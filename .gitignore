@@ -4,7 +4,7 @@
 # git rm file will stop track them.
 
 
-
+.git/
 configure
 Makefile
 Makefile.in
