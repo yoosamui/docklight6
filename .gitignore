@@ -3,16 +3,6 @@
 # #  # untracked file and nor will it be automatically added.
 # git rm file will stop track them.
 
-
-.git/
-configure
-Makefile
-Makefile.in
-config.log
-config.status
-config.h
-stamp-h1
-autom4te.cache/
 nbproject/
 bin/
 debian/.debhelper

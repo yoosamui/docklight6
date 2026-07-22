@@ -1,0 +1,26 @@
+window.dock-window,
+window.dock-tooltip-window {
+    background-color: transparent;
+}
+
+.dock-surface {
+    background-color: @theme_bg_color;
+}
+
+.dock-tooltip {
+    background-color: rgba(35, 35, 35, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.dock-surface.dock-rounded {
+    border-radius: 12px;
+}
+
+.dock-tooltip.dock-rounded {
+    border-radius: 8px;
+}
+
+.dock-tooltip label {
+    color: white;
+    font-weight: bold;
+}

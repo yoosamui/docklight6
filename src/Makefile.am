@@ -1,41 +1,30 @@
-ACLOCAL_AMFLAGS = -I m4 --install
-# program that will be installed in $bindir
-bin_PROGRAMS = docklight
+bin_PROGRAMS = docklight-prototype
 
-ALLCPPFLAGS = $(GTKMM_CFLAGS)
-ALLCPPFLAGS += $(WNCK_CFLAGS)
-ALLCPPFLAGS += -DPROGRAMNAME_LOCALEDIR=\""$(bindir)/docklight-5/locale"\"
-ALLCPPFLAGS += -DWNCK_I_KNOW_THIS_IS_UNSTABLE  -Lbamf3 -I/usr/include/libbamf3/
-#ALLCPPFLAGS += pkg-config --libs '-lX11 -lXcomposite -lXdamage -lXfixes -lXtst'
-#pkg-config --libs fontconfig
-docklight_CPPFLAGS = $(ALLCPPFLAGS)
+AM_CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
 
-# detailed
-#docklight_CPPFLAGS += -Wall -Wextra -Werror -std=c++17 -pedantic
+# $(abs_top_srcdir) expands to the absolute 
+# path of the top-level source directory, regardless of where you build.
+AM_CPPFLAGS = \
+  -DSOURCE_DIR=\"$(abs_top_srcdir)/src\"
 
-# release
-##docklight_CPPFLAGS += O2 -s -DNDEBUG -Wall -Wextra -Werror -std=c++11 -pedantic
-docklight_CPPFLAGS +=  -s -DNDEBUG -Wall -Wextra -Werror -std=c++17 -pedantic
+docklight_prototype_SOURCES = \
+    main.cpp \
+    dock_common.cpp \
+    dock_window.cpp \
+    dock_settings.cpp \
+    launcher_manager.cpp \
+    wayland_backend.cpp \
+    dock_layout_geometry.cpp \
+    dock_layout_metrics.cpp \
+    dock_layout_engine.cpp \
+    dock_tooltip_window.cpp \
+    dock_item.cpp
 
+docklight_prototype_CPPFLAGS = \
+    $(AM_CPPFLAGS) \
+    $(GTKMM_CFLAGS) \
+    $(GTK_LAYER_SHELL_CFLAGS)
 
-
-
-# standard debug
-#
-# -g adds debug information.
-# -O0 disables optimizations, making debugging easier.
-
-docklight_CPPFLAGS += -DDEBUG -Wall -std=c++17 -ggdb -O0
-
-#docklight_LDFLAGS = -lX11 -lXcomposite -lXdamage -lXfixes -lXtst
-
-
-ALLDADDLIBS = $(GTKMM_LIBS)
-ALLDADDLIBS +=  -lXext -lX11 -lXcomposite -lXdamage -lXrender -lXfixes -lXtst
-
-docklight_LDADD = $(ALLDADDLIBS)
-
-docklight_SOURCES =  \
-main.cpp \
-$(NULL)
-
+docklight_prototype_LDADD = \
+    $(GTKMM_LIBS) \
+    $(GTK_LAYER_SHELL_LIBS)

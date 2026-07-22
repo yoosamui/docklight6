@@ -1,0 +1,507 @@
+
+#include "dock_window.h"
+#include "dock_constants.h"
+#include "dock_geometry.h"
+#include "dock_common.h"
+
+#include "launcher_manager.h"
+#include <gtk-layer-shell.h>
+
+#include <iostream>
+#include <memory>
+
+DockWindow::DockWindow()
+{
+
+    set_decorated(false);
+    set_resizable(false);
+
+    GtkWindow *gtk_win = win();
+
+    gtk_layer_init_for_window(gtk_win);
+
+    gtk_layer_set_namespace(
+        gtk_win,
+        "docklight6");
+
+    gtk_layer_set_layer(
+        gtk_win,
+        GTK_LAYER_SHELL_LAYER_TOP);
+
+    gtk_layer_auto_exclusive_zone_enable(
+        gtk_win);
+
+    gtk_layer_set_anchor(
+        gtk_win,
+        GTK_LAYER_SHELL_EDGE_BOTTOM,
+        TRUE);
+
+    gtk_layer_set_margin(
+        gtk_win,
+        GTK_LAYER_SHELL_EDGE_BOTTOM,
+        0);
+
+    create_dock();
+
+    LauncherManager manager;
+    auto apps = manager.load_applications();
+
+    int count = 0;
+
+    for (const auto &launcher : apps)
+    {
+        if (count >= DockConstants::MAX_DOCK_ITEMS)
+            break;
+
+        auto item = Gtk::manage(
+            new DockItem(*this, launcher.app));
+
+        m_dock_box.pack_start(
+            *item,
+            Gtk::PACK_SHRINK);
+
+        ++count;
+    }
+    m_geometry.set_item_count(count);
+
+    m_overlay.add(m_dock_box);
+    m_dock_box.show_all();
+
+    update_layout();
+
+    m_overlay_window.set_halign(Gtk::ALIGN_FILL);
+    m_overlay_window.set_valign(Gtk::ALIGN_FILL);
+
+    add(m_overlay);
+
+    show_all_children();
+
+    /*   signal_focus_out_event().connect(
+          [this](GdkEventFocus *)
+          {
+              std::cout
+                  << "DOCK FOCUS LOST"
+                  << std::endl;
+
+              cancel_hide_timer();
+
+              m_overlay_window.hide_overlay();
+
+              return false;
+          }); */
+
+    // Layer-shell tooltip window exists,
+    // but must start hidden.
+    m_overlay_window.hide_overlay();
+}
+
+void DockWindow::schedule_show_tooltip(DockItem &item)
+{
+    if (m_show_timer.connected())
+        m_show_timer.disconnect();
+
+    m_pending_item = &item;
+
+    m_show_timer =
+        Glib::signal_timeout().connect(
+            [this]()
+            {
+                if (!m_pending_item)
+                    return false;
+
+                show_tooltip(
+                    *m_pending_item);
+
+                m_pending_item = nullptr;
+
+                return false;
+            },
+            DockConstants::TOOLTIP_SHOW_DELAY_MS);
+}
+
+void DockWindow::schedule_hide_overlay()
+{
+    // if (m_hide_connection.connected())
+    //     m_hide_connection.disconnect();
+
+    // m_hide_connection =
+    //     Glib::signal_timeout().connect(
+    //         [this]()
+    //         {
+    //             // m_overlay_window.hide_overlay();
+    //             start_hide_timer();
+
+    //             return false; // run once, then stop timer
+    //         },
+    //         300);
+
+    start_hide_timer();
+}
+
+void DockWindow::create_dock()
+{
+    m_dock_box.set_spacing(m_geometry.item_spacing());
+}
+
+void DockWindow::hide_tooltip()
+{
+
+    if (m_show_timer.connected())
+        m_show_timer.disconnect();
+
+    m_pending_item = nullptr;
+
+    cancel_hide_timer();
+
+    m_overlay_window.hide_overlay();
+    m_overlay_window.hide_tooltip();
+}
+
+void DockWindow::show_tooltip(DockItem &item)
+{
+    auto item_geometry =
+        m_layout_geometry.item_geometry(
+            item,
+            *this);
+
+    auto dock_geometry =
+        m_layout_geometry.dock_geometry(
+            *this);
+
+    auto monitor_geometry =
+        m_layout_geometry.monitor_geometry(
+            *this);
+
+    ScreenPosition position =
+        m_layout_engine.calculate_tooltip_position(
+            m_layout,
+            monitor_geometry,
+            dock_geometry,
+            item_geometry);
+
+    m_overlay_window.set_anchor_mode(
+        m_layout.location);
+
+    m_overlay_window.set_position(
+        position);
+}
+
+int DockWindow::dock_left() const
+{
+    return m_geometry.dock_x();
+}
+
+DockLocation DockWindow::location() const
+{
+    std::cout
+        << "location="
+        << static_cast<int>(m_layout.location)
+        << std::endl;
+
+    return m_layout.location;
+}
+
+GtkWindow *DockWindow::win()
+{
+    return GTK_WINDOW(gobj());
+}
+
+void DockWindow::update_layout()
+{
+    apply_location();
+    apply_alignment();
+
+    switch (m_layout.autohide)
+    {
+    case DockAutohide::none:
+
+        gtk_layer_auto_exclusive_zone_enable(
+            win());
+
+        break;
+
+    case DockAutohide::autohide:
+
+        gtk_layer_set_exclusive_zone(
+            win(),
+            0);
+
+        break;
+
+    case DockAutohide::intellihide:
+
+        gtk_layer_set_exclusive_zone(
+            win(),
+            0);
+
+        break;
+    }
+}
+void DockWindow::cancel_hide_timer()
+{
+    if (m_hide_timer.connected())
+    {
+        m_hide_timer.disconnect();
+    }
+}
+
+void DockWindow::start_hide_timer()
+{
+    cancel_hide_timer();
+
+    m_hide_timer =
+        Glib::signal_timeout().connect(
+            [this]()
+            {
+                std::cout
+                    << "DOCK AUTO HIDE"
+                    << std::endl;
+
+                m_overlay_window.hide_overlay();
+
+                return false;
+            },
+            DockConstants::TOOLTIP_HIDE_DELAY_MS);
+}
+
+// Notice that this function only decides which edge the dock is attached to.
+void DockWindow::apply_location()
+{
+
+    GtkWindow *gtk_win = win();
+
+    switch (m_layout.location)
+    {
+    case DockLocation::bottom:
+
+        gtk_layer_set_anchor(
+            gtk_win,
+            GTK_LAYER_SHELL_EDGE_BOTTOM,
+            TRUE);
+
+        gtk_layer_set_anchor(
+            gtk_win,
+            GTK_LAYER_SHELL_EDGE_TOP,
+            FALSE);
+
+        break;
+
+    case DockLocation::top:
+
+        gtk_layer_set_anchor(
+            gtk_win,
+            GTK_LAYER_SHELL_EDGE_TOP,
+            TRUE);
+
+        gtk_layer_set_anchor(
+            gtk_win,
+            GTK_LAYER_SHELL_EDGE_BOTTOM,
+            FALSE);
+
+        break;
+
+    case DockLocation::left:
+
+        gtk_layer_set_anchor(
+            gtk_win,
+            GTK_LAYER_SHELL_EDGE_LEFT,
+            TRUE);
+
+        gtk_layer_set_anchor(
+            gtk_win,
+            GTK_LAYER_SHELL_EDGE_RIGHT,
+            FALSE);
+
+        break;
+
+    case DockLocation::right:
+
+        gtk_layer_set_anchor(
+            gtk_win,
+            GTK_LAYER_SHELL_EDGE_RIGHT,
+            TRUE);
+
+        gtk_layer_set_anchor(
+            gtk_win,
+            GTK_LAYER_SHELL_EDGE_LEFT,
+            FALSE);
+
+        break;
+    }
+
+    bool vertical =
+        m_layout.location == DockLocation::left ||
+        m_layout.location == DockLocation::right;
+
+    m_dock_box.set_orientation(
+        vertical
+            ? Gtk::ORIENTATION_VERTICAL
+            : Gtk::ORIENTATION_HORIZONTAL);
+    if (vertical)
+    {
+        m_dock_box.set_orientation(
+            Gtk::ORIENTATION_VERTICAL);
+    }
+    else
+    {
+        m_dock_box.set_orientation(
+            Gtk::ORIENTATION_HORIZONTAL);
+    }
+    // for (auto *child : // dock_box.get_children())
+    // {
+    //     auto *item = dynamic_cast<DockItem *>(child);
+
+    //     if (item)
+    //         item->set_vertical(vertical);
+    // }
+}
+
+// // dock_box.set_orientation(Gtk::ORIENTATION_VERTICAL);
+//  // dock_box.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
+
+void DockWindow::apply_alignment()
+{
+    GtkWindow *gtk_win = win();
+
+    switch (m_layout.alignment)
+    {
+    case DockAlignment::fill:
+
+        switch (m_layout.location)
+        {
+        case DockLocation::top:
+        case DockLocation::bottom:
+
+            gtk_layer_set_anchor(
+                gtk_win,
+                GTK_LAYER_SHELL_EDGE_LEFT,
+                TRUE);
+
+            gtk_layer_set_anchor(
+                gtk_win,
+                GTK_LAYER_SHELL_EDGE_RIGHT,
+                TRUE);
+
+            gtk_widget_set_size_request(
+                GTK_WIDGET(gobj()),
+                -1,
+                m_geometry.item_height());
+
+            break;
+
+        case DockLocation::left:
+        case DockLocation::right:
+
+            gtk_layer_set_anchor(
+                gtk_win,
+                GTK_LAYER_SHELL_EDGE_TOP,
+                FALSE);
+
+            gtk_layer_set_anchor(
+                gtk_win,
+                GTK_LAYER_SHELL_EDGE_BOTTOM,
+                FALSE);
+
+            gtk_widget_set_size_request(
+                GTK_WIDGET(gobj()),
+                m_geometry.item_width(),
+                m_geometry.dock_height());
+
+            break;
+        }
+
+        break;
+
+    case DockAlignment::center:
+
+        switch (m_layout.location)
+        {
+        case DockLocation::top:
+        case DockLocation::bottom:
+        {
+            gtk_layer_set_anchor(
+                gtk_win,
+                GTK_LAYER_SHELL_EDGE_LEFT,
+                FALSE);
+
+            gtk_layer_set_anchor(
+                gtk_win,
+                GTK_LAYER_SHELL_EDGE_RIGHT,
+                FALSE);
+
+            int width = m_geometry.dock_width();
+
+            gtk_widget_set_size_request(
+                GTK_WIDGET(gobj()),
+                width,
+                m_geometry.item_height());
+
+            break;
+        }
+
+        case DockLocation::left:
+        case DockLocation::right:
+        {
+            gtk_layer_set_anchor(
+                gtk_win,
+                GTK_LAYER_SHELL_EDGE_TOP,
+                FALSE);
+
+            gtk_layer_set_anchor(
+                gtk_win,
+                GTK_LAYER_SHELL_EDGE_BOTTOM,
+                FALSE);
+
+            int height =
+                m_geometry.dock_height();
+
+            gtk_widget_set_size_request(
+                GTK_WIDGET(gobj()),
+                m_geometry.item_height(),
+                height);
+
+            break;
+        }
+        }
+
+        break;
+
+    default:
+        break;
+    }
+}
+
+int DockWindow::preferred_dock_height() const
+{
+    return m_geometry.dock_height();
+}
+
+void DockWindow::update_alignment()
+{
+
+    // switch (m_layout.alignment)
+    // {
+    // case DockAlignment::fill:
+    //     set_fill_alignment();
+    //     break;
+
+    // case DockAlignment::center:
+    //     set_center_alignment();
+    //     break;
+
+    // default:
+    //     break;
+    // }
+}
+
+// int DockWindow::preferred_dock_width() const
+// {
+//     int minimum = 0;
+//     int natural = 0;
+
+//     m_dock_box.get_preferred_width(
+//         minimum,
+//         natural);
+
+//     return natural;
+// }
