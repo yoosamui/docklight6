@@ -9,11 +9,9 @@ AM_CPPFLAGS = \
 
 docklight_prototype_SOURCES = \
     main.cpp \
-    dock_common.cpp \
     dock_window.cpp \
     dock_settings.cpp \
     launcher_manager.cpp \
-    wayland_backend.cpp \
     dock_layout_geometry.cpp \
     dock_layout_metrics.cpp \
     dock_layout_engine.cpp \

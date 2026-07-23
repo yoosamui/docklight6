@@ -15,6 +15,7 @@ sudo apt-get update && sudo apt install libnotify-bin \
 build-essential \
 cmake \
 libgtkmm-3.0-dev \
+libgtk-layer-shell-dev \
 libwnck-3-dev \
 autotools-dev \
 autoconf \
