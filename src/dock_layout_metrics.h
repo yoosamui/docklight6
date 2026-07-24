@@ -5,7 +5,7 @@
 //
 // Stores compile-time visual metrics used by the dock.
 //
-// Runtime choices belong in DockLayoutSettings and placement decisions belong
+// Runtime choices belong in DockLayoutRequest and placement decisions belong
 // in DockLayoutEngine.
 //
 // Responsibility:
@@ -19,6 +19,7 @@ public:
     // Dock
 
     static constexpr int DOCK_HEIGHT = 48;
+    // Empty space inside the dock before the first and after the last item.
     static constexpr int DOCK_MARGIN = 8;
 
     // Icon size is the primary user setting. Item size is derived from it so
@@ -43,6 +44,8 @@ public:
     static constexpr int TOOLTIP_MIN_WIDTH = 80;
     static constexpr int TOOLTIP_HEIGHT = 38;
     static constexpr int TOOLTIP_DISTANCE = 12;
+    // Minimum gap between a tooltip and either end of the monitor axis.
+    static constexpr int TOOLTIP_EDGE_MARGIN = 8;
     static constexpr int TOOLTIP_LABEL_PADDING = 12;
     static constexpr int TOOLTIP_FONT_SIZE = 12;
 

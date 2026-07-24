@@ -2,7 +2,6 @@
 
 #include "dock_constants.h"
 #include "dock_layout_metrics.h"
-#include "dock_settings.h"
 
 #include <gtk-layer-shell.h>
 
@@ -74,6 +73,8 @@ void DockTooltipWindow::set_rounded_corners(
     int radius,
     int icon_size)
 {
+    m_icon_size = std::max(1, icon_size);
+
     auto context = m_event_box.get_style_context();
 
     if (enabled)
@@ -90,15 +91,15 @@ void DockTooltipWindow::set_rounded_corners(
 
     m_tooltip_height =
         DockLayoutMetrics::tooltip_height_for(
-            icon_size);
+            m_icon_size);
 
     m_tooltip_distance =
         DockLayoutMetrics::tooltip_distance_for(
-            icon_size);
+            m_icon_size);
 
     const int label_padding =
         DockLayoutMetrics::tooltip_label_padding_for(
-            icon_size);
+            m_icon_size);
 
     m_label.set_margin_start(label_padding);
     m_label.set_margin_end(label_padding);
@@ -112,7 +113,7 @@ void DockTooltipWindow::set_rounded_corners(
         ".dock-tooltip label { font-size: " +
         std::to_string(
             DockLayoutMetrics::tooltip_font_size_for(
-                icon_size)) +
+                m_icon_size)) +
         "px; }");
 }
 
@@ -154,7 +155,7 @@ int DockTooltipWindow::preferred_width_for(
     // Use the natural label width so long application names are not clipped.
     return std::max(
         DockLayoutMetrics::tooltip_min_width_for(
-            g_settings.icon_size()),
+            m_icon_size),
         natural_width);
 }
 

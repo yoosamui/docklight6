@@ -1,10 +1,11 @@
 #include "dock_layout_engine.h"
+#include "dock_layout_metrics.h"
 
 #include <algorithm>
 
 DockPlacement
 DockLayoutEngine::calculate_dock_layout(
-    const DockLayoutSettings &settings,
+    const DockLayoutRequest &request,
     const MonitorGeometry &monitor,
     const DockWindowGeometry &dock) const
 {
@@ -18,7 +19,7 @@ DockLayoutEngine::calculate_dock_layout(
     if (dock.height > 0)
         placement.height = dock.height;
  
-    switch (settings.location)
+    switch (request.location)
     {
     case DockLocation::bottom:
 
@@ -53,22 +54,22 @@ DockLayoutEngine::calculate_dock_layout(
         break;
     }
 
-    if (settings.size.length > 0)
+    if (request.size.length > 0)
         placement.set_main_axis_size(
-            settings.size.length);
+            request.size.length);
 
-    if (settings.size.thickness > 0)
+    if (request.size.thickness > 0)
         placement.set_cross_axis_size(
-            settings.size.thickness);
+            request.size.thickness);
 
-    if (settings.autohide == DockAutohide::none)
+    if (request.autohide == DockAutohide::none)
     {
         // Let gtk-layer-shell keep the reservation synchronized with the
         // surface and its anchored edge. It includes later GTK size changes.
         placement.exclusive_zone = -1;
     }
 
-    switch (settings.alignment)
+    switch (request.alignment)
     {
     case DockAlignment::center:
     {
@@ -120,7 +121,7 @@ DockLayoutEngine::calculate_dock_layout(
 
 ScreenPosition
 DockLayoutEngine::calculate_tooltip_position(
-    const DockLayoutSettings &settings,
+    const DockLayoutRequest &request,
     const MonitorGeometry &monitor,
     const DockWindowGeometry &dock,
     const ItemGeometry &item,
@@ -138,7 +139,7 @@ DockLayoutEngine::calculate_tooltip_position(
     // that coordinate system. Autohiding docks have no reservation, so their
     // tooltip still needs to clear the dock thickness explicitly.
     const bool dock_reserves_space =
-        settings.autohide == DockAutohide::none;
+        request.autohide == DockAutohide::none;
 
     const int horizontal_edge_offset =
         (dock_reserves_space ? 0 : dock_height) +
@@ -148,29 +149,35 @@ DockLayoutEngine::calculate_tooltip_position(
         (dock_reserves_space ? 0 : dock_width) +
         tooltip_distance;
 
-    int dock_x = 0;
-    int dock_y = 0;
+    // x/y are usable-area offsets relative to the selected output. This is
+    // important when only one edge has a panel or compositor safety inset.
+    int dock_x = monitor.x;
+    int dock_y = monitor.y;
 
     const bool horizontal =
-        settings.location == DockLocation::bottom ||
-        settings.location == DockLocation::top;
+        request.location == DockLocation::bottom ||
+        request.location == DockLocation::top;
 
     if (horizontal)
     {
-        if (settings.alignment == DockAlignment::center)
-            dock_x = (monitor.width - dock_width) / 2;
-        else if (settings.alignment == DockAlignment::end)
-            dock_x = monitor.width - dock_width;
+        if (request.alignment == DockAlignment::center)
+            dock_x +=
+                (monitor.width - dock_width) / 2;
+        else if (request.alignment == DockAlignment::end)
+            dock_x +=
+                monitor.width - dock_width;
     }
     else
     {
-        if (settings.alignment == DockAlignment::center)
-            dock_y = (monitor.height - dock_height) / 2;
-        else if (settings.alignment == DockAlignment::end)
-            dock_y = monitor.height - dock_height;
+        if (request.alignment == DockAlignment::center)
+            dock_y +=
+                (monitor.height - dock_height) / 2;
+        else if (request.alignment == DockAlignment::end)
+            dock_y +=
+                monitor.height - dock_height;
     }
 
-    switch (settings.location)
+    switch (request.location)
     {
     case DockLocation::bottom:
         position.x = dock_x + item.center_x - tooltip_width / 2;
@@ -199,6 +206,39 @@ DockLayoutEngine::calculate_tooltip_position(
         position.y =
             dock_y + item.center_y - tooltip_height / 2;
         break;
+    }
+
+    // A horizontal dock's first and last tooltip can cross the left or right
+    // monitor edge. Move only those tooltips inward. Vertical dock tooltips
+    // open beside the dock and retain their normal item-centred position.
+    if (horizontal)
+    {
+        const int available_edge_space =
+            std::max(
+                0,
+                monitor.width -
+                    tooltip_width);
+
+        const int edge_margin =
+            std::min(
+                DockLayoutMetrics::TOOLTIP_EDGE_MARGIN,
+                available_edge_space / 2);
+
+        const int minimum_x =
+            monitor.x +
+            edge_margin;
+
+        const int maximum_x =
+            monitor.x +
+            monitor.width -
+            tooltip_width -
+            edge_margin;
+
+        position.x =
+            std::clamp(
+                position.x,
+                minimum_x,
+                maximum_x);
     }
 
     return position;

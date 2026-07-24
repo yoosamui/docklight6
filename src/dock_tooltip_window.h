@@ -9,8 +9,8 @@
 #include <glibmm/ustring.h>
 #include <sigc++/sigc++.h>
 
-#include "dock_enums.h"
-#include "dock_layout_engine.h"
+#include "dock_layout_metrics.h"
+#include "dock_layout_types.h"
 
 class DockTooltipWindow : public Gtk::Window
 {
@@ -55,6 +55,7 @@ private:
     Glib::RefPtr<Gtk::CssProvider> m_visual_css;
     int m_tooltip_height = DockLayoutMetrics::TOOLTIP_HEIGHT;
     int m_tooltip_distance = DockLayoutMetrics::TOOLTIP_DISTANCE;
+    int m_icon_size = DockLayoutMetrics::BASE_ICON_SIZE;
     sigc::connection m_reveal_timer;
     bool m_has_request = false;
     Glib::ustring m_request_text;

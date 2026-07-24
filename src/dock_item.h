@@ -1,7 +1,6 @@
 #pragma once
 
 #include <gtkmm.h>
-#include "dock_enums.h"
 
 class DockWindow;
 
@@ -12,6 +11,7 @@ public:
         DockWindow &dock,
         Glib::RefPtr<Gio::AppInfo> app);
 
+    void set_icon_size(int icon_size);
     void set_vertical(bool vertical);
     Glib::ustring app_name() const;
 
@@ -31,6 +31,7 @@ private:
 
     Gtk::Image image;
     Gtk::Label label;
+    int m_icon_size = 0;
 
     bool on_button_press_event(
         GdkEventButton *event) override;

@@ -3,6 +3,7 @@
 #include "dock_settings.h"
 #include "dock_window.h"
 
+#include <algorithm>
 #include <iostream>
 
 DockItem::DockItem(
@@ -13,18 +14,40 @@ DockItem::DockItem(
 {
     set_visible_window(false);
 
-    const int icon_size =
-        g_settings.icon_size();
-
     add_events(
         Gdk::ENTER_NOTIFY_MASK |
         Gdk::LEAVE_NOTIFY_MASK);
 
-    // -------------------------------------------------------
-    // Load application icon
-    // -------------------------------------------------------
+    image.set_halign(Gtk::ALIGN_CENTER);
+    image.set_valign(Gtk::ALIGN_CENTER);
+    add(image);
 
-    auto icon = app->get_icon();
+    set_icon_size(g_settings.icon_size());
+
+    show_all_children();
+
+    signal_size_allocate().connect(
+        [](Gtk::Allocation &alloc)
+        {
+            std::cout
+                << "DockItem allocation: "
+                << alloc.get_width()
+                << " x "
+                << alloc.get_height()
+                << std::endl;
+        });
+}
+
+void DockItem::set_icon_size(int icon_size)
+{
+    icon_size = std::max(1, icon_size);
+
+    if (icon_size == m_icon_size)
+        return;
+
+    m_icon_size = icon_size;
+
+    auto icon = m_app->get_icon();
 
     if (icon)
     {
@@ -35,7 +58,7 @@ DockItem::DockItem(
         {
             auto names = themed->get_names();
 
-            std::cout << app->get_name() << " -> ";
+            std::cout << m_app->get_name() << " -> ";
 
             for (const auto &name : names)
                 std::cout << name << " ";
@@ -54,6 +77,35 @@ DockItem::DockItem(
                             icon_size,
                             Gtk::ICON_LOOKUP_USE_BUILTIN);
 
+                    const int pixbuf_width =
+                        pixbuf->get_width();
+
+                    const int pixbuf_height =
+                        pixbuf->get_height();
+
+                    if (pixbuf_width > icon_size ||
+                        pixbuf_height > icon_size)
+                    {
+                        const double scale =
+                            std::min(
+                                static_cast<double>(icon_size) /
+                                    pixbuf_width,
+                                static_cast<double>(icon_size) /
+                                    pixbuf_height);
+
+                        pixbuf =
+                            pixbuf->scale_simple(
+                                std::max(
+                                    1,
+                                    static_cast<int>(
+                                        pixbuf_width * scale)),
+                                std::max(
+                                    1,
+                                    static_cast<int>(
+                                        pixbuf_height * scale)),
+                                Gdk::INTERP_BILINEAR);
+                    }
+
                     image.set(pixbuf);
                 }
                 catch (const Glib::Error &e)
@@ -69,34 +121,9 @@ DockItem::DockItem(
         }
     }
 
-    // -------------------------------------------------------
-    // Layout
-    // -------------------------------------------------------
-
     set_size_request(
         DockLayoutMetrics::item_size_for(icon_size),
         DockLayoutMetrics::item_size_for(icon_size));
-
-    // Slot size derives from the icon-size setting, leaving a consistent
-    // padding reserve for indicators and future hover animation.
-    image.set_halign(Gtk::ALIGN_CENTER);
-    image.set_valign(Gtk::ALIGN_CENTER);
-    add(image);
-
-    show_all_children();
-
-    // set_tooltip_text(app_name());
-
-    signal_size_allocate().connect(
-        [](Gtk::Allocation &alloc)
-        {
-            std::cout
-                << "DockItem allocation: "
-                << alloc.get_width()
-                << " x "
-                << alloc.get_height()
-                << std::endl;
-        });
 }
 
 Glib::ustring DockItem::app_name() const

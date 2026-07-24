@@ -4,7 +4,7 @@
 # git rm file will stop track them.
 
 src/docklight/
-src/docklight-prototype/
+src/docklight6
 nbproject/
 bin/
 debian/.debhelper
@@ -145,5 +145,4 @@ tags
 *.exe
 *.out
 *.app
-
 

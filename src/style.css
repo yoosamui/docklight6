@@ -12,6 +12,7 @@ window.dock-tooltip-window {
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+window.dock-window.dock-rounded,
 .dock-surface.dock-rounded {
     border-radius: 12px;
 }

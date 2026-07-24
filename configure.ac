@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([docklight-prototype], [0.1], [yoosamui@example.com])
+AC_INIT([docklight6], [0.1], [yoosamui@example.com])
 
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 

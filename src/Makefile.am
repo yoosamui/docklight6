@@ -1,4 +1,4 @@
-bin_PROGRAMS = docklight-prototype
+bin_PROGRAMS = docklight6
 
 AM_CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
 
@@ -7,7 +7,7 @@ AM_CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
 AM_CPPFLAGS = \
   -DSOURCE_DIR=\"$(abs_top_srcdir)/src\"
 
-docklight_prototype_SOURCES = \
+docklight6_SOURCES = \
     main.cpp \
     dock_window.cpp \
     dock_settings.cpp \
@@ -18,11 +18,11 @@ docklight_prototype_SOURCES = \
     dock_tooltip_window.cpp \
     dock_item.cpp
 
-docklight_prototype_CPPFLAGS = \
+docklight6_CPPFLAGS = \
     $(AM_CPPFLAGS) \
     $(GTKMM_CFLAGS) \
     $(GTK_LAYER_SHELL_CFLAGS)
 
-docklight_prototype_LDADD = \
+docklight6_LDADD = \
     $(GTKMM_LIBS) \
     $(GTK_LAYER_SHELL_LIBS)

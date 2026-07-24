@@ -1,8 +1,6 @@
 #pragma once
 
-#include "dock_enums.h"
 #include "dock_layout_types.h"
-#include "dock_layout_metrics.h"
 #include "dock_window_geometry.h"
 
 //
@@ -22,13 +20,13 @@ public:
 
     DockPlacement
     calculate_dock_layout(
-        const DockLayoutSettings &settings,
+        const DockLayoutRequest &request,
         const MonitorGeometry &monitor,
         const DockWindowGeometry &dock) const;
 
     ScreenPosition
     calculate_tooltip_position(
-        const DockLayoutSettings &settings,
+        const DockLayoutRequest &request,
         const MonitorGeometry &monitor,
         const DockWindowGeometry &dock,
         const ItemGeometry &item,
