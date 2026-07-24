@@ -149,7 +149,7 @@ struct DockSize
 // it is not a placement result or the application's settings store.
 struct DockLayoutRequest
 {
-    DockLocation location = DockLocation::right;
+    DockLocation location = DockLocation::bottom;
     DockAlignment alignment = DockAlignment::center;
     DockAutohide autohide = DockAutohide::none;
 
@@ -159,7 +159,7 @@ struct DockLayoutRequest
 
     // -1 derives a pill radius from the current icon-size based item metric.
     // A non-negative value is an explicit user override in pixels.
-    int corner_radius = -1;
+    int corner_radius = 6;
     DockSize size;
 };
 

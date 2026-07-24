@@ -12,13 +12,12 @@ public:
 private:
     // Preserve the current launcher-icon request while making it configurable
     // through g_settings instead of a DockItem literal.
-    int m_icon_size = 512; // 512 test value. default is 46px
+    int m_icon_size = 46; // 512 test value. default is 46px
 
     // Some Wayland compositors report the full output as the work area even
     // when a panel occludes the bottom edge. This is the minimum hidden
     // screen inset; the dock's visible edge margin is added separately.
     int m_minimum_bottom_workarea_inset = 36;
 };
-
 
 extern DockSettings g_settings;
