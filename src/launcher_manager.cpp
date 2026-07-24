@@ -56,7 +56,7 @@ std::vector<std::string> LauncherManager::read_config()
             Glib::get_home_dir(),
             ".config",
             "docklight6",
-            "docklight.conf"));
+            "docklight.data"));
 
     std::string line;
 

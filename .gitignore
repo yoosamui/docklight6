@@ -3,6 +3,8 @@
 # #  # untracked file and nor will it be automatically added.
 # git rm file will stop track them.
 
+src/docklight/
+src/docklight-prototype/
 nbproject/
 bin/
 debian/.debhelper
