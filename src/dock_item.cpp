@@ -47,83 +47,111 @@ void DockItem::set_icon_size(int icon_size)
 
     m_icon_size = icon_size;
 
-    auto icon = m_app->get_icon();
-
-    if (icon)
-    {
-        auto themed =
-            Glib::RefPtr<Gio::ThemedIcon>::cast_dynamic(icon);
-
-        if (themed)
-        {
-            auto names = themed->get_names();
-
-            std::cout << m_app->get_name() << " -> ";
-
-            for (const auto &name : names)
-                std::cout << name << " ";
-
-            std::cout << std::endl;
-
-            if (!names.empty())
-            {
-                auto icon_name = *names.begin();
-
-                try
-                {
-                    auto pixbuf =
-                        Gtk::IconTheme::get_default()->load_icon(
-                            icon_name,
-                            icon_size,
-                            Gtk::ICON_LOOKUP_USE_BUILTIN);
-
-                    const int pixbuf_width =
-                        pixbuf->get_width();
-
-                    const int pixbuf_height =
-                        pixbuf->get_height();
-
-                    if (pixbuf_width > icon_size ||
-                        pixbuf_height > icon_size)
-                    {
-                        const double scale =
-                            std::min(
-                                static_cast<double>(icon_size) /
-                                    pixbuf_width,
-                                static_cast<double>(icon_size) /
-                                    pixbuf_height);
-
-                        pixbuf =
-                            pixbuf->scale_simple(
-                                std::max(
-                                    1,
-                                    static_cast<int>(
-                                        pixbuf_width * scale)),
-                                std::max(
-                                    1,
-                                    static_cast<int>(
-                                        pixbuf_height * scale)),
-                                Gdk::INTERP_BILINEAR);
-                    }
-
-                    image.set(pixbuf);
-                }
-                catch (const Glib::Error &e)
-                {
-                    std::cerr
-                        << "Cannot load icon "
-                        << icon_name
-                        << ": "
-                        << e.what()
-                        << std::endl;
-                }
-            }
-        }
-    }
+    reload_icon();
 
     set_size_request(
         DockLayoutMetrics::item_size_for(icon_size),
         DockLayoutMetrics::item_size_for(icon_size));
+}
+
+void DockItem::reload_icon()
+{
+    auto icon = m_app->get_icon();
+    auto icon_theme =
+        Gtk::IconTheme::get_default();
+
+    if (!icon_theme)
+    {
+        g_warning(
+            "Cannot load icon for %s: no GTK icon theme",
+            m_app->get_name().c_str());
+        return;
+    }
+
+    Gtk::IconInfo icon_info;
+
+    if (icon)
+    {
+        icon_info =
+            icon_theme->lookup_icon(
+                icon,
+                m_icon_size,
+                Gtk::ICON_LOOKUP_USE_BUILTIN);
+    }
+
+    if (!icon_info)
+    {
+        icon_info =
+            icon_theme->lookup_icon(
+                "application-x-executable",
+                m_icon_size,
+                Gtk::ICON_LOOKUP_USE_BUILTIN);
+    }
+
+    if (!icon_info)
+    {
+        g_warning(
+            "Cannot find an icon for %s in the current theme",
+            m_app->get_name().c_str());
+        return;
+    }
+
+    try
+    {
+        auto pixbuf =
+            icon_info.load_icon();
+
+        if (!pixbuf)
+        {
+            g_warning(
+                "Cannot load icon for %s from the current theme",
+                m_app->get_name().c_str());
+            return;
+        }
+
+        const int pixbuf_width =
+            pixbuf->get_width();
+
+        const int pixbuf_height =
+            pixbuf->get_height();
+
+        if (pixbuf_width > m_icon_size ||
+            pixbuf_height > m_icon_size)
+        {
+            const double scale =
+                std::min(
+                    static_cast<double>(m_icon_size) /
+                        pixbuf_width,
+                    static_cast<double>(m_icon_size) /
+                        pixbuf_height);
+
+            pixbuf =
+                pixbuf->scale_simple(
+                    std::max(
+                        1,
+                        static_cast<int>(
+                            pixbuf_width * scale)),
+                    std::max(
+                        1,
+                        static_cast<int>(
+                            pixbuf_height * scale)),
+                    Gdk::INTERP_BILINEAR);
+        }
+
+        image.set(pixbuf);
+    }
+    catch (const Glib::Error &error)
+    {
+        // Keep the previously displayed pixbuf when the new theme contains
+        // a broken icon. One bad asset must not leave an empty dock item.
+        const auto error_message =
+            error.what();
+
+        g_warning(
+            "Cannot reload icon for %s: %s",
+            m_app->get_name().c_str(),
+            error_message.c_str());
+    }
 }
 
 Glib::ustring DockItem::app_name() const

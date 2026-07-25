@@ -24,6 +24,7 @@ public:
         const DockConfiguration &configuration,
         const Glib::RefPtr<Gdk::Monitor>
             &monitor);
+    ~DockWindow() override;
     void apply_configuration(
         const DockConfiguration &configuration);
     void set_monitor(
@@ -50,6 +51,8 @@ private:
         const MonitorGeometry &monitor,
         DockOrientation orientation);
     void schedule_layout_update();
+    void schedule_icon_refresh();
+    void reload_icons();
     std::vector<DockItem *> dock_items();
     DockWindowGeometry content_geometry() const;
     void show_tooltip(DockItem &item);
@@ -64,6 +67,7 @@ private:
     Gtk::Box m_dock_box{
         Gtk::ORIENTATION_HORIZONTAL};
     Glib::RefPtr<Gtk::CssProvider> m_visual_css;
+    Glib::RefPtr<Gtk::IconTheme> m_icon_theme;
 
     // Visible empty widgets whose requested size becomes the dock's leading
     // and trailing content margin on the active orientation axis.
@@ -90,5 +94,7 @@ private:
     sigc::connection m_show_timer;
     sigc::connection m_hide_timer;
     sigc::connection m_layout_update;
+    sigc::connection m_icon_theme_changed;
+    sigc::connection m_icon_refresh;
     DockItem *m_pending_item = nullptr;
 };

@@ -138,6 +138,18 @@ DockWindow::DockWindow(
         std::max(1, m_settings.icon_size());
     apply_visual_style();
 
+    m_icon_theme =
+        Gtk::IconTheme::get_default();
+
+    if (m_icon_theme)
+    {
+        m_icon_theme_changed =
+            m_icon_theme->signal_changed().connect(
+                sigc::mem_fun(
+                    *this,
+                    &DockWindow::schedule_icon_refresh));
+    }
+
     // At realize time the dock has a GDK window and can resolve its actual
     // monitor, but it has not mapped at an oversized natural size yet.
     signal_realize().connect(
@@ -146,6 +158,12 @@ DockWindow::DockWindow(
             &DockWindow::update_dock_layout));
 
     update_dock_layout();
+}
+
+DockWindow::~DockWindow()
+{
+    m_icon_theme_changed.disconnect();
+    m_icon_refresh.disconnect();
 }
 
 void DockWindow::apply_configuration(
@@ -737,6 +755,37 @@ void DockWindow::schedule_layout_update()
                 update_dock_layout();
                 return false;
             });
+}
+
+void DockWindow::schedule_icon_refresh()
+{
+    if (m_icon_refresh.connected())
+        return;
+
+    // A desktop theme switch can invalidate several icon-theme caches in
+    // quick succession. Refresh all dock items once after GTK has processed
+    // the complete change.
+    m_icon_refresh =
+        Glib::signal_idle().connect(
+            [this]()
+            {
+                reload_icons();
+                return false;
+            });
+}
+
+void DockWindow::reload_icons()
+{
+    auto items = dock_items();
+
+    std::cout
+        << "Icon theme changed: refreshing "
+        << items.size()
+        << " dock icons"
+        << std::endl;
+
+    for (auto *item : items)
+        item->reload_icon();
 }
 
 std::vector<DockItem *> DockWindow::dock_items()

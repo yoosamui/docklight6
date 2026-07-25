@@ -13,6 +13,7 @@ public:
         int icon_size);
 
     void set_icon_size(int icon_size);
+    void reload_icon();
     void set_vertical(bool vertical);
     Glib::ustring app_name() const;
 
