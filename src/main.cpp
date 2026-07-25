@@ -73,6 +73,13 @@ int main(int argc, char *argv[])
     // cannot be used because a monitor move temporarily hides the window.
     app->register_application();
 
+    if (app->is_remote())
+    {
+        g_message(
+            "DockLight is already running");
+        return app->run();
+    }
+
     g_message(
         "%s starting",
         PACKAGE_STRING);

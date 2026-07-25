@@ -23,11 +23,18 @@ constexpr unsigned int RELOAD_DELAY_MS = 200;
 const char *CONFIG_FILENAME = "docklight.conf";
 const char *DOCK_GROUP = "dock";
 
-const char *MONITOR_SETTING_TEMPLATE = R"(
-# Monitor used by the dock.
+const char *MONITOR_SETTING_TEMPLATE = R"(# Monitor used by the dock.
 # Empty uses default: primary
 # Run "docklight6 --list-monitors" to show accepted identifiers
 monitor =
+
+)";
+
+const char *HOVER_EFFECT_SETTING_TEMPLATE = R"(# Effect shown while the pointer is over an icon.
+# Empty uses default: standard
+# Valid values: standard, zoom, pixels, glow
+# zoom, pixels, and glow currently use the standard effect
+hover_effect =
 
 )";
 
@@ -36,6 +43,12 @@ const char *CONFIG_TEMPLATE = R"([dock]
 # Empty uses default: primary
 # Run "docklight6 --list-monitors" to show accepted identifiers
 monitor =
+
+# Effect shown while the pointer is over an icon.
+# Empty uses default: standard
+# Valid values: standard, zoom, pixels, glow
+# zoom, pixels, and glow currently use the standard effect
+hover_effect =
 
 # Icon size in pixels.
 # Empty uses default: 46
@@ -184,6 +197,8 @@ bool same_configuration(
                right.settings.monitor() &&
            left.settings.icon_size() ==
                right.settings.icon_size() &&
+           left.settings.hover_effect() ==
+               right.settings.hover_effect() &&
            left.settings.minimum_bottom_workarea_inset() ==
                right.settings.minimum_bottom_workarea_inset() &&
            left.layout_request.location ==
@@ -217,7 +232,12 @@ DockConfigurationManager::DockConfigurationManager()
             CONFIG_FILENAME);
 
     ensure_config_file();
-    ensure_monitor_setting();
+    ensure_setting(
+        "monitor",
+        MONITOR_SETTING_TEMPLATE);
+    ensure_setting(
+        "hover_effect",
+        HOVER_EFFECT_SETTING_TEMPLATE);
     reload();
 }
 
@@ -306,7 +326,9 @@ void DockConfigurationManager::ensure_config_file()
     }
 }
 
-void DockConfigurationManager::ensure_monitor_setting()
+void DockConfigurationManager::ensure_setting(
+    const char *key,
+    const char *setting_template)
 {
     Glib::KeyFile key_file;
 
@@ -318,7 +340,7 @@ void DockConfigurationManager::ensure_monitor_setting()
             !key_file.has_group(DOCK_GROUP) ||
             key_file.has_key(
                 DOCK_GROUP,
-                "monitor"))
+                key))
         {
             return;
         }
@@ -348,14 +370,15 @@ void DockConfigurationManager::ensure_monitor_setting()
 
         contents.insert(
             insert_position,
-            MONITOR_SETTING_TEMPLATE);
+            setting_template);
 
         Glib::file_set_contents(
             m_config_path,
             contents);
 
         g_message(
-            "Added monitor setting to dock configuration");
+            "Added '%s' setting to dock configuration",
+            key);
     }
     catch (const Glib::Error &error)
     {
@@ -418,6 +441,40 @@ void DockConfigurationManager::reload()
             monitor.empty()
                 ? defaults.settings.monitor()
                 : monitor);
+
+        const auto hover_effect =
+            value_for(
+                key_file,
+                "hover_effect");
+
+        if (hover_effect.empty() ||
+            hover_effect == "standard")
+        {
+            candidate.settings.set_hover_effect(
+                DockHoverEffect::standard);
+        }
+        else if (hover_effect == "zoom")
+        {
+            candidate.settings.set_hover_effect(
+                DockHoverEffect::zoom);
+        }
+        else if (hover_effect == "pixels")
+        {
+            candidate.settings.set_hover_effect(
+                DockHoverEffect::pixels);
+        }
+        else if (hover_effect == "glow")
+        {
+            candidate.settings.set_hover_effect(
+                DockHoverEffect::glow);
+        }
+        else
+        {
+            g_warning(
+                "Invalid [dock] hover_effect '%s'; "
+                "keeping the previous value",
+                hover_effect.c_str());
+        }
 
         const auto icon_size =
             value_for(

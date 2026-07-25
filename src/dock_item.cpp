@@ -7,9 +7,11 @@
 DockItem::DockItem(
     DockWindow &dock,
     Glib::RefPtr<Gio::AppInfo> app,
-    int icon_size)
+    int icon_size,
+    DockHoverEffect hover_effect)
     : m_dock(dock),
-      m_app(app)
+      m_app(app),
+      m_hover_effect(hover_effect)
 {
     set_visible_window(false);
 
@@ -40,6 +42,13 @@ void DockItem::set_icon_size(int icon_size)
     set_size_request(
         DockLayoutMetrics::item_size_for(icon_size),
         DockLayoutMetrics::item_size_for(icon_size));
+}
+
+void DockItem::set_hover_effect(
+    DockHoverEffect effect)
+{
+    m_hover_effect = effect;
+    apply_hover_effect();
 }
 
 void DockItem::reload_icon()
@@ -126,7 +135,12 @@ void DockItem::reload_icon()
                     Gdk::INTERP_BILINEAR);
         }
 
-        image.set(pixbuf);
+        m_icon_pixbuf = pixbuf;
+        m_hover_pixbuf =
+            create_standard_hover_pixbuf(
+                m_icon_pixbuf);
+
+        apply_hover_effect();
     }
     catch (const Glib::Error &error)
     {
@@ -150,6 +164,9 @@ Glib::ustring DockItem::app_name() const
 bool DockItem::on_enter_notify_event(
     GdkEventCrossing *)
 {
+    m_hovered = true;
+    apply_hover_effect();
+
     m_dock.schedule_show_tooltip(*this);
 
     return true;
@@ -158,6 +175,9 @@ bool DockItem::on_enter_notify_event(
 bool DockItem::on_leave_notify_event(
     GdkEventCrossing *)
 {
+    m_hovered = false;
+    apply_hover_effect();
+
     m_dock.schedule_hide_tooltip();
 
     return false;
@@ -191,4 +211,85 @@ bool DockItem::on_button_press_event(GdkEventButton *event)
     }
 
     return true;
+}
+
+void DockItem::apply_hover_effect()
+{
+    if (!m_icon_pixbuf)
+        return;
+
+    // The remaining enum values are reserved for later implementations.
+    // Until then they deliberately use the safe, layout-neutral effect.
+    switch (m_hover_effect)
+    {
+    case DockHoverEffect::standard:
+    case DockHoverEffect::zoom:
+    case DockHoverEffect::pixels:
+    case DockHoverEffect::glow:
+        image.set(
+            m_hovered && m_hover_pixbuf
+                ? m_hover_pixbuf
+                : m_icon_pixbuf);
+        break;
+    }
+}
+
+Glib::RefPtr<Gdk::Pixbuf>
+DockItem::create_standard_hover_pixbuf(
+    const Glib::RefPtr<Gdk::Pixbuf>
+        &source) const
+{
+    if (!source)
+        return {};
+
+    auto highlighted =
+        source->copy();
+
+    auto *pixels =
+        highlighted->get_pixels();
+
+    const int width =
+        highlighted->get_width();
+
+    const int height =
+        highlighted->get_height();
+
+    const int rowstride =
+        highlighted->get_rowstride();
+
+    const int channels =
+        highlighted->get_n_channels();
+
+    for (int y = 0;
+         y < height;
+         ++y)
+    {
+        auto *row =
+            pixels + y * rowstride;
+
+        for (int x = 0;
+             x < width;
+             ++x)
+        {
+            auto *pixel =
+                row + x * channels;
+
+            for (int channel = 0;
+                 channel < 3;
+                 ++channel)
+            {
+                pixel[channel] =
+                    static_cast<guchar>(
+                        std::min(
+                            255,
+                            static_cast<int>(
+                                pixel[channel]) *
+                                    5 /
+                                    4 +
+                                24));
+            }
+        }
+    }
+
+    return highlighted;
 }

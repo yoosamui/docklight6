@@ -163,6 +163,12 @@ void DockWindow::apply_configuration(
     m_settings =
         configuration.settings;
 
+    for (auto *item : dock_items())
+    {
+        item->set_hover_effect(
+            m_settings.hover_effect());
+    }
+
     m_layout_request =
         configuration.layout_request;
 
@@ -757,7 +763,8 @@ void DockWindow::create_dock()
                 new DockItem(
                     *this,
                     launcher.app,
-                    m_settings.icon_size()));
+                    m_settings.icon_size(),
+                    m_settings.hover_effect()));
 
         m_dock_box.pack_start(
             *item,

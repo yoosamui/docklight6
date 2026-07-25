@@ -26,6 +26,17 @@ void DockSettings::set_icon_size(int size)
     m_icon_size = size;
 }
 
+DockHoverEffect DockSettings::hover_effect() const
+{
+    return m_hover_effect;
+}
+
+void DockSettings::set_hover_effect(
+    DockHoverEffect effect)
+{
+    m_hover_effect = effect;
+}
+
 int DockSettings::minimum_bottom_workarea_inset() const
 {
     return m_minimum_bottom_workarea_inset;

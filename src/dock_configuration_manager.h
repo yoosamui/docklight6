@@ -25,7 +25,9 @@ public:
 
 private:
     void ensure_config_file();
-    void ensure_monitor_setting();
+    void ensure_setting(
+        const char *key,
+        const char *setting_template);
     void reload();
     void schedule_reload();
     bool is_config_file(

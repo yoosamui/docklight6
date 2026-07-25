@@ -29,10 +29,9 @@ enum class DockAutohide : int
     intellihide = 1
 };
 
-
-enum class DockHoverEffects : int
+enum class DockHoverEffect : int
 {
-    default = 0,
+    standard = 0,
     zoom = 1,
     pixels = 2,
     glow = 3
