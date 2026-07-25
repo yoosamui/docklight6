@@ -3,6 +3,9 @@
 #include "dock_layout_types.h"
 
 #include <gtkmm.h>
+#include <sigc++/connection.h>
+
+#include <vector>
 
 class DockWindow;
 
@@ -14,6 +17,7 @@ public:
         Glib::RefPtr<Gio::AppInfo> app,
         int icon_size,
         DockHoverEffect hover_effect);
+    ~DockItem() override;
 
     void set_icon_size(int icon_size);
     void set_hover_effect(
@@ -40,14 +44,22 @@ private:
     Gtk::Label label;
     Glib::RefPtr<Gdk::Pixbuf> m_icon_pixbuf;
     Glib::RefPtr<Gdk::Pixbuf> m_hover_pixbuf;
+    std::vector<Glib::RefPtr<Gdk::Pixbuf>>
+        m_blur_frames;
     int m_icon_size = 0;
     DockHoverEffect m_hover_effect =
         DockHoverEffect::standard;
     bool m_hovered = false;
+    int m_blur_frame = 0;
+    int m_blur_target_frame = 0;
+    sigc::connection m_blur_animation;
 
     bool on_button_press_event(
         GdkEventButton *event) override;
     void apply_hover_effect();
+    void create_blur_frames();
+    void start_blur_animation();
+    bool advance_blur_animation();
     Glib::RefPtr<Gdk::Pixbuf>
     create_standard_hover_pixbuf(
         const Glib::RefPtr<Gdk::Pixbuf>
