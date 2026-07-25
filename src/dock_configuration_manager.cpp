@@ -611,7 +611,8 @@ void DockConfigurationManager::reload()
         m_current);
 
     g_message(
-        "Dock configuration reloaded");
+        "Dock configuration reloaded: %s",
+        m_config_path.c_str());
 }
 
 void DockConfigurationManager::schedule_reload()

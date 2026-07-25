@@ -5,7 +5,6 @@
 #include "dock_window.h"
 #include "config.h"
 
-#include <iostream>
 #include <string>
 
 namespace
@@ -74,26 +73,37 @@ int main(int argc, char *argv[])
     // cannot be used because a monitor move temporarily hides the window.
     app->register_application();
 
+    g_message(
+        "%s starting",
+        PACKAGE_STRING);
+
+    g_message(
+        "Dock configuration loaded: %s",
+        configuration.config_path().c_str());
+
     auto css = Gtk::CssProvider::create();
+    const std::string style_path =
+        std::string(SOURCE_DIR) + "/style.css";
 
     try
     {
         css->load_from_path(
-            std::string(SOURCE_DIR) + "/style.css");
+            style_path);
 
         Gtk::StyleContext::add_provider_for_screen(
             Gdk::Screen::get_default(),
             css,
             GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-        std::cout << "CSS loaded successfully." << std::endl;
+        g_message(
+            "Dock style loaded: %s",
+            style_path.c_str());
     }
-    catch (const Glib::Error &ex)
+    catch (const Glib::Error &error)
     {
-        std::cerr
-            << "Failed to load CSS: "
-            << ex.what()
-            << std::endl;
+        g_warning(
+            "Cannot load DockLight style: %s",
+            error.what().c_str());
     }
 
     DockMonitorManager monitors(
@@ -135,6 +145,8 @@ int main(int argc, char *argv[])
     app->add_window(window);
     app->hold();
     window.show();
+
+    g_message("DockLight is ready");
 
     return app->run();
 }

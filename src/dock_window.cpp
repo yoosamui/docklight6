@@ -4,7 +4,6 @@
 #include <gtk-layer-shell.h>
 
 #include <algorithm>
-#include <iostream>
 #include <memory>
 
 DockWindow::DockWindow(
@@ -16,12 +15,6 @@ DockWindow::DockWindow(
       m_layout_request(
           configuration.layout_request)
 {
-
-    std::cout
-        << "DockWindow constructor visible="
-        << get_visible()
-        << std::endl;
-
     set_decorated(false);
     set_resizable(false);
     set_app_paintable(true);
@@ -111,28 +104,6 @@ DockWindow::DockWindow(
             schedule_layout_update();
         });
 
-    signal_size_allocate().connect(
-        [](Gtk::Allocation &allocation)
-        {
-            std::cout
-                << "DockWindow allocation: "
-                << allocation.get_width()
-                << " x "
-                << allocation.get_height()
-                << std::endl;
-        });
-
-    m_dock_box.signal_size_allocate().connect(
-        [](Gtk::Allocation &allocation)
-        {
-            std::cout
-                << "DockBox allocation: "
-                << allocation.get_width()
-                << " x "
-                << allocation.get_height()
-                << std::endl;
-        });
-
     create_dock();
     m_effective_icon_size =
         std::max(1, m_settings.icon_size());
@@ -148,6 +119,21 @@ DockWindow::DockWindow(
                 sigc::mem_fun(
                     *this,
                     &DockWindow::schedule_icon_refresh));
+
+        auto gtk_settings =
+            Gtk::Settings::get_default();
+
+        if (gtk_settings)
+        {
+            const auto theme_name =
+                gtk_settings
+                    ->property_gtk_icon_theme_name()
+                    .get_value();
+
+            g_message(
+                "Icon theme loaded: %s",
+                theme_name.c_str());
+        }
     }
 
     // At realize time the dock has a GDK window and can resolve its actual
@@ -226,9 +212,6 @@ void DockWindow::update_dock_layout()
     {
         // Never submit the unconstrained natural size to layer-shell. The
         // realize callback will retry once GDK can identify the output.
-        std::cout
-            << "Dock layout deferred: monitor geometry unavailable"
-            << std::endl;
         return;
     }
 
@@ -277,25 +260,6 @@ void DockWindow::update_dock_layout()
         workarea_geometry.y - output_geometry.y,
         workarea_geometry.width,
         workarea_geometry.height};
-
-    std::cout
-        << "Dock monitor geometry: output="
-        << output_geometry.x
-        << ","
-        << output_geometry.y
-        << " "
-        << output_geometry.width
-        << "x"
-        << output_geometry.height
-        << " workarea="
-        << workarea_geometry.x
-        << ","
-        << workarea_geometry.y
-        << " "
-        << workarea_geometry.width
-        << "x"
-        << workarea_geometry.height
-        << std::endl;
 
     // Apply orientation before measuring the dock. A vertical dock has a
     // different natural size than a horizontal one.
@@ -453,33 +417,6 @@ void DockWindow::apply_dock_layout(
             gtk_win,
             placement.exclusive_zone);
     }
-
-    std::cout
-        << "Dock placement request: size="
-        << placement.width
-        << "x"
-        << placement.height
-        << " margins="
-        << placement.margin_left
-        << ","
-        << placement.margin_right
-        << ","
-        << placement.margin_top
-        << ","
-        << placement.margin_bottom
-        << std::endl;
-
-    std::cout
-        << "Dock reservation: zone="
-        << gtk_layer_get_exclusive_zone(gtk_win)
-        << " auto="
-        << gtk_layer_auto_exclusive_zone_is_enabled(gtk_win)
-        << " anchors="
-        << placement.anchor_left
-        << placement.anchor_right
-        << placement.anchor_top
-        << placement.anchor_bottom
-        << std::endl;
 }
 
 void DockWindow::apply_workarea_insets(
@@ -723,24 +660,7 @@ void DockWindow::update_effective_icon_size(
             m_trailing_main_axis_margin;
 
     if (size_changed || margins_changed)
-    {
-        std::cout
-            << "Dock icon size: requested="
-            << requested_icon_size
-            << " effective="
-            << m_effective_icon_size
-            << " items="
-            << items.size()
-            << " monitor-length="
-            << monitor_length
-            << " end-margins="
-            << m_leading_main_axis_margin
-            << "+"
-            << m_trailing_main_axis_margin
-            << std::endl;
-
         apply_visual_style();
-    }
 }
 
 void DockWindow::schedule_layout_update()
@@ -778,14 +698,30 @@ void DockWindow::reload_icons()
 {
     auto items = dock_items();
 
-    std::cout
-        << "Icon theme changed: refreshing "
-        << items.size()
-        << " dock icons"
-        << std::endl;
-
     for (auto *item : items)
         item->reload_icon();
+
+    auto gtk_settings =
+        Gtk::Settings::get_default();
+
+    if (gtk_settings)
+    {
+        const auto theme_name =
+            gtk_settings
+                ->property_gtk_icon_theme_name()
+                .get_value();
+
+        g_message(
+            "Icon theme reloaded: %s (%zu icons)",
+            theme_name.c_str(),
+            items.size());
+    }
+    else
+    {
+        g_message(
+            "Icon theme reloaded: %zu icons",
+            items.size());
+    }
 }
 
 std::vector<DockItem *> DockWindow::dock_items()
@@ -826,10 +762,6 @@ void DockWindow::create_dock()
         m_dock_box.pack_start(
             *item,
             Gtk::PACK_SHRINK);
-
-        std::cout
-            << "Created DockItem"
-            << std::endl;
 
         ++count;
 

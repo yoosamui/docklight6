@@ -73,6 +73,9 @@ private:
         const Glib::RefPtr<Gdk::Monitor> &monitor,
         const MonitorSnapshot &snapshot,
         bool used_fallback);
+    void log_monitor(
+        const Glib::RefPtr<Gdk::Monitor> &monitor,
+        const MonitorSnapshot &snapshot) const;
     void connect_selected_monitor_signals();
 
     static bool same_snapshot(

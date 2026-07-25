@@ -548,6 +548,14 @@ void DockMonitorManager::start_monitoring()
 
     connect_selected_monitor_signals();
 
+    if (m_selected_monitor &&
+        m_applied_snapshot)
+    {
+        log_monitor(
+            m_selected_monitor,
+            *m_applied_snapshot);
+    }
+
     try
     {
         const auto output_config_path =
@@ -777,8 +785,45 @@ void DockMonitorManager::apply_monitor(
 
     connect_selected_monitor_signals();
 
+    log_monitor(
+        m_selected_monitor,
+        snapshot);
+
     m_signal_monitor_changed.emit(
         m_selected_monitor);
+}
+
+void DockMonitorManager::log_monitor(
+    const Glib::RefPtr<Gdk::Monitor> &monitor,
+    const MonitorSnapshot &snapshot) const
+{
+    std::string identifier =
+        m_requested_monitor;
+
+    for (const auto &available :
+         available_monitors())
+    {
+        if (available.monitor == monitor)
+        {
+            identifier =
+                available.identifier;
+            break;
+        }
+    }
+
+    g_message(
+        "Current monitor: %s; output=%dx%d at %d,%d; "
+        "workarea=%dx%d at %d,%d; scale=%d",
+        identifier.c_str(),
+        snapshot.width,
+        snapshot.height,
+        snapshot.x,
+        snapshot.y,
+        snapshot.workarea_width,
+        snapshot.workarea_height,
+        snapshot.workarea_x,
+        snapshot.workarea_y,
+        snapshot.scale);
 }
 
 void DockMonitorManager::

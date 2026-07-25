@@ -3,7 +3,6 @@
 #include "dock_window.h"
 
 #include <algorithm>
-#include <iostream>
 
 DockItem::DockItem(
     DockWindow &dock,
@@ -25,17 +24,6 @@ DockItem::DockItem(
     set_icon_size(icon_size);
 
     show_all_children();
-
-    signal_size_allocate().connect(
-        [](Gtk::Allocation &alloc)
-        {
-            std::cout
-                << "DockItem allocation: "
-                << alloc.get_width()
-                << " x "
-                << alloc.get_height()
-                << std::endl;
-        });
 }
 
 void DockItem::set_icon_size(int icon_size)
@@ -156,29 +144,12 @@ void DockItem::reload_icon()
 
 Glib::ustring DockItem::app_name() const
 {
-
     return m_app->get_display_name();
 }
-
-// void DockWindow::show_tooltip(DockItem &item)
-// {
-//     std::cout << "DockWindow tooltip: "
-//               << item.app_name()
-//               << std::endl;
-
-//     m_overlay_widget.show_tooltip(
-//         item.app_name(),
-//         200,
-//         10);
-// }
 
 bool DockItem::on_enter_notify_event(
     GdkEventCrossing *)
 {
-    std::cout << "ENTER: "
-              << app_name()
-              << std::endl;
-
     m_dock.schedule_show_tooltip(*this);
 
     return true;
@@ -187,10 +158,6 @@ bool DockItem::on_enter_notify_event(
 bool DockItem::on_leave_notify_event(
     GdkEventCrossing *)
 {
-    std::cout << "LEAVE: "
-              << app_name()
-              << std::endl;
-
     m_dock.schedule_hide_tooltip();
 
     return false;
@@ -214,11 +181,12 @@ bool DockItem::on_button_press_event(GdkEventButton *event)
 
             m_app->launch(files);
         }
-        catch (const Glib::Error &e)
+        catch (const Glib::Error &error)
         {
-            std::cerr
-                << e.what()
-                << std::endl;
+            g_warning(
+                "Cannot launch %s: %s",
+                m_app->get_name().c_str(),
+                error.what().c_str());
         }
     }
 

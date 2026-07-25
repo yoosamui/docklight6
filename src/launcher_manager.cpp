@@ -1,5 +1,4 @@
 #include "launcher_manager.h"
-#include <iostream>
 #include <fstream>
 
 std::vector<Launcher> LauncherManager::load_applications()
@@ -7,7 +6,6 @@ std::vector<Launcher> LauncherManager::load_applications()
     std::vector<Launcher> result;
 
     auto ids = read_config();
-    g_message("Launcher configuration loaded");
 
     for (const auto &id : ids)
     {
@@ -15,10 +13,9 @@ std::vector<Launcher> LauncherManager::load_applications()
 
         if (!app)
         {
-            std::cout
-                << "Missing: "
-                << id
-                << std::endl;
+            g_warning(
+                "Launcher '%s' is not installed",
+                id.c_str());
 
             continue;
         }
@@ -28,6 +25,13 @@ std::vector<Launcher> LauncherManager::load_applications()
 
         result.push_back(launcher);
     }
+
+    g_message(
+        "Loaded %zu launcher%s",
+        result.size(),
+        result.size() == 1
+            ? ""
+            : "s");
 
     return result;
 }

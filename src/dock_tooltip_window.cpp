@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <glibmm/main.h>
-#include <iostream>
 #include <pangomm/layout.h>
 
 DockTooltipWindow::DockTooltipWindow()
@@ -58,13 +57,6 @@ DockTooltipWindow::DockTooltipWindow()
         [this]()
         {
             make_input_transparent();
-            std::cout << "Tooltip map" << std::endl;
-        });
-
-    signal_unmap().connect(
-        []()
-        {
-            std::cout << "Tooltip unmap" << std::endl;
         });
 }
 
@@ -185,21 +177,8 @@ void DockTooltipWindow::show_tooltip(
             tooltip_width,
             position))
     {
-        std::cout
-            << "Tooltip duplicate request: "
-            << text
-            << std::endl;
         return;
     }
-
-    std::cout
-        << "Tooltip request: "
-        << text
-        << " position="
-        << position.x
-        << ","
-        << position.y
-        << std::endl;
 
     cancel_reveal();
 
@@ -232,7 +211,6 @@ void DockTooltipWindow::show_tooltip(
         Glib::signal_timeout().connect(
             [this]()
             {
-                std::cout << "Tooltip reveal" << std::endl;
                 show_all();
                 return false;
             },
@@ -241,7 +219,6 @@ void DockTooltipWindow::show_tooltip(
 
 void DockTooltipWindow::hide_tooltip()
 {
-    std::cout << "Tooltip hide" << std::endl;
     cancel_reveal();
     m_has_request = false;
     hide();
