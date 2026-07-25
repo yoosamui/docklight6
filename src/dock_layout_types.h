@@ -149,7 +149,7 @@ struct DockSize
 // it is not a placement result or the application's settings store.
 struct DockLayoutRequest
 {
-    DockLocation location = DockLocation::bottom;
+    DockLocation location = DockLocation::right;
     DockAlignment alignment = DockAlignment::center;
     DockAutohide autohide = DockAutohide::none;
 

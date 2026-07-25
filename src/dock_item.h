@@ -9,7 +9,8 @@ class DockItem : public Gtk::EventBox
 public:
     DockItem(
         DockWindow &dock,
-        Glib::RefPtr<Gio::AppInfo> app);
+        Glib::RefPtr<Gio::AppInfo> app,
+        int icon_size);
 
     void set_icon_size(int icon_size);
     void set_vertical(bool vertical);

@@ -7,7 +7,7 @@ std::vector<Launcher> LauncherManager::load_applications()
     std::vector<Launcher> result;
 
     auto ids = read_config();
-    g_message("Config Loaded");
+    g_message("Launcher configuration loaded");
 
     for (const auto &id : ids)
     {

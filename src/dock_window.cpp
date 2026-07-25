@@ -1,14 +1,17 @@
 #include "dock_window.h"
 #include "dock_constants.h"
 #include "dock_layout_metrics.h"
-#include "dock_settings.h"
 #include <gtk-layer-shell.h>
 
 #include <algorithm>
 #include <iostream>
 #include <memory>
 
-DockWindow::DockWindow()
+DockWindow::DockWindow(
+    const DockConfiguration &configuration)
+    : m_settings(configuration.settings),
+      m_layout_request(
+          configuration.layout_request)
 {
 
     std::cout
@@ -120,7 +123,7 @@ DockWindow::DockWindow()
 
     create_dock();
     m_effective_icon_size =
-        std::max(1, g_settings.icon_size());
+        std::max(1, m_settings.icon_size());
     apply_visual_style();
 
     // At realize time the dock has a GDK window and can resolve its actual
@@ -131,6 +134,26 @@ DockWindow::DockWindow()
             &DockWindow::update_dock_layout));
 
     update_dock_layout();
+}
+
+void DockWindow::apply_configuration(
+    const DockConfiguration &configuration)
+{
+    cancel_show_timer();
+    cancel_hide_timer();
+    m_pending_item = nullptr;
+    hide_tooltip();
+
+    m_settings =
+        configuration.settings;
+
+    m_layout_request =
+        configuration.layout_request;
+
+    // Icon size, orientation, alignment, reservation, and visual settings all
+    // converge in update_dock_layout(). Coalesce rapid configuration saves
+    // into one recalculation on the GTK main loop.
+    schedule_layout_update();
 }
 
 void DockWindow::update_dock_layout()
@@ -175,7 +198,7 @@ void DockWindow::update_dock_layout()
     const int required_bottom_inset =
         std::max(
             reported_bottom_inset,
-            g_settings.minimum_bottom_workarea_inset()) +
+            m_settings.minimum_bottom_workarea_inset()) +
         DockLayoutMetrics::DOCK_MARGIN;
 
     const int missing_bottom_inset =
@@ -559,7 +582,7 @@ void DockWindow::update_effective_icon_size(
         m_trailing_main_axis_margin;
 
     const int requested_icon_size =
-        std::max(1, g_settings.icon_size());
+        std::max(1, m_settings.icon_size());
 
     int effective_icon_size =
         requested_icon_size;
@@ -707,7 +730,8 @@ void DockWindow::create_dock()
             Gtk::manage(
                 new DockItem(
                     *this,
-                    launcher.app));
+                    launcher.app,
+                    m_settings.icon_size()));
 
         m_dock_box.pack_start(
             *item,

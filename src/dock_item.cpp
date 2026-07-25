@@ -1,6 +1,5 @@
 #include "dock_item.h"
 #include "dock_layout_metrics.h"
-#include "dock_settings.h"
 #include "dock_window.h"
 
 #include <algorithm>
@@ -8,7 +7,8 @@
 
 DockItem::DockItem(
     DockWindow &dock,
-    Glib::RefPtr<Gio::AppInfo> app)
+    Glib::RefPtr<Gio::AppInfo> app,
+    int icon_size)
     : m_dock(dock),
       m_app(app)
 {
@@ -22,7 +22,7 @@ DockItem::DockItem(
     image.set_valign(Gtk::ALIGN_CENTER);
     add(image);
 
-    set_icon_size(g_settings.icon_size());
+    set_icon_size(icon_size);
 
     show_all_children();
 

@@ -2,6 +2,7 @@
 
 #include <gtkmm/box.h>
 #include <gtkmm/cssprovider.h>
+#include "dock_configuration.h"
 #include "dock_layout_metrics.h"
 #include "dock_layout_types.h"
 #include "dock_item.h"
@@ -18,7 +19,10 @@ class DockTooltipWindow;
 class DockWindow : public Gtk::Window
 {
 public:
-    DockWindow();
+    explicit DockWindow(
+        const DockConfiguration &configuration);
+    void apply_configuration(
+        const DockConfiguration &configuration);
     void schedule_show_tooltip(DockItem &item);
     void schedule_hide_tooltip();
 
@@ -67,6 +71,7 @@ private:
     // so every item and both end margins fit on the monitor's main axis.
     int m_effective_icon_size = 0;
 
+    DockSettings m_settings;
     DockLayoutRequest m_layout_request;
     DockLayoutGeometry m_layout_geometry;
     DockLayoutEngine m_layout_engine;

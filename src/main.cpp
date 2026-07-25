@@ -1,5 +1,6 @@
 #include <gtkmm.h>
 
+#include "dock_configuration_manager.h"
 #include "dock_window.h"
 #include "config.h"
 
@@ -34,7 +35,17 @@ int main(int argc, char *argv[])
             << std::endl;
     }
 
-    DockWindow window;
+    DockConfigurationManager configuration;
+
+    DockWindow window(
+        configuration.current());
+
+    configuration.signal_changed().connect(
+        sigc::mem_fun(
+            window,
+            &DockWindow::apply_configuration));
+
+    configuration.start_monitoring();
 
     return app->run(window);
 }

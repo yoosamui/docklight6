@@ -2,10 +2,6 @@
 
 #include <algorithm>
 
-
-DockSettings g_settings;
-
-
 int DockSettings::icon_size() const
 {
     return m_icon_size;
