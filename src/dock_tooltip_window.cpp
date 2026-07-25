@@ -68,6 +68,17 @@ DockTooltipWindow::DockTooltipWindow()
         });
 }
 
+void DockTooltipWindow::set_monitor(
+    const Glib::RefPtr<Gdk::Monitor>
+        &monitor)
+{
+    gtk_layer_set_monitor(
+        GTK_WINDOW(gobj()),
+        monitor
+            ? monitor->gobj()
+            : nullptr);
+}
+
 void DockTooltipWindow::set_rounded_corners(
     bool enabled,
     int radius,

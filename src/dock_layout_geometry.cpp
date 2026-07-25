@@ -3,58 +3,9 @@
 #include "dock_item.h"
 #include "dock_window.h"
 
-#include <gdkmm/display.h>
 #include <gdkmm/monitor.h>
 #include <gdkmm/rectangle.h>
 #include <gdkmm/window.h>
-
-namespace
-{
-
-Glib::RefPtr<Gdk::Monitor> fallback_monitor(
-    const Glib::RefPtr<Gdk::Display> &display)
-{
-    if (!display)
-        return {};
-
-    auto primary = display->get_primary_monitor();
-
-    if (primary)
-        return primary;
-
-    // Some Wayland compositors do not expose a primary monitor. Monitor 0 is
-    // not necessarily the output on which an unassigned layer surface will
-    // appear, so prefer the largest connected output as a stable fallback.
-    Glib::RefPtr<Gdk::Monitor> largest;
-    long long largest_area = -1;
-
-    for (int index = 0;
-         index < display->get_n_monitors();
-         ++index)
-    {
-        auto monitor = display->get_monitor(index);
-
-        if (!monitor)
-            continue;
-
-        Gdk::Rectangle geometry;
-        monitor->get_geometry(geometry);
-
-        const long long area =
-            static_cast<long long>(geometry.get_width()) *
-            geometry.get_height();
-
-        if (area > largest_area)
-        {
-            largest = monitor;
-            largest_area = area;
-        }
-    }
-
-    return largest;
-}
-
-}
 
 ItemGeometry
 DockLayoutGeometry::item_geometry(
@@ -131,27 +82,10 @@ DockLayoutGeometry::dock_geometry(
 
 MonitorGeometry
 DockLayoutGeometry::monitor_geometry(
-    DockWindow &dock) const
+    const Glib::RefPtr<Gdk::Monitor>
+        &monitor) const
 {
     MonitorGeometry geometry;
-
-    auto gdk_window =
-        dock.get_window();
-
-    auto display = gdk_window
-                       ? gdk_window->get_display()
-                       : Gdk::Display::get_default();
-
-    if (!display)
-        return geometry;
-
-    auto monitor = gdk_window
-                       ? display->get_monitor_at_window(
-                             gdk_window)
-                       : fallback_monitor(display);
-
-    if (!monitor)
-        monitor = fallback_monitor(display);
 
     if (!monitor)
         return geometry;
@@ -170,27 +104,10 @@ DockLayoutGeometry::monitor_geometry(
 
 MonitorGeometry
 DockLayoutGeometry::output_geometry(
-    DockWindow &dock) const
+    const Glib::RefPtr<Gdk::Monitor>
+        &monitor) const
 {
     MonitorGeometry geometry;
-
-    auto gdk_window =
-        dock.get_window();
-
-    auto display = gdk_window
-                       ? gdk_window->get_display()
-                       : Gdk::Display::get_default();
-
-    if (!display)
-        return geometry;
-
-    auto monitor = gdk_window
-                       ? display->get_monitor_at_window(
-                             gdk_window)
-                       : fallback_monitor(display);
-
-    if (!monitor)
-        monitor = fallback_monitor(display);
 
     if (!monitor)
         return geometry;

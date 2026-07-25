@@ -1,17 +1,78 @@
 #include <gtkmm.h>
 
 #include "dock_configuration_manager.h"
+#include "dock_monitor_manager.h"
 #include "dock_window.h"
 #include "config.h"
 
 #include <iostream>
+#include <string>
+
+namespace
+{
+
+bool take_list_monitors_option(
+    int &argc,
+    char *argv[])
+{
+    bool list_monitors = false;
+    int write_index = 1;
+
+    for (int read_index = 1;
+         read_index < argc;
+         ++read_index)
+    {
+        if (std::string(argv[read_index]) ==
+            "--list-monitors")
+        {
+            list_monitors = true;
+            continue;
+        }
+
+        argv[write_index++] =
+            argv[read_index];
+    }
+
+    argc = write_index;
+    argv[argc] = nullptr;
+
+    return list_monitors;
+}
+
+}
 
 int main(int argc, char *argv[])
 {
+    const bool list_monitors =
+        take_list_monitors_option(
+            argc,
+            argv);
+
     auto app = Gtk::Application::create(
         argc,
         argv,
         "org.docklight6");
+
+    // Ensure an existing configuration receives newly introduced settings
+    // even when this invocation only lists monitors.
+    DockConfigurationManager configuration;
+
+    if (list_monitors)
+    {
+        DockMonitorManager monitors;
+        monitors.print_available_monitors();
+
+        return monitors
+                       .available_monitors()
+                       .empty()
+                   ? 1
+                   : 0;
+    }
+
+    // Emit GApplication::startup before manually attaching the dock window.
+    // run(window) normally performs this registration, but that overload
+    // cannot be used because a monitor move temporarily hides the window.
+    app->register_application();
 
     auto css = Gtk::CssProvider::create();
 
@@ -35,17 +96,45 @@ int main(int argc, char *argv[])
             << std::endl;
     }
 
-    DockConfigurationManager configuration;
+    DockMonitorManager monitors(
+        configuration
+            .current()
+            .settings
+            .monitor());
 
     DockWindow window(
-        configuration.current());
+        configuration.current(),
+        monitors.selected_monitor());
 
     configuration.signal_changed().connect(
+        [&window, &monitors](
+            const DockConfiguration
+                &updated_configuration)
+        {
+            window.apply_configuration(
+                updated_configuration);
+
+            monitors.set_requested_monitor(
+                updated_configuration
+                    .settings
+                    .monitor());
+        });
+
+    monitors.signal_monitor_changed().connect(
         sigc::mem_fun(
             window,
-            &DockWindow::apply_configuration));
+            &DockWindow::set_monitor));
 
     configuration.start_monitoring();
+    monitors.start_monitoring();
 
-    return app->run(window);
+    // Gtk::Application::run(window) returns as soon as that window is hidden.
+    // gtk_layer_set_monitor() temporarily unmaps the layer surface while
+    // moving it, so using the convenience overload would terminate DockLight
+    // during every runtime monitor change.
+    app->add_window(window);
+    app->hold();
+    window.show();
+
+    return app->run();
 }

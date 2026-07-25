@@ -6,6 +6,7 @@
 #include <gtkmm/cssprovider.h>
 #include <gtkmm/label.h>
 #include <gtkmm/eventbox.h>
+#include <gdkmm/monitor.h>
 #include <glibmm/ustring.h>
 #include <sigc++/sigc++.h>
 
@@ -16,6 +17,10 @@ class DockTooltipWindow : public Gtk::Window
 {
 public:
     DockTooltipWindow();
+
+    void set_monitor(
+        const Glib::RefPtr<Gdk::Monitor>
+            &monitor);
 
     // The layout engine must receive this width before calculating the
     // position, otherwise a variable-width tooltip would not stay centered.

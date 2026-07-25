@@ -2,6 +2,20 @@
 
 #include <algorithm>
 
+const std::string &DockSettings::monitor() const
+{
+    return m_monitor;
+}
+
+void DockSettings::set_monitor(
+    const std::string &identifier)
+{
+    m_monitor =
+        identifier.empty()
+            ? "primary"
+            : identifier;
+}
+
 int DockSettings::icon_size() const
 {
     return m_icon_size;

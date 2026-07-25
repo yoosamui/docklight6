@@ -3,6 +3,8 @@
 #include "dock_layout_types.h"
 #include "dock_window_geometry.h"
 
+#include <gdkmm/monitor.h>
+
 class DockItem;
 class DockWindow;
 
@@ -21,10 +23,12 @@ public:
 
 
     MonitorGeometry monitor_geometry(
-        DockWindow& dock) const;
+        const Glib::RefPtr<Gdk::Monitor>
+            &monitor) const;
 
     // Full monitor output. Use for deterministic layer-shell placement;
     // work-area geometry is reserved for desktop-content decisions.
     MonitorGeometry output_geometry(
-        DockWindow& dock) const;
+        const Glib::RefPtr<Gdk::Monitor>
+            &monitor) const;
 };

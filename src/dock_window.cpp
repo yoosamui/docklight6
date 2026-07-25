@@ -8,8 +8,11 @@
 #include <memory>
 
 DockWindow::DockWindow(
-    const DockConfiguration &configuration)
+    const DockConfiguration &configuration,
+    const Glib::RefPtr<Gdk::Monitor>
+        &monitor)
     : m_settings(configuration.settings),
+      m_monitor(monitor),
       m_layout_request(
           configuration.layout_request)
 {
@@ -64,6 +67,15 @@ DockWindow::DockWindow(
     GtkWindow *gtk_win = GTK_WINDOW(gobj());
 
     gtk_layer_init_for_window(gtk_win);
+
+    gtk_layer_set_monitor(
+        gtk_win,
+        m_monitor
+            ? m_monitor->gobj()
+            : nullptr);
+
+    m_overlay_window.set_monitor(
+        m_monitor);
 
     gtk_layer_set_namespace(
         gtk_win,
@@ -156,11 +168,40 @@ void DockWindow::apply_configuration(
     schedule_layout_update();
 }
 
+void DockWindow::set_monitor(
+    const Glib::RefPtr<Gdk::Monitor>
+        &monitor)
+{
+    if (!monitor)
+        return;
+
+    const bool monitor_changed =
+        monitor != m_monitor;
+
+    m_monitor = monitor;
+
+    if (monitor_changed)
+    {
+        hide_tooltip();
+
+        gtk_layer_set_monitor(
+            GTK_WINDOW(gobj()),
+            m_monitor->gobj());
+
+        m_overlay_window.set_monitor(
+            m_monitor);
+    }
+
+    // The same monitor object can emit new geometry, work-area, or scale
+    // values. Recalculate in both the move and geometry-change cases.
+    schedule_layout_update();
+}
+
 void DockWindow::update_dock_layout()
 {
     auto output_geometry =
         m_layout_geometry.output_geometry(
-            *this);
+            m_monitor);
 
     if (output_geometry.width <= 0 ||
         output_geometry.height <= 0)
@@ -175,7 +216,7 @@ void DockWindow::update_dock_layout()
 
     auto workarea_geometry =
         m_layout_geometry.monitor_geometry(
-            *this);
+            m_monitor);
 
     if (workarea_geometry.width <= 0 ||
         workarea_geometry.height <= 0)
@@ -805,7 +846,7 @@ void DockWindow::show_tooltip(DockItem &item)
     {
         monitor_geometry =
             m_layout_geometry.output_geometry(
-                *this);
+                m_monitor);
 
         // Layer-shell margins are relative to the selected output, not the
         // global desktop coordinate space.

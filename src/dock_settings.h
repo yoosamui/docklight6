@@ -1,8 +1,14 @@
 #pragma once
 
+#include <string>
+
 class DockSettings
 {
 public:
+    const std::string &monitor() const;
+    void set_monitor(
+        const std::string &identifier);
+
     int icon_size() const;
     void set_icon_size(int size);
 
@@ -10,6 +16,8 @@ public:
     void set_minimum_bottom_workarea_inset(int inset);
 
 private:
+    std::string m_monitor = "primary";
+
     // Preserve the current launcher-icon request while making it configurable
     // instead of keeping it as a DockItem literal.
     int m_icon_size = 46; // 512 test value. default is 46px
