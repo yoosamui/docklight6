@@ -33,8 +33,7 @@ enum class DockHoverEffect : int
 {
     standard = 0,
     zoom = 1,
-    pixels = 2,
-    blur = 3
+    blur = 2
 };
 
 class DockPlacement

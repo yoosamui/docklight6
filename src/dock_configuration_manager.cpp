@@ -32,8 +32,7 @@ monitor =
 
 const char *HOVER_EFFECT_SETTING_TEMPLATE = R"(# Effect shown while the pointer is over an icon.
 # Empty uses default: standard
-# Valid values: standard, zoom, pixels, blur
-# pixels currently uses the standard effect
+# Valid values: standard, zoom, blur
 hover_effect =
 
 )";
@@ -46,8 +45,7 @@ monitor =
 
 # Effect shown while the pointer is over an icon.
 # Empty uses default: standard
-# Valid values: standard, zoom, pixels, blur
-# pixels currently uses the standard effect
+# Valid values: standard, zoom, blur
 hover_effect =
 
 # Icon size in pixels.
@@ -457,11 +455,6 @@ void DockConfigurationManager::reload()
         {
             candidate.settings.set_hover_effect(
                 DockHoverEffect::zoom);
-        }
-        else if (hover_effect == "pixels")
-        {
-            candidate.settings.set_hover_effect(
-                DockHoverEffect::pixels);
         }
         else if (hover_effect == "blur")
         {

@@ -514,7 +514,6 @@ void DockItem::apply_hover_effect()
     switch (m_hover_effect)
     {
     case DockHoverEffect::standard:
-    case DockHoverEffect::pixels:
         m_zoom_animation.disconnect();
         m_zoom_frame = 0;
         m_zoom_target_frame = 0;
