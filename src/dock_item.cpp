@@ -8,6 +8,8 @@
 namespace
 {
 
+constexpr int ZOOM_FRAME_COUNT = 9;
+constexpr unsigned int ZOOM_FRAME_INTERVAL_MS = 16;
 constexpr int BLUR_FRAME_COUNT = 9;
 constexpr unsigned int BLUR_FRAME_INTERVAL_MS = 16;
 constexpr int BLUR_OUTER_RED = 105;
@@ -260,6 +262,7 @@ DockItem::DockItem(
 
 DockItem::~DockItem()
 {
+    m_zoom_animation.disconnect();
     m_blur_animation.disconnect();
 }
 
@@ -289,6 +292,18 @@ void DockItem::set_hover_effect(
     }
 
     m_hover_effect = effect;
+
+    if (m_hover_effect == DockHoverEffect::zoom)
+    {
+        create_zoom_frames();
+    }
+    else
+    {
+        m_zoom_animation.disconnect();
+        m_zoom_frames.clear();
+        m_zoom_frame = 0;
+        m_zoom_target_frame = 0;
+    }
 
     if (m_hover_effect == DockHoverEffect::blur)
     {
@@ -394,6 +409,18 @@ void DockItem::reload_icon()
             create_standard_hover_pixbuf(
                 m_icon_pixbuf);
 
+        if (m_hover_effect == DockHoverEffect::zoom)
+        {
+            create_zoom_frames();
+        }
+        else
+        {
+            m_zoom_animation.disconnect();
+            m_zoom_frames.clear();
+            m_zoom_frame = 0;
+            m_zoom_target_frame = 0;
+        }
+
         if (m_hover_effect == DockHoverEffect::blur)
         {
             create_blur_frames();
@@ -487,8 +514,10 @@ void DockItem::apply_hover_effect()
     switch (m_hover_effect)
     {
     case DockHoverEffect::standard:
-    case DockHoverEffect::zoom:
     case DockHoverEffect::pixels:
+        m_zoom_animation.disconnect();
+        m_zoom_frame = 0;
+        m_zoom_target_frame = 0;
         m_blur_animation.disconnect();
         m_blur_frame = 0;
         m_blur_target_frame = 0;
@@ -499,7 +528,37 @@ void DockItem::apply_hover_effect()
                 : m_icon_pixbuf);
         break;
 
+    case DockHoverEffect::zoom:
+        m_blur_animation.disconnect();
+        m_blur_frame = 0;
+        m_blur_target_frame = 0;
+
+        if (m_zoom_frames.empty())
+        {
+            image.set(m_icon_pixbuf);
+            return;
+        }
+
+        m_zoom_target_frame =
+            m_hovered
+                ? static_cast<int>(
+                      m_zoom_frames.size()) -
+                      1
+                : 0;
+
+        image.set(
+            m_zoom_frames[
+                static_cast<std::size_t>(
+                    m_zoom_frame)]);
+
+        start_zoom_animation();
+        break;
+
     case DockHoverEffect::blur:
+        m_zoom_animation.disconnect();
+        m_zoom_frame = 0;
+        m_zoom_target_frame = 0;
+
         if (m_blur_frames.empty())
         {
             image.set(m_icon_pixbuf);
@@ -521,6 +580,147 @@ void DockItem::apply_hover_effect()
         start_blur_animation();
         break;
     }
+}
+
+void DockItem::create_zoom_frames()
+{
+    m_zoom_animation.disconnect();
+    m_zoom_frames.clear();
+    m_zoom_frame = 0;
+    m_zoom_target_frame = 0;
+
+    if (!m_icon_pixbuf)
+        return;
+
+    const int item_size =
+        DockLayoutMetrics::item_size_for(
+            m_icon_size);
+
+    const int source_width =
+        m_icon_pixbuf->get_width();
+
+    const int source_height =
+        m_icon_pixbuf->get_height();
+
+    const int source_extent =
+        std::max(
+            source_width,
+            source_height);
+
+    const int zoom_percent =
+        std::min(
+            DockLayoutMetrics::
+                HOVER_ZOOM_PERCENT,
+            item_size * 100 /
+                std::max(1, source_extent));
+
+    const int target_width =
+        std::max(
+            source_width,
+            source_width * zoom_percent /
+                100);
+
+    const int target_height =
+        std::max(
+            source_height,
+            source_height * zoom_percent /
+                100);
+
+    m_zoom_frames.reserve(
+        ZOOM_FRAME_COUNT);
+
+    for (int frame_index = 0;
+         frame_index < ZOOM_FRAME_COUNT;
+         ++frame_index)
+    {
+        const int width =
+            source_width +
+            (target_width - source_width) *
+                frame_index /
+                (ZOOM_FRAME_COUNT - 1);
+
+        const int height =
+            source_height +
+            (target_height - source_height) *
+                frame_index /
+                (ZOOM_FRAME_COUNT - 1);
+
+        const int icon_x =
+            (item_size - width) / 2;
+
+        const int icon_y =
+            (item_size - height) / 2;
+
+        auto frame =
+            create_transparent_pixbuf(
+                item_size,
+                item_size);
+
+        m_icon_pixbuf->composite(
+            frame,
+            icon_x,
+            icon_y,
+            width,
+            height,
+            icon_x,
+            icon_y,
+            static_cast<double>(width) /
+                source_width,
+            static_cast<double>(height) /
+                source_height,
+            Gdk::INTERP_BILINEAR,
+            255);
+
+        m_zoom_frames.push_back(
+            frame);
+    }
+}
+
+void DockItem::start_zoom_animation()
+{
+    if (m_zoom_frame ==
+            m_zoom_target_frame ||
+        m_zoom_animation.connected())
+    {
+        return;
+    }
+
+    m_zoom_animation =
+        Glib::signal_timeout().connect(
+            sigc::mem_fun(
+                *this,
+                &DockItem::
+                    advance_zoom_animation),
+            ZOOM_FRAME_INTERVAL_MS);
+}
+
+bool DockItem::advance_zoom_animation()
+{
+    if (m_hover_effect !=
+            DockHoverEffect::zoom ||
+        m_zoom_frames.empty())
+    {
+        return false;
+    }
+
+    if (m_zoom_frame <
+        m_zoom_target_frame)
+    {
+        ++m_zoom_frame;
+    }
+    else if (m_zoom_frame >
+             m_zoom_target_frame)
+    {
+        --m_zoom_frame;
+    }
+
+    image.set(
+        m_zoom_frames[
+            static_cast<std::size_t>(
+                m_zoom_frame)]);
+
+    return m_zoom_frame !=
+           m_zoom_target_frame;
 }
 
 void DockItem::create_blur_frames()

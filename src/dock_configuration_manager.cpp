@@ -33,7 +33,7 @@ monitor =
 const char *HOVER_EFFECT_SETTING_TEMPLATE = R"(# Effect shown while the pointer is over an icon.
 # Empty uses default: standard
 # Valid values: standard, zoom, pixels, blur
-# zoom and pixels currently use the standard effect
+# pixels currently uses the standard effect
 hover_effect =
 
 )";
@@ -47,7 +47,7 @@ monitor =
 # Effect shown while the pointer is over an icon.
 # Empty uses default: standard
 # Valid values: standard, zoom, pixels, blur
-# zoom and pixels currently use the standard effect
+# pixels currently uses the standard effect
 hover_effect =
 
 # Icon size in pixels.

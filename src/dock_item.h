@@ -45,18 +45,26 @@ private:
     Glib::RefPtr<Gdk::Pixbuf> m_icon_pixbuf;
     Glib::RefPtr<Gdk::Pixbuf> m_hover_pixbuf;
     std::vector<Glib::RefPtr<Gdk::Pixbuf>>
+        m_zoom_frames;
+    std::vector<Glib::RefPtr<Gdk::Pixbuf>>
         m_blur_frames;
     int m_icon_size = 0;
     DockHoverEffect m_hover_effect =
         DockHoverEffect::standard;
     bool m_hovered = false;
+    int m_zoom_frame = 0;
+    int m_zoom_target_frame = 0;
     int m_blur_frame = 0;
     int m_blur_target_frame = 0;
+    sigc::connection m_zoom_animation;
     sigc::connection m_blur_animation;
 
     bool on_button_press_event(
         GdkEventButton *event) override;
     void apply_hover_effect();
+    void create_zoom_frames();
+    void start_zoom_animation();
+    bool advance_zoom_animation();
     void create_blur_frames();
     void start_blur_animation();
     bool advance_blur_animation();

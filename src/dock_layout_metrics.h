@@ -101,5 +101,5 @@ public:
 
     // Animation
 
-    static constexpr int HOVER_SCALE = 2;
+    static constexpr int HOVER_ZOOM_PERCENT = 120;
 };
