@@ -348,6 +348,12 @@ void DockWindow::apply_visual_style()
         "px;"
         "}");
 
+    for (auto *item : dock_items())
+    {
+        item->set_context_menu_corner_radius(
+            effective_radius);
+    }
+
     m_overlay_window.set_rounded_corners(
         layout_request.rounded_corners,
         effective_radius,

@@ -3,6 +3,7 @@
 #include "dock_window.h"
 
 #include <algorithm>
+#include <string>
 #include <vector>
 
 namespace
@@ -327,6 +328,31 @@ void DockItem::set_hover_effect(
     apply_hover_effect();
 }
 
+void DockItem::set_context_menu_corner_radius(
+    int corner_radius)
+{
+    if (!m_context_menu_css)
+        return;
+
+    m_context_menu_css->load_from_data(
+        "window.dock-context-menu-popup,"
+        "window.dock-context-menu-popup decoration {"
+        " background-color: transparent;"
+        " background-image: none;"
+        " border-radius: " +
+        std::to_string(
+            std::max(0, corner_radius)) +
+        "px;"
+        "}"
+        "menu.dock-context-menu {"
+        " background-clip: padding-box;"
+        " border-radius: " +
+        std::to_string(
+            std::max(0, corner_radius)) +
+        "px;"
+        "}");
+}
+
 void DockItem::reload_icon()
 {
     auto icon = m_app->get_icon();
@@ -630,8 +656,20 @@ void DockItem::initialize_context_menu()
                     "Maximize");
             });
 
-    m_context_menu.get_style_context()
-        ->add_class("dock-context-menu");
+    auto context =
+        m_context_menu.get_style_context();
+
+    context->add_class(
+        "dock-context-menu");
+
+    m_context_menu_css =
+        Gtk::CssProvider::create();
+
+    context->add_provider(
+        m_context_menu_css,
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION +
+            1);
+
     m_context_menu.show_all();
 }
 
@@ -685,6 +723,21 @@ void DockItem::show_context_menu(
 
     if (GTK_IS_WINDOW(menu_toplevel))
     {
+        auto *popup_context =
+            gtk_widget_get_style_context(
+                menu_toplevel);
+
+        gtk_style_context_add_class(
+            popup_context,
+            "dock-context-menu-popup");
+
+        gtk_style_context_add_provider(
+            popup_context,
+            GTK_STYLE_PROVIDER(
+                m_context_menu_css->gobj()),
+            GTK_STYLE_PROVIDER_PRIORITY_APPLICATION +
+                1);
+
         gtk_window_set_mnemonics_visible(
             GTK_WINDOW(menu_toplevel),
             TRUE);

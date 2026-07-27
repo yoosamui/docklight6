@@ -22,6 +22,8 @@ public:
     void set_icon_size(int icon_size);
     void set_hover_effect(
         DockHoverEffect effect);
+    void set_context_menu_corner_radius(
+        int corner_radius);
     void reload_icon();
     void set_vertical(bool vertical);
 
@@ -69,6 +71,7 @@ private:
     Glib::RefPtr<Gio::AppInfo> m_app;
     Glib::RefPtr<Gdk::Pixbuf> m_icon_pixbuf;
     Glib::RefPtr<Gdk::Pixbuf> m_hover_pixbuf;
+    Glib::RefPtr<Gtk::CssProvider> m_context_menu_css;
 
     Gtk::Image image;
     Gtk::Label label;
