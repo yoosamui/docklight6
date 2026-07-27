@@ -42,6 +42,25 @@ private:
 
     Gtk::Image image;
     Gtk::Label label;
+    Gtk::Menu m_context_menu;
+    Gtk::CheckMenuItem m_attach_item{
+        "A_ttach",
+        true};
+    Gtk::SeparatorMenuItem m_attach_separator;
+    Gtk::MenuItem m_open_new_window_item{
+        "_Open New Window",
+        true};
+    Gtk::SeparatorMenuItem m_window_separator;
+    Gtk::MenuItem m_close_all_item{
+        "_Close All",
+        true};
+    Gtk::MenuItem m_minimize_item{
+        "M_inimize",
+        true};
+    Gtk::MenuItem m_maximize_item{
+        "M_aximize",
+        true};
+    Gtk::SeparatorMenuItem m_close_separator;
     Glib::RefPtr<Gdk::Pixbuf> m_icon_pixbuf;
     Glib::RefPtr<Gdk::Pixbuf> m_hover_pixbuf;
     std::vector<Glib::RefPtr<Gdk::Pixbuf>>
@@ -61,6 +80,12 @@ private:
 
     bool on_button_press_event(
         GdkEventButton *event) override;
+    bool on_popup_menu();
+    void initialize_context_menu();
+    void show_context_menu(
+        const GdkEvent *event);
+    void log_context_action(
+        const char *action) const;
     void apply_hover_effect();
     void create_zoom_frames();
     void start_zoom_animation();

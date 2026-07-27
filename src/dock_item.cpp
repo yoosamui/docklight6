@@ -249,12 +249,19 @@ DockItem::DockItem(
 
     add_events(
         Gdk::ENTER_NOTIFY_MASK |
-        Gdk::LEAVE_NOTIFY_MASK);
+        Gdk::LEAVE_NOTIFY_MASK |
+        Gdk::BUTTON_PRESS_MASK);
 
     image.set_halign(Gtk::ALIGN_CENTER);
     image.set_valign(Gtk::ALIGN_CENTER);
     add(image);
 
+    signal_popup_menu().connect(
+        sigc::mem_fun(
+            *this,
+            &DockItem::on_popup_menu));
+
+    initialize_context_menu();
     set_icon_size(icon_size);
 
     show_all_children();
@@ -486,7 +493,12 @@ void DockItem::set_vertical(bool vertical)
 
 bool DockItem::on_button_press_event(GdkEventButton *event)
 {
-    if (event->button == 1)
+    if (event->button == GDK_BUTTON_SECONDARY)
+    {
+        show_context_menu(
+            reinterpret_cast<GdkEvent *>(event));
+    }
+    else if (event->button == GDK_BUTTON_PRIMARY)
     {
         try
         {
@@ -504,6 +516,188 @@ bool DockItem::on_button_press_event(GdkEventButton *event)
     }
 
     return true;
+}
+
+bool DockItem::on_popup_menu()
+{
+    show_context_menu(nullptr);
+    return true;
+}
+
+void DockItem::initialize_context_menu()
+{
+    auto initialize_item =
+        [](Gtk::MenuItem &item,
+           unsigned int mnemonic_index)
+        {
+            item.set_halign(Gtk::ALIGN_FILL);
+            item.set_valign(Gtk::ALIGN_CENTER);
+
+            auto *label =
+                dynamic_cast<Gtk::Label *>(
+                    item.get_child());
+
+            if (!label)
+                return;
+
+            label->set_halign(Gtk::ALIGN_FILL);
+            label->set_valign(Gtk::ALIGN_FILL);
+            label->set_xalign(0.0F);
+            label->set_yalign(0.5F);
+
+            // Preserve the native GTK mnemonic while ensuring its underline
+            // remains visible even when the desktop hides mouse-opened menu
+            // mnemonics.
+            Pango::AttrList attributes;
+            auto underline =
+                Pango::Attribute::
+                    create_attr_underline(
+                        Pango::UNDERLINE_SINGLE);
+
+            underline.set_start_index(
+                mnemonic_index);
+            underline.set_end_index(
+                mnemonic_index + 1);
+            attributes.insert(underline);
+            label->set_attributes(attributes);
+        };
+
+    initialize_item(m_attach_item, 1);
+    initialize_item(m_open_new_window_item, 0);
+    initialize_item(m_minimize_item, 1);
+    initialize_item(m_maximize_item, 1);
+    initialize_item(m_close_all_item, 0);
+
+    m_context_menu.append(
+        m_attach_item);
+    m_context_menu.append(
+        m_attach_separator);
+    m_context_menu.append(
+        m_open_new_window_item);
+    m_context_menu.append(
+        m_window_separator);
+    m_context_menu.append(
+        m_minimize_item);
+    m_context_menu.append(
+        m_maximize_item);
+    m_context_menu.append(
+        m_close_separator);
+    m_context_menu.append(
+        m_close_all_item);
+
+    m_attach_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                log_context_action(
+                    "Attach");
+            });
+
+    m_open_new_window_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                log_context_action(
+                    "Open New Window");
+            });
+
+    m_close_all_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                log_context_action(
+                    "Close All");
+            });
+
+    m_minimize_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                log_context_action(
+                    "Minimize");
+            });
+
+    m_maximize_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                log_context_action(
+                    "Maximize");
+            });
+
+    m_context_menu.get_style_context()
+        ->add_class("dock-context-menu");
+    m_context_menu.show_all();
+}
+
+void DockItem::show_context_menu(
+    const GdkEvent *event)
+{
+    Gdk::Gravity widget_anchor =
+        Gdk::GRAVITY_NORTH;
+
+    Gdk::Gravity menu_anchor =
+        Gdk::GRAVITY_SOUTH;
+
+    switch (m_dock.location())
+    {
+    case DockLocation::bottom:
+        widget_anchor = Gdk::GRAVITY_NORTH;
+        menu_anchor = Gdk::GRAVITY_SOUTH;
+        break;
+
+    case DockLocation::top:
+        widget_anchor = Gdk::GRAVITY_SOUTH;
+        menu_anchor = Gdk::GRAVITY_NORTH;
+        break;
+
+    case DockLocation::left:
+        widget_anchor = Gdk::GRAVITY_EAST;
+        menu_anchor = Gdk::GRAVITY_WEST;
+        break;
+
+    case DockLocation::right:
+        widget_anchor = Gdk::GRAVITY_WEST;
+        menu_anchor = Gdk::GRAVITY_EAST;
+        break;
+    }
+
+    m_dock.schedule_hide_tooltip();
+
+    m_context_menu.popup_at_widget(
+        this,
+        widget_anchor,
+        menu_anchor,
+        event);
+
+    // GtkMenu is hosted in its own popup GtkWindow. GTK normally hides
+    // mnemonic underlines for pointer-opened menus, so make them visible on
+    // that popup window after GTK has created and mapped it.
+    auto *menu_toplevel =
+        gtk_widget_get_toplevel(
+            GTK_WIDGET(
+                m_context_menu.gobj()));
+
+    if (GTK_IS_WINDOW(menu_toplevel))
+    {
+        gtk_window_set_mnemonics_visible(
+            GTK_WINDOW(menu_toplevel),
+            TRUE);
+    }
+}
+
+void DockItem::log_context_action(
+    const char *action) const
+{
+    g_message(
+        "Dock context menu: %s (%s)",
+        action,
+        m_app->get_name().c_str());
 }
 
 void DockItem::apply_hover_effect()

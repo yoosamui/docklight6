@@ -15,3 +15,8 @@ window.dock-tooltip-window {
     color: white;
     font-weight: bold;
 }
+
+.dock-context-menu menuitem {
+    min-height: 24px;
+    padding: 4px 12px;
+}
