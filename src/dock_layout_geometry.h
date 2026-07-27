@@ -8,19 +8,15 @@
 class DockItem;
 class DockWindow;
 
-
 class DockLayoutGeometry
 {
 public:
-
     ItemGeometry item_geometry(
-        DockItem& item,
-        DockWindow& dock) const;
-
+        DockItem &item,
+        DockWindow &dock) const;
 
     DockWindowGeometry dock_geometry(
-        DockWindow& dock) const;
-
+        DockWindow &dock) const;
 
     MonitorGeometry monitor_geometry(
         const Glib::RefPtr<Gdk::Monitor>

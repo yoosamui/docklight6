@@ -6,5 +6,6 @@
 struct DockConfiguration
 {
     DockSettings settings;
+
     DockLayoutRequest layout_request;
 };

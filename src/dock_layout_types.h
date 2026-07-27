@@ -167,6 +167,7 @@ struct DockLayoutRequest
     // -1 derives a pill radius from the current icon-size based item metric.
     // A non-negative value is an explicit user override in pixels.
     int corner_radius = 6;
+
     DockSize size;
 };
 

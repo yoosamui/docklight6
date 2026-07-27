@@ -2,6 +2,7 @@
 #define LAUNCHER_MANAGER_H
 
 #include <giomm.h>
+
 #include <vector>
 
 struct Launcher
@@ -16,6 +17,7 @@ public:
 
 private:
     std::vector<std::string> read_config();
+
     Glib::RefPtr<Gio::AppInfo> find_app(const std::string &desktop_id);
 };
 

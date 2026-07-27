@@ -13,6 +13,8 @@ class DockConfigurationManager
 public:
     DockConfigurationManager();
 
+    void start_monitoring();
+
     const DockConfiguration &current() const;
     const std::string &config_path() const;
 
@@ -21,8 +23,6 @@ public:
         const DockConfiguration &> &
     signal_changed();
 
-    void start_monitoring();
-
 private:
     void ensure_config_file();
     void ensure_setting(
@@ -30,20 +30,24 @@ private:
         const char *setting_template);
     void reload();
     void schedule_reload();
-    bool is_config_file(
-        const Glib::RefPtr<Gio::File> &file) const;
     void on_directory_changed(
         const Glib::RefPtr<Gio::File> &file,
         const Glib::RefPtr<Gio::File> &other_file,
         Gio::FileMonitorEvent event);
 
+    bool is_config_file(
+        const Glib::RefPtr<Gio::File> &file) const;
+
 private:
+    Glib::RefPtr<Gio::FileMonitor> m_monitor;
+
     DockConfiguration m_current;
+
     std::string m_config_directory;
     std::string m_config_path;
 
-    Glib::RefPtr<Gio::FileMonitor> m_monitor;
     sigc::connection m_reload_timer;
+
     sigc::signal<
         void,
         const DockConfiguration &>

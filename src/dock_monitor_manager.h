@@ -13,8 +13,11 @@
 struct DockMonitorInfo
 {
     Glib::RefPtr<Gdk::Monitor> monitor;
+
     std::string identifier;
+
     bool primary = false;
+
     int width = 0;
     int height = 0;
     int scale = 1;
@@ -27,18 +30,16 @@ public:
         const std::string &requested_monitor =
             "primary");
 
-    std::vector<DockMonitorInfo>
-    available_monitors() const;
-
     void print_available_monitors() const;
-
     void set_requested_monitor(
         const std::string &identifier);
+    void start_monitoring();
 
     Glib::RefPtr<Gdk::Monitor>
     selected_monitor() const;
 
-    void start_monitoring();
+    std::vector<DockMonitorInfo>
+    available_monitors() const;
 
     sigc::signal<
         void,
@@ -49,6 +50,7 @@ private:
     struct MonitorSnapshot
     {
         GdkMonitor *monitor = nullptr;
+
         int x = 0;
         int y = 0;
         int width = 0;
@@ -60,15 +62,7 @@ private:
         int scale = 1;
     };
 
-    Glib::RefPtr<Gdk::Monitor>
-    resolve_requested_monitor(
-        bool &used_fallback) const;
-
-    MonitorSnapshot snapshot_for(
-        const Glib::RefPtr<Gdk::Monitor> &monitor) const;
-
     void schedule_monitor_update();
-    bool sample_monitor_state();
     void apply_monitor(
         const Glib::RefPtr<Gdk::Monitor> &monitor,
         const MonitorSnapshot &snapshot,
@@ -78,21 +72,28 @@ private:
         const MonitorSnapshot &snapshot) const;
     void connect_selected_monitor_signals();
 
+    bool sample_monitor_state();
     static bool same_snapshot(
         const MonitorSnapshot &left,
         const MonitorSnapshot &right);
 
+    Glib::RefPtr<Gdk::Monitor>
+    resolve_requested_monitor(
+        bool &used_fallback) const;
+
+    MonitorSnapshot snapshot_for(
+        const Glib::RefPtr<Gdk::Monitor> &monitor) const;
+
 private:
     Glib::RefPtr<Gdk::Display> m_display;
     Glib::RefPtr<Gdk::Monitor> m_selected_monitor;
+    Glib::RefPtr<Gio::FileMonitor> m_kde_output_monitor;
+
     std::string m_requested_monitor = "primary";
     std::string m_warned_missing_monitor;
 
     std::optional<MonitorSnapshot> m_last_sample;
     std::optional<MonitorSnapshot> m_applied_snapshot;
-    int m_stable_samples = 0;
-    int m_sample_attempts = 0;
-    bool m_monitoring = false;
 
     sigc::connection m_monitor_timer;
     sigc::connection m_monitor_added;
@@ -101,11 +102,14 @@ private:
     sigc::connection m_geometry_changed;
     sigc::connection m_workarea_changed;
     sigc::connection m_scale_changed;
-    Glib::RefPtr<Gio::FileMonitor>
-        m_kde_output_monitor;
 
     sigc::signal<
         void,
         const Glib::RefPtr<Gdk::Monitor> &>
         m_signal_monitor_changed;
+
+    int m_stable_samples = 0;
+    int m_sample_attempts = 0;
+
+    bool m_monitoring = false;
 };

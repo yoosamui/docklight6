@@ -14,6 +14,8 @@ docklight6_SOURCES = \
     dock_configuration_manager.cpp \
     dock_monitor_manager.h \
     dock_monitor_manager.cpp \
+    dock_window_controller.h \
+    dock_window_controller.cpp \
     dock_window.cpp \
     dock_settings.cpp \
     launcher_manager.cpp \

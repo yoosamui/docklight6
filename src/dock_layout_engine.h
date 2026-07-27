@@ -16,8 +16,6 @@
 class DockLayoutEngine
 {
 public:
-
-
     DockPlacement
     calculate_dock_layout(
         const DockLayoutRequest &request,
