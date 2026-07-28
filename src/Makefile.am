@@ -2,7 +2,8 @@ bin_PROGRAMS = docklight6
 
 check_PROGRAMS = \
     window_registry_test \
-    kwin_window_backend_test
+    kwin_window_backend_test \
+    kwin_integration_service_test
 
 TESTS = $(check_PROGRAMS)
 
@@ -22,6 +23,8 @@ docklight6_SOURCES = \
     window_registry.h \
     window_registry.cpp \
     kwin_integration_protocol.h \
+    kwin_integration_service.h \
+    kwin_integration_service.cpp \
     kwin_window_backend.h \
     kwin_window_backend.cpp \
     dock_configuration.h \
@@ -82,4 +85,21 @@ kwin_window_backend_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)
 
 kwin_window_backend_test_LDADD = \
+    $(GTKMM_LIBS)
+
+kwin_integration_service_test_SOURCES = \
+    tests/kwin_integration_service_test.cpp \
+    managed_window.h \
+    window_backend.h \
+    window_backend.cpp \
+    kwin_integration_protocol.h \
+    kwin_integration_service.h \
+    kwin_integration_service.cpp \
+    kwin_window_backend.h \
+    kwin_window_backend.cpp
+
+kwin_integration_service_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+kwin_integration_service_test_LDADD = \
     $(GTKMM_LIBS)
