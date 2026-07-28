@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kwin_window_command.h"
 #include "window_backend.h"
 
 #include <cstdint>
@@ -37,6 +38,9 @@ public:
     bool set_window_maximized(
         const WindowId &window_id,
         bool maximized) override;
+
+    void set_command_handler(
+        KWinWindowCommandHandler handler);
 
     bool register_integration(
         std::uint32_t protocol_version);
@@ -80,6 +84,10 @@ private:
 
     bool accepts_incremental_revision(
         std::uint64_t revision) const;
+    bool dispatch_command(
+        KWinWindowCommandType type,
+        const WindowId &window_id,
+        bool state = false);
     void clear_state();
 
 private:
@@ -91,6 +99,9 @@ private:
     std::optional<WindowId> m_active_window;
     std::optional<std::uint64_t>
         m_staged_revision;
+
+    KWinWindowCommandHandler
+        m_command_handler;
 
     std::uint64_t m_last_revision = 0;
 

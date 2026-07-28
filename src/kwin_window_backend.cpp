@@ -3,6 +3,7 @@
 #include "kwin_integration_protocol.h"
 
 #include <algorithm>
+#include <utility>
 
 void KWinWindowBackend::start()
 {
@@ -28,8 +29,11 @@ KWinWindowBackend::capabilities() const
 {
     WindowBackendCapabilities capabilities;
 
-    // Window commands remain disabled until the command side of the
-    // integration protocol is implemented.
+    capabilities.can_activate = true;
+    capabilities.can_raise = true;
+    capabilities.can_close = true;
+    capabilities.can_minimize = true;
+    capabilities.can_maximize = true;
     capabilities.provides_stacking_order =
         true;
     capabilities.provides_activities = true;
@@ -66,37 +70,59 @@ KWinWindowBackend::active_window() const
 }
 
 bool KWinWindowBackend::activate_window(
-    const WindowId &)
+    const WindowId &window_id)
 {
-    return false;
+    return dispatch_command(
+        KWinWindowCommandType::ACTIVATE,
+        window_id);
 }
 
 bool KWinWindowBackend::raise_window(
-    const WindowId &)
+    const WindowId &window_id)
 {
-    return false;
+    return dispatch_command(
+        KWinWindowCommandType::RAISE,
+        window_id);
 }
 
 bool KWinWindowBackend::close_window(
-    const WindowId &)
+    const WindowId &window_id)
 {
-    return false;
+    return dispatch_command(
+        KWinWindowCommandType::CLOSE,
+        window_id);
 }
 
 bool KWinWindowBackend::
     set_window_minimized(
-        const WindowId &,
-        bool)
+        const WindowId &window_id,
+        bool minimized)
 {
-    return false;
+    return dispatch_command(
+        KWinWindowCommandType::
+            SET_MINIMIZED,
+        window_id,
+        minimized);
 }
 
 bool KWinWindowBackend::
     set_window_maximized(
-        const WindowId &,
-        bool)
+        const WindowId &window_id,
+        bool maximized)
 {
-    return false;
+    return dispatch_command(
+        KWinWindowCommandType::
+            SET_MAXIMIZED,
+        window_id,
+        maximized);
+}
+
+void KWinWindowBackend::
+    set_command_handler(
+        KWinWindowCommandHandler handler)
+{
+    m_command_handler =
+        std::move(handler);
 }
 
 bool KWinWindowBackend::register_integration(
@@ -467,6 +493,25 @@ bool KWinWindowBackend::
            m_connected &&
            !m_staged_revision &&
            revision > m_last_revision;
+}
+
+bool KWinWindowBackend::dispatch_command(
+    KWinWindowCommandType type,
+    const WindowId &window_id,
+    bool state)
+{
+    if (!m_connected ||
+        !m_command_handler ||
+        !find_window(window_id))
+    {
+        return false;
+    }
+
+    return m_command_handler(
+        KWinWindowCommand{
+            window_id,
+            type,
+            state});
 }
 
 void KWinWindowBackend::clear_state()

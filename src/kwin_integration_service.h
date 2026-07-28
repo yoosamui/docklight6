@@ -1,7 +1,10 @@
 #pragma once
 
+#include "kwin_window_command.h"
+
 #include <gio/gio.h>
 
+#include <deque>
 #include <string>
 
 class KWinWindowBackend;
@@ -32,6 +35,12 @@ private:
     void clear_sender(
         bool unregister_integration);
 
+    bool enqueue_command(
+        const KWinWindowCommand &command);
+    void deliver_next_command();
+    void cancel_command_keepalive();
+    void clear_commands();
+
     void handle_method_call(
         const char *sender,
         const char *method_name,
@@ -41,6 +50,8 @@ private:
     static void on_sender_vanished(
         GDBusConnection *connection,
         const gchar *name,
+        gpointer user_data);
+    static gboolean on_command_keepalive(
         gpointer user_data);
     static void on_method_call(
         GDBusConnection *connection,
@@ -60,8 +71,15 @@ private:
 
     std::string m_sender;
 
+    std::deque<KWinWindowCommand>
+        m_commands;
+
+    GDBusMethodInvocation *
+        m_command_invocation = nullptr;
+
     guint m_object_registration_id = 0;
     guint m_sender_watch_id = 0;
+    guint m_command_keepalive_id = 0;
 
     bool m_name_owned = false;
     bool m_available = false;

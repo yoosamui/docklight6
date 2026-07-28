@@ -29,6 +29,11 @@ constexpr char INTROSPECTION_XML[] =
     "      <arg type='s' direction='out' name='supported_version'/>"
     "    </method>"
     "    <method name='Unregister'/>"
+    "    <method name='WaitForCommand'>"
+    "      <arg type='s' direction='out' name='command'/>"
+    "      <arg type='s' direction='out' name='internal_id'/>"
+    "      <arg type='b' direction='out' name='state'/>"
+    "    </method>"
     "    <method name='BeginSnapshot'>"
     "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
@@ -261,12 +266,21 @@ KWinIntegrationService::
         KWinWindowBackend &backend)
     : m_backend(backend)
 {
+    m_backend.set_command_handler(
+        [this](
+            const KWinWindowCommand
+                &command)
+        {
+            return enqueue_command(
+                command);
+        });
 }
 
 KWinIntegrationService::
     ~KWinIntegrationService()
 {
     stop();
+    m_backend.set_command_handler({});
 }
 
 bool KWinIntegrationService::start()
@@ -548,6 +562,8 @@ bool KWinIntegrationService::accepts_sender(
 void KWinIntegrationService::clear_sender(
     bool unregister_integration)
 {
+    clear_commands();
+
     if (m_sender_watch_id != 0)
     {
         const auto watch_id =
@@ -561,6 +577,112 @@ void KWinIntegrationService::clear_sender(
 
     if (unregister_integration)
         m_backend.unregister_integration();
+}
+
+bool KWinIntegrationService::enqueue_command(
+    const KWinWindowCommand &command)
+{
+    constexpr std::size_t maximum_commands =
+        64;
+
+    if (m_sender.empty() ||
+        m_commands.size() >=
+            maximum_commands)
+    {
+        return false;
+    }
+
+    m_commands.push_back(command);
+    deliver_next_command();
+
+    return true;
+}
+
+void KWinIntegrationService::
+    deliver_next_command()
+{
+    if (!m_command_invocation ||
+        m_commands.empty())
+    {
+        return;
+    }
+
+    const auto command =
+        m_commands.front();
+    m_commands.pop_front();
+
+    const char *command_name = "";
+
+    switch (command.type)
+    {
+    case KWinWindowCommandType::ACTIVATE:
+        command_name = "activate";
+        break;
+    case KWinWindowCommandType::RAISE:
+        command_name = "raise";
+        break;
+    case KWinWindowCommandType::CLOSE:
+        command_name = "close";
+        break;
+    case KWinWindowCommandType::
+        SET_MINIMIZED:
+        command_name = "set-minimized";
+        break;
+    case KWinWindowCommandType::
+        SET_MAXIMIZED:
+        command_name = "set-maximized";
+        break;
+    }
+
+    auto invocation =
+        m_command_invocation;
+
+    m_command_invocation = nullptr;
+    cancel_command_keepalive();
+
+    g_dbus_method_invocation_return_value(
+        invocation,
+        g_variant_new(
+            "(ssb)",
+            command_name,
+            command.window_id.c_str(),
+            command.state));
+
+    g_object_unref(invocation);
+}
+
+void KWinIntegrationService::
+    cancel_command_keepalive()
+{
+    if (m_command_keepalive_id == 0)
+        return;
+
+    const auto keepalive_id =
+        m_command_keepalive_id;
+
+    m_command_keepalive_id = 0;
+    g_source_remove(keepalive_id);
+}
+
+void KWinIntegrationService::clear_commands()
+{
+    m_commands.clear();
+    cancel_command_keepalive();
+
+    if (!m_command_invocation)
+        return;
+
+    auto invocation =
+        m_command_invocation;
+
+    m_command_invocation = nullptr;
+
+    g_dbus_method_invocation_return_dbus_error(
+        invocation,
+        "org.docklight6.Error.Disconnected",
+        "The KWin integration disconnected");
+
+    g_object_unref(invocation);
 }
 
 void KWinIntegrationService::
@@ -637,6 +759,34 @@ void KWinIntegrationService::
             invocation,
             nullptr);
 
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "WaitForCommand") == 0)
+    {
+        if (m_command_invocation)
+        {
+            g_dbus_method_invocation_return_dbus_error(
+                invocation,
+                "org.docklight6.Error.AlreadyWaiting",
+                "The KWin integration already has a pending command request");
+            return;
+        }
+
+        m_command_invocation =
+            G_DBUS_METHOD_INVOCATION(
+                g_object_ref(invocation));
+
+        m_command_keepalive_id =
+            g_timeout_add_seconds(
+                20,
+                &KWinIntegrationService::
+                    on_command_keepalive,
+                this);
+
+        deliver_next_command();
         return;
     }
 
@@ -858,6 +1008,37 @@ void KWinIntegrationService::
 
     if (service->m_sender == name)
         service->clear_sender(true);
+}
+
+gboolean KWinIntegrationService::
+    on_command_keepalive(
+        gpointer user_data)
+{
+    auto service =
+        static_cast<KWinIntegrationService *>(
+            user_data);
+
+    service->m_command_keepalive_id = 0;
+
+    if (!service->m_command_invocation)
+        return G_SOURCE_REMOVE;
+
+    auto invocation =
+        service->m_command_invocation;
+
+    service->m_command_invocation = nullptr;
+
+    g_dbus_method_invocation_return_value(
+        invocation,
+        g_variant_new(
+            "(ssb)",
+            "none",
+            "",
+            false));
+
+    g_object_unref(invocation);
+
+    return G_SOURCE_REMOVE;
 }
 
 void KWinIntegrationService::on_method_call(

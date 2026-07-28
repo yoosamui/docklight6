@@ -31,6 +31,7 @@ docklight6_SOURCES = \
     kwin_integration_service.cpp \
     kwin_script_manager.h \
     kwin_script_manager.cpp \
+    kwin_window_command.h \
     kwin_window_backend.h \
     kwin_window_backend.cpp \
     dock_configuration.h \
@@ -84,6 +85,7 @@ kwin_window_backend_test_SOURCES = \
     window_registry.h \
     window_registry.cpp \
     kwin_integration_protocol.h \
+    kwin_window_command.h \
     kwin_window_backend.h \
     kwin_window_backend.cpp
 
@@ -101,6 +103,7 @@ kwin_integration_service_test_SOURCES = \
     kwin_integration_protocol.h \
     kwin_integration_service.h \
     kwin_integration_service.cpp \
+    kwin_window_command.h \
     kwin_window_backend.h \
     kwin_window_backend.cpp
 

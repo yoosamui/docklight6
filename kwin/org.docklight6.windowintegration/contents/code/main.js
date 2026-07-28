@@ -7,10 +7,11 @@
         "/org/docklight6/WindowIntegration";
     const INTERFACE_NAME =
         "org.docklight6.WindowIntegration1";
-    const PROTOCOL_VERSION = "2";
+    const PROTOCOL_VERSION = "3";
 
     let connected = false;
     let registering = false;
+    let waitingForCommand = false;
     let revision = 0;
 
     const trackedWindows = {};
@@ -139,6 +140,7 @@
             return;
 
         connected = false;
+        waitingForCommand = false;
         registerIntegration();
     }
 
@@ -248,6 +250,64 @@
             nextRevision(),
             stackingOrder(),
             handlePublishReply);
+    }
+
+    function executeCommand(
+        command,
+        identifier,
+        state) {
+        const window =
+            trackedWindows[identifier];
+
+        if (!window ||
+            !isTrackable(window))
+            return;
+
+        if (command === "activate") {
+            workspace.activateWindow(window);
+        } else if (command === "raise") {
+            workspace.raiseWindow(window);
+        } else if (command === "close") {
+            window.closeWindow();
+        } else if (
+            command === "set-minimized") {
+            window.minimized =
+                state === true;
+        } else if (
+            command === "set-maximized") {
+            window.setMaximize(
+                state === true,
+                state === true);
+        }
+    }
+
+    function waitForCommand() {
+        if (!connected ||
+            waitingForCommand)
+            return;
+
+        waitingForCommand = true;
+
+        callDBus(
+            SERVICE_NAME,
+            OBJECT_PATH,
+            INTERFACE_NAME,
+            "WaitForCommand",
+            function (
+                command,
+                identifier,
+                state) {
+                waitingForCommand = false;
+
+                if (!connected)
+                    return;
+
+                executeCommand(
+                    command,
+                    identifier,
+                    state);
+                waitForCommand();
+            });
     }
 
     function connectSignal(
@@ -362,10 +422,13 @@
                 registering = false;
                 connected = accepted === true;
 
-                if (!connected)
+                if (!connected) {
+                    waitingForCommand = false;
                     return;
+                }
 
                 revision = 0;
+                waitForCommand();
                 publishSnapshot();
             });
     }

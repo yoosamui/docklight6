@@ -37,6 +37,8 @@ function createWindow(
         },
         pid: 1234,
         minimized: false,
+        maximized: false,
+        closed: false,
         skipTaskbar: false,
         frameGeometry: {
             x: 10,
@@ -77,7 +79,17 @@ function createWindow(
         desktopFileNameChanged:
             new Signal(),
         stackingOrderChanged:
-            new Signal()
+            new Signal(),
+        closeWindow() {
+            this.closed = true;
+        },
+        setMaximize(
+            vertically,
+            horizontally) {
+            this.maximized =
+                vertically === true &&
+                horizontally === true;
+        }
     };
 }
 
@@ -101,7 +113,15 @@ const workspace = {
     activeWindow: managedWindow,
     windowAdded: new Signal(),
     windowRemoved: new Signal(),
-    windowActivated: new Signal()
+    windowActivated: new Signal(),
+    activatedWindow: null,
+    raisedWindow: null,
+    activateWindow(window) {
+        this.activatedWindow = window;
+    },
+    raiseWindow(window) {
+        this.raisedWindow = window;
+    }
 };
 
 const calls = [];
@@ -185,11 +205,11 @@ assert.strictEqual(
     "Register");
 assert.deepStrictEqual(
     calls[0].arguments,
-    ["2"]);
+    ["3"]);
 
 calls[0].callback(
     true,
-    "2");
+    "3");
 
 const beginSnapshot =
     calls.find(
@@ -214,6 +234,61 @@ assert.strictEqual(
     stagedWindows.length,
     1);
 assert(commitSnapshot);
+
+function deliverCommand(
+    command,
+    state) {
+    const wait =
+        calls
+            .filter(
+                call =>
+                    call.methodName ===
+                    "WaitForCommand")
+            .at(-1);
+
+    assert(wait);
+    assert(wait.callback);
+
+    wait.callback(
+        command,
+        "window-1",
+        state);
+}
+
+deliverCommand(
+    "activate",
+    false);
+assert.strictEqual(
+    workspace.activatedWindow,
+    managedWindow);
+
+deliverCommand(
+    "raise",
+    false);
+assert.strictEqual(
+    workspace.raisedWindow,
+    managedWindow);
+
+deliverCommand(
+    "set-minimized",
+    true);
+assert.strictEqual(
+    managedWindow.minimized,
+    true);
+
+deliverCommand(
+    "set-maximized",
+    true);
+assert.strictEqual(
+    managedWindow.maximized,
+    true);
+
+deliverCommand(
+    "close",
+    false);
+assert.strictEqual(
+    managedWindow.closed,
+    true);
 
 for (const value of
      stagedWindows[0].arguments) {

@@ -110,12 +110,81 @@ void verifies_registration_and_snapshot()
     const auto capabilities =
         backend.capabilities();
 
-    assert(!capabilities.can_activate);
-    assert(!capabilities.can_close);
+    assert(capabilities.can_activate);
+    assert(capabilities.can_raise);
+    assert(capabilities.can_close);
+    assert(capabilities.can_minimize);
+    assert(capabilities.can_maximize);
     assert(capabilities
                .provides_stacking_order);
     assert(capabilities
                .provides_frame_geometry);
+}
+
+void verifies_window_commands()
+{
+    KWinWindowBackend backend;
+    backend.start();
+
+    connect_with_snapshot(
+        backend,
+        15,
+        {
+            window(
+                "window-1",
+                "org.kde.dolphin")
+        },
+        std::nullopt,
+        {"window-1"});
+
+    std::vector<KWinWindowCommand>
+        commands;
+
+    backend.set_command_handler(
+        [&commands](
+            const KWinWindowCommand
+                &command)
+        {
+            commands.push_back(command);
+            return true;
+        });
+
+    assert(backend.activate_window(
+        "window-1"));
+    assert(backend.raise_window(
+        "window-1"));
+    assert(backend.close_window(
+        "window-1"));
+    assert(backend.set_window_minimized(
+        "window-1",
+        true));
+    assert(backend.set_window_maximized(
+        "window-1",
+        false));
+
+    assert(commands.size() == 5);
+    assert(commands[0].type ==
+           KWinWindowCommandType::ACTIVATE);
+    assert(commands[1].type ==
+           KWinWindowCommandType::RAISE);
+    assert(commands[2].type ==
+           KWinWindowCommandType::CLOSE);
+    assert(commands[3].type ==
+           KWinWindowCommandType::
+               SET_MINIMIZED);
+    assert(commands[3].state);
+    assert(commands[4].type ==
+           KWinWindowCommandType::
+               SET_MAXIMIZED);
+    assert(!commands[4].state);
+
+    assert(!backend.activate_window(
+        "missing-window"));
+
+    backend.set_command_handler({});
+
+    assert(!backend.activate_window(
+        "window-1"));
 }
 
 void verifies_incremental_revisions()
@@ -272,6 +341,7 @@ void verifies_cancelled_snapshot()
 int main()
 {
     verifies_registration_and_snapshot();
+    verifies_window_commands();
     verifies_incremental_revisions();
     verifies_atomic_resynchronization();
     verifies_cancelled_snapshot();

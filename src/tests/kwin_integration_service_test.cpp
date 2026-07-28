@@ -243,7 +243,7 @@ void verifies_dbus_state_transport()
             "Register",
             g_variant_new(
                 "(s)",
-                "1"));
+                "2"));
 
     gboolean registered = true;
     const char *supported_version =
@@ -263,7 +263,7 @@ void verifies_dbus_state_transport()
 
     assert(!registered);
     assert(supported_version_text ==
-           "2");
+           "3");
 
     result =
         call_method(
@@ -271,7 +271,7 @@ void verifies_dbus_state_transport()
             "Register",
             g_variant_new(
                 "(s)",
-                "2"));
+                "3"));
 
     g_variant_get(
         result,
@@ -340,6 +340,59 @@ void verifies_dbus_state_transport()
                 11,
                 "Stale"))));
 
+    assert(backend.activate_window(
+        "window-1"));
+
+    result =
+        call_method(
+            client,
+            "WaitForCommand",
+            nullptr);
+
+    const char *command = nullptr;
+    const char *window_id = nullptr;
+    gboolean command_state = true;
+
+    g_variant_get(
+        result,
+        "(&s&sb)",
+        &command,
+        &window_id,
+        &command_state);
+
+    assert(std::string(command) ==
+           "activate");
+    assert(std::string(window_id) ==
+           "window-1");
+    assert(!command_state);
+
+    g_variant_unref(result);
+
+    assert(backend.set_window_minimized(
+        "window-1",
+        true));
+
+    result =
+        call_method(
+            client,
+            "WaitForCommand",
+            nullptr);
+
+    g_variant_get(
+        result,
+        "(&s&sb)",
+        &command,
+        &window_id,
+        &command_state);
+
+    assert(std::string(command) ==
+           "set-minimized");
+    assert(std::string(window_id) ==
+           "window-1");
+    assert(command_state);
+
+    g_variant_unref(result);
+
     auto other_client =
         connect_to_test_bus(test_bus);
 
@@ -349,7 +402,7 @@ void verifies_dbus_state_transport()
             "Register",
             g_variant_new(
                 "(s)",
-                "2"));
+                "3"));
 
     g_variant_get(
         result,
