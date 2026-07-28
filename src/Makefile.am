@@ -8,6 +8,7 @@ check_PROGRAMS = \
 
 TESTS = \
     $(check_PROGRAMS) \
+    tests/kwin_minimize_effect_test.js \
     tests/kwin_script_test.js
 
 AM_CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
@@ -21,6 +22,7 @@ docklight6_SOURCES = \
     main.cpp \
     managed_window.h \
     running_application.h \
+    window_icon_geometry.h \
     window_backend.h \
     window_backend.cpp \
     window_registry.h \
@@ -68,6 +70,7 @@ dock_application_controller_test_SOURCES = \
     tests/fake_window_backend.cpp \
     managed_window.h \
     running_application.h \
+    window_icon_geometry.h \
     window_backend.h \
     window_backend.cpp \
     window_registry.h \
@@ -87,6 +90,7 @@ window_registry_test_SOURCES = \
     tests/fake_window_backend.cpp \
     managed_window.h \
     running_application.h \
+    window_icon_geometry.h \
     window_backend.h \
     window_backend.cpp \
     window_registry.h \
@@ -102,6 +106,7 @@ kwin_window_backend_test_SOURCES = \
     tests/kwin_window_backend_test.cpp \
     managed_window.h \
     running_application.h \
+    window_icon_geometry.h \
     window_backend.h \
     window_backend.cpp \
     window_registry.h \
@@ -120,6 +125,7 @@ kwin_window_backend_test_LDADD = \
 kwin_integration_service_test_SOURCES = \
     tests/kwin_integration_service_test.cpp \
     managed_window.h \
+    window_icon_geometry.h \
     window_backend.h \
     window_backend.cpp \
     kwin_integration_protocol.h \
@@ -134,3 +140,7 @@ kwin_integration_service_test_CPPFLAGS = \
 
 kwin_integration_service_test_LDADD = \
     $(GTKMM_LIBS)
+
+EXTRA_DIST = \
+    tests/kwin_minimize_effect_test.js \
+    tests/kwin_script_test.js

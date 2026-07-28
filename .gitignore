@@ -102,6 +102,9 @@ clang-tidy.sh
 /src/Makefile
 /src/Makefile.in
 /src/docklight
+/src/dock_application_controller_test
+/src/dock_application_controller_test.log
+/src/dock_application_controller_test.trs
 /src/test-suite.log
 /src/kwin_integration_service_test
 /src/kwin_integration_service_test.log

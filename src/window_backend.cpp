@@ -54,6 +54,13 @@ WindowBackend::signal_snapshot_changed()
     return m_signal_snapshot_changed;
 }
 
+sigc::signal<void> &
+WindowBackend::
+    signal_dock_surface_geometry_changed()
+{
+    return m_signal_dock_surface_geometry_changed;
+}
+
 void WindowBackend::notify_window_added(
     const ManagedWindow &window)
 {
@@ -101,4 +108,10 @@ void WindowBackend::notify_connection_changed(
 void WindowBackend::notify_snapshot_changed()
 {
     m_signal_snapshot_changed.emit();
+}
+
+void WindowBackend::
+    notify_dock_surface_geometry_changed()
+{
+    m_signal_dock_surface_geometry_changed.emit();
 }

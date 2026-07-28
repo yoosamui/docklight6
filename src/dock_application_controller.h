@@ -1,5 +1,7 @@
 #pragma once
 
+#include "window_icon_geometry.h"
+
 #include <string>
 #include <vector>
 
@@ -19,12 +21,13 @@ public:
     bool can_unminimize() const;
     bool can_maximize() const;
     bool can_close() const;
-
     bool toggle_minimized();
     bool minimize();
     bool unminimize();
     bool maximize();
     bool close_all();
+    bool set_icon_geometry(
+        const WindowIconGeometry &geometry);
 
 private:
     bool has_minimized_window() const;

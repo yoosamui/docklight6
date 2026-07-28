@@ -4,6 +4,8 @@
 #include "dock_item.h"
 #include "dock_layout_metrics.h"
 #include "dock_window.h"
+#include "window_icon_geometry.h"
+#include "window_registry.h"
 
 #include <gtk-layer-shell.h>
 #include <gtkmm/settings.h>
@@ -28,9 +30,13 @@ DockWindowController::~DockWindowController()
     cancel_show_timer();
     cancel_hide_timer();
     m_layout_update.disconnect();
+    m_icon_geometry_update.disconnect();
     m_icon_theme_changed.disconnect();
     m_icon_refresh.disconnect();
     m_realize.disconnect();
+    m_size_allocate.disconnect();
+    m_window_registry_changed.disconnect();
+    m_dock_surface_geometry_changed.disconnect();
     m_dock_add.disconnect();
     m_dock_remove.disconnect();
 }
@@ -53,6 +59,39 @@ void DockWindowController::initialize()
             {
                 schedule_layout_update();
             });
+
+    m_size_allocate =
+        m_window
+            .signal_size_allocate()
+            .connect(
+                [this](
+                    Gtk::Allocation &)
+                {
+                    schedule_icon_geometry_update();
+                });
+
+    if (m_window.m_window_registry)
+    {
+        m_window_registry_changed =
+            m_window
+                .m_window_registry
+                ->signal_changed()
+                .connect(
+                    [this]()
+                    {
+                        schedule_icon_geometry_update();
+                    });
+
+        m_dock_surface_geometry_changed =
+            m_window
+                .m_window_registry
+                ->signal_dock_surface_geometry_changed()
+                .connect(
+                    [this]()
+                    {
+                        schedule_icon_geometry_update();
+                    });
+    }
 
     m_icon_theme =
         Gtk::IconTheme::get_default();
@@ -163,6 +202,9 @@ void DockWindowController::update_dock_layout()
         return;
     }
 
+    m_output_geometry =
+        output_geometry;
+
     auto workarea_geometry =
         m_layout_geometry.monitor_geometry(
             m_monitor);
@@ -249,6 +291,9 @@ void DockWindowController::update_dock_layout()
         workarea_geometry);
 
     m_window.apply_dock_layout(placement);
+
+    m_placement = placement;
+    schedule_icon_geometry_update();
 }
 
 void DockWindowController::apply_workarea_insets(
@@ -401,6 +446,140 @@ void DockWindowController::schedule_layout_update()
                 update_dock_layout();
                 return false;
             });
+}
+
+void DockWindowController::
+    schedule_icon_geometry_update()
+{
+    if (m_icon_geometry_update.connected())
+        return;
+
+    m_icon_geometry_update =
+        Glib::signal_idle().connect(
+            [this]()
+            {
+                update_icon_geometries();
+                return false;
+            });
+}
+
+void DockWindowController::
+    update_icon_geometries()
+{
+    if (!m_window.get_realized() ||
+        m_output_geometry.width <= 0 ||
+        m_output_geometry.height <= 0)
+    {
+        return;
+    }
+
+    const auto dock_position =
+        dock_screen_position();
+
+    for (auto *item :
+         m_window.dock_items())
+    {
+        const auto item_geometry =
+            item->icon_geometry();
+
+        WindowIconGeometry geometry;
+
+        geometry.x =
+            dock_position.x +
+            item_geometry.x;
+        geometry.y =
+            dock_position.y +
+            item_geometry.y;
+        geometry.width =
+            item_geometry.width;
+        geometry.height =
+            item_geometry.height;
+
+        item->publish_icon_geometry(
+            geometry);
+    }
+}
+
+ScreenPosition
+DockWindowController::dock_screen_position()
+    const
+{
+    if (m_window.m_window_registry)
+    {
+        const auto surface_geometry =
+            m_window
+                .m_window_registry
+                ->dock_surface_geometry();
+
+        if (surface_geometry &&
+            surface_geometry->width > 0 &&
+            surface_geometry->height > 0)
+        {
+            return {
+                surface_geometry->x,
+                surface_geometry->y};
+        }
+    }
+
+    const int width =
+        std::max(
+            1,
+            m_window.get_allocated_width());
+
+    const int height =
+        std::max(
+            1,
+            m_window.get_allocated_height());
+
+    ScreenPosition position;
+
+    if (m_placement.anchor_left)
+    {
+        position.x =
+            m_output_geometry.x +
+            m_placement.margin_left;
+    }
+    else if (m_placement.anchor_right)
+    {
+        position.x =
+            m_output_geometry.x +
+            m_output_geometry.width -
+            m_placement.margin_right -
+            width;
+    }
+    else
+    {
+        position.x =
+            m_output_geometry.x +
+            (m_output_geometry.width -
+             width) /
+                2;
+    }
+
+    if (m_placement.anchor_top)
+    {
+        position.y =
+            m_output_geometry.y +
+            m_placement.margin_top;
+    }
+    else if (m_placement.anchor_bottom)
+    {
+        position.y =
+            m_output_geometry.y +
+            m_output_geometry.height -
+            m_placement.margin_bottom -
+            height;
+    }
+    else
+    {
+        position.y =
+            m_output_geometry.y +
+            (m_output_geometry.height -
+             height) /
+                2;
+    }
+
+    return position;
 }
 
 void DockWindowController::schedule_icon_refresh()

@@ -30,6 +30,8 @@ public:
     running_applications() const;
     const std::optional<WindowId> &
     active_window() const;
+    std::optional<WindowIconGeometry>
+    dock_surface_geometry() const;
 
     const ManagedWindow *find_window(
         const WindowId &window_id) const;
@@ -50,11 +52,16 @@ public:
     bool set_window_maximized(
         const WindowId &window_id,
         bool maximized);
+    bool set_window_icon_geometry(
+        const WindowId &window_id,
+        const WindowIconGeometry &geometry);
 
     sigc::signal<void> &
     signal_changed();
     sigc::signal<void, bool> &
     signal_connection_changed();
+    sigc::signal<void> &
+    signal_dock_surface_geometry_changed();
 
 private:
     void load_snapshot();
@@ -102,6 +109,8 @@ private:
     sigc::signal<void> m_signal_changed;
     sigc::signal<void, bool>
         m_signal_connection_changed;
+    sigc::signal<void>
+        m_signal_dock_surface_geometry_changed;
 
     bool m_started = false;
     bool m_connected = false;

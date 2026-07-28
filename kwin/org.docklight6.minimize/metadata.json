@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "KWin/Effect",
+    "KPlugin": {
+        "Name": "Docklight Minimize",
+        "Description": "Animates windows to their Docklight launcher while coexisting with other docks",
+        "Icon": "preferences-system-windows-effect-squash",
+        "Authors": [
+            {
+                "Name": "Docklight Project"
+            }
+        ],
+        "Id": "org.docklight6.minimize",
+        "Version": "1.0",
+        "License": "GPL-3.0-or-later",
+        "EnabledByDefault": false
+    },
+    "X-KDE-Ordering": 60,
+    "X-KWin-Exclusive-Category": "minimize",
+    "X-Plasma-API": "javascript"
+}

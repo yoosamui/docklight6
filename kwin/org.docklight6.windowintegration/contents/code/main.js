@@ -7,7 +7,7 @@
         "/org/docklight6/WindowIntegration";
     const INTERFACE_NAME =
         "org.docklight6.WindowIntegration1";
-    const PROTOCOL_VERSION = "3";
+    const PROTOCOL_VERSION = "4";
 
     let connected = false;
     let registering = false;
@@ -15,6 +15,7 @@
     let revision = 0;
 
     const trackedWindows = {};
+    let dockSurface = null;
 
     function windowId(window) {
         if (!window || !window.internalId)
@@ -38,7 +39,41 @@
             !window.outline &&
             !window.desktopWindow &&
             !window.dock &&
+            !isDocklightSurface(window) &&
             windowId(window));
+    }
+
+    function isDocklightSurface(window) {
+        return Boolean(
+            window &&
+            !window.deleted &&
+            !window.popupWindow &&
+            !window.tooltip &&
+            !window.outline &&
+            !window.desktopWindow &&
+            window.skipTaskbar &&
+            String(
+                window.resourceName || "") ===
+                "docklight6");
+    }
+
+    function findDocklightSurface(
+        excludedWindow) {
+        const windows =
+            workspace.stackingOrder || [];
+
+        for (let index = 0;
+             index < windows.length;
+             ++index) {
+            if (windows[index] !==
+                    excludedWindow &&
+                isDocklightSurface(
+                    windows[index])) {
+                return windows[index];
+            }
+        }
+
+        return null;
     }
 
     function booleanText(value) {
@@ -252,6 +287,53 @@
             handlePublishReply);
     }
 
+    function publishDockSurfaceGeometry() {
+        if (!connected) {
+            registerIntegration();
+            return;
+        }
+
+        const geometry =
+            dockSurface &&
+            isDocklightSurface(dockSurface)
+                ? dockSurface.frameGeometry || {}
+                : {};
+
+        callDBus(
+            SERVICE_NAME,
+            OBJECT_PATH,
+            INTERFACE_NAME,
+            "PublishDockSurfaceGeometry",
+            nextRevision(),
+            Number(geometry.x || 0),
+            Number(geometry.y || 0),
+            Number(geometry.width || 0),
+            Number(geometry.height || 0),
+            handlePublishReply);
+    }
+
+    function connectDockSurface(window) {
+        if (!isDocklightSurface(window))
+            return false;
+
+        if (dockSurface === window)
+            return true;
+
+        if (isDocklightSurface(dockSurface))
+            return false;
+
+        dockSurface = window;
+
+        connectSignal(
+            window.frameGeometryChanged,
+            function () {
+                if (dockSurface === window)
+                    publishDockSurfaceGeometry();
+            });
+
+        return true;
+    }
+
     function executeCommand(
         command,
         identifier,
@@ -398,6 +480,9 @@
         for (let index = 0;
              index < windows.length;
              ++index) {
+            connectDockSurface(
+                windows[index]);
+
             if (connectWindow(windows[index])) {
                 callWindowMethod(
                     "StageWindow",
@@ -415,6 +500,8 @@
             activeWindowId(),
             stackingOrder(),
             handlePublishReply);
+
+        publishDockSurfaceGeometry();
     }
 
     function registerIntegration() {
@@ -445,6 +532,9 @@
     }
 
     function onWindowAdded(window) {
+        const isDockSurface =
+            connectDockSurface(window);
+
         const trackable =
             connectWindow(window);
 
@@ -456,6 +546,9 @@
         if (trackable)
             publishWindow(window);
 
+        if (isDockSurface)
+            publishDockSurfaceGeometry();
+
         publishStackingOrder();
     }
 
@@ -466,6 +559,16 @@
             Boolean(trackedWindows[identifier]);
 
         delete trackedWindows[identifier];
+
+        const wasDockSurface =
+            dockSurface === window;
+
+        if (wasDockSurface) {
+            dockSurface = null;
+
+            connectDockSurface(
+                findDocklightSurface(window));
+        }
 
         if (!connected) {
             registerIntegration();
@@ -483,6 +586,9 @@
                 handlePublishReply);
         }
 
+        if (wasDockSurface)
+            publishDockSurfaceGeometry();
+
         publishStackingOrder();
     }
 
@@ -492,6 +598,8 @@
     for (let index = 0;
          index < initialWindows.length;
          ++index) {
+        connectDockSurface(
+            initialWindows[index]);
         connectWindow(initialWindows[index]);
     }
 

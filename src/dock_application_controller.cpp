@@ -250,6 +250,37 @@ bool DockApplicationController::close_all()
 }
 
 bool DockApplicationController::
+    set_icon_geometry(
+        const WindowIconGeometry &geometry)
+{
+    const auto running_application =
+        application();
+
+    if (!running_application ||
+        !m_registry
+             ->capabilities()
+             .accepts_icon_geometry)
+    {
+        return false;
+    }
+
+    bool accepted = true;
+
+    for (const auto &window_id :
+         running_application->window_ids)
+    {
+        accepted =
+            m_registry
+                ->set_window_icon_geometry(
+                    window_id,
+                    geometry) &&
+            accepted;
+    }
+
+    return accepted;
+}
+
+bool DockApplicationController::
     has_minimized_window() const
 {
     const auto running_application =

@@ -5,10 +5,13 @@
 
 #include <glib.h>
 
+#include <algorithm>
 #include <charconv>
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <map>
+#include <sstream>
 #include <string>
 #include <system_error>
 #include <vector>
@@ -33,6 +36,16 @@ constexpr char INTROSPECTION_XML[] =
     "      <arg type='s' direction='out' name='command'/>"
     "      <arg type='s' direction='out' name='internal_id'/>"
     "      <arg type='b' direction='out' name='state'/>"
+    "    </method>"
+    "    <method name='GetIconGeometries'>"
+    "      <arg type='a(siiii)' direction='out' name='geometries'/>"
+    "    </method>"
+    "    <method name='GetDockSurfaceGeometry'>"
+    "      <arg type='b' direction='out' name='available'/>"
+    "      <arg type='i' direction='out' name='x'/>"
+    "      <arg type='i' direction='out' name='y'/>"
+    "      <arg type='i' direction='out' name='width'/>"
+    "      <arg type='i' direction='out' name='height'/>"
     "    </method>"
     "    <method name='BeginSnapshot'>"
     "      <arg type='s' direction='in' name='revision'/>"
@@ -69,6 +82,31 @@ constexpr char INTROSPECTION_XML[] =
     "      <arg type='s' direction='in' name='stacking_order'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
+    "    <method name='PublishDockSurfaceGeometry'>"
+    "      <arg type='s' direction='in' name='revision'/>"
+    "      <arg type='i' direction='in' name='x'/>"
+    "      <arg type='i' direction='in' name='y'/>"
+    "      <arg type='i' direction='in' name='width'/>"
+    "      <arg type='i' direction='in' name='height'/>"
+    "      <arg type='b' direction='out' name='accepted'/>"
+    "    </method>"
+    "    <signal name='IconGeometryChanged'>"
+    "      <arg type='s' name='internal_id'/>"
+    "      <arg type='i' name='x'/>"
+    "      <arg type='i' name='y'/>"
+    "      <arg type='i' name='width'/>"
+    "      <arg type='i' name='height'/>"
+    "    </signal>"
+    "    <signal name='IconGeometryRemoved'>"
+    "      <arg type='s' name='internal_id'/>"
+    "    </signal>"
+    "    <signal name='DockSurfaceGeometryChanged'>"
+    "      <arg type='b' name='available'/>"
+    "      <arg type='i' name='x'/>"
+    "      <arg type='i' name='y'/>"
+    "      <arg type='i' name='width'/>"
+    "      <arg type='i' name='height'/>"
+    "    </signal>"
     "  </interface>"
     "</node>";
 
@@ -82,6 +120,39 @@ constexpr guint32 DBUS_REQUEST_NAME_PRIMARY_OWNER =
     1;
 constexpr guint32 DBUS_REQUEST_NAME_ALREADY_OWNER =
     4;
+constexpr char MINIMIZE_EFFECT_ID[] =
+    "org.docklight6.minimize";
+constexpr char MINIMIZE_EFFECT_GROUP[] =
+    "Effect-org.docklight6.minimize";
+constexpr guint EFFECT_GEOMETRY_UPDATE_DELAY_MS =
+    50;
+
+bool minimize_effect_is_installed()
+{
+    if (g_getenv(
+            "DOCKLIGHT_DISABLE_MINIMIZE_EFFECT_BRIDGE"))
+    {
+        return false;
+    }
+
+    auto metadata_path =
+        g_build_filename(
+            g_get_user_data_dir(),
+            "kwin",
+            "effects",
+            MINIMIZE_EFFECT_ID,
+            "metadata.json",
+            nullptr);
+
+    const bool installed =
+        g_file_test(
+            metadata_path,
+            G_FILE_TEST_IS_REGULAR);
+
+    g_free(metadata_path);
+
+    return installed;
+}
 
 template <typename Integer>
 bool parse_integer(
@@ -274,6 +345,53 @@ KWinIntegrationService::
             return enqueue_command(
                 command);
         });
+
+    m_backend.set_icon_geometry_handler(
+        [this](
+            const WindowId &window_id,
+            const WindowIconGeometry
+                &geometry)
+        {
+            return publish_icon_geometry(
+                window_id,
+                geometry);
+        });
+
+    m_window_removed =
+        m_backend
+            .signal_window_removed()
+            .connect(
+                sigc::mem_fun(
+                    *this,
+                    &KWinIntegrationService::
+                        remove_icon_geometry));
+
+    m_snapshot_changed =
+        m_backend
+            .signal_snapshot_changed()
+            .connect(
+                sigc::mem_fun(
+                    *this,
+                    &KWinIntegrationService::
+                        prune_icon_geometries));
+
+    m_connection_changed =
+        m_backend
+            .signal_connection_changed()
+            .connect(
+                sigc::mem_fun(
+                    *this,
+                    &KWinIntegrationService::
+                        handle_backend_connection));
+
+    m_dock_surface_geometry_changed =
+        m_backend
+            .signal_dock_surface_geometry_changed()
+            .connect(
+                sigc::mem_fun(
+                    *this,
+                    &KWinIntegrationService::
+                        emit_dock_surface_geometry));
 }
 
 KWinIntegrationService::
@@ -281,6 +399,13 @@ KWinIntegrationService::
 {
     stop();
     m_backend.set_command_handler({});
+    m_backend.set_icon_geometry_handler(
+        {});
+    m_window_removed.disconnect();
+    m_snapshot_changed.disconnect();
+    m_connection_changed.disconnect();
+    m_dock_surface_geometry_changed
+        .disconnect();
 }
 
 bool KWinIntegrationService::start()
@@ -334,12 +459,21 @@ bool KWinIntegrationService::start()
     }
 
     m_available = true;
+    schedule_effect_geometry_update();
 
     return true;
 }
 
 void KWinIntegrationService::stop()
 {
+    cancel_effect_geometry_update();
+
+    if (m_effect_geometries_initialized &&
+        !m_published_effect_geometries.empty())
+    {
+        write_effect_geometries({});
+    }
+
     clear_sender(true);
     release_name();
     unregister_object();
@@ -598,6 +732,462 @@ bool KWinIntegrationService::enqueue_command(
     return true;
 }
 
+bool KWinIntegrationService::
+    publish_icon_geometry(
+        const WindowId &window_id,
+        const WindowIconGeometry &geometry)
+{
+    if (!m_available ||
+        !m_connection ||
+        window_id.empty() ||
+        geometry.width <= 0 ||
+        geometry.height <= 0)
+    {
+        return false;
+    }
+
+    const auto current =
+        m_icon_geometries.find(
+            window_id);
+
+    if (current !=
+            m_icon_geometries.end() &&
+        current->second == geometry)
+    {
+        return true;
+    }
+
+    m_icon_geometries[window_id] =
+        geometry;
+    schedule_effect_geometry_update();
+
+    GError *error = nullptr;
+
+    const bool emitted =
+        g_dbus_connection_emit_signal(
+            m_connection,
+            nullptr,
+            KWinIntegrationProtocol::
+                OBJECT_PATH,
+            KWinIntegrationProtocol::
+                INTERFACE_NAME,
+            "IconGeometryChanged",
+            g_variant_new(
+                "(siiii)",
+                window_id.c_str(),
+                geometry.x,
+                geometry.y,
+                geometry.width,
+                geometry.height),
+            &error);
+
+    if (!emitted)
+    {
+        g_warning(
+            "Cannot publish KWin icon geometry: %s",
+            error
+                ? error->message
+                : "unknown error");
+    }
+
+    g_clear_error(&error);
+
+    return emitted;
+}
+
+void KWinIntegrationService::
+    remove_icon_geometry(
+        const WindowId &window_id)
+{
+    if (m_icon_geometries.erase(
+            window_id) == 0)
+    {
+        return;
+    }
+
+    emit_icon_geometry_removed(
+        window_id);
+    schedule_effect_geometry_update();
+}
+
+void KWinIntegrationService::
+    handle_backend_connection(
+        bool connected)
+{
+    if (connected)
+    {
+        prune_icon_geometries();
+        return;
+    }
+
+    while (!m_icon_geometries.empty())
+    {
+        const auto window_id =
+            m_icon_geometries.begin()
+                ->first;
+
+        m_icon_geometries.erase(
+            m_icon_geometries.begin());
+
+        emit_icon_geometry_removed(
+            window_id);
+    }
+
+    schedule_effect_geometry_update();
+}
+
+void KWinIntegrationService::
+    prune_icon_geometries()
+{
+    const auto windows =
+        m_backend.windows();
+    bool changed = false;
+
+    for (auto iterator =
+             m_icon_geometries.begin();
+         iterator !=
+             m_icon_geometries.end();)
+    {
+        const auto found =
+            std::find_if(
+                windows.begin(),
+                windows.end(),
+                [&iterator](
+                    const ManagedWindow
+                        &window)
+                {
+                    return window.id ==
+                           iterator->first;
+                });
+
+        if (found != windows.end())
+        {
+            ++iterator;
+            continue;
+        }
+
+        const auto window_id =
+            iterator->first;
+
+        iterator =
+            m_icon_geometries.erase(
+                iterator);
+        changed = true;
+
+        emit_icon_geometry_removed(
+            window_id);
+    }
+
+    if (changed)
+        schedule_effect_geometry_update();
+}
+
+void KWinIntegrationService::
+    schedule_effect_geometry_update()
+{
+    if (m_effect_geometry_update_id != 0 ||
+        !minimize_effect_is_installed())
+    {
+        return;
+    }
+
+    m_effect_geometry_update_id =
+        g_timeout_add(
+            EFFECT_GEOMETRY_UPDATE_DELAY_MS,
+            &KWinIntegrationService::
+                on_effect_geometry_update,
+            this);
+}
+
+void KWinIntegrationService::
+    publish_effect_geometries()
+{
+    std::map<
+        std::int64_t,
+        WindowIconGeometry>
+        process_geometries;
+
+    for (const auto &window :
+         m_backend.windows())
+    {
+        if (window.process_id <= 0)
+            continue;
+
+        const auto geometry =
+            m_icon_geometries.find(
+                window.id);
+
+        if (geometry ==
+            m_icon_geometries.end())
+        {
+            continue;
+        }
+
+        process_geometries[
+            window.process_id] =
+            geometry->second;
+    }
+
+    std::ostringstream encoded;
+    bool first = true;
+
+    for (const auto &entry :
+         process_geometries)
+    {
+        if (!first)
+            encoded << ';';
+
+        first = false;
+
+        encoded
+            << entry.first << ','
+            << entry.second.x << ','
+            << entry.second.y << ','
+            << entry.second.width << ','
+            << entry.second.height;
+    }
+
+    write_effect_geometries(
+        encoded.str());
+}
+
+bool KWinIntegrationService::
+    write_effect_geometries(
+        const std::string &geometries)
+{
+    if ((m_effect_geometries_initialized &&
+         geometries ==
+             m_published_effect_geometries) ||
+        !minimize_effect_is_installed())
+    {
+        return true;
+    }
+
+    gchar *arguments[] = {
+        const_cast<gchar *>(
+            "kwriteconfig6"),
+        const_cast<gchar *>("--file"),
+        const_cast<gchar *>("kwinrc"),
+        const_cast<gchar *>("--group"),
+        const_cast<gchar *>(
+            MINIMIZE_EFFECT_GROUP),
+        const_cast<gchar *>("--key"),
+        const_cast<gchar *>("Geometries"),
+        const_cast<gchar *>(
+            geometries.c_str()),
+        nullptr};
+
+    GError *error = nullptr;
+    gint exit_status = 0;
+
+    const bool spawned =
+        g_spawn_sync(
+            nullptr,
+            arguments,
+            nullptr,
+            G_SPAWN_SEARCH_PATH,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            &exit_status,
+            &error);
+
+    if (!spawned ||
+        !g_spawn_check_wait_status(
+            exit_status,
+            &error))
+    {
+        g_warning(
+            "Cannot publish Docklight minimize-effect geometries: %s",
+            error
+                ? error->message
+                : "unknown error");
+
+        g_clear_error(&error);
+        return false;
+    }
+
+    m_published_effect_geometries =
+        geometries;
+    m_effect_geometries_initialized =
+        true;
+
+    if (m_connection)
+    {
+        g_dbus_connection_call(
+            m_connection,
+            "org.kde.KWin",
+            "/Effects",
+            "org.kde.kwin.Effects",
+            "reconfigureEffect",
+            g_variant_new(
+                "(s)",
+                MINIMIZE_EFFECT_ID),
+            nullptr,
+            G_DBUS_CALL_FLAGS_NONE,
+            -1,
+            nullptr,
+            nullptr,
+            nullptr);
+    }
+
+    return true;
+}
+
+void KWinIntegrationService::
+    cancel_effect_geometry_update()
+{
+    if (m_effect_geometry_update_id == 0)
+        return;
+
+    g_source_remove(
+        m_effect_geometry_update_id);
+    m_effect_geometry_update_id = 0;
+}
+
+void KWinIntegrationService::
+    emit_icon_geometry_removed(
+        const WindowId &window_id)
+{
+    if (!m_available ||
+        !m_connection)
+    {
+        return;
+    }
+
+    GError *error = nullptr;
+
+    g_dbus_connection_emit_signal(
+        m_connection,
+        nullptr,
+        KWinIntegrationProtocol::
+            OBJECT_PATH,
+        KWinIntegrationProtocol::
+            INTERFACE_NAME,
+        "IconGeometryRemoved",
+        g_variant_new(
+            "(s)",
+            window_id.c_str()),
+        &error);
+
+    if (error)
+    {
+        g_warning(
+            "Cannot remove KWin icon geometry: %s",
+            error->message);
+    }
+
+    g_clear_error(&error);
+}
+
+void KWinIntegrationService::
+    return_icon_geometries(
+        GDBusMethodInvocation *invocation) const
+{
+    GVariantBuilder builder;
+
+    g_variant_builder_init(
+        &builder,
+        G_VARIANT_TYPE("a(siiii)"));
+
+    for (const auto &entry :
+         m_icon_geometries)
+    {
+        const auto &geometry =
+            entry.second;
+
+        g_variant_builder_add(
+            &builder,
+            "(siiii)",
+            entry.first.c_str(),
+            geometry.x,
+            geometry.y,
+            geometry.width,
+            geometry.height);
+    }
+
+    g_dbus_method_invocation_return_value(
+        invocation,
+        g_variant_new(
+            "(a(siiii))",
+            &builder));
+}
+
+void KWinIntegrationService::
+    return_dock_surface_geometry(
+        GDBusMethodInvocation *invocation) const
+{
+    const auto geometry =
+        m_backend.dock_surface_geometry();
+
+    g_dbus_method_invocation_return_value(
+        invocation,
+        g_variant_new(
+            "(biiii)",
+            geometry.has_value(),
+            geometry
+                ? geometry->x
+                : 0,
+            geometry
+                ? geometry->y
+                : 0,
+            geometry
+                ? geometry->width
+                : 0,
+            geometry
+                ? geometry->height
+                : 0));
+}
+
+void KWinIntegrationService::
+    emit_dock_surface_geometry()
+{
+    if (!m_available ||
+        !m_connection)
+    {
+        return;
+    }
+
+    const auto geometry =
+        m_backend.dock_surface_geometry();
+    GError *error = nullptr;
+
+    g_dbus_connection_emit_signal(
+        m_connection,
+        nullptr,
+        KWinIntegrationProtocol::
+            OBJECT_PATH,
+        KWinIntegrationProtocol::
+            INTERFACE_NAME,
+        "DockSurfaceGeometryChanged",
+        g_variant_new(
+            "(biiii)",
+            geometry.has_value(),
+            geometry
+                ? geometry->x
+                : 0,
+            geometry
+                ? geometry->y
+                : 0,
+            geometry
+                ? geometry->width
+                : 0,
+            geometry
+                ? geometry->height
+                : 0),
+        &error);
+
+    if (error)
+    {
+        g_warning(
+            "Cannot publish Docklight surface geometry: %s",
+            error->message);
+    }
+
+    g_clear_error(&error);
+}
+
 void KWinIntegrationService::
     deliver_next_command()
 {
@@ -741,6 +1331,27 @@ void KWinIntegrationService::
                 PROTOCOL_VERSION_TEXT
                     .c_str()));
 
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "GetIconGeometries") == 0)
+    {
+        g_message(
+            "Docklight Plasma geometry bridge connected");
+
+        return_icon_geometries(
+            invocation);
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "GetDockSurfaceGeometry") == 0)
+    {
+        return_dock_surface_geometry(
+            invocation);
         return;
     }
 
@@ -993,6 +1604,49 @@ void KWinIntegrationService::
         return;
     }
 
+    if (std::strcmp(
+            method_name,
+            "PublishDockSurfaceGeometry") == 0)
+    {
+        const char *revision_text = nullptr;
+        std::uint64_t revision = 0;
+        WindowIconGeometry geometry;
+
+        g_variant_get(
+            parameters,
+            "(&siiii)",
+            &revision_text,
+            &geometry.x,
+            &geometry.y,
+            &geometry.width,
+            &geometry.height);
+
+        const bool empty =
+            geometry.width == 0 &&
+            geometry.height == 0;
+
+        const bool valid =
+            geometry.width > 0 &&
+            geometry.height > 0;
+
+        return_accepted(
+            invocation,
+            parse_integer(
+                revision_text,
+                revision) &&
+                (empty || valid) &&
+                m_backend
+                    .publish_dock_surface_geometry(
+                        revision,
+                        empty
+                            ? std::nullopt
+                            : std::optional<
+                                  WindowIconGeometry>{
+                                  geometry}));
+
+        return;
+    }
+
     g_dbus_method_invocation_return_error(
         invocation,
         G_DBUS_ERROR,
@@ -1042,6 +1696,20 @@ gboolean KWinIntegrationService::
             false));
 
     g_object_unref(invocation);
+
+    return G_SOURCE_REMOVE;
+}
+
+gboolean KWinIntegrationService::
+    on_effect_geometry_update(
+        gpointer user_data)
+{
+    auto service =
+        static_cast<KWinIntegrationService *>(
+            user_data);
+
+    service->m_effect_geometry_update_id = 0;
+    service->publish_effect_geometries();
 
     return G_SOURCE_REMOVE;
 }

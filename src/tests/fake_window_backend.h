@@ -23,6 +23,8 @@ public:
     stacking_order() const override;
     std::optional<WindowId>
     active_window() const override;
+    std::optional<WindowIconGeometry>
+    dock_surface_geometry() const override;
 
     bool activate_window(
         const WindowId &window_id) override;
@@ -36,6 +38,10 @@ public:
     bool set_window_maximized(
         const WindowId &window_id,
         bool maximized) override;
+    bool set_window_icon_geometry(
+        const WindowId &window_id,
+        const WindowIconGeometry
+            &geometry) override;
 
     void set_snapshot(
         std::vector<ManagedWindow> windows,
@@ -58,6 +64,9 @@ public:
             &stacking_order);
     void set_connected(
         bool connected);
+    void set_dock_surface_geometry(
+        const std::optional<
+            WindowIconGeometry> &geometry);
 
 private:
     ManagedWindow *find_window(
@@ -68,6 +77,8 @@ private:
     std::vector<WindowId> m_stacking_order;
 
     std::optional<WindowId> m_active_window;
+    std::optional<WindowIconGeometry>
+        m_dock_surface_geometry;
 
     bool m_connected = false;
 };

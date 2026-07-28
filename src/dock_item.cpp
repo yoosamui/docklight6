@@ -87,6 +87,27 @@ application_identifiers(
     return identifiers;
 }
 
+bool has_single_main_window(
+    const Glib::RefPtr<Gio::AppInfo> &app)
+{
+    if (!app ||
+        !G_IS_DESKTOP_APP_INFO(app->gobj()))
+    {
+        return false;
+    }
+
+    auto *desktop_app =
+        G_DESKTOP_APP_INFO(
+            app->gobj());
+
+    return g_desktop_app_info_get_boolean(
+               desktop_app,
+               "SingleMainWindow") ||
+           g_desktop_app_info_get_boolean(
+               desktop_app,
+               "X-GNOME-SingleWindow");
+}
+
 Glib::RefPtr<Gdk::Pixbuf>
 create_transparent_pixbuf(
     int width,
@@ -313,7 +334,9 @@ DockItem::DockItem(
       m_application_controller(
           window_registry,
           application_identifiers(app)),
-      m_hover_effect(hover_effect)
+      m_hover_effect(hover_effect),
+      m_single_main_window(
+          has_single_main_window(app))
 {
     set_visible_window(false);
 
@@ -357,6 +380,41 @@ void DockItem::set_icon_size(int icon_size)
     set_size_request(
         DockLayoutMetrics::item_size_for(icon_size),
         DockLayoutMetrics::item_size_for(icon_size));
+}
+
+void DockItem::publish_icon_geometry(
+    const WindowIconGeometry &geometry)
+{
+    m_application_controller
+        .set_icon_geometry(geometry);
+}
+
+ItemGeometry DockItem::icon_geometry()
+{
+    const auto allocation =
+        image.get_allocation();
+
+    ItemGeometry geometry;
+
+    image.translate_coordinates(
+        m_dock,
+        0,
+        0,
+        geometry.x,
+        geometry.y);
+
+    geometry.width =
+        allocation.get_width();
+    geometry.height =
+        allocation.get_height();
+    geometry.center_x =
+        geometry.x +
+        geometry.width / 2;
+    geometry.center_y =
+        geometry.y +
+        geometry.height / 2;
+
+    return geometry;
 }
 
 void DockItem::set_hover_effect(
@@ -857,6 +915,10 @@ void DockItem::show_context_menu(
 
 void DockItem::refresh_context_menu()
 {
+    m_open_new_window_item.set_sensitive(
+        !m_application_controller.running() ||
+        !m_single_main_window);
+
     m_minimize_item.set_sensitive(
         m_application_controller
             .can_minimize());

@@ -58,6 +58,9 @@ private:
         const MonitorGeometry &monitor,
         DockOrientation orientation);
     void schedule_layout_update();
+    void schedule_icon_geometry_update();
+    void update_icon_geometries();
+    ScreenPosition dock_screen_position() const;
     void schedule_icon_refresh();
     void reload_icons();
     void show_tooltip(DockItem &item);
@@ -81,13 +84,21 @@ private:
     DockLayoutEngine m_layout_engine;
 
     MonitorGeometry m_usable_monitor_geometry;
+    MonitorGeometry m_output_geometry;
+
+    DockPlacement m_placement;
 
     sigc::connection m_show_timer;
     sigc::connection m_hide_timer;
     sigc::connection m_layout_update;
+    sigc::connection m_icon_geometry_update;
     sigc::connection m_icon_theme_changed;
     sigc::connection m_icon_refresh;
     sigc::connection m_realize;
+    sigc::connection m_size_allocate;
+    sigc::connection m_window_registry_changed;
+    sigc::connection
+        m_dock_surface_geometry_changed;
     sigc::connection m_dock_add;
     sigc::connection m_dock_remove;
 

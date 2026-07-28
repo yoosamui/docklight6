@@ -263,7 +263,7 @@ void verifies_dbus_state_transport()
 
     assert(!registered);
     assert(supported_version_text ==
-           "3");
+           "4");
 
     result =
         call_method(
@@ -271,7 +271,7 @@ void verifies_dbus_state_transport()
             "Register",
             g_variant_new(
                 "(s)",
-                "3"));
+                "4"));
 
     g_variant_get(
         result,
@@ -324,9 +324,29 @@ void verifies_dbus_state_transport()
     assert(accepted(
         call_method(
             client,
+            "PublishDockSurfaceGeometry",
+            g_variant_new(
+                "(siiii)",
+                "11",
+                0,
+                331,
+                62,
+                822))));
+
+    const std::optional<WindowIconGeometry>
+        expected_dock_geometry{
+            {0, 331, 62, 822}};
+
+    assert(
+        backend.dock_surface_geometry() ==
+        expected_dock_geometry);
+
+    assert(accepted(
+        call_method(
+            client,
             "PublishWindow",
             window_parameters(
-                11,
+                12,
                 "Downloads"))));
 
     assert(backend.windows()[0].caption ==
@@ -337,7 +357,7 @@ void verifies_dbus_state_transport()
             client,
             "PublishWindow",
             window_parameters(
-                11,
+                12,
                 "Stale"))));
 
     assert(backend.activate_window(
@@ -396,6 +416,57 @@ void verifies_dbus_state_transport()
     auto other_client =
         connect_to_test_bus(test_bus);
 
+    assert(
+        backend.set_window_icon_geometry(
+            "window-1",
+            {100, 200, 64, 64}));
+
+    result =
+        call_method(
+            other_client,
+            "GetIconGeometries",
+            nullptr);
+
+    GVariant *geometries = nullptr;
+
+    g_variant_get(
+        result,
+        "(@a(siiii))",
+        &geometries);
+
+    assert(
+        g_variant_n_children(
+            geometries) == 1);
+
+    const char *geometry_window_id =
+        nullptr;
+    gint32 geometry_x = 0;
+    gint32 geometry_y = 0;
+    gint32 geometry_width = 0;
+    gint32 geometry_height = 0;
+
+    g_variant_get_child(
+        geometries,
+        0,
+        "(&siiii)",
+        &geometry_window_id,
+        &geometry_x,
+        &geometry_y,
+        &geometry_width,
+        &geometry_height);
+
+    assert(
+        std::string(
+            geometry_window_id) ==
+        "window-1");
+    assert(geometry_x == 100);
+    assert(geometry_y == 200);
+    assert(geometry_width == 64);
+    assert(geometry_height == 64);
+
+    g_variant_unref(geometries);
+    g_variant_unref(result);
+
     result =
         call_method(
             other_client,
@@ -451,6 +522,11 @@ void verifies_dbus_state_transport()
 
 int main()
 {
+    g_setenv(
+        "DOCKLIGHT_DISABLE_MINIMIZE_EFFECT_BRIDGE",
+        "1",
+        true);
+
     verifies_dbus_state_transport();
 
     return 0;

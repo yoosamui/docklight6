@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Docklight contributors"
+            }
+        ],
+        "Category": "Windows and Tasks",
+        "Description": "Publishes Docklight icon geometry to KWin through Plasma Shell",
+        "EnabledByDefault": true,
+        "Icon": "dock",
+        "Id": "org.docklight6.geometrybridge",
+        "License": "GPL-3.0-or-later",
+        "Name": "Docklight Window Geometry Bridge"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

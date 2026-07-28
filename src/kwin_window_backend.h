@@ -4,6 +4,7 @@
 #include "window_backend.h"
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -11,6 +12,12 @@
 class KWinWindowBackend : public WindowBackend
 {
 public:
+    using IconGeometryHandler =
+        std::function<
+            bool(
+                const WindowId &,
+                const WindowIconGeometry &)>;
+
     void start() override;
     void stop() override;
 
@@ -25,6 +32,8 @@ public:
     stacking_order() const override;
     std::optional<WindowId>
     active_window() const override;
+    std::optional<WindowIconGeometry>
+    dock_surface_geometry() const override;
 
     bool activate_window(
         const WindowId &window_id) override;
@@ -38,9 +47,15 @@ public:
     bool set_window_maximized(
         const WindowId &window_id,
         bool maximized) override;
+    bool set_window_icon_geometry(
+        const WindowId &window_id,
+        const WindowIconGeometry
+            &geometry) override;
 
     void set_command_handler(
         KWinWindowCommandHandler handler);
+    void set_icon_geometry_handler(
+        IconGeometryHandler handler);
 
     bool register_integration(
         std::uint32_t protocol_version);
@@ -73,6 +88,10 @@ public:
         std::uint64_t revision,
         const std::vector<WindowId>
             &stacking_order);
+    bool publish_dock_surface_geometry(
+        std::uint64_t revision,
+        const std::optional<
+            WindowIconGeometry> &geometry);
 
     std::uint64_t last_revision() const;
 
@@ -97,11 +116,16 @@ private:
     std::vector<WindowId> m_stacking_order;
 
     std::optional<WindowId> m_active_window;
+    std::optional<WindowIconGeometry>
+        m_dock_surface_geometry;
     std::optional<std::uint64_t>
         m_staged_revision;
 
     KWinWindowCommandHandler
         m_command_handler;
+
+    IconGeometryHandler
+        m_icon_geometry_handler;
 
     std::uint64_t m_last_revision = 0;
 

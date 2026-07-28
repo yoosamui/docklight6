@@ -1,6 +1,7 @@
 #pragma once
 
 #include "managed_window.h"
+#include "window_icon_geometry.h"
 
 #include <sigc++/signal.h>
 
@@ -20,6 +21,7 @@ struct WindowBackendCapabilities
     bool provides_virtual_desktops = false;
     bool provides_frame_geometry = false;
     bool provides_icons = false;
+    bool accepts_icon_geometry = false;
 };
 
 class WindowBackend
@@ -41,6 +43,8 @@ public:
     stacking_order() const = 0;
     virtual std::optional<WindowId>
     active_window() const = 0;
+    virtual std::optional<WindowIconGeometry>
+    dock_surface_geometry() const = 0;
 
     virtual bool activate_window(
         const WindowId &window_id) = 0;
@@ -54,6 +58,9 @@ public:
     virtual bool set_window_maximized(
         const WindowId &window_id,
         bool maximized) = 0;
+    virtual bool set_window_icon_geometry(
+        const WindowId &window_id,
+        const WindowIconGeometry &geometry) = 0;
 
     sigc::signal<
         void,
@@ -87,6 +94,8 @@ public:
 
     sigc::signal<void> &
     signal_snapshot_changed();
+    sigc::signal<void> &
+    signal_dock_surface_geometry_changed();
 
 protected:
     void notify_window_added(
@@ -104,6 +113,7 @@ protected:
     void notify_connection_changed(
         bool connected);
     void notify_snapshot_changed();
+    void notify_dock_surface_geometry_changed();
 
 private:
     sigc::signal<
@@ -133,4 +143,6 @@ private:
 
     sigc::signal<void>
         m_signal_snapshot_changed;
+    sigc::signal<void>
+        m_signal_dock_surface_geometry_changed;
 };

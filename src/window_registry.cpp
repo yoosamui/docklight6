@@ -104,6 +104,16 @@ void WindowRegistry::start()
                     &WindowRegistry::
                         on_snapshot_changed)));
 
+    m_connections.push_back(
+        m_backend
+            .signal_dock_surface_geometry_changed()
+            .connect(
+                [this]()
+                {
+                    m_signal_dock_surface_geometry_changed
+                        .emit();
+                }));
+
     m_backend.start();
 
     if (!m_connected)
@@ -156,6 +166,12 @@ const std::optional<WindowId> &
 WindowRegistry::active_window() const
 {
     return m_active_window;
+}
+
+std::optional<WindowIconGeometry>
+WindowRegistry::dock_surface_geometry() const
+{
+    return m_backend.dock_surface_geometry();
 }
 
 const ManagedWindow *
@@ -253,6 +269,16 @@ bool WindowRegistry::set_window_maximized(
                    maximized);
 }
 
+bool WindowRegistry::set_window_icon_geometry(
+    const WindowId &window_id,
+    const WindowIconGeometry &geometry)
+{
+    return m_backend
+        .set_window_icon_geometry(
+            window_id,
+            geometry);
+}
+
 sigc::signal<void> &
 WindowRegistry::signal_changed()
 {
@@ -263,6 +289,13 @@ sigc::signal<void, bool> &
 WindowRegistry::signal_connection_changed()
 {
     return m_signal_connection_changed;
+}
+
+sigc::signal<void> &
+WindowRegistry::
+    signal_dock_surface_geometry_changed()
+{
+    return m_signal_dock_surface_geometry_changed;
 }
 
 void WindowRegistry::load_snapshot()

@@ -29,6 +29,9 @@ public:
         int corner_radius);
     void reload_icon();
     void set_vertical(bool vertical);
+    void publish_icon_geometry(
+        const WindowIconGeometry &geometry);
+    ItemGeometry icon_geometry();
 
     Glib::ustring app_name() const;
 
@@ -110,4 +113,5 @@ private:
     int m_blur_target_frame = 0;
 
     bool m_hovered = false;
+    bool m_single_main_window = false;
 };

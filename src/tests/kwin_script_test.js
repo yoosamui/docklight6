@@ -103,7 +103,32 @@ const dockWindow =
         "dock-window",
         "org.docklight6");
 
-dockWindow.dock = true;
+dockWindow.resourceName = "docklight6";
+dockWindow.skipTaskbar = true;
+
+const dockPopup =
+    createWindow(
+        "dock-popup",
+        "org.docklight6");
+
+dockPopup.resourceName = "docklight6";
+dockPopup.skipTaskbar = true;
+dockPopup.popupWindow = true;
+
+const replacementDockWindow =
+    createWindow(
+        "replacement-dock-window",
+        "org.docklight6");
+
+replacementDockWindow.resourceName =
+    "docklight6";
+replacementDockWindow.skipTaskbar = true;
+replacementDockWindow.frameGeometry = {
+    x: 100,
+    y: 700,
+    width: 600,
+    height: 64
+};
 
 const workspace = {
     stackingOrder: [
@@ -211,11 +236,11 @@ assert.strictEqual(
     "Register");
 assert.deepStrictEqual(
     calls[0].arguments,
-    ["3"]);
+    ["4"]);
 
 calls[0].callback(
     true,
-    "3");
+    "4");
 
 const beginSnapshot =
     calls.find(
@@ -235,11 +260,76 @@ const commitSnapshot =
             call.methodName ===
             "CommitSnapshot");
 
+const dockSurfaceGeometry =
+    calls.find(
+        call =>
+            call.methodName ===
+            "PublishDockSurfaceGeometry");
+
 assert(beginSnapshot);
 assert.strictEqual(
     stagedWindows.length,
     1);
 assert(commitSnapshot);
+assert(dockSurfaceGeometry);
+assert.deepStrictEqual(
+    dockSurfaceGeometry.arguments,
+    [
+        "2",
+        10,
+        20,
+        800,
+        600
+    ]);
+
+const dockGeometryCount =
+    calls.filter(
+        call =>
+            call.methodName ===
+            "PublishDockSurfaceGeometry")
+        .length;
+
+workspace.stackingOrder = [
+    managedWindow,
+    dockWindow,
+    dockPopup
+];
+workspace.windowAdded.emit(
+    dockPopup);
+workspace.windowRemoved.emit(
+    dockPopup);
+
+assert.strictEqual(
+    calls.filter(
+        call =>
+            call.methodName ===
+            "PublishDockSurfaceGeometry")
+        .length,
+    dockGeometryCount);
+
+workspace.stackingOrder = [
+    managedWindow,
+    replacementDockWindow
+];
+workspace.windowRemoved.emit(
+    dockWindow);
+
+const recoveredDockGeometry =
+    calls
+        .filter(
+            call =>
+                call.methodName ===
+                "PublishDockSurfaceGeometry")
+        .at(-1);
+
+assert.deepStrictEqual(
+    recoveredDockGeometry.arguments.slice(1),
+    [
+        100,
+        700,
+        600,
+        64
+    ]);
 
 function deliverCommand(
     command,

@@ -36,6 +36,8 @@ FakeWindowBackend::capabilities() const
     capabilities.provides_frame_geometry =
         true;
     capabilities.provides_icons = true;
+    capabilities.accepts_icon_geometry =
+        true;
 
     return capabilities;
 }
@@ -61,6 +63,13 @@ std::optional<WindowId>
 FakeWindowBackend::active_window() const
 {
     return m_active_window;
+}
+
+std::optional<WindowIconGeometry>
+FakeWindowBackend::
+    dock_surface_geometry() const
+{
+    return m_dock_surface_geometry;
 }
 
 bool FakeWindowBackend::activate_window(
@@ -137,6 +146,16 @@ bool FakeWindowBackend::
     notify_window_updated(*window);
 
     return true;
+}
+
+bool FakeWindowBackend::
+    set_window_icon_geometry(
+        const WindowId &window_id,
+        const WindowIconGeometry &geometry)
+{
+    return find_window(window_id) &&
+           geometry.width > 0 &&
+           geometry.height > 0;
 }
 
 void FakeWindowBackend::set_snapshot(
@@ -273,6 +292,18 @@ void FakeWindowBackend::set_connected(
 
     notify_connection_changed(
         connected);
+}
+
+void FakeWindowBackend::
+    set_dock_surface_geometry(
+        const std::optional<
+            WindowIconGeometry> &geometry)
+{
+    if (m_dock_surface_geometry == geometry)
+        return;
+
+    m_dock_surface_geometry = geometry;
+    notify_dock_surface_geometry_changed();
 }
 
 ManagedWindow *

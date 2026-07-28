@@ -42,6 +42,8 @@ KWinWindowBackend::capabilities() const
     capabilities.provides_frame_geometry =
         true;
     capabilities.provides_icons = true;
+    capabilities.accepts_icon_geometry =
+        true;
 
     return capabilities;
 }
@@ -67,6 +69,13 @@ std::optional<WindowId>
 KWinWindowBackend::active_window() const
 {
     return m_active_window;
+}
+
+std::optional<WindowIconGeometry>
+KWinWindowBackend::
+    dock_surface_geometry() const
+{
+    return m_dock_surface_geometry;
 }
 
 bool KWinWindowBackend::activate_window(
@@ -117,11 +126,33 @@ bool KWinWindowBackend::
         maximized);
 }
 
+bool KWinWindowBackend::
+    set_window_icon_geometry(
+        const WindowId &window_id,
+        const WindowIconGeometry &geometry)
+{
+    return !window_id.empty() &&
+           geometry.width > 0 &&
+           geometry.height > 0 &&
+           m_icon_geometry_handler &&
+           m_icon_geometry_handler(
+               window_id,
+               geometry);
+}
+
 void KWinWindowBackend::
     set_command_handler(
         KWinWindowCommandHandler handler)
 {
     m_command_handler =
+        std::move(handler);
+}
+
+void KWinWindowBackend::
+    set_icon_geometry_handler(
+        IconGeometryHandler handler)
+{
+    m_icon_geometry_handler =
         std::move(handler);
 }
 
@@ -436,6 +467,32 @@ bool KWinWindowBackend::
     return true;
 }
 
+bool KWinWindowBackend::
+    publish_dock_surface_geometry(
+        std::uint64_t revision,
+        const std::optional<
+            WindowIconGeometry> &geometry)
+{
+    if (!accepts_incremental_revision(
+            revision))
+    {
+        return false;
+    }
+
+    const bool changed =
+        m_dock_surface_geometry != geometry;
+
+    m_dock_surface_geometry = geometry;
+    m_last_revision = revision;
+
+    if (changed)
+    {
+        notify_dock_surface_geometry_changed();
+    }
+
+    return true;
+}
+
 std::uint64_t
 KWinWindowBackend::last_revision() const
 {
@@ -521,6 +578,7 @@ void KWinWindowBackend::clear_state()
     m_stacking_order.clear();
 
     m_active_window.reset();
+    m_dock_surface_geometry.reset();
     m_staged_revision.reset();
 
     m_last_revision = 0;
