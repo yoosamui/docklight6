@@ -53,6 +53,26 @@ application_identifiers(
     add_identifier(app->get_id());
     add_identifier(app->get_executable());
 
+    const auto icon = app->get_icon();
+
+    if (icon &&
+        G_IS_THEMED_ICON(icon->gobj()))
+    {
+        const auto icon_names =
+            g_themed_icon_get_names(
+                G_THEMED_ICON(
+                    icon->gobj()));
+
+        for (int index = 0;
+             icon_names &&
+             icon_names[index];
+             ++index)
+        {
+            add_identifier(
+                icon_names[index]);
+        }
+    }
+
     if (G_IS_DESKTOP_APP_INFO(app->gobj()))
     {
         const auto startup_wm_class =
