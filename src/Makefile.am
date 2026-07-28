@@ -9,6 +9,10 @@ AM_CPPFLAGS = \
 
 docklight6_SOURCES = \
     main.cpp \
+    managed_window.h \
+    running_application.h \
+    window_backend.h \
+    window_backend.cpp \
     dock_configuration.h \
     dock_configuration_manager.h \
     dock_configuration_manager.cpp \
