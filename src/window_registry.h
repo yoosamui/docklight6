@@ -1,0 +1,92 @@
+#pragma once
+
+#include "running_application.h"
+#include "window_backend.h"
+
+#include <sigc++/connection.h>
+#include <sigc++/signal.h>
+
+#include <optional>
+#include <string>
+#include <vector>
+
+class WindowRegistry
+{
+public:
+    explicit WindowRegistry(
+        WindowBackend &backend);
+    ~WindowRegistry();
+
+    void start();
+    void stop();
+
+    bool connected() const;
+
+    const std::vector<ManagedWindow> &
+    windows() const;
+    const std::vector<RunningApplication> &
+    running_applications() const;
+    const std::optional<WindowId> &
+    active_window() const;
+
+    const ManagedWindow *find_window(
+        const WindowId &window_id) const;
+    const RunningApplication *
+    find_application(
+        const std::string
+            &desktop_file_name) const;
+
+    sigc::signal<void> &
+    signal_changed();
+    sigc::signal<void, bool> &
+    signal_connection_changed();
+
+private:
+    void load_snapshot();
+    void clear();
+    void rebuild_applications();
+    bool apply_stacking_order(
+        const std::vector<WindowId>
+            &stacking_order);
+    bool apply_active_window(
+        const std::optional<WindowId>
+            &window_id);
+
+    void on_window_added(
+        const ManagedWindow &window);
+    void on_window_updated(
+        const ManagedWindow &window);
+    void on_window_removed(
+        const WindowId &window_id);
+    void on_active_window_changed(
+        const std::optional<WindowId>
+            &window_id);
+    void on_stacking_order_changed(
+        const std::vector<WindowId>
+            &stacking_order);
+    void on_connection_changed(
+        bool connected);
+
+    static std::string
+    normalize_desktop_file_name(
+        const std::string
+            &desktop_file_name);
+
+private:
+    WindowBackend &m_backend;
+
+    std::vector<ManagedWindow> m_windows;
+    std::vector<RunningApplication>
+        m_running_applications;
+
+    std::optional<WindowId> m_active_window;
+
+    std::vector<sigc::connection> m_connections;
+
+    sigc::signal<void> m_signal_changed;
+    sigc::signal<void, bool>
+        m_signal_connection_changed;
+
+    bool m_started = false;
+    bool m_connected = false;
+};

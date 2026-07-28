@@ -102,7 +102,12 @@ clang-tidy.sh
 /src/Makefile
 /src/Makefile.in
 /src/docklight
+/src/test-suite.log
+/src/window_registry_test
+/src/window_registry_test.log
+/src/window_registry_test.trs
 /stamp-h1
+/test-driver
 /src/svg/
 
 *.src.swp
@@ -145,4 +150,3 @@ tags
 *.exe
 *.out
 *.app
-

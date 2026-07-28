@@ -1,5 +1,9 @@
 bin_PROGRAMS = docklight6
 
+check_PROGRAMS = window_registry_test
+
+TESTS = $(check_PROGRAMS)
+
 AM_CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
 
 # $(abs_top_srcdir) expands to the absolute 
@@ -13,6 +17,8 @@ docklight6_SOURCES = \
     running_application.h \
     window_backend.h \
     window_backend.cpp \
+    window_registry.h \
+    window_registry.cpp \
     dock_configuration.h \
     dock_configuration_manager.h \
     dock_configuration_manager.cpp \
@@ -37,3 +43,20 @@ docklight6_CPPFLAGS = \
 docklight6_LDADD = \
     $(GTKMM_LIBS) \
     $(GTK_LAYER_SHELL_LIBS)
+
+window_registry_test_SOURCES = \
+    tests/window_registry_test.cpp \
+    tests/fake_window_backend.h \
+    tests/fake_window_backend.cpp \
+    managed_window.h \
+    running_application.h \
+    window_backend.h \
+    window_backend.cpp \
+    window_registry.h \
+    window_registry.cpp
+
+window_registry_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+window_registry_test_LDADD = \
+    $(GTKMM_LIBS)
