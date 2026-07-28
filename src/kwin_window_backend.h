@@ -1,0 +1,100 @@
+#pragma once
+
+#include "window_backend.h"
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <vector>
+
+class KWinWindowBackend : public WindowBackend
+{
+public:
+    void start() override;
+    void stop() override;
+
+    std::string name() const override;
+    WindowBackendCapabilities
+    capabilities() const override;
+    bool connected() const override;
+
+    std::vector<ManagedWindow>
+    windows() const override;
+    std::vector<WindowId>
+    stacking_order() const override;
+    std::optional<WindowId>
+    active_window() const override;
+
+    bool activate_window(
+        const WindowId &window_id) override;
+    bool raise_window(
+        const WindowId &window_id) override;
+    bool close_window(
+        const WindowId &window_id) override;
+    bool set_window_minimized(
+        const WindowId &window_id,
+        bool minimized) override;
+    bool set_window_maximized(
+        const WindowId &window_id,
+        bool maximized) override;
+
+    bool register_integration(
+        std::uint32_t protocol_version);
+    void unregister_integration();
+
+    bool begin_snapshot(
+        std::uint64_t revision);
+    bool stage_window(
+        std::uint64_t revision,
+        const ManagedWindow &window);
+    bool commit_snapshot(
+        std::uint64_t revision,
+        const std::optional<WindowId>
+            &active_window,
+        const std::vector<WindowId>
+            &stacking_order);
+    void cancel_snapshot();
+
+    bool publish_window(
+        std::uint64_t revision,
+        const ManagedWindow &window);
+    bool publish_window_removed(
+        std::uint64_t revision,
+        const WindowId &window_id);
+    bool publish_active_window(
+        std::uint64_t revision,
+        const std::optional<WindowId>
+            &window_id);
+    bool publish_stacking_order(
+        std::uint64_t revision,
+        const std::vector<WindowId>
+            &stacking_order);
+
+    std::uint64_t last_revision() const;
+
+private:
+    ManagedWindow *find_window(
+        const WindowId &window_id);
+    const ManagedWindow *find_window(
+        const WindowId &window_id) const;
+
+    bool accepts_incremental_revision(
+        std::uint64_t revision) const;
+    void clear_state();
+
+private:
+    std::vector<ManagedWindow> m_windows;
+    std::vector<ManagedWindow>
+        m_staged_windows;
+    std::vector<WindowId> m_stacking_order;
+
+    std::optional<WindowId> m_active_window;
+    std::optional<std::uint64_t>
+        m_staged_revision;
+
+    std::uint64_t m_last_revision = 0;
+
+    bool m_started = false;
+    bool m_registered = false;
+    bool m_connected = false;
+};

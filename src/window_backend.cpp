@@ -48,6 +48,12 @@ WindowBackend::signal_connection_changed()
     return m_signal_connection_changed;
 }
 
+sigc::signal<void> &
+WindowBackend::signal_snapshot_changed()
+{
+    return m_signal_snapshot_changed;
+}
+
 void WindowBackend::notify_window_added(
     const ManagedWindow &window)
 {
@@ -90,4 +96,9 @@ void WindowBackend::notify_connection_changed(
 {
     m_signal_connection_changed.emit(
         connected);
+}
+
+void WindowBackend::notify_snapshot_changed()
+{
+    m_signal_snapshot_changed.emit();
 }

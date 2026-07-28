@@ -95,6 +95,15 @@ void WindowRegistry::start()
                     &WindowRegistry::
                         on_connection_changed)));
 
+    m_connections.push_back(
+        m_backend
+            .signal_snapshot_changed()
+            .connect(
+                sigc::mem_fun(
+                    *this,
+                    &WindowRegistry::
+                        on_snapshot_changed)));
+
     m_backend.start();
 
     if (!m_connected)
@@ -555,6 +564,11 @@ void WindowRegistry::on_connection_changed(
 
     m_signal_connection_changed.emit(
         connected);
+}
+
+void WindowRegistry::on_snapshot_changed()
+{
+    load_snapshot();
 }
 
 std::string

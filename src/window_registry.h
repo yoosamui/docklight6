@@ -66,6 +66,7 @@ private:
             &stacking_order);
     void on_connection_changed(
         bool connected);
+    void on_snapshot_changed();
 
     static std::string
     normalize_desktop_file_name(

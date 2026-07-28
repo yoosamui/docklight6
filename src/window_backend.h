@@ -85,6 +85,9 @@ public:
         bool> &
     signal_connection_changed();
 
+    sigc::signal<void> &
+    signal_snapshot_changed();
+
 protected:
     void notify_window_added(
         const ManagedWindow &window);
@@ -100,6 +103,7 @@ protected:
             &stacking_order);
     void notify_connection_changed(
         bool connected);
+    void notify_snapshot_changed();
 
 private:
     sigc::signal<
@@ -126,4 +130,7 @@ private:
         void,
         bool>
         m_signal_connection_changed;
+
+    sigc::signal<void>
+        m_signal_snapshot_changed;
 };
