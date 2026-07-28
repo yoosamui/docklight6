@@ -8,7 +8,6 @@
 #include <cassert>
 #include <cstdint>
 #include <functional>
-#include <initializer_list>
 #include <string>
 #include <vector>
 
@@ -154,50 +153,30 @@ GDBusConnection *connect_to_test_bus(
     return connection;
 }
 
-GVariant *string_array(
-    std::initializer_list<const char *>
-        values)
-{
-    GVariantBuilder builder;
-
-    g_variant_builder_init(
-        &builder,
-        G_VARIANT_TYPE("as"));
-
-    for (const auto value :
-         values)
-    {
-        g_variant_builder_add(
-            &builder,
-            "s",
-            value);
-    }
-
-    return g_variant_builder_end(
-        &builder);
-}
-
 GVariant *window_parameters(
     std::uint64_t revision,
     const char *caption)
 {
+    const auto revision_text =
+        std::to_string(revision);
+
     return g_variant_new(
-        "(tssssxbbbiiii@as@as)",
-        static_cast<guint64>(revision),
+        "(sssssssssssssss)",
+        revision_text.c_str(),
         "window-1",
         "org.kde.dolphin",
         caption,
         "system-file-manager",
-        static_cast<gint64>(1234),
-        false,
-        false,
-        false,
-        10,
-        20,
-        800,
-        600,
-        string_array({"activity-1"}),
-        string_array({"desktop-1"}));
+        "1234",
+        "0",
+        "0",
+        "0",
+        "10",
+        "20",
+        "800",
+        "600",
+        "activity-1",
+        "desktop-1");
 }
 
 bool accepted(
@@ -265,38 +244,40 @@ void verifies_dbus_state_transport()
             client,
             "Register",
             g_variant_new(
-                "(u)",
-                KWinIntegrationProtocol::
-                        VERSION +
-                    1));
+                "(s)",
+                "2"));
 
     gboolean registered = true;
-    guint32 supported_version = 0;
+    const char *supported_version =
+        nullptr;
 
     g_variant_get(
         result,
-        "(bu)",
+        "(b&s)",
         &registered,
         &supported_version);
+
+    const std::string
+        supported_version_text =
+            supported_version;
 
     g_variant_unref(result);
 
     assert(!registered);
-    assert(supported_version ==
-           KWinIntegrationProtocol::VERSION);
+    assert(supported_version_text ==
+           "1");
 
     result =
         call_method(
             client,
             "Register",
             g_variant_new(
-                "(u)",
-                KWinIntegrationProtocol::
-                    VERSION));
+                "(s)",
+                "1"));
 
     g_variant_get(
         result,
-        "(bu)",
+        "(b&s)",
         &registered,
         &supported_version);
 
@@ -309,9 +290,8 @@ void verifies_dbus_state_transport()
             client,
             "BeginSnapshot",
             g_variant_new(
-                "(t)",
-                static_cast<guint64>(
-                    10)))));
+                "(s)",
+                "10"))));
 
     assert(accepted(
         call_method(
@@ -326,12 +306,10 @@ void verifies_dbus_state_transport()
             client,
             "CommitSnapshot",
             g_variant_new(
-                "(ts@as)",
-                static_cast<guint64>(
-                    10),
+                "(sss)",
+                "10",
                 "window-1",
-                string_array({
-                    "window-1"})))));
+                "window-1"))));
 
     assert(backend.connected());
     assert(backend.windows().size() == 1);
@@ -372,13 +350,12 @@ void verifies_dbus_state_transport()
             other_client,
             "Register",
             g_variant_new(
-                "(u)",
-                KWinIntegrationProtocol::
-                    VERSION));
+                "(s)",
+                "1"));
 
     g_variant_get(
         result,
-        "(bu)",
+        "(b&s)",
         &registered,
         &supported_version);
 

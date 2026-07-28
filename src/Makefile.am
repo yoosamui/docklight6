@@ -5,7 +5,9 @@ check_PROGRAMS = \
     kwin_window_backend_test \
     kwin_integration_service_test
 
-TESTS = $(check_PROGRAMS)
+TESTS = \
+    $(check_PROGRAMS) \
+    tests/kwin_script_test.js
 
 AM_CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
 

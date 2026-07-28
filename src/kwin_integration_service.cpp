@@ -5,9 +5,12 @@
 
 #include <glib.h>
 
+#include <charconv>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <string>
+#include <system_error>
 #include <vector>
 
 namespace
@@ -21,95 +24,160 @@ constexpr char INTROSPECTION_XML[] =
     "      <arg type='t' direction='out' name='last_revision'/>"
     "    </method>"
     "    <method name='Register'>"
-    "      <arg type='u' direction='in' name='protocol_version'/>"
+    "      <arg type='s' direction='in' name='protocol_version'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
-    "      <arg type='u' direction='out' name='supported_version'/>"
+    "      <arg type='s' direction='out' name='supported_version'/>"
     "    </method>"
     "    <method name='Unregister'/>"
     "    <method name='BeginSnapshot'>"
-    "      <arg type='t' direction='in' name='revision'/>"
+    "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
     "    <method name='StageWindow'>"
-    "      <arg type='t' direction='in' name='revision'/>"
+    "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='s' direction='in' name='internal_id'/>"
     "      <arg type='s' direction='in' name='desktop_file_name'/>"
     "      <arg type='s' direction='in' name='caption'/>"
     "      <arg type='s' direction='in' name='icon_name'/>"
-    "      <arg type='x' direction='in' name='pid'/>"
-    "      <arg type='b' direction='in' name='minimized'/>"
-    "      <arg type='b' direction='in' name='maximized'/>"
-    "      <arg type='b' direction='in' name='skip_taskbar'/>"
-    "      <arg type='i' direction='in' name='x'/>"
-    "      <arg type='i' direction='in' name='y'/>"
-    "      <arg type='i' direction='in' name='width'/>"
-    "      <arg type='i' direction='in' name='height'/>"
-    "      <arg type='as' direction='in' name='activities'/>"
-    "      <arg type='as' direction='in' name='desktops'/>"
+    "      <arg type='s' direction='in' name='pid'/>"
+    "      <arg type='s' direction='in' name='minimized'/>"
+    "      <arg type='s' direction='in' name='maximized'/>"
+    "      <arg type='s' direction='in' name='skip_taskbar'/>"
+    "      <arg type='s' direction='in' name='x'/>"
+    "      <arg type='s' direction='in' name='y'/>"
+    "      <arg type='s' direction='in' name='width'/>"
+    "      <arg type='s' direction='in' name='height'/>"
+    "      <arg type='s' direction='in' name='activities'/>"
+    "      <arg type='s' direction='in' name='desktops'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
     "    <method name='CommitSnapshot'>"
-    "      <arg type='t' direction='in' name='revision'/>"
+    "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='s' direction='in' name='active_window'/>"
-    "      <arg type='as' direction='in' name='stacking_order'/>"
+    "      <arg type='s' direction='in' name='stacking_order'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
     "    <method name='PublishWindow'>"
-    "      <arg type='t' direction='in' name='revision'/>"
+    "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='s' direction='in' name='internal_id'/>"
     "      <arg type='s' direction='in' name='desktop_file_name'/>"
     "      <arg type='s' direction='in' name='caption'/>"
     "      <arg type='s' direction='in' name='icon_name'/>"
-    "      <arg type='x' direction='in' name='pid'/>"
-    "      <arg type='b' direction='in' name='minimized'/>"
-    "      <arg type='b' direction='in' name='maximized'/>"
-    "      <arg type='b' direction='in' name='skip_taskbar'/>"
-    "      <arg type='i' direction='in' name='x'/>"
-    "      <arg type='i' direction='in' name='y'/>"
-    "      <arg type='i' direction='in' name='width'/>"
-    "      <arg type='i' direction='in' name='height'/>"
-    "      <arg type='as' direction='in' name='activities'/>"
-    "      <arg type='as' direction='in' name='desktops'/>"
+    "      <arg type='s' direction='in' name='pid'/>"
+    "      <arg type='s' direction='in' name='minimized'/>"
+    "      <arg type='s' direction='in' name='maximized'/>"
+    "      <arg type='s' direction='in' name='skip_taskbar'/>"
+    "      <arg type='s' direction='in' name='x'/>"
+    "      <arg type='s' direction='in' name='y'/>"
+    "      <arg type='s' direction='in' name='width'/>"
+    "      <arg type='s' direction='in' name='height'/>"
+    "      <arg type='s' direction='in' name='activities'/>"
+    "      <arg type='s' direction='in' name='desktops'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
     "    <method name='PublishWindowRemoved'>"
-    "      <arg type='t' direction='in' name='revision'/>"
+    "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='s' direction='in' name='internal_id'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
     "    <method name='PublishActiveWindow'>"
-    "      <arg type='t' direction='in' name='revision'/>"
+    "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='s' direction='in' name='internal_id'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
     "    <method name='PublishStackingOrder'>"
-    "      <arg type='t' direction='in' name='revision'/>"
-    "      <arg type='as' direction='in' name='stacking_order'/>"
+    "      <arg type='s' direction='in' name='revision'/>"
+    "      <arg type='s' direction='in' name='stacking_order'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
     "  </interface>"
     "</node>";
 
-std::vector<std::string> string_array(
-    GVariant *array)
+const std::string PROTOCOL_VERSION_TEXT =
+    std::to_string(
+        KWinIntegrationProtocol::VERSION);
+
+template <typename Integer>
+bool parse_integer(
+    const char *text,
+    Integer &value)
 {
-    std::vector<std::string> values;
-    GVariantIter iterator;
-    const char *value = nullptr;
+    if (!text || text[0] == '\0')
+        return false;
 
-    g_variant_iter_init(
-        &iterator,
-        array);
+    const auto end =
+        text + std::strlen(text);
 
-    while (g_variant_iter_next(
-        &iterator,
-        "&s",
-        &value))
+    const auto result =
+        std::from_chars(
+            text,
+            end,
+            value);
+
+    return result.ec == std::errc{} &&
+           result.ptr == end;
+}
+
+bool parse_boolean(
+    const char *text,
+    bool &value)
+{
+    if (std::strcmp(text, "0") == 0)
     {
-        values.emplace_back(value);
+        value = false;
+        return true;
     }
 
-    return values;
+    if (std::strcmp(text, "1") == 0)
+    {
+        value = true;
+        return true;
+    }
+
+    return false;
+}
+
+bool parse_string_array(
+    const char *encoded_values,
+    std::vector<std::string> &values)
+{
+    values.clear();
+
+    if (!encoded_values ||
+        encoded_values[0] == '\0')
+    {
+        return true;
+    }
+
+    auto parts =
+        g_strsplit(
+            encoded_values,
+            ",",
+            -1);
+
+    for (int index = 0;
+         parts[index];
+         ++index)
+    {
+        auto decoded =
+            g_uri_unescape_string(
+                parts[index],
+                nullptr);
+
+        if (!decoded)
+        {
+            g_strfreev(parts);
+            values.clear();
+            return false;
+        }
+
+        values.emplace_back(decoded);
+        g_free(decoded);
+    }
+
+    g_strfreev(parts);
+
+    return true;
 }
 
 std::optional<WindowId> optional_window_id(
@@ -129,31 +197,26 @@ bool parse_window(
     std::uint64_t &revision,
     ManagedWindow &window)
 {
+    const char *revision_text = nullptr;
     const char *internal_id = nullptr;
     const char *desktop_file_name = nullptr;
     const char *caption = nullptr;
     const char *icon_name = nullptr;
-
-    gint64 process_id = 0;
-
-    gboolean minimized = false;
-    gboolean maximized = false;
-    gboolean skip_taskbar = false;
-
-    gint32 x = 0;
-    gint32 y = 0;
-    gint32 width = 0;
-    gint32 height = 0;
-
-    GVariant *activities = nullptr;
-    GVariant *desktops = nullptr;
-
-    guint64 message_revision = 0;
+    const char *process_id = nullptr;
+    const char *minimized = nullptr;
+    const char *maximized = nullptr;
+    const char *skip_taskbar = nullptr;
+    const char *x = nullptr;
+    const char *y = nullptr;
+    const char *width = nullptr;
+    const char *height = nullptr;
+    const char *activities = nullptr;
+    const char *desktops = nullptr;
 
     g_variant_get(
         parameters,
-        "(t&s&s&s&sxbbbiiii@as@as)",
-        &message_revision,
+        "(&s&s&s&s&s&s&s&s&s&s&s&s&s&s&s)",
+        &revision_text,
         &internal_id,
         &desktop_file_name,
         &caption,
@@ -169,32 +232,48 @@ bool parse_window(
         &activities,
         &desktops);
 
-    revision = message_revision;
+    if (!parse_integer(
+            revision_text,
+            revision) ||
+        !parse_integer(
+            process_id,
+            window.process_id) ||
+        !parse_boolean(
+            minimized,
+            window.minimized) ||
+        !parse_boolean(
+            maximized,
+            window.maximized) ||
+        !parse_boolean(
+            skip_taskbar,
+            window.skip_taskbar) ||
+        !parse_integer(
+            x,
+            window.frame_geometry.x) ||
+        !parse_integer(
+            y,
+            window.frame_geometry.y) ||
+        !parse_integer(
+            width,
+            window.frame_geometry.width) ||
+        !parse_integer(
+            height,
+            window.frame_geometry.height) ||
+        !parse_string_array(
+            activities,
+            window.activity_ids) ||
+        !parse_string_array(
+            desktops,
+            window.desktop_ids))
+    {
+        return false;
+    }
 
     window.id = internal_id;
     window.desktop_file_name =
         desktop_file_name;
     window.caption = caption;
     window.icon_name = icon_name;
-
-    window.activity_ids =
-        string_array(activities);
-    window.desktop_ids =
-        string_array(desktops);
-
-    window.frame_geometry.x = x;
-    window.frame_geometry.y = y;
-    window.frame_geometry.width = width;
-    window.frame_geometry.height = height;
-
-    window.process_id = process_id;
-
-    window.minimized = minimized;
-    window.maximized = maximized;
-    window.skip_taskbar = skip_taskbar;
-
-    g_variant_unref(activities);
-    g_variant_unref(desktops);
 
     return !window.id.empty();
 }
@@ -447,14 +526,19 @@ void KWinIntegrationService::
             method_name,
             "Register") == 0)
     {
-        guint32 protocol_version = 0;
+        const char *protocol_version_text =
+            nullptr;
+        std::uint32_t protocol_version = 0;
 
         g_variant_get(
             parameters,
-            "(u)",
-            &protocol_version);
+            "(&s)",
+            &protocol_version_text);
 
         const bool accepted =
+            parse_integer(
+                protocol_version_text,
+                protocol_version) &&
             register_sender(
                 sender,
                 protocol_version);
@@ -462,10 +546,10 @@ void KWinIntegrationService::
         g_dbus_method_invocation_return_value(
             invocation,
             g_variant_new(
-                "(bu)",
+                "(bs)",
                 accepted,
-                KWinIntegrationProtocol::
-                    VERSION));
+                PROTOCOL_VERSION_TEXT
+                    .c_str()));
 
         return;
     }
@@ -497,17 +581,21 @@ void KWinIntegrationService::
             method_name,
             "BeginSnapshot") == 0)
     {
-        guint64 revision = 0;
+        const char *revision_text = nullptr;
+        std::uint64_t revision = 0;
 
         g_variant_get(
             parameters,
-            "(t)",
-            &revision);
+            "(&s)",
+            &revision_text);
 
         return_accepted(
             invocation,
-            m_backend.begin_snapshot(
-                revision));
+            parse_integer(
+                revision_text,
+                revision) &&
+                m_backend.begin_snapshot(
+                    revision));
 
         return;
     }
@@ -554,26 +642,37 @@ void KWinIntegrationService::
             method_name,
             "CommitSnapshot") == 0)
     {
-        guint64 revision = 0;
+        const char *revision_text = nullptr;
         const char *active_window = nullptr;
-        GVariant *stacking_order = nullptr;
+        const char *stacking_order_text =
+            nullptr;
 
         g_variant_get(
             parameters,
-            "(t&s@as)",
-            &revision,
+            "(&s&s&s)",
+            &revision_text,
             &active_window,
-            &stacking_order);
+            &stacking_order_text);
+
+        std::uint64_t revision = 0;
+        std::vector<std::string>
+            stacking_order;
+
+        const bool parsed =
+            parse_integer(
+                revision_text,
+                revision) &&
+            parse_string_array(
+                stacking_order_text,
+                stacking_order);
 
         const bool accepted =
+            parsed &&
             m_backend.commit_snapshot(
                 revision,
                 optional_window_id(
                     active_window),
-                string_array(
-                    stacking_order));
-
-        g_variant_unref(stacking_order);
+                stacking_order);
 
         return_accepted(
             invocation,
@@ -586,18 +685,23 @@ void KWinIntegrationService::
             method_name,
             "PublishWindowRemoved") == 0)
     {
-        guint64 revision = 0;
+        const char *revision_text = nullptr;
         const char *window_id = nullptr;
 
         g_variant_get(
             parameters,
-            "(t&s)",
-            &revision,
+            "(&s&s)",
+            &revision_text,
             &window_id);
+
+        std::uint64_t revision = 0;
 
         return_accepted(
             invocation,
-            m_backend
+            parse_integer(
+                revision_text,
+                revision) &&
+                m_backend
                 .publish_window_removed(
                     revision,
                     window_id));
@@ -609,18 +713,23 @@ void KWinIntegrationService::
             method_name,
             "PublishActiveWindow") == 0)
     {
-        guint64 revision = 0;
+        const char *revision_text = nullptr;
         const char *window_id = nullptr;
 
         g_variant_get(
             parameters,
-            "(t&s)",
-            &revision,
+            "(&s&s)",
+            &revision_text,
             &window_id);
+
+        std::uint64_t revision = 0;
 
         return_accepted(
             invocation,
-            m_backend
+            parse_integer(
+                revision_text,
+                revision) &&
+                m_backend
                 .publish_active_window(
                     revision,
                     optional_window_id(
@@ -633,23 +742,31 @@ void KWinIntegrationService::
             method_name,
             "PublishStackingOrder") == 0)
     {
-        guint64 revision = 0;
-        GVariant *stacking_order = nullptr;
+        const char *revision_text = nullptr;
+        const char *stacking_order_text =
+            nullptr;
 
         g_variant_get(
             parameters,
-            "(t@as)",
-            &revision,
-            &stacking_order);
+            "(&s&s)",
+            &revision_text,
+            &stacking_order_text);
+
+        std::uint64_t revision = 0;
+        std::vector<std::string>
+            stacking_order;
 
         const bool accepted =
-            m_backend
+            parse_integer(
+                revision_text,
+                revision) &&
+            parse_string_array(
+                stacking_order_text,
+                stacking_order) &&
+                m_backend
                 .publish_stacking_order(
                     revision,
-                    string_array(
-                        stacking_order));
-
-        g_variant_unref(stacking_order);
+                    stacking_order);
 
         return_accepted(
             invocation,
