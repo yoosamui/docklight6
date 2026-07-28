@@ -1,6 +1,7 @@
 #include "window_system_controller.h"
 
 #include "kwin_integration_service.h"
+#include "kwin_script_manager.h"
 #include "kwin_window_backend.h"
 #include "window_registry.h"
 
@@ -112,6 +113,9 @@ void WindowSystemController::start()
 
     g_message(
         "KWin window integration is ready for the KWin script");
+
+    KWinScriptManager script_manager;
+    script_manager.restart();
 }
 
 void WindowSystemController::stop()

@@ -7,7 +7,7 @@
         "/org/docklight6/WindowIntegration";
     const INTERFACE_NAME =
         "org.docklight6.WindowIntegration1";
-    const PROTOCOL_VERSION = "1";
+    const PROTOCOL_VERSION = "2";
 
     let connected = false;
     let registering = false;
@@ -148,6 +148,26 @@
         window) {
         const geometry =
             window.frameGeometry || {};
+        const payload =
+            encodedList([
+                windowId(window),
+                String(
+                    window.desktopFileName || ""),
+                String(window.caption || ""),
+                iconName(window),
+                integerText(window.pid),
+                booleanText(window.minimized),
+                booleanText(maximized(window)),
+                booleanText(window.skipTaskbar),
+                integerText(geometry.x),
+                integerText(geometry.y),
+                integerText(geometry.width),
+                integerText(geometry.height),
+                encodedList(window.activities),
+                encodedList(
+                    window.desktops,
+                    desktopId)
+            ]);
 
         callDBus(
             SERVICE_NAME,
@@ -155,23 +175,7 @@
             INTERFACE_NAME,
             methodName,
             messageRevision,
-            windowId(window),
-            String(
-                window.desktopFileName || ""),
-            String(window.caption || ""),
-            iconName(window),
-            integerText(window.pid),
-            booleanText(window.minimized),
-            booleanText(maximized(window)),
-            booleanText(window.skipTaskbar),
-            integerText(geometry.x),
-            integerText(geometry.y),
-            integerText(geometry.width),
-            integerText(geometry.height),
-            encodedList(window.activities),
-            encodedList(
-                window.desktops,
-                desktopId),
+            payload,
             handlePublishReply);
     }
 

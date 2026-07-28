@@ -5,7 +5,7 @@
 namespace KWinIntegrationProtocol
 {
 
-constexpr std::uint32_t VERSION = 1;
+constexpr std::uint32_t VERSION = 2;
 
 constexpr char SERVICE_NAME[] =
     "org.docklight6.WindowIntegration";

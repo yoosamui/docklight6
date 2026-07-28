@@ -29,6 +29,8 @@ docklight6_SOURCES = \
     kwin_integration_protocol.h \
     kwin_integration_service.h \
     kwin_integration_service.cpp \
+    kwin_script_manager.h \
+    kwin_script_manager.cpp \
     kwin_window_backend.h \
     kwin_window_backend.cpp \
     dock_configuration.h \

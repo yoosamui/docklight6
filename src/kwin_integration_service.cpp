@@ -35,20 +35,7 @@ constexpr char INTROSPECTION_XML[] =
     "    </method>"
     "    <method name='StageWindow'>"
     "      <arg type='s' direction='in' name='revision'/>"
-    "      <arg type='s' direction='in' name='internal_id'/>"
-    "      <arg type='s' direction='in' name='desktop_file_name'/>"
-    "      <arg type='s' direction='in' name='caption'/>"
-    "      <arg type='s' direction='in' name='icon_name'/>"
-    "      <arg type='s' direction='in' name='pid'/>"
-    "      <arg type='s' direction='in' name='minimized'/>"
-    "      <arg type='s' direction='in' name='maximized'/>"
-    "      <arg type='s' direction='in' name='skip_taskbar'/>"
-    "      <arg type='s' direction='in' name='x'/>"
-    "      <arg type='s' direction='in' name='y'/>"
-    "      <arg type='s' direction='in' name='width'/>"
-    "      <arg type='s' direction='in' name='height'/>"
-    "      <arg type='s' direction='in' name='activities'/>"
-    "      <arg type='s' direction='in' name='desktops'/>"
+    "      <arg type='s' direction='in' name='window_payload'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
     "    <method name='CommitSnapshot'>"
@@ -59,20 +46,7 @@ constexpr char INTROSPECTION_XML[] =
     "    </method>"
     "    <method name='PublishWindow'>"
     "      <arg type='s' direction='in' name='revision'/>"
-    "      <arg type='s' direction='in' name='internal_id'/>"
-    "      <arg type='s' direction='in' name='desktop_file_name'/>"
-    "      <arg type='s' direction='in' name='caption'/>"
-    "      <arg type='s' direction='in' name='icon_name'/>"
-    "      <arg type='s' direction='in' name='pid'/>"
-    "      <arg type='s' direction='in' name='minimized'/>"
-    "      <arg type='s' direction='in' name='maximized'/>"
-    "      <arg type='s' direction='in' name='skip_taskbar'/>"
-    "      <arg type='s' direction='in' name='x'/>"
-    "      <arg type='s' direction='in' name='y'/>"
-    "      <arg type='s' direction='in' name='width'/>"
-    "      <arg type='s' direction='in' name='height'/>"
-    "      <arg type='s' direction='in' name='activities'/>"
-    "      <arg type='s' direction='in' name='desktops'/>"
+    "      <arg type='s' direction='in' name='window_payload'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
     "    <method name='PublishWindowRemoved'>"
@@ -205,82 +179,66 @@ bool parse_window(
     ManagedWindow &window)
 {
     const char *revision_text = nullptr;
-    const char *internal_id = nullptr;
-    const char *desktop_file_name = nullptr;
-    const char *caption = nullptr;
-    const char *icon_name = nullptr;
-    const char *process_id = nullptr;
-    const char *minimized = nullptr;
-    const char *maximized = nullptr;
-    const char *skip_taskbar = nullptr;
-    const char *x = nullptr;
-    const char *y = nullptr;
-    const char *width = nullptr;
-    const char *height = nullptr;
-    const char *activities = nullptr;
-    const char *desktops = nullptr;
+    const char *window_payload = nullptr;
 
     g_variant_get(
         parameters,
-        "(&s&s&s&s&s&s&s&s&s&s&s&s&s&s&s)",
+        "(&s&s)",
         &revision_text,
-        &internal_id,
-        &desktop_file_name,
-        &caption,
-        &icon_name,
-        &process_id,
-        &minimized,
-        &maximized,
-        &skip_taskbar,
-        &x,
-        &y,
-        &width,
-        &height,
-        &activities,
-        &desktops);
+        &window_payload);
+
+    std::vector<std::string> fields;
+
+    if (!parse_string_array(
+            window_payload,
+            fields) ||
+        fields.size() != 14)
+    {
+        return false;
+    }
 
     if (!parse_integer(
             revision_text,
             revision) ||
         !parse_integer(
-            process_id,
+            fields[4].c_str(),
             window.process_id) ||
         !parse_boolean(
-            minimized,
+            fields[5].c_str(),
             window.minimized) ||
         !parse_boolean(
-            maximized,
+            fields[6].c_str(),
             window.maximized) ||
         !parse_boolean(
-            skip_taskbar,
+            fields[7].c_str(),
             window.skip_taskbar) ||
         !parse_integer(
-            x,
+            fields[8].c_str(),
             window.frame_geometry.x) ||
         !parse_integer(
-            y,
+            fields[9].c_str(),
             window.frame_geometry.y) ||
         !parse_integer(
-            width,
+            fields[10].c_str(),
             window.frame_geometry.width) ||
         !parse_integer(
-            height,
+            fields[11].c_str(),
             window.frame_geometry.height) ||
         !parse_string_array(
-            activities,
+            fields[12].c_str(),
             window.activity_ids) ||
         !parse_string_array(
-            desktops,
+            fields[13].c_str(),
             window.desktop_ids))
     {
         return false;
     }
 
-    window.id = internal_id;
+    window.id = fields[0];
     window.desktop_file_name =
-        desktop_file_name;
-    window.caption = caption;
-    window.icon_name = icon_name;
+        fields[1];
+    window.caption = fields[2];
+    window.icon_name = fields[3];
 
     return !window.id.empty();
 }

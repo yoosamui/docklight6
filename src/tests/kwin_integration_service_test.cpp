@@ -159,24 +159,26 @@ GVariant *window_parameters(
 {
     const auto revision_text =
         std::to_string(revision);
+    auto encoded_caption =
+        g_uri_escape_string(
+            caption,
+            nullptr,
+            false);
+
+    const std::string payload =
+        "window-1,"
+        "org.kde.dolphin," +
+        std::string(encoded_caption) +
+        ",system-file-manager,"
+        "1234,0,0,0,10,20,800,600,"
+        "activity-1,desktop-1";
+
+    g_free(encoded_caption);
 
     return g_variant_new(
-        "(sssssssssssssss)",
+        "(ss)",
         revision_text.c_str(),
-        "window-1",
-        "org.kde.dolphin",
-        caption,
-        "system-file-manager",
-        "1234",
-        "0",
-        "0",
-        "0",
-        "10",
-        "20",
-        "800",
-        "600",
-        "activity-1",
-        "desktop-1");
+        payload.c_str());
 }
 
 bool accepted(
@@ -241,7 +243,7 @@ void verifies_dbus_state_transport()
             "Register",
             g_variant_new(
                 "(s)",
-                "2"));
+                "1"));
 
     gboolean registered = true;
     const char *supported_version =
@@ -261,7 +263,7 @@ void verifies_dbus_state_transport()
 
     assert(!registered);
     assert(supported_version_text ==
-           "1");
+           "2");
 
     result =
         call_method(
@@ -269,7 +271,7 @@ void verifies_dbus_state_transport()
             "Register",
             g_variant_new(
                 "(s)",
-                "1"));
+                "2"));
 
     g_variant_get(
         result,
@@ -347,7 +349,7 @@ void verifies_dbus_state_transport()
             "Register",
             g_variant_new(
                 "(s)",
-                "1"));
+                "2"));
 
     g_variant_get(
         result,

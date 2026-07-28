@@ -185,11 +185,11 @@ assert.strictEqual(
     "Register");
 assert.deepStrictEqual(
     calls[0].arguments,
-    ["1"]);
+    ["2"]);
 
 calls[0].callback(
     true,
-    "1");
+    "2");
 
 const beginSnapshot =
     calls.find(
@@ -223,13 +223,23 @@ for (const value of
 }
 
 assert.strictEqual(
-    stagedWindows[0].arguments[1],
+    stagedWindows[0].arguments.length,
+    2);
+
+const stagedWindowPayload =
+    stagedWindows[0]
+        .arguments[1]
+        .split(",")
+        .map(decodeURIComponent);
+
+assert.strictEqual(
+    stagedWindowPayload[0],
     "window-1");
 assert.strictEqual(
-    stagedWindows[0].arguments[13],
+    stagedWindowPayload[12],
     "activity%2Cone");
 assert.strictEqual(
-    stagedWindows[0].arguments[14],
+    stagedWindowPayload[13],
     "desktop%2Cone");
 assert.deepStrictEqual(
     commitSnapshot.arguments,
@@ -250,7 +260,9 @@ assert.strictEqual(
     windowUpdate.methodName,
     "PublishWindow");
 assert.strictEqual(
-    windowUpdate.arguments[3],
+    windowUpdate.arguments[1]
+        .split(",")
+        .map(decodeURIComponent)[2],
     "Downloads");
 
 workspace.windowActivated.emit(
