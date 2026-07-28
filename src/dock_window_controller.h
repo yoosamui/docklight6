@@ -88,6 +88,9 @@ private:
 
     DockPlacement m_placement;
 
+    DockLocation m_applied_location =
+        DockLocation::bottom;
+
     sigc::connection m_show_timer;
     sigc::connection m_hide_timer;
     sigc::connection m_layout_update;
@@ -103,4 +106,6 @@ private:
     sigc::connection m_dock_remove;
 
     DockItem *m_pending_item = nullptr;
+
+    bool m_has_applied_layout = false;
 };

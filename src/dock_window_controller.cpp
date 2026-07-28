@@ -259,6 +259,15 @@ void DockWindowController::update_dock_layout()
             workarea_geometry,
             {});
 
+    const bool remap_for_anchor_change =
+        m_window.get_mapped() &&
+        m_has_applied_layout &&
+        m_applied_location !=
+            m_layout_request.location;
+
+    if (remap_for_anchor_change)
+        m_window.hide();
+
     // The first pass exists only to establish the box orientation. Do not
     // send its unknown (-1 x -1) size or partial anchor set to layer-shell:
     // switching from that temporary state to the final opposite-edge anchors
@@ -293,6 +302,13 @@ void DockWindowController::update_dock_layout()
     m_window.apply_dock_layout(placement);
 
     m_placement = placement;
+    m_applied_location =
+        m_layout_request.location;
+    m_has_applied_layout = true;
+
+    if (remap_for_anchor_change)
+        m_window.show_all();
+
     schedule_icon_geometry_update();
 }
 
