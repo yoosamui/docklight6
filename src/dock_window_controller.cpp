@@ -31,6 +31,7 @@ DockWindowController::~DockWindowController()
     cancel_hide_timer();
     m_layout_update.disconnect();
     m_icon_geometry_update.disconnect();
+    m_edge_layout_update.disconnect();
     m_icon_theme_changed.disconnect();
     m_icon_refresh.disconnect();
     m_realize.disconnect();
@@ -259,14 +260,10 @@ void DockWindowController::update_dock_layout()
             workarea_geometry,
             {});
 
-    const bool remap_for_anchor_change =
-        m_window.get_mapped() &&
+    const bool edge_changed =
         m_has_applied_layout &&
         m_applied_location !=
             m_layout_request.location;
-
-    if (remap_for_anchor_change)
-        m_window.hide();
 
     // The first pass exists only to establish the box orientation. Do not
     // send its unknown (-1 x -1) size or partial anchor set to layer-shell:
@@ -306,8 +303,23 @@ void DockWindowController::update_dock_layout()
         m_layout_request.location;
     m_has_applied_layout = true;
 
-    if (remap_for_anchor_change)
-        m_window.show_all();
+    if (edge_changed)
+    {
+        m_edge_layout_update.disconnect();
+
+        // The first mapped pass changes the box orientation and layer-shell
+        // anchors. Recalculate once GTK has accepted the new allocation so
+        // margins and the automatic exclusive zone use the new axis rather
+        // than the previous horizontal/vertical size.
+        m_edge_layout_update =
+            Glib::signal_timeout().connect(
+                [this]()
+                {
+                    update_dock_layout();
+                    return false;
+                },
+                10);
+    }
 
     schedule_icon_geometry_update();
 }

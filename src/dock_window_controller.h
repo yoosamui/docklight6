@@ -95,6 +95,7 @@ private:
     sigc::connection m_hide_timer;
     sigc::connection m_layout_update;
     sigc::connection m_icon_geometry_update;
+    sigc::connection m_edge_layout_update;
     sigc::connection m_icon_theme_changed;
     sigc::connection m_icon_refresh;
     sigc::connection m_realize;
