@@ -114,6 +114,8 @@ clang-tidy.sh
 /src/kwin_window_backend_test.trs
 /src/tests/kwin_script_test.js.log
 /src/tests/kwin_script_test.js.trs
+/src/tests/*.log
+/src/tests/*.trs
 /src/window_registry_test
 /src/window_registry_test.log
 /src/window_registry_test.trs

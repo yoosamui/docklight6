@@ -2,12 +2,40 @@
 
 set -euo pipefail
 
-if [ "${EUID}" -eq 0 ]; then
-    echo "Install the Plasma geometry bridge as the desktop user, without sudo" >&2
+install_globally=false
+
+if [ "${1:-}" = "--global" ]; then
+    install_globally=true
+    shift
+fi
+
+if [ "$#" -ne 0 ]; then
+    echo "Usage: $0 [--global]" >&2
     exit 1
 fi
 
-for command_name in cmake kpackagetool6 qdbus6; do
+if "${install_globally}"; then
+    if [ "${EUID}" -ne 0 ]; then
+        echo "The global Plasma geometry bridge installation requires root" >&2
+        exit 1
+    fi
+elif [ "${EUID}" -eq 0 ]; then
+    echo "Install the development Plasma geometry bridge as the desktop user, without sudo" >&2
+    exit 1
+fi
+
+required_commands=(
+    cmake
+    kpackagetool6
+)
+
+if ! "${install_globally}"; then
+    required_commands+=(
+        qdbus6
+    )
+fi
+
+for command_name in "${required_commands[@]}"; do
     if ! command -v "${command_name}" >/dev/null 2>&1; then
         echo "Missing required command: ${command_name}" >&2
         exit 1
@@ -61,85 +89,44 @@ cp \
     "${package_directory}/contents/ui/bridge/"
 
 package_id="org.docklight6.geometrybridge"
-installed_package="${HOME}/.local/share/plasma/plasmoids/${package_id}"
+package_tool_arguments=(
+    --type Plasma/Applet
+)
 
-if [ -d "${installed_package}" ]; then
+if "${install_globally}"; then
+    package_tool_arguments+=(
+        --global
+    )
+fi
+
+if kpackagetool6 \
+    "${package_tool_arguments[@]}" \
+    --show "${package_id}" \
+    >/dev/null 2>&1; then
     echo "Updating Docklight Plasma geometry bridge"
     kpackagetool6 \
-        --type Plasma/Applet \
+        "${package_tool_arguments[@]}" \
         --upgrade "${package_directory}"
 else
     echo "Installing Docklight Plasma geometry bridge"
     kpackagetool6 \
-        --type Plasma/Applet \
+        "${package_tool_arguments[@]}" \
         --install "${package_directory}"
 fi
 
-plasma_script='
-const packageId = "org.docklight6.geometrybridge";
-const taskManagerIds = [
-    "org.kde.plasma.icontasks",
-    "org.kde.plasma.taskmanager"
-];
-const panelContainments = panels();
-const allContainments = desktops().concat(panelContainments);
+if "${install_globally}"; then
+    echo "Docklight Plasma geometry bridge is installed system-wide"
+    echo "Start Docklight as the Plasma desktop user to activate the bridge"
+else
+    plasma_script="$(
+        <"${script_directory}/ensure-geometry-bridge.js"
+    )"
 
-let targetPanel = null;
-let installedWidget = null;
-let installedContainment = null;
+    qdbus6 \
+        org.kde.plasmashell \
+        /PlasmaShell \
+        org.kde.PlasmaShell.evaluateScript \
+        "${plasma_script}" >/dev/null
 
-for (const panel of panelContainments) {
-    for (const widgetId of panel.widgetIds) {
-        const widget = panel.widgetById(widgetId);
-
-        if (taskManagerIds.includes(widget.type)) {
-            targetPanel = panel;
-            break;
-        }
-    }
-
-    if (targetPanel) {
-        break;
-    }
-}
-
-for (const containment of allContainments) {
-    for (const widgetId of containment.widgetIds) {
-        const widget = containment.widgetById(widgetId);
-
-        if (widget.type === packageId) {
-            installedWidget = widget;
-            installedContainment = containment;
-            break;
-        }
-    }
-
-    if (installedWidget) {
-        break;
-    }
-}
-
-if (!targetPanel && panelContainments.length > 0) {
-    targetPanel = panelContainments[0];
-}
-
-if (!targetPanel) {
-    throw new Error(
-        "No Plasma panel is available for the Docklight geometry bridge");
-}
-
-if (installedWidget) {
-    installedWidget.remove();
-    installedWidget = null;
-}
-
-targetPanel.addWidget(packageId);
-'
-
-qdbus6 \
-    org.kde.plasmashell \
-    /PlasmaShell \
-    org.kde.PlasmaShell.evaluateScript \
-    "${plasma_script}" >/dev/null
-
-echo "Docklight Plasma geometry bridge is installed and active"
+    echo "Docklight Plasma geometry bridge is installed and active"
+fi

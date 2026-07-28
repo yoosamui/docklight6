@@ -9,6 +9,7 @@ EXTRA_DIST = \
     kwin/org.docklight6.windowintegration/metadata.json \
     kwin/org.docklight6.windowintegration/contents/code/main.js \
     plasma/geometry-bridge/README.md \
+    plasma/geometry-bridge/ensure-geometry-bridge.js \
     plasma/geometry-bridge/install-geometry-bridge.sh \
     plasma/geometry-bridge/plugin/CMakeLists.txt \
     plasma/geometry-bridge/plugin/geometry_bridge.h \
@@ -18,10 +19,14 @@ EXTRA_DIST = \
     plasma/geometry-bridge/package/contents/ui/main.qml \
     plasma/geometry-bridge/package/contents/ui/bridge/qmldir
 
+dist_pkgdata_DATA = \
+    plasma/geometry-bridge/ensure-geometry-bridge.js
+
 .PHONY: \
     install-kwin-integration \
     install-kwin-minimize-effect \
-    install-plasma-geometry-bridge
+    install-plasma-geometry-bridge \
+    install-plasma-geometry-bridge-system
 
 install-kwin-integration:
 	$(SHELL) $(srcdir)/kwin/install-window-integration.sh
@@ -31,3 +36,6 @@ install-kwin-minimize-effect:
 
 install-plasma-geometry-bridge:
 	$(SHELL) $(srcdir)/plasma/geometry-bridge/install-geometry-bridge.sh
+
+install-plasma-geometry-bridge-system:
+	$(SHELL) $(srcdir)/plasma/geometry-bridge/install-geometry-bridge.sh --global

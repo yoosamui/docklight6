@@ -14,5 +14,6 @@
         "License": "GPL-3.0-or-later",
         "Name": "Docklight Window Geometry Bridge"
     },
+    "NoDisplay": true,
     "X-Plasma-API-Minimum-Version": "6.0"
 }

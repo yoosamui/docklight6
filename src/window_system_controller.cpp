@@ -3,6 +3,7 @@
 #include "kwin_integration_service.h"
 #include "kwin_script_manager.h"
 #include "kwin_window_backend.h"
+#include "plasma_geometry_bridge_manager.h"
 #include "window_registry.h"
 
 #include <glib.h>
@@ -113,6 +114,10 @@ void WindowSystemController::start()
 
     g_message(
         "KWin window integration is ready for the KWin script");
+
+    PlasmaGeometryBridgeManager
+        bridge_manager;
+    bridge_manager.ensure();
 
     KWinScriptManager script_manager;
     script_manager.restart();

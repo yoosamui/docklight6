@@ -9,7 +9,8 @@ check_PROGRAMS = \
 TESTS = \
     $(check_PROGRAMS) \
     tests/kwin_minimize_effect_test.js \
-    tests/kwin_script_test.js
+    tests/kwin_script_test.js \
+    tests/plasma_geometry_bridge_test.js
 
 AM_CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
 
@@ -34,6 +35,8 @@ docklight6_SOURCES = \
     kwin_integration_service.cpp \
     kwin_script_manager.h \
     kwin_script_manager.cpp \
+    plasma_geometry_bridge_manager.h \
+    plasma_geometry_bridge_manager.cpp \
     kwin_window_command.h \
     kwin_window_backend.h \
     kwin_window_backend.cpp \
@@ -57,6 +60,7 @@ docklight6_SOURCES = \
 
 docklight6_CPPFLAGS = \
     $(AM_CPPFLAGS) \
+    -DDOCKLIGHT_DATA_DIR=\"$(pkgdatadir)\" \
     $(GTKMM_CFLAGS) \
     $(GTK_LAYER_SHELL_CFLAGS)
 
@@ -143,4 +147,5 @@ kwin_integration_service_test_LDADD = \
 
 EXTRA_DIST = \
     tests/kwin_minimize_effect_test.js \
-    tests/kwin_script_test.js
+    tests/kwin_script_test.js \
+    tests/plasma_geometry_bridge_test.js
