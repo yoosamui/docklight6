@@ -209,11 +209,7 @@ void verifies_dbus_state_transport()
     backend.start();
 
     assert(service.start());
-    assert(wait_until(
-        [&service]()
-        {
-            return service.available();
-        }));
+    assert(service.available());
 
     auto client =
         connect_to_test_bus(test_bus);

@@ -3,6 +3,7 @@
 #include "dock_configuration_manager.h"
 #include "dock_monitor_manager.h"
 #include "dock_window.h"
+#include "window_system_controller.h"
 #include "config.h"
 
 #include <string>
@@ -87,6 +88,9 @@ int main(int argc, char *argv[])
     g_message(
         "Dock configuration loaded: %s",
         configuration.config_path().c_str());
+
+    WindowSystemController window_system;
+    window_system.start();
 
     auto css = Gtk::CssProvider::create();
     const std::string style_path =

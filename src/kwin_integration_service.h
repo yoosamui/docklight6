@@ -19,8 +19,9 @@ public:
     bool available() const;
 
 private:
-    void register_object(
-        GDBusConnection *connection);
+    bool request_name();
+    void release_name();
+    bool register_object();
     void unregister_object();
 
     bool register_sender(
@@ -37,18 +38,6 @@ private:
         GVariant *parameters,
         GDBusMethodInvocation *invocation);
 
-    static void on_bus_acquired(
-        GDBusConnection *connection,
-        const gchar *name,
-        gpointer user_data);
-    static void on_name_acquired(
-        GDBusConnection *connection,
-        const gchar *name,
-        gpointer user_data);
-    static void on_name_lost(
-        GDBusConnection *connection,
-        const gchar *name,
-        gpointer user_data);
     static void on_sender_vanished(
         GDBusConnection *connection,
         const gchar *name,
@@ -71,9 +60,9 @@ private:
 
     std::string m_sender;
 
-    guint m_name_owner_id = 0;
     guint m_object_registration_id = 0;
     guint m_sender_watch_id = 0;
 
+    bool m_name_owned = false;
     bool m_available = false;
 };

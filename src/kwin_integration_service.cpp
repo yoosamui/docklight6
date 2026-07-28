@@ -97,6 +97,13 @@ const std::string PROTOCOL_VERSION_TEXT =
     std::to_string(
         KWinIntegrationProtocol::VERSION);
 
+constexpr guint32 DBUS_NAME_FLAG_DO_NOT_QUEUE =
+    4;
+constexpr guint32 DBUS_REQUEST_NAME_PRIMARY_OWNER =
+    1;
+constexpr guint32 DBUS_REQUEST_NAME_ALREADY_OWNER =
+    4;
+
 template <typename Integer>
 bool parse_integer(
     const char *text,
@@ -306,7 +313,7 @@ KWinIntegrationService::
 
 bool KWinIntegrationService::start()
 {
-    if (m_name_owner_id != 0)
+    if (m_available)
         return true;
 
     GError *error = nullptr;
@@ -328,36 +335,42 @@ bool KWinIntegrationService::start()
         return false;
     }
 
-    m_name_owner_id =
-        g_bus_own_name(
+    m_connection =
+        g_bus_get_sync(
             G_BUS_TYPE_SESSION,
-            KWinIntegrationProtocol::
-                SERVICE_NAME,
-            G_BUS_NAME_OWNER_FLAGS_NONE,
-            &KWinIntegrationService::
-                on_bus_acquired,
-            &KWinIntegrationService::
-                on_name_acquired,
-            &KWinIntegrationService::
-                on_name_lost,
-            this,
-            nullptr);
+            nullptr,
+            &error);
 
-    return m_name_owner_id != 0;
+    if (!m_connection)
+    {
+        g_warning(
+            "Cannot connect to the session D-Bus for KWin integration: %s",
+            error
+                ? error->message
+                : "unknown error");
+
+        g_clear_error(&error);
+        stop();
+        return false;
+    }
+
+    if (!register_object() ||
+        !request_name())
+    {
+        stop();
+        return false;
+    }
+
+    m_available = true;
+
+    return true;
 }
 
 void KWinIntegrationService::stop()
 {
     clear_sender(true);
+    release_name();
     unregister_object();
-
-    if (m_name_owner_id != 0)
-    {
-        g_bus_unown_name(
-            m_name_owner_id);
-
-        m_name_owner_id = 0;
-    }
 
     if (m_connection)
     {
@@ -381,18 +394,108 @@ bool KWinIntegrationService::available() const
     return m_available;
 }
 
-void KWinIntegrationService::register_object(
-    GDBusConnection *connection)
+bool KWinIntegrationService::request_name()
 {
-    unregister_object();
+    GError *error = nullptr;
 
-    if (m_connection)
-        g_object_unref(m_connection);
+    auto result =
+        g_dbus_connection_call_sync(
+            m_connection,
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "org.freedesktop.DBus",
+            "RequestName",
+            g_variant_new(
+                "(su)",
+                KWinIntegrationProtocol::
+                    SERVICE_NAME,
+                DBUS_NAME_FLAG_DO_NOT_QUEUE),
+            G_VARIANT_TYPE("(u)"),
+            G_DBUS_CALL_FLAGS_NONE,
+            -1,
+            nullptr,
+            &error);
 
-    m_connection =
-        G_DBUS_CONNECTION(
-            g_object_ref(connection));
+    if (!result)
+    {
+        g_warning(
+            "Cannot acquire the KWin integration D-Bus name: %s",
+            error
+                ? error->message
+                : "unknown error");
 
+        g_clear_error(&error);
+        return false;
+    }
+
+    guint32 reply = 0;
+    g_variant_get(
+        result,
+        "(u)",
+        &reply);
+    g_variant_unref(result);
+
+    m_name_owned =
+        reply ==
+            DBUS_REQUEST_NAME_PRIMARY_OWNER ||
+        reply ==
+            DBUS_REQUEST_NAME_ALREADY_OWNER;
+
+    if (!m_name_owned)
+    {
+        g_warning(
+            "Cannot acquire the KWin integration D-Bus name because another Docklight instance owns it");
+    }
+
+    return m_name_owned;
+}
+
+void KWinIntegrationService::release_name()
+{
+    if (!m_connection ||
+        !m_name_owned)
+    {
+        return;
+    }
+
+    GError *error = nullptr;
+
+    auto result =
+        g_dbus_connection_call_sync(
+            m_connection,
+            "org.freedesktop.DBus",
+            "/org/freedesktop/DBus",
+            "org.freedesktop.DBus",
+            "ReleaseName",
+            g_variant_new(
+                "(s)",
+                KWinIntegrationProtocol::
+                    SERVICE_NAME),
+            G_VARIANT_TYPE("(u)"),
+            G_DBUS_CALL_FLAGS_NONE,
+            -1,
+            nullptr,
+            &error);
+
+    if (!result)
+    {
+        g_warning(
+            "Cannot release the KWin integration D-Bus name: %s",
+            error
+                ? error->message
+                : "unknown error");
+    }
+    else
+    {
+        g_variant_unref(result);
+    }
+
+    g_clear_error(&error);
+    m_name_owned = false;
+}
+
+bool KWinIntegrationService::register_object()
+{
     static const GDBusInterfaceVTable
         interface_vtable{
             &KWinIntegrationService::
@@ -424,6 +527,8 @@ void KWinIntegrationService::register_object(
     }
 
     g_clear_error(&error);
+
+    return m_object_registration_id != 0;
 }
 
 void KWinIntegrationService::
@@ -781,43 +886,6 @@ void KWinIntegrationService::
         G_DBUS_ERROR_UNKNOWN_METHOD,
         "Unknown KWin integration method: %s",
         method_name);
-}
-
-void KWinIntegrationService::on_bus_acquired(
-    GDBusConnection *connection,
-    const gchar *,
-    gpointer user_data)
-{
-    static_cast<KWinIntegrationService *>(
-        user_data)
-        ->register_object(connection);
-}
-
-void KWinIntegrationService::on_name_acquired(
-    GDBusConnection *,
-    const gchar *,
-    gpointer user_data)
-{
-    auto service =
-        static_cast<KWinIntegrationService *>(
-            user_data);
-
-    service->m_available =
-        service->m_object_registration_id !=
-        0;
-}
-
-void KWinIntegrationService::on_name_lost(
-    GDBusConnection *,
-    const gchar *,
-    gpointer user_data)
-{
-    auto service =
-        static_cast<KWinIntegrationService *>(
-            user_data);
-
-    service->m_available = false;
-    service->clear_sender(true);
 }
 
 void KWinIntegrationService::

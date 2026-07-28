@@ -24,6 +24,8 @@ docklight6_SOURCES = \
     window_backend.cpp \
     window_registry.h \
     window_registry.cpp \
+    window_system_controller.h \
+    window_system_controller.cpp \
     kwin_integration_protocol.h \
     kwin_integration_service.h \
     kwin_integration_service.cpp \
