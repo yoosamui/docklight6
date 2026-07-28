@@ -13,7 +13,9 @@
 DockWindow::DockWindow(
     const DockConfiguration &configuration,
     const Glib::RefPtr<Gdk::Monitor>
-        &monitor)
+        &monitor,
+    WindowRegistry *window_registry)
+    : m_window_registry(window_registry)
 {
     m_controller =
         std::make_unique<DockWindowController>(
@@ -442,6 +444,7 @@ void DockWindow::create_dock()
                 new DockItem(
                     *this,
                     launcher.app,
+                    m_window_registry,
                     m_controller
                         ->settings()
                         .icon_size(),

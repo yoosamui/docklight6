@@ -19,6 +19,7 @@ public:
 
     bool available() const;
 
+    WindowRegistry *registry();
     const WindowRegistry *registry() const;
 
 private:

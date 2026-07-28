@@ -640,6 +640,11 @@ void KWinIntegrationService::
     m_command_invocation = nullptr;
     cancel_command_keepalive();
 
+    g_message(
+        "KWin window command delivered: %s %s",
+        command_name,
+        command.window_id.c_str());
+
     g_dbus_method_invocation_return_value(
         invocation,
         g_variant_new(

@@ -302,11 +302,22 @@
                 if (!connected)
                     return;
 
-                executeCommand(
-                    command,
-                    identifier,
-                    state);
-                waitForCommand();
+                try {
+                    executeCommand(
+                        command,
+                        identifier,
+                        state);
+                } catch (error) {
+                    print(
+                        "Docklight command failed:",
+                        command,
+                        identifier,
+                        String(error));
+                } finally {
+                    // A failed KWin operation must not terminate the
+                    // long-running command channel.
+                    waitForCommand();
+                }
             });
     }
 

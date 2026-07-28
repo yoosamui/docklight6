@@ -125,6 +125,11 @@ const workspace = {
 };
 
 const calls = [];
+const messages = [];
+
+function print(...arguments_) {
+    messages.push(arguments_);
+}
 
 function callDBus(
     service,
@@ -184,6 +189,7 @@ const context = {
     encodeURIComponent,
     isFinite,
     callDBus,
+    print,
     workspace
 };
 
@@ -289,6 +295,40 @@ deliverCommand(
 assert.strictEqual(
     managedWindow.closed,
     true);
+
+const waitCountBeforeFailure =
+    calls.filter(
+        call =>
+            call.methodName ===
+            "WaitForCommand")
+        .length;
+
+workspace.activateWindow =
+    function () {
+        throw new Error(
+            "test command failure");
+    };
+
+deliverCommand(
+    "activate",
+    false);
+
+const waitCountAfterFailure =
+    calls.filter(
+        call =>
+            call.methodName ===
+            "WaitForCommand")
+        .length;
+
+assert.strictEqual(
+    waitCountAfterFailure,
+    waitCountBeforeFailure + 1);
+assert.strictEqual(
+    messages.length,
+    1);
+assert.strictEqual(
+    messages[0][0],
+    "Docklight command failed:");
 
 for (const value of
      stagedWindows[0].arguments) {

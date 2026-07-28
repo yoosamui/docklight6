@@ -2,6 +2,8 @@
 #include "dock_layout_metrics.h"
 #include "dock_window.h"
 
+#include <gio/gdesktopappinfo.h>
+
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -21,6 +23,49 @@ constexpr int BLUR_INNER_GREEN = 245;
 constexpr int BLUR_INNER_BLUE = 255;
 constexpr int BLUR_OUTER_MAX_ALPHA = 225;
 constexpr int BLUR_INNER_MAX_ALPHA = 190;
+
+std::vector<std::string>
+application_identifiers(
+    const Glib::RefPtr<Gio::AppInfo> &app)
+{
+    std::vector<std::string> identifiers;
+
+    if (!app)
+        return identifiers;
+
+    const auto add_identifier =
+        [&identifiers](
+            const std::string &identifier)
+        {
+            if (identifier.empty() ||
+                std::find(
+                    identifiers.begin(),
+                    identifiers.end(),
+                    identifier) !=
+                    identifiers.end())
+            {
+                return;
+            }
+
+            identifiers.push_back(identifier);
+        };
+
+    add_identifier(app->get_id());
+    add_identifier(app->get_executable());
+
+    if (G_IS_DESKTOP_APP_INFO(app->gobj()))
+    {
+        const auto startup_wm_class =
+            g_desktop_app_info_get_startup_wm_class(
+                G_DESKTOP_APP_INFO(
+                    app->gobj()));
+
+        if (startup_wm_class)
+            add_identifier(startup_wm_class);
+    }
+
+    return identifiers;
+}
 
 Glib::RefPtr<Gdk::Pixbuf>
 create_transparent_pixbuf(
@@ -240,10 +285,14 @@ create_blur_pixbuf(
 DockItem::DockItem(
     DockWindow &dock,
     Glib::RefPtr<Gio::AppInfo> app,
+    WindowRegistry *window_registry,
     int icon_size,
     DockHoverEffect hover_effect)
     : m_dock(dock),
       m_app(app),
+      m_application_controller(
+          window_registry,
+          application_identifiers(app)),
       m_hover_effect(hover_effect)
 {
     set_visible_window(false);
@@ -526,18 +575,15 @@ bool DockItem::on_button_press_event(GdkEventButton *event)
     }
     else if (event->button == GDK_BUTTON_PRIMARY)
     {
-        try
+        if (!m_application_controller
+                 .running())
         {
-            std::vector<Glib::RefPtr<Gio::File>> files;
-
-            m_app->launch(files);
+            launch_application();
         }
-        catch (const Glib::Error &error)
+        else
         {
-            g_warning(
-                "Cannot launch %s: %s",
-                m_app->get_name().c_str(),
-                error.what().c_str());
+            m_application_controller
+                .toggle_minimized();
         }
     }
 
@@ -591,6 +637,7 @@ void DockItem::initialize_context_menu()
     initialize_item(m_attach_item, 1);
     initialize_item(m_open_new_window_item, 0);
     initialize_item(m_minimize_item, 1);
+    initialize_item(m_unminimize_item, 0);
     initialize_item(m_maximize_item, 1);
     initialize_item(m_close_all_item, 0);
 
@@ -604,6 +651,8 @@ void DockItem::initialize_context_menu()
         m_window_separator);
     m_context_menu.append(
         m_minimize_item);
+    m_context_menu.append(
+        m_unminimize_item);
     m_context_menu.append(
         m_maximize_item);
     m_context_menu.append(
@@ -625,8 +674,7 @@ void DockItem::initialize_context_menu()
         .connect(
             [this]()
             {
-                log_context_action(
-                    "Open New Window");
+                launch_application();
             });
 
     m_close_all_item
@@ -634,8 +682,16 @@ void DockItem::initialize_context_menu()
         .connect(
             [this]()
             {
-                log_context_action(
-                    "Close All");
+                const bool accepted =
+                    m_application_controller
+                        .close_all();
+
+                g_message(
+                    "Close all windows for %s: %s",
+                    m_app->get_id().c_str(),
+                    accepted
+                        ? "accepted"
+                        : "rejected");
             });
 
     m_minimize_item
@@ -643,8 +699,16 @@ void DockItem::initialize_context_menu()
         .connect(
             [this]()
             {
-                log_context_action(
-                    "Minimize");
+                const bool accepted =
+                    m_application_controller
+                        .minimize();
+
+                g_message(
+                    "Minimize windows for %s: %s",
+                    m_app->get_id().c_str(),
+                    accepted
+                        ? "accepted"
+                        : "rejected");
             });
 
     m_maximize_item
@@ -652,8 +716,33 @@ void DockItem::initialize_context_menu()
         .connect(
             [this]()
             {
-                log_context_action(
-                    "Maximize");
+                const bool accepted =
+                    m_application_controller
+                        .maximize();
+
+                g_message(
+                    "Maximize window for %s: %s",
+                    m_app->get_id().c_str(),
+                    accepted
+                        ? "accepted"
+                        : "rejected");
+            });
+
+    m_unminimize_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                const bool accepted =
+                    m_application_controller
+                        .unminimize();
+
+                g_message(
+                    "Unminimize windows for %s: %s",
+                    m_app->get_id().c_str(),
+                    accepted
+                        ? "accepted"
+                        : "rejected");
             });
 
     auto context =
@@ -676,6 +765,8 @@ void DockItem::initialize_context_menu()
 void DockItem::show_context_menu(
     const GdkEvent *event)
 {
+    refresh_context_menu();
+
     Gdk::Gravity widget_anchor =
         Gdk::GRAVITY_NORTH;
 
@@ -741,6 +832,44 @@ void DockItem::show_context_menu(
         gtk_window_set_mnemonics_visible(
             GTK_WINDOW(menu_toplevel),
             TRUE);
+    }
+}
+
+void DockItem::refresh_context_menu()
+{
+    m_minimize_item.set_sensitive(
+        m_application_controller
+            .can_minimize());
+
+    m_unminimize_item.set_sensitive(
+        m_application_controller
+            .can_unminimize());
+
+    m_maximize_item.set_sensitive(
+        m_application_controller
+            .can_maximize());
+
+    m_close_all_item.set_sensitive(
+        m_application_controller
+            .can_close());
+}
+
+void DockItem::launch_application()
+{
+    try
+    {
+        std::vector<
+            Glib::RefPtr<Gio::File>>
+            files;
+
+        m_app->launch(files);
+    }
+    catch (const Glib::Error &error)
+    {
+        g_warning(
+            "Cannot launch %s: %s",
+            m_app->get_name().c_str(),
+            error.what().c_str());
     }
 }
 

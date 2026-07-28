@@ -134,6 +134,12 @@ bool WindowRegistry::connected() const
     return m_connected;
 }
 
+WindowBackendCapabilities
+WindowRegistry::capabilities() const
+{
+    return m_backend.capabilities();
+}
+
 const std::vector<ManagedWindow> &
 WindowRegistry::windows() const
 {
@@ -199,6 +205,52 @@ WindowRegistry::find_application(
                    m_running_applications.end()
                ? nullptr
                : &*application;
+}
+
+bool WindowRegistry::activate_window(
+    const WindowId &window_id)
+{
+    return m_connected &&
+           m_backend.activate_window(
+               window_id);
+}
+
+bool WindowRegistry::raise_window(
+    const WindowId &window_id)
+{
+    return m_connected &&
+           m_backend.raise_window(
+               window_id);
+}
+
+bool WindowRegistry::close_window(
+    const WindowId &window_id)
+{
+    return m_connected &&
+           m_backend.close_window(
+               window_id);
+}
+
+bool WindowRegistry::set_window_minimized(
+    const WindowId &window_id,
+    bool minimized)
+{
+    return m_connected &&
+           m_backend
+               .set_window_minimized(
+                   window_id,
+                   minimized);
+}
+
+bool WindowRegistry::set_window_maximized(
+    const WindowId &window_id,
+    bool maximized)
+{
+    return m_connected &&
+           m_backend
+               .set_window_maximized(
+                   window_id,
+                   maximized);
 }
 
 sigc::signal<void> &
@@ -620,6 +672,16 @@ WindowRegistry::normalize_desktop_file_name(
     {
         normalized_name += ".desktop";
     }
+
+    std::transform(
+        normalized_name.begin(),
+        normalized_name.end(),
+        normalized_name.begin(),
+        [](unsigned char character)
+        {
+            return static_cast<char>(
+                std::tolower(character));
+        });
 
     return normalized_name;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "dock_application_controller.h"
 #include "dock_layout_types.h"
 
 #include <gtkmm.h>
@@ -8,6 +9,7 @@
 #include <vector>
 
 class DockWindow;
+class WindowRegistry;
 
 class DockItem : public Gtk::EventBox
 {
@@ -15,6 +17,7 @@ public:
     DockItem(
         DockWindow &dock,
         Glib::RefPtr<Gio::AppInfo> app,
+        WindowRegistry *window_registry,
         int icon_size,
         DockHoverEffect hover_effect);
     ~DockItem() override;
@@ -52,6 +55,8 @@ private:
     void initialize_context_menu();
     void show_context_menu(
         const GdkEvent *event);
+    void refresh_context_menu();
+    void launch_application();
     void log_context_action(
         const char *action) const;
     void apply_hover_effect();
@@ -73,6 +78,9 @@ private:
     Glib::RefPtr<Gdk::Pixbuf> m_hover_pixbuf;
     Glib::RefPtr<Gtk::CssProvider> m_context_menu_css;
 
+    DockApplicationController
+        m_application_controller;
+
     Gtk::Image image;
     Gtk::Label label;
     Gtk::Menu m_context_menu;
@@ -82,6 +90,7 @@ private:
     Gtk::SeparatorMenuItem m_window_separator;
     Gtk::MenuItem m_close_all_item{"_Close All", true};
     Gtk::MenuItem m_minimize_item{"M_inimize", true};
+    Gtk::MenuItem m_unminimize_item{"_Unminimize", true};
     Gtk::MenuItem m_maximize_item{"M_aximize", true};
     Gtk::SeparatorMenuItem m_close_separator;
 

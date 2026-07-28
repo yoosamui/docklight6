@@ -15,6 +15,7 @@
 #include <vector>
 
 class DockWindowController;
+class WindowRegistry;
 
 class DockWindow : public Gtk::Window
 {
@@ -22,7 +23,8 @@ public:
     explicit DockWindow(
         const DockConfiguration &configuration,
         const Glib::RefPtr<Gdk::Monitor>
-            &monitor);
+            &monitor,
+        WindowRegistry *window_registry);
     ~DockWindow() override;
     void apply_configuration(
         const DockConfiguration &configuration);
@@ -67,6 +69,9 @@ private:
     int m_effective_icon_size = 0;
 
     DockTooltipWindow m_overlay_window;
+
+    WindowRegistry *m_window_registry =
+        nullptr;
 
     std::unique_ptr<DockWindowController> m_controller;
 };

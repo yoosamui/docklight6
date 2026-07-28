@@ -1,6 +1,7 @@
 bin_PROGRAMS = docklight6
 
 check_PROGRAMS = \
+    dock_application_controller_test \
     window_registry_test \
     kwin_window_backend_test \
     kwin_integration_service_test
@@ -34,6 +35,8 @@ docklight6_SOURCES = \
     kwin_window_command.h \
     kwin_window_backend.h \
     kwin_window_backend.cpp \
+    dock_application_controller.h \
+    dock_application_controller.cpp \
     dock_configuration.h \
     dock_configuration_manager.h \
     dock_configuration_manager.cpp \
@@ -58,6 +61,25 @@ docklight6_CPPFLAGS = \
 docklight6_LDADD = \
     $(GTKMM_LIBS) \
     $(GTK_LAYER_SHELL_LIBS)
+
+dock_application_controller_test_SOURCES = \
+    tests/dock_application_controller_test.cpp \
+    tests/fake_window_backend.h \
+    tests/fake_window_backend.cpp \
+    managed_window.h \
+    running_application.h \
+    window_backend.h \
+    window_backend.cpp \
+    window_registry.h \
+    window_registry.cpp \
+    dock_application_controller.h \
+    dock_application_controller.cpp
+
+dock_application_controller_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+dock_application_controller_test_LDADD = \
+    $(GTKMM_LIBS)
 
 window_registry_test_SOURCES = \
     tests/window_registry_test.cpp \

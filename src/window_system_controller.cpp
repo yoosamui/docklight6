@@ -144,6 +144,12 @@ bool WindowSystemController::available() const
            m_kwin_service->available();
 }
 
+WindowRegistry *
+WindowSystemController::registry()
+{
+    return m_registry.get();
+}
+
 const WindowRegistry *
 WindowSystemController::registry() const
 {

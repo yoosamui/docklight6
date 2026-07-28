@@ -125,7 +125,8 @@ int main(int argc, char *argv[])
 
     DockWindow window(
         configuration.current(),
-        monitors.selected_monitor());
+        monitors.selected_monitor(),
+        window_system.registry());
 
     configuration.signal_changed().connect(
         [&window, &monitors](

@@ -21,6 +21,8 @@ public:
     void stop();
 
     bool connected() const;
+    WindowBackendCapabilities
+    capabilities() const;
 
     const std::vector<ManagedWindow> &
     windows() const;
@@ -35,6 +37,19 @@ public:
     find_application(
         const std::string
             &desktop_file_name) const;
+
+    bool activate_window(
+        const WindowId &window_id);
+    bool raise_window(
+        const WindowId &window_id);
+    bool close_window(
+        const WindowId &window_id);
+    bool set_window_minimized(
+        const WindowId &window_id,
+        bool minimized);
+    bool set_window_maximized(
+        const WindowId &window_id,
+        bool maximized);
 
     sigc::signal<void> &
     signal_changed();
