@@ -31,6 +31,7 @@ public:
             &monitor);
     void schedule_show_tooltip(DockItem &item);
     void schedule_hide_tooltip();
+    void hide_tooltip_immediately();
     DockLocation location() const;
 
 private:

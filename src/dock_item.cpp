@@ -705,7 +705,7 @@ void DockItem::show_context_menu(
         break;
     }
 
-    m_dock.schedule_hide_tooltip();
+    m_dock.hide_tooltip_immediately();
 
     m_context_menu.popup_at_widget(
         this,

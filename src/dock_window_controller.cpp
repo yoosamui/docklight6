@@ -479,6 +479,14 @@ void DockWindowController::schedule_hide_tooltip()
     start_hide_timer();
 }
 
+void DockWindowController::hide_tooltip_immediately()
+{
+    cancel_show_timer();
+    cancel_hide_timer();
+    m_pending_item = nullptr;
+    hide_tooltip();
+}
+
 void DockWindowController::show_tooltip(
     DockItem &item)
 {

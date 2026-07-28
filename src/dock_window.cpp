@@ -148,6 +148,11 @@ void DockWindow::schedule_hide_tooltip()
     m_controller->schedule_hide_tooltip();
 }
 
+void DockWindow::hide_tooltip_immediately()
+{
+    m_controller->hide_tooltip_immediately();
+}
+
 DockLocation DockWindow::location() const
 {
     return m_controller->location();

@@ -30,6 +30,7 @@ public:
     void schedule_show_tooltip(
         DockItem &item);
     void schedule_hide_tooltip();
+    void hide_tooltip_immediately();
 
     const DockSettings &settings() const
     {
