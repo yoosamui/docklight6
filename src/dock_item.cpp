@@ -190,6 +190,43 @@ namespace
                    "X-GNOME-SingleWindow");
     }
 
+    const char *new_window_action(
+        GDesktopAppInfo *desktop_app)
+    {
+        if (!desktop_app)
+            return nullptr;
+
+        const auto *actions =
+            g_desktop_app_info_list_actions(
+                desktop_app);
+
+        // Desktop action identifiers are chosen by each application.
+        // Prefer the widely used freedesktop-style spelling, while also
+        // supporting identifiers used by Firefox and Visual Studio Code.
+        constexpr const char *candidates[] = {
+            "new-window",
+            "NewWindow",
+            "new-empty-window"};
+
+        for (const auto *candidate :
+             candidates)
+        {
+            for (int index = 0;
+                 actions && actions[index];
+                 ++index)
+            {
+                if (g_str_equal(
+                        actions[index],
+                        candidate))
+                {
+                    return actions[index];
+                }
+            }
+        }
+
+        return nullptr;
+    }
+
     Glib::RefPtr<Gdk::Pixbuf>
     create_transparent_pixbuf(
         int width,
@@ -1077,7 +1114,7 @@ void DockItem::initialize_context_menu()
         .connect(
             [this]()
             {
-                launch_application();
+                launch_new_window();
             });
 
     m_close_all_item
@@ -1517,6 +1554,39 @@ void DockItem::launch_application()
             m_app->get_name().c_str(),
             error.what().c_str());
     }
+}
+
+void DockItem::launch_new_window()
+{
+    if (G_IS_DESKTOP_APP_INFO(
+            m_app->gobj()))
+    {
+        auto *desktop_app =
+            G_DESKTOP_APP_INFO(
+                m_app->gobj());
+
+        const auto *action =
+            new_window_action(
+                desktop_app);
+
+        if (action)
+        {
+            g_desktop_app_info_launch_action(
+                desktop_app,
+                action,
+                nullptr);
+
+            g_message(
+                "Launched desktop action '%s' for %s",
+                action,
+                m_app->get_name().c_str());
+            return;
+        }
+    }
+
+    // Applications without a dedicated desktop action conventionally open
+    // another window when their normal launcher is activated again.
+    launch_application();
 }
 
 void DockItem::log_context_action(

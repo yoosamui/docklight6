@@ -79,6 +79,7 @@ private:
         const GdkEvent *event);
     void refresh_context_menu();
     void launch_application();
+    void launch_new_window();
     void log_context_action(
         const char *action) const;
     void apply_hover_effect();
