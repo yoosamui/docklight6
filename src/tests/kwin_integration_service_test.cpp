@@ -171,7 +171,7 @@ GVariant *window_parameters(
         std::string(encoded_caption) +
         ",system-file-manager,"
         "1234,0,0,0,10,20,800,600,"
-        "activity-1,desktop-1";
+        "activity-1,desktop-1,2,0";
 
     g_free(encoded_caption);
 
@@ -263,7 +263,7 @@ void verifies_dbus_state_transport()
 
     assert(!registered);
     assert(supported_version_text ==
-           "4");
+           "5");
 
     result =
         call_method(
@@ -271,7 +271,7 @@ void verifies_dbus_state_transport()
             "Register",
             g_variant_new(
                 "(s)",
-                "4"));
+                "5"));
 
     g_variant_get(
         result,
@@ -320,6 +320,12 @@ void verifies_dbus_state_transport()
                .activity_ids ==
            std::vector<std::string>({
                "activity-1"}));
+    assert(backend.windows()[0]
+               .desktop_numbers ==
+           std::vector<unsigned int>({
+               2}));
+    assert(!backend.windows()[0]
+                .on_current_desktop);
 
     assert(accepted(
         call_method(

@@ -7,7 +7,7 @@
         "/org/docklight6/WindowIntegration";
     const INTERFACE_NAME =
         "org.docklight6.WindowIntegration1";
-    const PROTOCOL_VERSION = "4";
+    const PROTOCOL_VERSION = "5";
 
     let connected = false;
     let registering = false;
@@ -125,6 +125,21 @@
         return desktop.id || "";
     }
 
+    function desktopNumber(desktop) {
+        if (!desktop)
+            return null;
+
+        const number =
+            Number(
+                desktop.x11DesktopNumber);
+
+        if (!isFinite(number) ||
+            number < 1)
+            return null;
+
+        return Math.round(number);
+    }
+
     function iconName(window) {
         try {
             if (window.icon) {
@@ -203,7 +218,14 @@
                 encodedList(window.activities),
                 encodedList(
                     window.desktops,
-                    desktopId)
+                    desktopId),
+                encodedList(
+                    window.desktops,
+                    desktopNumber),
+                booleanText(
+                    windowOnDesktop(
+                        window,
+                        workspace.currentDesktop))
             ]);
 
         callDBus(
@@ -287,6 +309,22 @@
             handlePublishReply);
     }
 
+    function publishDesktopPresence() {
+        if (!connected) {
+            registerIntegration();
+            return;
+        }
+
+        for (const identifier in
+             trackedWindows) {
+            const window =
+                trackedWindows[identifier];
+
+            if (isTrackable(window))
+                publishWindow(window);
+        }
+    }
+
     function publishDockSurfaceGeometry() {
         if (!connected) {
             registerIntegration();
@@ -334,6 +372,74 @@
         return true;
     }
 
+    function windowOnDesktop(
+        window,
+        desktop) {
+        if (window.onAllDesktops)
+            return true;
+
+        const desktops =
+            window.desktops || [];
+
+        if (desktops.length === 0)
+            return true;
+
+        const currentId =
+            desktopId(desktop);
+
+        for (let index = 0;
+             index < desktops.length;
+             ++index) {
+            if (desktops[index] === desktop ||
+                (currentId &&
+                 desktopId(desktops[index]) ===
+                    currentId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function windowOnActivity(
+        window,
+        activity) {
+        const activities =
+            window.activities || [];
+
+        return activities.length === 0 ||
+            activities.indexOf(activity) !== -1;
+    }
+
+    function activateWindow(window) {
+        const activities =
+            window.activities || [];
+
+        if (activities.length > 0 &&
+            !windowOnActivity(
+                window,
+                workspace.currentActivity)) {
+            workspace.currentActivity =
+                activities[0];
+        }
+
+        const desktops =
+            window.desktops || [];
+
+        if (desktops.length > 0 &&
+            !windowOnDesktop(
+                window,
+                workspace.currentDesktop)) {
+            workspace.currentDesktop =
+                desktops[0];
+        }
+
+        // KWin 6 exposes activation through the writable activeWindow
+        // property.  activateWindow() is not part of Workspace's scripting
+        // API and raises a TypeError on current Plasma releases.
+        workspace.activeWindow = window;
+    }
+
     function executeCommand(
         command,
         identifier,
@@ -346,7 +452,7 @@
             return;
 
         if (command === "activate") {
-            workspace.activateWindow(window);
+            activateWindow(window);
         } else if (command === "raise") {
             workspace.raiseWindow(window);
         } else if (command === "close") {
@@ -612,6 +718,9 @@
     connectSignal(
         workspace.windowActivated,
         publishActiveWindow);
+    connectSignal(
+        workspace.currentDesktopChanged,
+        publishDesktopPresence);
 
     registerIntegration();
 }());

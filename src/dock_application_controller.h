@@ -1,5 +1,6 @@
 #pragma once
 
+#include "managed_window.h"
 #include "window_icon_geometry.h"
 
 #include <optional>
@@ -13,6 +14,19 @@ enum class WindowCycleDirection
 {
     previous,
     next
+};
+
+struct ApplicationWindowEntry
+{
+    WindowId id;
+
+    std::string caption;
+    std::string icon_name;
+    std::vector<unsigned int> desktop_numbers;
+
+    bool active = false;
+    bool minimized = false;
+    bool on_current_desktop = true;
 };
 
 class DockApplicationController
@@ -35,8 +49,15 @@ public:
     bool close_all();
     bool cycle_window(
         WindowCycleDirection direction);
+    bool minimize_window(
+        const WindowId &window_id);
+    bool show_window(
+        const WindowId &window_id);
     bool set_icon_geometry(
         const WindowIconGeometry &geometry);
+
+    std::vector<ApplicationWindowEntry>
+    window_entries() const;
 
     void reset_window_cycle();
 

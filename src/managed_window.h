@@ -25,6 +25,7 @@ struct ManagedWindow
     std::vector<unsigned char> icon_png;
     std::vector<std::string> activity_ids;
     std::vector<std::string> desktop_ids;
+    std::vector<unsigned int> desktop_numbers;
 
     WindowGeometry frame_geometry;
 
@@ -34,4 +35,5 @@ struct ManagedWindow
     bool minimized = false;
     bool maximized = false;
     bool skip_taskbar = false;
+    bool on_current_desktop = true;
 };

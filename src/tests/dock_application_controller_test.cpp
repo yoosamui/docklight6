@@ -282,6 +282,106 @@ void verifies_window_cycle_tracks_group_changes()
                "window-3"});
 }
 
+void verifies_grouped_window_entries()
+{
+    FakeWindowBackend backend;
+
+    auto first_window =
+        window("window-1", true);
+    auto second_window =
+        window("window-2");
+    auto other_application_window =
+        window(
+            "window-3",
+            false,
+            "org.mozilla.firefox");
+
+    first_window.caption =
+        "Files";
+    first_window.icon_name =
+        "system-file-manager";
+    first_window.desktop_numbers =
+        {2};
+    first_window.on_current_desktop =
+        false;
+    second_window.caption =
+        "Downloads";
+    second_window.icon_name =
+        "folder-download";
+
+    backend.set_snapshot(
+        {
+            first_window,
+            second_window,
+            other_application_window
+        },
+        {
+            "window-1",
+            "window-2",
+            "window-3"
+        },
+        WindowId{"window-2"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    const auto entries =
+        controller.window_entries();
+
+    assert(entries.size() == 2);
+    assert(entries[0].id ==
+           "window-1");
+    assert(entries[0].caption ==
+           "Files");
+    assert(entries[0].icon_name ==
+           "system-file-manager");
+    assert(entries[0].desktop_numbers ==
+           std::vector<unsigned int>{2});
+    assert(!entries[0]
+                .on_current_desktop);
+    assert(!entries[0].active);
+    assert(entries[0].minimized);
+
+    assert(entries[1].id ==
+           "window-2");
+    assert(entries[1].caption ==
+           "Downloads");
+    assert(entries[1]
+               .desktop_numbers.empty());
+    assert(entries[1]
+               .on_current_desktop);
+    assert(entries[1].active);
+    assert(!entries[1].minimized);
+
+    assert(!controller.show_window(
+        "window-3"));
+    assert(controller.show_window(
+        "window-1"));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-1"});
+    assert(!registry
+                .find_window("window-1")
+                ->minimized);
+
+    assert(controller.minimize_window(
+        "window-2"));
+    assert(registry
+               .find_window("window-2")
+               ->minimized);
+    assert(!registry
+                .find_window("window-1")
+                ->minimized);
+    assert(!controller.minimize_window(
+        "window-3"));
+}
+
 }
 
 int main()
@@ -291,6 +391,7 @@ int main()
     verifies_alternate_application_identity();
     verifies_window_cycling();
     verifies_window_cycle_tracks_group_changes();
+    verifies_grouped_window_entries();
 
     return 0;
 }

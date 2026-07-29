@@ -51,7 +51,8 @@ function createWindow(
         ],
         desktops: [
             {
-                id: "desktop,one"
+                id: "desktop,one",
+                x11DesktopNumber: 2
             }
         ],
         managed: true,
@@ -135,19 +136,39 @@ const workspace = {
         managedWindow,
         dockWindow
     ],
-    activeWindow: managedWindow,
+    currentDesktop: {
+        id: "desktop,two",
+        x11DesktopNumber: 1
+    },
+    currentActivity: "activity,two",
     windowAdded: new Signal(),
     windowRemoved: new Signal(),
     windowActivated: new Signal(),
+    currentDesktopChanged:
+        new Signal(),
     activatedWindow: null,
     raisedWindow: null,
-    activateWindow(window) {
-        this.activatedWindow = window;
-    },
     raiseWindow(window) {
         this.raisedWindow = window;
     }
 };
+
+let activeWindow = managedWindow;
+
+Object.defineProperty(
+    workspace,
+    "activeWindow",
+    {
+        configurable: true,
+        get() {
+            return activeWindow;
+        },
+        set(window) {
+            activeWindow = window;
+            this.activatedWindow =
+                window;
+        }
+    });
 
 const calls = [];
 const messages = [];
@@ -236,11 +257,11 @@ assert.strictEqual(
     "Register");
 assert.deepStrictEqual(
     calls[0].arguments,
-    ["4"]);
+    ["5"]);
 
 calls[0].callback(
     true,
-    "4");
+    "5");
 
 const beginSnapshot =
     calls.find(
@@ -357,6 +378,12 @@ deliverCommand(
 assert.strictEqual(
     workspace.activatedWindow,
     managedWindow);
+assert.strictEqual(
+    workspace.currentDesktop,
+    managedWindow.desktops[0]);
+assert.strictEqual(
+    workspace.currentActivity,
+    managedWindow.activities[0]);
 
 deliverCommand(
     "raise",
@@ -393,11 +420,19 @@ const waitCountBeforeFailure =
             "WaitForCommand")
         .length;
 
-workspace.activateWindow =
-    function () {
-        throw new Error(
-            "test command failure");
-    };
+Object.defineProperty(
+    workspace,
+    "activeWindow",
+    {
+        configurable: true,
+        get() {
+            return activeWindow;
+        },
+        set() {
+            throw new Error(
+                "test command failure");
+        }
+    });
 
 deliverCommand(
     "activate",
@@ -446,6 +481,12 @@ assert.strictEqual(
 assert.strictEqual(
     stagedWindowPayload[13],
     "desktop%2Cone");
+assert.strictEqual(
+    stagedWindowPayload[14],
+    "2");
+assert.strictEqual(
+    stagedWindowPayload[15],
+    "0");
 assert.deepStrictEqual(
     commitSnapshot.arguments,
     [
@@ -476,6 +517,27 @@ workspace.windowActivated.emit(
 assert.strictEqual(
     calls[calls.length - 1].methodName,
     "PublishActiveWindow");
+
+workspace.currentDesktop =
+    managedWindow.desktops[0];
+workspace.currentDesktopChanged.emit(
+    {
+        id: "desktop,two",
+        x11DesktopNumber: 1
+    },
+    workspace.currentDesktop);
+
+const desktopUpdate =
+    calls[calls.length - 1];
+
+assert.strictEqual(
+    desktopUpdate.methodName,
+    "PublishWindow");
+assert.strictEqual(
+    desktopUpdate.arguments[1]
+        .split(",")
+        .map(decodeURIComponent)[15],
+    "1");
 
 managedWindow.stackingOrderChanged.emit();
 

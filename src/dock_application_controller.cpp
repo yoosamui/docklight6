@@ -357,17 +357,42 @@ bool DockApplicationController::cycle_window(
     }
 
     const auto window_id = *target;
-    const auto window =
-        m_registry->find_window(
-            window_id);
 
     m_cycle_window_id =
         window_id;
 
+    return show_window(window_id);
+}
+
+bool DockApplicationController::show_window(
+    const WindowId &window_id)
+{
+    const auto running_application =
+        application();
+
+    if (!running_application ||
+        std::find(
+            running_application
+                ->window_ids.begin(),
+            running_application
+                ->window_ids.end(),
+            window_id) ==
+            running_application
+                ->window_ids.end())
+    {
+        return false;
+    }
+
+    const auto window =
+        m_registry->find_window(
+            window_id);
+
+    if (!window)
+        return false;
+
     bool accepted = true;
 
-    if (window &&
-        window->minimized)
+    if (window->minimized)
     {
         accepted =
             m_registry
@@ -388,6 +413,96 @@ bool DockApplicationController::cycle_window(
         accepted;
 
     return accepted;
+}
+
+bool DockApplicationController::
+    minimize_window(
+        const WindowId &window_id)
+{
+    const auto running_application =
+        application();
+
+    if (!running_application ||
+        std::find(
+            running_application
+                ->window_ids.begin(),
+            running_application
+                ->window_ids.end(),
+            window_id) ==
+            running_application
+                ->window_ids.end())
+    {
+        return false;
+    }
+
+    const auto window =
+        m_registry->find_window(
+            window_id);
+
+    if (!window)
+        return false;
+
+    if (window->minimized)
+        return true;
+
+    return m_registry
+        ->set_window_minimized(
+            window_id,
+            true);
+}
+
+std::vector<ApplicationWindowEntry>
+DockApplicationController::
+    window_entries() const
+{
+    std::vector<ApplicationWindowEntry>
+        entries;
+
+    const auto running_application =
+        application();
+
+    if (!running_application)
+        return entries;
+
+    entries.reserve(
+        running_application
+            ->window_ids.size());
+
+    for (const auto &window_id :
+         running_application
+             ->window_ids)
+    {
+        const auto window =
+            m_registry->find_window(
+                window_id);
+
+        if (!window)
+            continue;
+
+        ApplicationWindowEntry entry;
+
+        entry.id = window_id;
+        entry.caption =
+            window->caption;
+        entry.icon_name =
+            window->icon_name;
+        entry.desktop_numbers =
+            window->desktop_numbers;
+        entry.active =
+            running_application
+                ->active_window_id ==
+            std::optional<WindowId>{
+                window_id};
+        entry.minimized =
+            window->minimized;
+        entry.on_current_desktop =
+            window->on_current_desktop;
+
+        entries.push_back(
+            std::move(entry));
+    }
+
+    return entries;
 }
 
 void DockApplicationController::

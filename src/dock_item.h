@@ -6,6 +6,7 @@
 #include <gtkmm.h>
 #include <sigc++/connection.h>
 
+#include <memory>
 #include <vector>
 
 class DockWindow;
@@ -59,6 +60,10 @@ private:
     bool advance_blur_animation();
 
     void initialize_context_menu();
+    void rebuild_window_menu_items();
+    void schedule_window_action(
+        const WindowId &window_id,
+        bool minimize);
     void show_context_menu(
         const GdkEvent *event);
     void refresh_context_menu();
@@ -70,6 +75,10 @@ private:
     void start_zoom_animation();
     void create_blur_frames();
     void start_blur_animation();
+
+    Glib::RefPtr<Gdk::Pixbuf>
+    context_menu_window_icon(
+        const std::string &icon_name) const;
 
     Glib::RefPtr<Gdk::Pixbuf>
     create_standard_hover_pixbuf(
@@ -90,6 +99,8 @@ private:
     Gtk::Image image;
     Gtk::Label label;
     Gtk::Menu m_context_menu;
+    Gtk::SeparatorMenuItem
+        m_group_separator;
     Gtk::CheckMenuItem m_attach_item{"A_ttach", true};
     Gtk::SeparatorMenuItem m_attach_separator;
     Gtk::MenuItem m_open_new_window_item{"_Open New Window", true};
@@ -102,9 +113,13 @@ private:
 
     std::vector<Glib::RefPtr<Gdk::Pixbuf>> m_zoom_frames;
     std::vector<Glib::RefPtr<Gdk::Pixbuf>> m_blur_frames;
+    std::vector<
+        std::unique_ptr<Gtk::MenuItem>>
+        m_window_menu_items;
 
     sigc::connection m_zoom_animation;
     sigc::connection m_blur_animation;
+    sigc::connection m_window_action_idle;
 
     DockHoverEffect m_hover_effect =
         DockHoverEffect::standard;

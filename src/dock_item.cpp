@@ -23,6 +23,30 @@ constexpr int BLUR_INNER_GREEN = 245;
 constexpr int BLUR_INNER_BLUE = 255;
 constexpr int BLUR_OUTER_MAX_ALPHA = 225;
 constexpr int BLUR_INNER_MAX_ALPHA = 190;
+constexpr int CONTEXT_MENU_ICON_SIZE = 20;
+constexpr int CONTEXT_MENU_TITLE_WIDTH = 48;
+
+std::string desktop_badge_text(
+    const std::vector<unsigned int>
+        &desktop_numbers)
+{
+    std::string text = "[ ";
+
+    for (std::size_t index = 0;
+         index < desktop_numbers.size();
+         ++index)
+    {
+        if (index > 0)
+            text += ", ";
+
+        text += std::to_string(
+            desktop_numbers[index]);
+    }
+
+    text += " ]";
+
+    return text;
+}
 
 std::vector<std::string>
 application_identifiers(
@@ -366,6 +390,7 @@ DockItem::~DockItem()
 {
     m_zoom_animation.disconnect();
     m_blur_animation.disconnect();
+    m_window_action_idle.disconnect();
 }
 
 void DockItem::set_icon_size(int icon_size)
@@ -782,6 +807,8 @@ void DockItem::initialize_context_menu()
     initialize_item(m_close_all_item, 0);
 
     m_context_menu.append(
+        m_group_separator);
+    m_context_menu.append(
         m_attach_item);
     m_context_menu.append(
         m_attach_separator);
@@ -900,6 +927,191 @@ void DockItem::initialize_context_menu()
             1);
 
     m_context_menu.show_all();
+    m_group_separator.hide();
+}
+
+void DockItem::rebuild_window_menu_items()
+{
+    for (const auto &item :
+         m_window_menu_items)
+    {
+        m_context_menu.remove(*item);
+    }
+
+    m_window_menu_items.clear();
+
+    const auto entries =
+        m_application_controller
+            .window_entries();
+
+    int position = 0;
+
+    for (const auto &entry :
+         entries)
+    {
+        auto item =
+            std::make_unique<
+                Gtk::MenuItem>();
+
+        item->set_halign(
+            Gtk::ALIGN_FILL);
+        item->set_valign(
+            Gtk::ALIGN_CENTER);
+
+        auto row =
+            Gtk::manage(
+                new Gtk::Box(
+                    Gtk::ORIENTATION_HORIZONTAL,
+                    8));
+
+        row->set_halign(
+            Gtk::ALIGN_FILL);
+        row->set_valign(
+            Gtk::ALIGN_CENTER);
+
+        auto icon =
+            Gtk::manage(
+                new Gtk::Image());
+
+        icon->set_halign(
+            Gtk::ALIGN_CENTER);
+        icon->set_valign(
+            Gtk::ALIGN_CENTER);
+        icon->set_size_request(
+            CONTEXT_MENU_ICON_SIZE,
+            CONTEXT_MENU_ICON_SIZE);
+
+        const auto pixbuf =
+            context_menu_window_icon(
+                entry.icon_name);
+
+        if (pixbuf)
+            icon->set(pixbuf);
+
+        auto window_label =
+            Gtk::manage(
+                new Gtk::Label(
+                    entry.caption.empty()
+                        ? m_app
+                              ->get_display_name()
+                        : entry.caption));
+
+        window_label->set_halign(
+            Gtk::ALIGN_FILL);
+        window_label->set_valign(
+            Gtk::ALIGN_CENTER);
+        window_label->set_xalign(0.0F);
+        window_label->set_yalign(0.5F);
+        window_label->set_ellipsize(
+            Pango::ELLIPSIZE_END);
+        window_label->set_max_width_chars(
+            CONTEXT_MENU_TITLE_WIDTH);
+
+        row->pack_start(
+            *icon,
+            false,
+            false);
+
+        if (!entry.on_current_desktop &&
+            !entry.desktop_numbers.empty())
+        {
+            auto desktop_badge =
+                Gtk::manage(
+                    new Gtk::Label(
+                        desktop_badge_text(
+                            entry.desktop_numbers)));
+
+            desktop_badge->set_halign(
+                Gtk::ALIGN_CENTER);
+            desktop_badge->set_valign(
+                Gtk::ALIGN_CENTER);
+            desktop_badge->set_xalign(0.5F);
+            desktop_badge->set_yalign(0.5F);
+
+            row->pack_start(
+                *desktop_badge,
+                false,
+                false);
+        }
+
+        row->pack_start(
+            *window_label,
+            true,
+            true);
+
+        item->add(*row);
+
+        const auto window_id =
+            entry.id;
+        const bool minimize =
+            entry.active &&
+            !entry.minimized;
+
+        item->signal_activate()
+            .connect(
+                [this,
+                 window_id,
+                 minimize]()
+                {
+                    schedule_window_action(
+                        window_id,
+                        minimize);
+                });
+
+        m_context_menu.insert(
+            *item,
+            position++);
+
+        item->show_all();
+
+        m_window_menu_items.push_back(
+            std::move(item));
+    }
+
+    if (entries.empty())
+        m_group_separator.hide();
+    else
+        m_group_separator.show();
+}
+
+void DockItem::schedule_window_action(
+    const WindowId &window_id,
+    bool minimize)
+{
+    // Activating a KWin window while GtkMenu still owns its popup grab can
+    // make GTK restore focus to the popup during teardown.  Close the menu
+    // first and dispatch the window command on the next main-loop turn.
+    m_context_menu.popdown();
+    m_window_action_idle.disconnect();
+
+    m_window_action_idle =
+        Glib::signal_idle().connect(
+            [this,
+             window_id,
+             minimize]()
+            {
+                const bool accepted =
+                    minimize
+                        ? m_application_controller
+                              .minimize_window(
+                                  window_id)
+                        : m_application_controller
+                              .show_window(
+                                  window_id);
+
+                g_message(
+                    "%s window %s for %s: %s",
+                    minimize
+                        ? "Minimize"
+                        : "Show",
+                    window_id.c_str(),
+                    m_app->get_id().c_str(),
+                    accepted
+                        ? "accepted"
+                        : "rejected");
+
+                return false;
+            });
 }
 
 void DockItem::show_context_menu(
@@ -977,6 +1189,8 @@ void DockItem::show_context_menu(
 
 void DockItem::refresh_context_menu()
 {
+    rebuild_window_menu_items();
+
     m_open_new_window_item.set_sensitive(
         !m_application_controller.running() ||
         !m_single_main_window);
@@ -996,6 +1210,58 @@ void DockItem::refresh_context_menu()
     m_close_all_item.set_sensitive(
         m_application_controller
             .can_close());
+}
+
+Glib::RefPtr<Gdk::Pixbuf>
+DockItem::context_menu_window_icon(
+    const std::string &icon_name) const
+{
+    const auto icon_theme =
+        Gtk::IconTheme::get_default();
+
+    if (icon_theme &&
+        !icon_name.empty())
+    {
+        try
+        {
+            const auto icon =
+                icon_theme->load_icon(
+                    icon_name,
+                    CONTEXT_MENU_ICON_SIZE,
+                    Gtk::ICON_LOOKUP_USE_BUILTIN);
+
+            if (icon)
+                return icon;
+        }
+        catch (const Glib::Error &)
+        {
+        }
+    }
+
+    if (!m_icon_pixbuf)
+        return {};
+
+    const double scale =
+        std::min(
+            static_cast<double>(
+                CONTEXT_MENU_ICON_SIZE) /
+                m_icon_pixbuf->get_width(),
+            static_cast<double>(
+                CONTEXT_MENU_ICON_SIZE) /
+                m_icon_pixbuf->get_height());
+
+    return m_icon_pixbuf->scale_simple(
+        std::max(
+            1,
+            static_cast<int>(
+                m_icon_pixbuf->get_width() *
+                scale)),
+        std::max(
+            1,
+            static_cast<int>(
+                m_icon_pixbuf->get_height() *
+                scale)),
+        Gdk::INTERP_BILINEAR);
 }
 
 void DockItem::launch_application()

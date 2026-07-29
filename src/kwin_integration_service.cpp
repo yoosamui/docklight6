@@ -237,6 +237,41 @@ bool parse_string_array(
     return true;
 }
 
+bool parse_desktop_numbers(
+    const char *encoded_values,
+    std::vector<unsigned int> &numbers)
+{
+    std::vector<std::string> values;
+
+    if (!parse_string_array(
+            encoded_values,
+            values))
+    {
+        return false;
+    }
+
+    numbers.clear();
+    numbers.reserve(values.size());
+
+    for (const auto &value : values)
+    {
+        unsigned int number = 0;
+
+        if (!parse_integer(
+                value.c_str(),
+                number) ||
+            number == 0)
+        {
+            numbers.clear();
+            return false;
+        }
+
+        numbers.push_back(number);
+    }
+
+    return true;
+}
+
 std::optional<WindowId> optional_window_id(
     const char *window_id)
 {
@@ -268,7 +303,7 @@ bool parse_window(
     if (!parse_string_array(
             window_payload,
             fields) ||
-        fields.size() != 14)
+        fields.size() != 16)
     {
         return false;
     }
@@ -305,7 +340,13 @@ bool parse_window(
             window.activity_ids) ||
         !parse_string_array(
             fields[13].c_str(),
-            window.desktop_ids))
+            window.desktop_ids) ||
+        !parse_desktop_numbers(
+            fields[14].c_str(),
+            window.desktop_numbers) ||
+        !parse_boolean(
+            fields[15].c_str(),
+            window.on_current_desktop))
     {
         return false;
     }
