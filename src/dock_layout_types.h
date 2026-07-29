@@ -29,11 +29,17 @@ enum class DockAutohide : int
     intellihide = 1
 };
 
-enum class DockHoverEffect : int
+enum class DockHoverEffect : unsigned int
 {
     standard = 0,
     zoom = 1,
     blur = 2
+};
+
+enum class DockIndicator : unsigned int
+{
+    lines = 0,
+    dots = 1
 };
 
 class DockPlacement

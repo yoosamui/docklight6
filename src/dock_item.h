@@ -20,12 +20,20 @@ public:
         Glib::RefPtr<Gio::AppInfo> app,
         WindowRegistry *window_registry,
         int icon_size,
-        DockHoverEffect hover_effect);
+        DockHoverEffect hover_effect,
+        DockIndicator indicator,
+        const std::string
+            &indicator_color);
     ~DockItem() override;
 
     void set_icon_size(int icon_size);
     void set_hover_effect(
         DockHoverEffect effect);
+    void set_indicator(
+        DockIndicator indicator);
+    void set_indicator_color(
+        const std::string &color);
+    void refresh_indicator();
     void set_context_menu_corner_radius(
         int corner_radius);
     void reload_icon();
@@ -58,6 +66,9 @@ private:
     bool on_popup_menu();
     bool advance_zoom_animation();
     bool advance_blur_animation();
+    bool draw_indicator(
+        const Cairo::RefPtr<Cairo::Context>
+            &context);
 
     void initialize_context_menu();
     void rebuild_window_menu_items();
@@ -123,6 +134,10 @@ private:
 
     DockHoverEffect m_hover_effect =
         DockHoverEffect::standard;
+    DockIndicator m_indicator =
+        DockIndicator::lines;
+
+    Gdk::RGBA m_indicator_color;
 
     double m_scroll_delta_y = 0.0;
 
@@ -131,6 +146,8 @@ private:
     int m_zoom_target_frame = 0;
     int m_blur_frame = 0;
     int m_blur_target_frame = 0;
+
+    std::size_t m_indicator_window_count = 0;
 
     bool m_hovered = false;
     bool m_single_main_window = false;

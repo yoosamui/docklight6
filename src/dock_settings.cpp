@@ -37,6 +37,29 @@ void DockSettings::set_hover_effect(
     m_hover_effect = effect;
 }
 
+DockIndicator DockSettings::indicator() const
+{
+    return m_indicator;
+}
+
+void DockSettings::set_indicator(
+    DockIndicator indicator)
+{
+    m_indicator = indicator;
+}
+
+const std::string &
+DockSettings::indicator_color() const
+{
+    return m_indicator_color;
+}
+
+void DockSettings::set_indicator_color(
+    const std::string &color)
+{
+    m_indicator_color = color;
+}
+
 int DockSettings::minimum_bottom_workarea_inset() const
 {
     return m_minimum_bottom_workarea_inset;

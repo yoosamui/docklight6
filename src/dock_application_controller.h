@@ -3,6 +3,7 @@
 #include "managed_window.h"
 #include "window_icon_geometry.h"
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <vector>
@@ -55,6 +56,8 @@ public:
         const WindowId &window_id);
     bool set_icon_geometry(
         const WindowIconGeometry &geometry);
+
+    std::size_t window_count() const;
 
     std::vector<ApplicationWindowEntry>
     window_entries() const;

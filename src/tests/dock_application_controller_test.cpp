@@ -51,6 +51,7 @@ void verifies_launcher_window_actions()
         });
 
     assert(controller.running());
+    assert(controller.window_count() == 2);
     assert(controller.can_minimize());
     assert(!controller.can_unminimize());
     assert(controller.can_maximize());
@@ -110,6 +111,7 @@ void verifies_launcher_window_actions()
 
     assert(controller.close_all());
     assert(!controller.running());
+    assert(controller.window_count() == 0);
     assert(registry.windows().empty());
 }
 

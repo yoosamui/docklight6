@@ -11,55 +11,60 @@
 namespace
 {
 
-constexpr int ZOOM_FRAME_COUNT = 9;
-constexpr unsigned int ZOOM_FRAME_INTERVAL_MS = 16;
-constexpr int BLUR_FRAME_COUNT = 9;
-constexpr unsigned int BLUR_FRAME_INTERVAL_MS = 16;
-constexpr int BLUR_OUTER_RED = 105;
-constexpr int BLUR_OUTER_GREEN = 170;
-constexpr int BLUR_OUTER_BLUE = 255;
-constexpr int BLUR_INNER_RED = 235;
-constexpr int BLUR_INNER_GREEN = 245;
-constexpr int BLUR_INNER_BLUE = 255;
-constexpr int BLUR_OUTER_MAX_ALPHA = 225;
-constexpr int BLUR_INNER_MAX_ALPHA = 190;
-constexpr int CONTEXT_MENU_ICON_SIZE = 20;
-constexpr int CONTEXT_MENU_TITLE_WIDTH = 48;
+    constexpr int ZOOM_FRAME_COUNT = 9;
+    constexpr unsigned int ZOOM_FRAME_INTERVAL_MS = 16;
+    constexpr int BLUR_FRAME_COUNT = 9;
+    constexpr unsigned int BLUR_FRAME_INTERVAL_MS = 16;
+    constexpr int BLUR_OUTER_RED = 105;
+    constexpr int BLUR_OUTER_GREEN = 170;
+    constexpr int BLUR_OUTER_BLUE = 255;
+    constexpr int BLUR_INNER_RED = 235;
+    constexpr int BLUR_INNER_GREEN = 245;
+    constexpr int BLUR_INNER_BLUE = 255;
+    constexpr int BLUR_OUTER_MAX_ALPHA = 225;
+    constexpr int BLUR_INNER_MAX_ALPHA = 190;
+    constexpr int CONTEXT_MENU_ICON_SIZE = 20;
+    constexpr int CONTEXT_MENU_TITLE_WIDTH = 48;
+    constexpr double INDICATOR_THICKNESS = 2.0;  // Line height
+    constexpr double INDICATOR_LINE_INSET = 1.0; // Shortens 2 px on each side
+    constexpr double INDICATOR_DOT_RADIUS = 2.0;
+    constexpr double INDICATOR_DOT_GAP = 6.0;
+    constexpr double INDICATOR_PI = 3.14159265358979323846;
 
-std::string desktop_badge_text(
-    const std::vector<unsigned int>
-        &desktop_numbers)
-{
-    std::string text = "[ ";
-
-    for (std::size_t index = 0;
-         index < desktop_numbers.size();
-         ++index)
+    std::string desktop_badge_text(
+        const std::vector<unsigned int>
+            &desktop_numbers)
     {
-        if (index > 0)
-            text += ", ";
+        std::string text = "[ ";
 
-        text += std::to_string(
-            desktop_numbers[index]);
+        for (std::size_t index = 0;
+             index < desktop_numbers.size();
+             ++index)
+        {
+            if (index > 0)
+                text += ", ";
+
+            text += std::to_string(
+                desktop_numbers[index]);
+        }
+
+        text += " ]";
+
+        return text;
     }
 
-    text += " ]";
+    std::vector<std::string>
+    application_identifiers(
+        const Glib::RefPtr<Gio::AppInfo> &app)
+    {
+        std::vector<std::string> identifiers;
 
-    return text;
-}
+        if (!app)
+            return identifiers;
 
-std::vector<std::string>
-application_identifiers(
-    const Glib::RefPtr<Gio::AppInfo> &app)
-{
-    std::vector<std::string> identifiers;
-
-    if (!app)
-        return identifiers;
-
-    const auto add_identifier =
-        [&identifiers](
-            const std::string &identifier)
+        const auto add_identifier =
+            [&identifiers](
+                const std::string &identifier)
         {
             if (identifier.empty() ||
                 std::find(
@@ -74,276 +79,267 @@ application_identifiers(
             identifiers.push_back(identifier);
         };
 
-    add_identifier(app->get_id());
-    add_identifier(app->get_executable());
+        add_identifier(app->get_id());
+        add_identifier(app->get_executable());
 
-    const auto icon = app->get_icon();
+        const auto icon = app->get_icon();
 
-    if (icon &&
-        G_IS_THEMED_ICON(icon->gobj()))
-    {
-        const auto icon_names =
-            g_themed_icon_get_names(
-                G_THEMED_ICON(
-                    icon->gobj()));
-
-        for (int index = 0;
-             icon_names &&
-             icon_names[index];
-             ++index)
+        if (icon &&
+            G_IS_THEMED_ICON(icon->gobj()))
         {
-            add_identifier(
-                icon_names[index]);
-        }
-    }
+            const auto icon_names =
+                g_themed_icon_get_names(
+                    G_THEMED_ICON(
+                        icon->gobj()));
 
-    if (G_IS_DESKTOP_APP_INFO(app->gobj()))
-    {
-        const auto startup_wm_class =
-            g_desktop_app_info_get_startup_wm_class(
-                G_DESKTOP_APP_INFO(
-                    app->gobj()));
-
-        if (startup_wm_class)
-            add_identifier(startup_wm_class);
-    }
-
-    return identifiers;
-}
-
-bool has_single_main_window(
-    const Glib::RefPtr<Gio::AppInfo> &app)
-{
-    if (!app ||
-        !G_IS_DESKTOP_APP_INFO(app->gobj()))
-    {
-        return false;
-    }
-
-    auto *desktop_app =
-        G_DESKTOP_APP_INFO(
-            app->gobj());
-
-    return g_desktop_app_info_get_boolean(
-               desktop_app,
-               "SingleMainWindow") ||
-           g_desktop_app_info_get_boolean(
-               desktop_app,
-               "X-GNOME-SingleWindow");
-}
-
-Glib::RefPtr<Gdk::Pixbuf>
-create_transparent_pixbuf(
-    int width,
-    int height)
-{
-    auto pixbuf =
-        Gdk::Pixbuf::create(
-            Gdk::COLORSPACE_RGB,
-            true,
-            8,
-            std::max(1, width),
-            std::max(1, height));
-
-    pixbuf->fill(0x00000000);
-
-    return pixbuf;
-}
-
-std::vector<float>
-box_blur_alpha(
-    const std::vector<float> &source,
-    int width,
-    int height,
-    int radius)
-{
-    if (radius <= 0)
-        return source;
-
-    const int diameter =
-        radius * 2 + 1;
-
-    std::vector<float> horizontal(
-        source.size(),
-        0.0F);
-
-    std::vector<float> result(
-        source.size(),
-        0.0F);
-
-    for (int y = 0; y < height; ++y)
-    {
-        float sum = 0.0F;
-
-        for (int offset = -radius;
-             offset <= radius;
-             ++offset)
-        {
-            if (offset >= 0 &&
-                offset < width)
+            for (int index = 0;
+                 icon_names &&
+                 icon_names[index];
+                 ++index)
             {
-                sum +=
-                    source[
-                        static_cast<std::size_t>(
+                add_identifier(
+                    icon_names[index]);
+            }
+        }
+
+        if (G_IS_DESKTOP_APP_INFO(app->gobj()))
+        {
+            const auto startup_wm_class =
+                g_desktop_app_info_get_startup_wm_class(
+                    G_DESKTOP_APP_INFO(
+                        app->gobj()));
+
+            if (startup_wm_class)
+                add_identifier(startup_wm_class);
+        }
+
+        return identifiers;
+    }
+
+    bool has_single_main_window(
+        const Glib::RefPtr<Gio::AppInfo> &app)
+    {
+        if (!app ||
+            !G_IS_DESKTOP_APP_INFO(app->gobj()))
+        {
+            return false;
+        }
+
+        auto *desktop_app =
+            G_DESKTOP_APP_INFO(
+                app->gobj());
+
+        return g_desktop_app_info_get_boolean(
+                   desktop_app,
+                   "SingleMainWindow") ||
+               g_desktop_app_info_get_boolean(
+                   desktop_app,
+                   "X-GNOME-SingleWindow");
+    }
+
+    Glib::RefPtr<Gdk::Pixbuf>
+    create_transparent_pixbuf(
+        int width,
+        int height)
+    {
+        auto pixbuf =
+            Gdk::Pixbuf::create(
+                Gdk::COLORSPACE_RGB,
+                true,
+                8,
+                std::max(1, width),
+                std::max(1, height));
+
+        pixbuf->fill(0x00000000);
+
+        return pixbuf;
+    }
+
+    std::vector<float>
+    box_blur_alpha(
+        const std::vector<float> &source,
+        int width,
+        int height,
+        int radius)
+    {
+        if (radius <= 0)
+            return source;
+
+        const int diameter =
+            radius * 2 + 1;
+
+        std::vector<float> horizontal(
+            source.size(),
+            0.0F);
+
+        std::vector<float> result(
+            source.size(),
+            0.0F);
+
+        for (int y = 0; y < height; ++y)
+        {
+            float sum = 0.0F;
+
+            for (int offset = -radius;
+                 offset <= radius;
+                 ++offset)
+            {
+                if (offset >= 0 &&
+                    offset < width)
+                {
+                    sum +=
+                        source[static_cast<std::size_t>(
                             y * width + offset)];
+                }
+            }
+
+            for (int x = 0; x < width; ++x)
+            {
+                horizontal[static_cast<std::size_t>(
+                    y * width + x)] =
+                    sum / diameter;
+
+                const int remove_x =
+                    x - radius;
+
+                const int add_x =
+                    x + radius + 1;
+
+                if (remove_x >= 0)
+                {
+                    sum -=
+                        source[static_cast<std::size_t>(
+                            y * width +
+                            remove_x)];
+                }
+
+                if (add_x < width)
+                {
+                    sum +=
+                        source[static_cast<std::size_t>(
+                            y * width +
+                            add_x)];
+                }
             }
         }
 
         for (int x = 0; x < width; ++x)
         {
-            horizontal[
-                static_cast<std::size_t>(
-                    y * width + x)] =
-                sum / diameter;
+            float sum = 0.0F;
 
-            const int remove_x =
-                x - radius;
-
-            const int add_x =
-                x + radius + 1;
-
-            if (remove_x >= 0)
+            for (int offset = -radius;
+                 offset <= radius;
+                 ++offset)
             {
-                sum -=
-                    source[
-                        static_cast<std::size_t>(
-                            y * width +
-                            remove_x)];
-            }
-
-            if (add_x < width)
-            {
-                sum +=
-                    source[
-                        static_cast<std::size_t>(
-                            y * width +
-                            add_x)];
-            }
-        }
-    }
-
-    for (int x = 0; x < width; ++x)
-    {
-        float sum = 0.0F;
-
-        for (int offset = -radius;
-             offset <= radius;
-             ++offset)
-        {
-            if (offset >= 0 &&
-                offset < height)
-            {
-                sum +=
-                    horizontal[
-                        static_cast<std::size_t>(
+                if (offset >= 0 &&
+                    offset < height)
+                {
+                    sum +=
+                        horizontal[static_cast<std::size_t>(
                             offset * width + x)];
+                }
             }
-        }
 
-        for (int y = 0; y < height; ++y)
-        {
-            result[
-                static_cast<std::size_t>(
-                    y * width + x)] =
-                sum / diameter;
-
-            const int remove_y =
-                y - radius;
-
-            const int add_y =
-                y + radius + 1;
-
-            if (remove_y >= 0)
+            for (int y = 0; y < height; ++y)
             {
-                sum -=
-                    horizontal[
-                        static_cast<std::size_t>(
+                result[static_cast<std::size_t>(
+                    y * width + x)] =
+                    sum / diameter;
+
+                const int remove_y =
+                    y - radius;
+
+                const int add_y =
+                    y + radius + 1;
+
+                if (remove_y >= 0)
+                {
+                    sum -=
+                        horizontal[static_cast<std::size_t>(
                             remove_y * width +
                             x)];
-            }
+                }
 
-            if (add_y < height)
-            {
-                sum +=
-                    horizontal[
-                        static_cast<std::size_t>(
+                if (add_y < height)
+                {
+                    sum +=
+                        horizontal[static_cast<std::size_t>(
                             add_y * width +
                             x)];
+                }
             }
         }
+
+        return result;
     }
 
-    return result;
-}
-
-std::vector<float>
-blur_alpha(
-    std::vector<float> alpha,
-    int width,
-    int height,
-    int radius)
-{
-    for (int pass = 0; pass < 3; ++pass)
+    std::vector<float>
+    blur_alpha(
+        std::vector<float> alpha,
+        int width,
+        int height,
+        int radius)
     {
-        alpha =
-            box_blur_alpha(
-                alpha,
-                width,
-                height,
-                radius);
-    }
-
-    return alpha;
-}
-
-Glib::RefPtr<Gdk::Pixbuf>
-create_blur_pixbuf(
-    const std::vector<float> &alpha,
-    int size,
-    int red,
-    int green,
-    int blue)
-{
-    auto blur =
-        create_transparent_pixbuf(
-            size,
-            size);
-
-    auto *pixels =
-        blur->get_pixels();
-
-    const int rowstride =
-        blur->get_rowstride();
-
-    for (int y = 0; y < size; ++y)
-    {
-        auto *row =
-            pixels + y * rowstride;
-
-        for (int x = 0; x < size; ++x)
+        for (int pass = 0; pass < 3; ++pass)
         {
-            auto *pixel =
-                row + x * 4;
-
-            pixel[0] =
-                static_cast<guchar>(red);
-            pixel[1] =
-                static_cast<guchar>(green);
-            pixel[2] =
-                static_cast<guchar>(blue);
-            pixel[3] =
-                static_cast<guchar>(
-                    std::clamp(
-                        alpha[
-                            static_cast<std::size_t>(
-                                y * size + x)],
-                        0.0F,
-                        255.0F));
+            alpha =
+                box_blur_alpha(
+                    alpha,
+                    width,
+                    height,
+                    radius);
         }
+
+        return alpha;
     }
 
-    return blur;
-}
+    Glib::RefPtr<Gdk::Pixbuf>
+    create_blur_pixbuf(
+        const std::vector<float> &alpha,
+        int size,
+        int red,
+        int green,
+        int blue)
+    {
+        auto blur =
+            create_transparent_pixbuf(
+                size,
+                size);
+
+        auto *pixels =
+            blur->get_pixels();
+
+        const int rowstride =
+            blur->get_rowstride();
+
+        for (int y = 0; y < size; ++y)
+        {
+            auto *row =
+                pixels + y * rowstride;
+
+            for (int x = 0; x < size; ++x)
+            {
+                auto *pixel =
+                    row + x * 4;
+
+                pixel[0] =
+                    static_cast<guchar>(red);
+                pixel[1] =
+                    static_cast<guchar>(green);
+                pixel[2] =
+                    static_cast<guchar>(blue);
+                pixel[3] =
+                    static_cast<guchar>(
+                        std::clamp(
+                            alpha[static_cast<std::size_t>(
+                                y * size + x)],
+                            0.0F,
+                            255.0F));
+            }
+        }
+
+        return blur;
+    }
 
 }
 
@@ -352,16 +348,27 @@ DockItem::DockItem(
     Glib::RefPtr<Gio::AppInfo> app,
     WindowRegistry *window_registry,
     int icon_size,
-    DockHoverEffect hover_effect)
+    DockHoverEffect hover_effect,
+    DockIndicator indicator,
+    const std::string
+        &indicator_color)
     : m_dock(dock),
       m_app(app),
       m_application_controller(
           window_registry,
           application_identifiers(app)),
       m_hover_effect(hover_effect),
+      m_indicator(indicator),
       m_single_main_window(
           has_single_main_window(app))
 {
+    if (!m_indicator_color.set(
+            indicator_color))
+    {
+        m_indicator_color.set(
+            "#69aaff");
+    }
+
     set_visible_window(false);
 
     add_events(
@@ -380,8 +387,15 @@ DockItem::DockItem(
             *this,
             &DockItem::on_popup_menu));
 
+    signal_draw().connect(
+        sigc::mem_fun(
+            *this,
+            &DockItem::draw_indicator),
+        true);
+
     initialize_context_menu();
     set_icon_size(icon_size);
+    refresh_indicator();
 
     show_all_children();
 }
@@ -407,6 +421,8 @@ void DockItem::set_icon_size(int icon_size)
     set_size_request(
         DockLayoutMetrics::item_size_for(icon_size),
         DockLayoutMetrics::item_size_for(icon_size));
+
+    queue_draw();
 }
 
 void DockItem::publish_icon_geometry(
@@ -480,6 +496,173 @@ void DockItem::set_hover_effect(
     }
 
     apply_hover_effect();
+}
+
+void DockItem::set_indicator(
+    DockIndicator indicator)
+{
+    if (indicator == m_indicator)
+        return;
+
+    m_indicator = indicator;
+    queue_draw();
+}
+
+void DockItem::set_indicator_color(
+    const std::string &color)
+{
+    Gdk::RGBA parsed;
+
+    if (!parsed.set(color))
+        return;
+
+    m_indicator_color = parsed;
+    queue_draw();
+}
+
+void DockItem::refresh_indicator()
+{
+    const auto window_count =
+        m_application_controller
+            .window_count();
+
+    if (window_count ==
+        m_indicator_window_count)
+    {
+        return;
+    }
+
+    m_indicator_window_count =
+        window_count;
+    queue_draw();
+}
+
+bool DockItem::draw_indicator(
+    const Cairo::RefPtr<Cairo::Context>
+        &context)
+{
+    if (!context ||
+        m_indicator_window_count == 0)
+    {
+        return false;
+    }
+
+    const auto allocation =
+        get_allocation();
+
+    const double width =
+        allocation.get_width();
+    const double height =
+        allocation.get_height();
+
+    if (width <= 0.0 || height <= 0.0)
+        return false;
+
+    context->save();
+    context->set_source_rgba(
+        m_indicator_color.get_red(),
+        m_indicator_color.get_green(),
+        m_indicator_color.get_blue(),
+        m_indicator_color.get_alpha());
+
+    if (m_indicator ==
+        DockIndicator::lines)
+    {
+        const double length =
+            std::min(
+                width,
+                std::max(
+                    0.0,
+                    static_cast<double>(
+                        m_icon_size) -
+                        2.0 *
+                            INDICATOR_LINE_INSET));
+
+        const double origin =
+            (width - length) /
+            2.0;
+
+        const double position =
+            height -
+            INDICATOR_THICKNESS;
+
+        const auto draw_segment =
+            [&](double start,
+                double segment_length)
+        {
+            context->rectangle(
+                start,
+                position,
+                segment_length,
+                INDICATOR_THICKNESS);
+        };
+
+        if (m_indicator_window_count == 1)
+        {
+            const double half_length =
+                length / 2.0;
+
+            draw_segment(
+                origin +
+                    (length - half_length) /
+                        2.0,
+                half_length);
+        }
+        else
+        {
+            draw_segment(origin, length);
+        }
+
+        context->fill();
+    }
+    else
+    {
+        const double radius =
+            INDICATOR_DOT_RADIUS;
+
+        const double edge_center =
+            height - radius;
+
+        const double main_center =
+            width / 2.0;
+
+        const auto draw_dot =
+            [&](double center)
+        {
+            context->arc(
+                center,
+                edge_center,
+                radius,
+                0.0,
+                2.0 *
+                    INDICATOR_PI);
+        };
+
+        if (m_indicator_window_count == 1)
+        {
+            draw_dot(main_center);
+        }
+        else
+        {
+            const double offset =
+                radius +
+                INDICATOR_DOT_GAP /
+                    2.0;
+
+            draw_dot(
+                main_center -
+                offset);
+            draw_dot(
+                main_center +
+                offset);
+        }
+
+        context->fill();
+    }
+
+    context->restore();
+
+    return false;
 }
 
 void DockItem::set_context_menu_corner_radius(
@@ -766,38 +949,38 @@ void DockItem::initialize_context_menu()
     auto initialize_item =
         [](Gtk::MenuItem &item,
            unsigned int mnemonic_index)
-        {
-            item.set_halign(Gtk::ALIGN_FILL);
-            item.set_valign(Gtk::ALIGN_CENTER);
+    {
+        item.set_halign(Gtk::ALIGN_FILL);
+        item.set_valign(Gtk::ALIGN_CENTER);
 
-            auto *label =
-                dynamic_cast<Gtk::Label *>(
-                    item.get_child());
+        auto *label =
+            dynamic_cast<Gtk::Label *>(
+                item.get_child());
 
-            if (!label)
-                return;
+        if (!label)
+            return;
 
-            label->set_halign(Gtk::ALIGN_FILL);
-            label->set_valign(Gtk::ALIGN_FILL);
-            label->set_xalign(0.0F);
-            label->set_yalign(0.5F);
+        label->set_halign(Gtk::ALIGN_FILL);
+        label->set_valign(Gtk::ALIGN_FILL);
+        label->set_xalign(0.0F);
+        label->set_yalign(0.5F);
 
-            // Preserve the native GTK mnemonic while ensuring its underline
-            // remains visible even when the desktop hides mouse-opened menu
-            // mnemonics.
-            Pango::AttrList attributes;
-            auto underline =
-                Pango::Attribute::
-                    create_attr_underline(
-                        Pango::UNDERLINE_SINGLE);
+        // Preserve the native GTK mnemonic while ensuring its underline
+        // remains visible even when the desktop hides mouse-opened menu
+        // mnemonics.
+        Pango::AttrList attributes;
+        auto underline =
+            Pango::Attribute::
+                create_attr_underline(
+                    Pango::UNDERLINE_SINGLE);
 
-            underline.set_start_index(
-                mnemonic_index);
-            underline.set_end_index(
-                mnemonic_index + 1);
-            attributes.insert(underline);
-            label->set_attributes(attributes);
-        };
+        underline.set_start_index(
+            mnemonic_index);
+        underline.set_end_index(
+            mnemonic_index + 1);
+        attributes.insert(underline);
+        label->set_attributes(attributes);
+    };
 
     initialize_item(m_attach_item, 1);
     initialize_item(m_open_new_window_item, 0);
@@ -1332,9 +1515,8 @@ void DockItem::apply_hover_effect()
                 : 0;
 
         image.set(
-            m_zoom_frames[
-                static_cast<std::size_t>(
-                    m_zoom_frame)]);
+            m_zoom_frames[static_cast<std::size_t>(
+                m_zoom_frame)]);
 
         start_zoom_animation();
         break;
@@ -1358,9 +1540,8 @@ void DockItem::apply_hover_effect()
                 : 0;
 
         image.set(
-            m_blur_frames[
-                static_cast<std::size_t>(
-                    m_blur_frame)]);
+            m_blur_frames[static_cast<std::size_t>(
+                m_blur_frame)]);
 
         start_blur_animation();
         break;
@@ -1500,9 +1681,8 @@ bool DockItem::advance_zoom_animation()
     }
 
     image.set(
-        m_zoom_frames[
-            static_cast<std::size_t>(
-                m_zoom_frame)]);
+        m_zoom_frames[static_cast<std::size_t>(
+            m_zoom_frame)]);
 
     return m_zoom_frame !=
            m_zoom_target_frame;
@@ -1566,11 +1746,10 @@ void DockItem::create_blur_frames()
             const auto *pixel =
                 row + x * icon_channels;
 
-            icon_alpha[
-                static_cast<std::size_t>(
-                    (icon_y + y) *
-                        item_size +
-                    icon_x + x)] =
+            icon_alpha[static_cast<std::size_t>(
+                (icon_y + y) *
+                    item_size +
+                icon_x + x)] =
                 icon_has_alpha
                     ? pixel[icon_channels - 1]
                     : 255.0F;
@@ -1725,9 +1904,8 @@ bool DockItem::advance_blur_animation()
     }
 
     image.set(
-        m_blur_frames[
-            static_cast<std::size_t>(
-                m_blur_frame)]);
+        m_blur_frames[static_cast<std::size_t>(
+            m_blur_frame)]);
 
     return m_blur_frame !=
            m_blur_target_frame;

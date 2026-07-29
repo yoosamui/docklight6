@@ -6,6 +6,7 @@
 #include <glibmm/keyfile.h>
 #include <glibmm/main.h>
 #include <glibmm/miscutils.h>
+#include <gdkmm/rgba.h>
 
 #include <algorithm>
 #include <cctype>
@@ -37,6 +38,18 @@ hover_effect =
 
 )";
 
+const char *INDICATOR_SETTING_TEMPLATE = R"(# Running-window indicator style.
+# Valid values: lines, dots
+indicator = lines
+
+)";
+
+const char *INDICATOR_COLOR_SETTING_TEMPLATE = R"(# Running-window indicator fill color.
+# Accepts GTK colors such as #rrggbb, rgb(), rgba(), or a named color
+indicator_color = #69aaff
+
+)";
+
 const char *CONFIG_TEMPLATE = R"([dock]
 # Monitor used by the dock.
 # Empty uses default: primary
@@ -47,6 +60,14 @@ monitor =
 # Empty uses default: standard
 # Valid values: standard, zoom, blur
 hover_effect =
+
+# Running-window indicator style.
+# Valid values: lines, dots
+indicator = lines
+
+# Running-window indicator fill color.
+# Accepts GTK colors such as #rrggbb, rgb(), rgba(), or a named color
+indicator_color = #69aaff
 
 # Icon size in pixels.
 # Empty uses default: 46
@@ -197,6 +218,10 @@ bool same_configuration(
                right.settings.icon_size() &&
            left.settings.hover_effect() ==
                right.settings.hover_effect() &&
+           left.settings.indicator() ==
+               right.settings.indicator() &&
+           left.settings.indicator_color() ==
+               right.settings.indicator_color() &&
            left.settings.minimum_bottom_workarea_inset() ==
                right.settings.minimum_bottom_workarea_inset() &&
            left.layout_request.location ==
@@ -236,6 +261,12 @@ DockConfigurationManager::DockConfigurationManager()
     ensure_setting(
         "hover_effect",
         HOVER_EFFECT_SETTING_TEMPLATE);
+    ensure_setting(
+        "indicator",
+        INDICATOR_SETTING_TEMPLATE);
+    ensure_setting(
+        "indicator_color",
+        INDICATOR_COLOR_SETTING_TEMPLATE);
     reload();
 }
 
@@ -467,6 +498,64 @@ void DockConfigurationManager::reload()
                 "Invalid [dock] hover_effect '%s'; "
                 "keeping the previous value",
                 hover_effect.c_str());
+        }
+
+        const auto indicator =
+            value_for(
+                key_file,
+                "indicator");
+
+        if (indicator.empty() ||
+            indicator == "lines")
+        {
+            candidate.settings.set_indicator(
+                DockIndicator::lines);
+        }
+        else if (indicator == "dots")
+        {
+            candidate.settings.set_indicator(
+                DockIndicator::dots);
+        }
+        else
+        {
+            g_warning(
+                "Invalid [dock] indicator '%s'; "
+                "keeping the previous value",
+                indicator.c_str());
+        }
+
+        const auto indicator_color =
+            text_value_for(
+                key_file,
+                "indicator_color");
+
+        if (indicator_color.empty())
+        {
+            candidate.settings
+                .set_indicator_color(
+                    defaults.settings
+                        .indicator_color());
+        }
+        else
+        {
+            Gdk::RGBA color;
+
+            if (color.set(indicator_color))
+            {
+                candidate.settings
+                    .set_indicator_color(
+                        indicator_color);
+            }
+            else
+            {
+                g_warning(
+                    "Invalid [dock] indicator_color '%s'; "
+                    "keeping '%s'",
+                    indicator_color.c_str(),
+                    candidate.settings
+                        .indicator_color()
+                        .c_str());
+            }
         }
 
         const auto icon_size =

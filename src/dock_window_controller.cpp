@@ -80,6 +80,14 @@ void DockWindowController::initialize()
                 .connect(
                     [this]()
                     {
+                        for (auto *item :
+                             m_window
+                                 .dock_items())
+                        {
+                            item
+                                ->refresh_indicator();
+                        }
+
                         schedule_icon_geometry_update();
                     });
 
@@ -92,6 +100,12 @@ void DockWindowController::initialize()
                     {
                         schedule_icon_geometry_update();
                     });
+    }
+
+    for (auto *item :
+         m_window.dock_items())
+    {
+        item->refresh_indicator();
     }
 
     m_icon_theme =
@@ -149,6 +163,10 @@ void DockWindowController::apply_configuration(
     {
         item->set_hover_effect(
             m_settings.hover_effect());
+        item->set_indicator(
+            m_settings.indicator());
+        item->set_indicator_color(
+            m_settings.indicator_color());
     }
 
     m_layout_request =

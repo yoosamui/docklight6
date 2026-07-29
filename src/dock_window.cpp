@@ -450,7 +450,13 @@ void DockWindow::create_dock()
                         .icon_size(),
                     m_controller
                         ->settings()
-                        .hover_effect()));
+                        .hover_effect(),
+                    m_controller
+                        ->settings()
+                        .indicator(),
+                    m_controller
+                        ->settings()
+                        .indicator_color()));
 
         m_dock_box.pack_start(
             *item,

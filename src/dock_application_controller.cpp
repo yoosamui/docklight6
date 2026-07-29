@@ -505,6 +505,18 @@ DockApplicationController::
     return entries;
 }
 
+std::size_t DockApplicationController::
+    window_count() const
+{
+    const auto running_application =
+        application();
+
+    return running_application
+               ? running_application
+                     ->window_ids.size()
+               : 0;
+}
+
 void DockApplicationController::
     reset_window_cycle()
 {

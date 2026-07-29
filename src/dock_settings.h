@@ -12,11 +12,18 @@ public:
     void set_icon_size(int size);
     void set_hover_effect(
         DockHoverEffect effect);
+    void set_indicator(
+        DockIndicator indicator);
+    void set_indicator_color(
+        const std::string &color);
     void set_minimum_bottom_workarea_inset(int inset);
 
     const std::string &monitor() const;
 
     DockHoverEffect hover_effect() const;
+    DockIndicator indicator() const;
+    const std::string &
+    indicator_color() const;
 
     int icon_size() const;
     int minimum_bottom_workarea_inset() const;
@@ -35,4 +42,10 @@ private:
 
     DockHoverEffect m_hover_effect =
         DockHoverEffect::standard;
+
+    DockIndicator m_indicator =
+        DockIndicator::lines;
+
+    std::string m_indicator_color =
+        "#69aaff";
 };
