@@ -22,6 +22,11 @@ EXTRA_DIST = \
 dist_pkgdata_DATA = \
     plasma/geometry-bridge/ensure-geometry-bridge.js
 
+docklighticonsdir = $(pkgdatadir)/icons
+
+dist_docklighticons_DATA = \
+    data/icons/128x128/docklight.home.png
+
 .PHONY: \
     install-kwin-integration \
     install-kwin-minimize-effect \

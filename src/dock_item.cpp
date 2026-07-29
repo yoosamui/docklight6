@@ -1,8 +1,15 @@
 #include "dock_item.h"
+#include "dock_configuration_manager.h"
 #include "dock_layout_metrics.h"
+#include "dock_monitor_manager.h"
 #include "dock_window.h"
+#include "window_registry.h"
+#include "config.h"
 
 #include <gio/gdesktopappinfo.h>
+#include <giomm/application.h>
+#include <glibmm/miscutils.h>
+#include <gtk-layer-shell.h>
 
 #include <algorithm>
 #include <string>
@@ -30,6 +37,52 @@ namespace
     constexpr double INDICATOR_DOT_RADIUS = 2.0;
     constexpr double INDICATOR_DOT_GAP = 6.0;
     constexpr double INDICATOR_PI = 3.14159265358979323846;
+
+    void keep_dialog_above(
+        Gtk::Window &dialog,
+        Gtk::Window &parent,
+        const char *name_space)
+    {
+        dialog.set_keep_above(true);
+
+        if (!gtk_layer_is_supported())
+            return;
+
+        auto *window =
+            GTK_WINDOW(dialog.gobj());
+
+        gtk_layer_init_for_window(window);
+        gtk_layer_set_namespace(
+            window,
+            name_space);
+        gtk_layer_set_layer(
+            window,
+            GTK_LAYER_SHELL_LAYER_OVERLAY);
+        gtk_layer_set_exclusive_zone(
+            window,
+            0);
+        gtk_layer_set_keyboard_mode(
+            window,
+            GTK_LAYER_SHELL_KEYBOARD_MODE_ON_DEMAND);
+
+        const auto parent_window =
+            parent.get_window();
+
+        if (!parent_window)
+            return;
+
+        auto *display =
+            gdk_window_get_display(
+                parent_window->gobj());
+        auto *monitor =
+            gdk_display_get_monitor_at_window(
+                display,
+                parent_window->gobj());
+
+        gtk_layer_set_monitor(
+            window,
+            monitor);
+    }
 
     std::string desktop_badge_text(
         const std::vector<unsigned int>
@@ -1969,4 +2022,1497 @@ DockItem::create_standard_hover_pixbuf(
     }
 
     return highlighted;
+}
+
+DockHomeItem::DockHomeItem(
+    DockWindow &dock,
+    WindowRegistry *window_registry,
+    int icon_size)
+    : m_dock(dock),
+      m_window_registry(window_registry)
+{
+    set_visible_window(false);
+
+    add_events(
+        Gdk::BUTTON_PRESS_MASK);
+
+    m_image.set_halign(
+        Gtk::ALIGN_CENTER);
+    m_image.set_valign(
+        Gtk::ALIGN_CENTER);
+    add(m_image);
+
+    signal_popup_menu().connect(
+        sigc::mem_fun(
+            *this,
+            &DockHomeItem::on_popup_menu));
+
+    load_icon_once();
+    initialize_context_menu();
+    set_icon_size(icon_size);
+
+    show_all_children();
+}
+
+DockHomeItem::~DockHomeItem()
+{
+    m_settings_idle.disconnect();
+}
+
+void DockHomeItem::set_icon_size(
+    int icon_size)
+{
+    icon_size = std::max(1, icon_size);
+
+    if (icon_size == m_icon_size)
+        return;
+
+    m_icon_size = icon_size;
+    update_icon();
+
+    set_size_request(
+        DockLayoutMetrics::item_size_for(
+            icon_size),
+        DockLayoutMetrics::item_size_for(
+            icon_size));
+}
+
+void DockHomeItem::
+    set_context_menu_corner_radius(
+        int corner_radius)
+{
+    if (!m_context_menu_css)
+        return;
+
+    m_context_menu_css->load_from_data(
+        "window.dock-context-menu-popup,"
+        "window.dock-context-menu-popup decoration {"
+        " background-color: transparent;"
+        " background-image: none;"
+        " border-radius: " +
+        std::to_string(
+            std::max(0, corner_radius)) +
+        "px;"
+        "}"
+        "menu.dock-context-menu {"
+        " background-clip: padding-box;"
+        " border-radius: " +
+        std::to_string(
+            std::max(0, corner_radius)) +
+        "px;"
+        "}");
+}
+
+bool DockHomeItem::on_button_press_event(
+    GdkEventButton *event)
+{
+    if (event &&
+        event->button ==
+            GDK_BUTTON_SECONDARY)
+    {
+        show_context_menu(
+            reinterpret_cast<GdkEvent *>(
+                event));
+        return true;
+    }
+
+    return false;
+}
+
+bool DockHomeItem::on_popup_menu()
+{
+    show_context_menu(nullptr);
+    return true;
+}
+
+void DockHomeItem::load_icon_once()
+{
+    if (m_icon_load_attempted)
+        return;
+
+    m_icon_load_attempted = true;
+
+    const std::vector<std::string>
+        icon_paths = {
+            Glib::build_filename(
+                DOCKLIGHT_DATA_DIR,
+                "icons",
+                "docklight.home.png"),
+            Glib::build_filename(
+                SOURCE_DIR,
+                "..",
+                "data",
+                "icons",
+                "docklight.home.png"),
+            Glib::build_filename(
+                SOURCE_DIR,
+                "..",
+                "data",
+                "icons",
+                "128x128",
+                "docklight.home.png")};
+
+    for (const auto &icon_path :
+         icon_paths)
+    {
+        try
+        {
+            m_source_icon =
+                Gdk::Pixbuf::
+                    create_from_file(
+                        icon_path);
+
+            if (m_source_icon)
+            {
+                g_message(
+                    "Home icon loaded: %s",
+                    icon_path.c_str());
+                return;
+            }
+        }
+        catch (const Glib::Error &)
+        {
+        }
+    }
+
+    g_warning(
+        "Cannot load DockLight home icon");
+}
+
+void DockHomeItem::update_icon()
+{
+    if (!m_source_icon)
+        return;
+
+    if (m_source_icon->get_width() ==
+            m_icon_size &&
+        m_source_icon->get_height() ==
+            m_icon_size)
+    {
+        m_display_icon = m_source_icon;
+    }
+    else
+    {
+        m_display_icon =
+            m_source_icon->scale_simple(
+                m_icon_size,
+                m_icon_size,
+                Gdk::INTERP_BILINEAR);
+    }
+
+    if (m_display_icon)
+        m_image.set(m_display_icon);
+}
+
+void DockHomeItem::
+    initialize_context_menu()
+{
+    const auto initialize_mnemonic =
+        [](Gtk::MenuItem &item,
+           unsigned int mnemonic_index)
+    {
+        item.set_halign(Gtk::ALIGN_FILL);
+        item.set_valign(Gtk::ALIGN_CENTER);
+
+        auto *label =
+            dynamic_cast<Gtk::Label *>(
+                item.get_child());
+
+        if (!label)
+            return;
+
+        label->set_halign(Gtk::ALIGN_FILL);
+        label->set_valign(Gtk::ALIGN_FILL);
+        label->set_xalign(0.0F);
+        label->set_yalign(0.5F);
+
+        Pango::AttrList attributes;
+        auto underline =
+            Pango::Attribute::
+                create_attr_underline(
+                    Pango::UNDERLINE_SINGLE);
+
+        underline.set_start_index(
+            mnemonic_index);
+        underline.set_end_index(
+            mnemonic_index + 1);
+        attributes.insert(underline);
+        label->set_attributes(attributes);
+    };
+
+    initialize_mnemonic(
+        m_settings_item,
+        0);
+    initialize_mnemonic(
+        m_minimize_all_item,
+        0);
+    initialize_mnemonic(
+        m_unminimize_all_item,
+        0);
+    initialize_mnemonic(
+        m_maximize_all_item,
+        2);
+    initialize_mnemonic(
+        m_close_all_item,
+        0);
+    initialize_mnemonic(
+        m_about_item,
+        1);
+    initialize_mnemonic(
+        m_exit_item,
+        0);
+
+    m_context_menu.append(
+        m_settings_item);
+    m_context_menu.append(
+        m_window_separator);
+    m_context_menu.append(
+        m_minimize_all_item);
+    m_context_menu.append(
+        m_unminimize_all_item);
+    m_context_menu.append(
+        m_maximize_all_item);
+    m_context_menu.append(
+        m_close_separator);
+    m_context_menu.append(
+        m_close_all_item);
+    m_context_menu.append(
+        m_about_separator);
+    m_context_menu.append(
+        m_about_item);
+    m_context_menu.append(
+        m_exit_separator);
+    m_context_menu.append(
+        m_exit_item);
+
+    m_settings_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                m_settings_idle.disconnect();
+
+                m_settings_idle =
+                    Glib::signal_idle().connect(
+                        [this]()
+                        {
+                            open_settings();
+                            return false;
+                        });
+            });
+
+    m_minimize_all_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                minimize_all();
+            });
+
+    m_unminimize_all_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                unminimize_all();
+            });
+
+    m_maximize_all_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                maximize_all();
+            });
+
+    m_close_all_item
+        .signal_activate()
+        .connect(
+            [this]()
+            {
+                close_all();
+            });
+
+    m_about_item
+        .signal_activate()
+        .connect(
+            sigc::mem_fun(
+                *this,
+                &DockHomeItem::show_about));
+
+    m_exit_item
+        .signal_activate()
+        .connect(
+            sigc::mem_fun(
+                *this,
+                &DockHomeItem::exit_docklight));
+
+    auto context =
+        m_context_menu.get_style_context();
+
+    context->add_class(
+        "dock-context-menu");
+
+    m_context_menu_css =
+        Gtk::CssProvider::create();
+
+    context->add_provider(
+        m_context_menu_css,
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION +
+            1);
+
+    m_context_menu.show_all();
+}
+
+void DockHomeItem::refresh_context_menu()
+{
+    bool has_window = false;
+    bool has_unminimized_window = false;
+    bool has_minimized_window = false;
+    bool has_unmaximized_window = false;
+
+    WindowBackendCapabilities capabilities;
+
+    if (m_window_registry)
+    {
+        capabilities =
+            m_window_registry->capabilities();
+
+        for (const auto &window :
+             m_window_registry->windows())
+        {
+            has_window = true;
+            has_unminimized_window =
+                has_unminimized_window ||
+                !window.minimized;
+            has_minimized_window =
+                has_minimized_window ||
+                window.minimized;
+            has_unmaximized_window =
+                has_unmaximized_window ||
+                !window.maximized ||
+                window.minimized;
+        }
+    }
+
+    m_minimize_all_item.set_sensitive(
+        capabilities.can_minimize &&
+        has_unminimized_window);
+    m_unminimize_all_item.set_sensitive(
+        capabilities.can_minimize &&
+        has_minimized_window);
+    m_maximize_all_item.set_sensitive(
+        capabilities.can_maximize &&
+        has_unmaximized_window);
+    m_close_all_item.set_sensitive(
+        capabilities.can_close &&
+        has_window);
+}
+
+void DockHomeItem::show_context_menu(
+    const GdkEvent *event)
+{
+    refresh_context_menu();
+
+    Gdk::Gravity widget_anchor =
+        Gdk::GRAVITY_NORTH;
+    Gdk::Gravity menu_anchor =
+        Gdk::GRAVITY_SOUTH;
+
+    switch (m_dock.location())
+    {
+    case DockLocation::bottom:
+        widget_anchor =
+            Gdk::GRAVITY_NORTH;
+        menu_anchor =
+            Gdk::GRAVITY_SOUTH;
+        break;
+
+    case DockLocation::top:
+        widget_anchor =
+            Gdk::GRAVITY_SOUTH;
+        menu_anchor =
+            Gdk::GRAVITY_NORTH;
+        break;
+
+    case DockLocation::left:
+        widget_anchor =
+            Gdk::GRAVITY_EAST;
+        menu_anchor =
+            Gdk::GRAVITY_WEST;
+        break;
+
+    case DockLocation::right:
+        widget_anchor =
+            Gdk::GRAVITY_WEST;
+        menu_anchor =
+            Gdk::GRAVITY_EAST;
+        break;
+    }
+
+    m_dock.hide_tooltip_immediately();
+
+    m_context_menu.popup_at_widget(
+        this,
+        widget_anchor,
+        menu_anchor,
+        event);
+
+    auto *menu_toplevel =
+        gtk_widget_get_toplevel(
+            GTK_WIDGET(
+                m_context_menu.gobj()));
+
+    if (GTK_IS_WINDOW(menu_toplevel))
+    {
+        auto *popup_context =
+            gtk_widget_get_style_context(
+                menu_toplevel);
+
+        gtk_style_context_add_class(
+            popup_context,
+            "dock-context-menu-popup");
+
+        gtk_style_context_add_provider(
+            popup_context,
+            GTK_STYLE_PROVIDER(
+                m_context_menu_css->gobj()),
+            GTK_STYLE_PROVIDER_PRIORITY_APPLICATION +
+                1);
+
+        gtk_window_set_mnemonics_visible(
+            GTK_WINDOW(menu_toplevel),
+            TRUE);
+    }
+}
+
+bool DockHomeItem::minimize_all()
+{
+    return m_window_registry &&
+           m_window_registry
+               ->minimize_all();
+}
+
+bool DockHomeItem::unminimize_all()
+{
+    return m_window_registry &&
+           m_window_registry
+               ->unminimize_all();
+}
+
+bool DockHomeItem::maximize_all()
+{
+    return m_window_registry &&
+           m_window_registry
+               ->maximize_all();
+}
+
+bool DockHomeItem::close_all()
+{
+    return m_window_registry &&
+           m_window_registry
+               ->close_all();
+}
+
+void DockHomeItem::open_settings()
+{
+    DockConfigurationManager configuration;
+    const auto current =
+        configuration.current();
+
+    Gtk::Dialog dialog(
+        "DockLight Settings",
+        m_dock,
+        true);
+
+    dialog.set_type_hint(
+        Gdk::WINDOW_TYPE_HINT_DIALOG);
+    keep_dialog_above(
+        dialog,
+        m_dock,
+        "docklight6-settings");
+    dialog.set_decorated(true);
+    dialog.set_resizable(false);
+    dialog.property_destroy_with_parent() =
+        true;
+    dialog.set_skip_taskbar_hint(true);
+    dialog.set_skip_pager_hint(true);
+    dialog.set_position(
+        Gtk::WIN_POS_CENTER_ON_PARENT);
+    dialog.set_default_size(460, -1);
+    dialog.set_size_request(460, -1);
+
+    Gtk::HeaderBar header;
+    Gtk::Image header_icon;
+
+    header.set_title(
+        "DockLight Settings");
+    header.set_show_close_button(true);
+    header.set_decoration_layout(
+        ":close");
+
+    if (m_source_icon)
+    {
+        dialog.set_icon(
+            m_source_icon);
+
+        const auto small_home_icon =
+            m_source_icon->scale_simple(
+                20,
+                20,
+                Gdk::INTERP_BILINEAR);
+
+        if (small_home_icon)
+        {
+            header_icon.set(
+                small_home_icon);
+            header.pack_start(
+                header_icon);
+        }
+    }
+
+    dialog.set_titlebar(header);
+
+    dialog.add_button(
+        "_Close",
+        Gtk::RESPONSE_CLOSE);
+
+    Gtk::Grid grid;
+    grid.set_hexpand(true);
+    grid.set_vexpand(false);
+    grid.set_border_width(14);
+    grid.set_row_spacing(10);
+    grid.set_column_spacing(16);
+    grid.set_column_homogeneous(false);
+
+    Gtk::Label monitor_label(
+        "Monitor");
+    Gtk::Label hover_label(
+        "Hover effect");
+    Gtk::Label indicator_label(
+        "Indicator");
+    Gtk::Label indicator_color_label(
+        "Indicator color");
+    Gtk::Label icon_size_label(
+        "Icon size");
+    Gtk::Label location_label(
+        "Location");
+    Gtk::Label rounded_corners_label(
+        "Rounded corners");
+    Gtk::Label corner_radius_label(
+        "Corner radius");
+    Gtk::Label alignment_label(
+        "Alignment");
+    Gtk::Label autohide_label(
+        "Autohide");
+
+    const std::vector<Gtk::Label *>
+        labels = {
+            &monitor_label,
+            &hover_label,
+            &indicator_label,
+            &indicator_color_label,
+            &icon_size_label,
+            &location_label,
+            &rounded_corners_label,
+            &corner_radius_label,
+            &alignment_label,
+            &autohide_label};
+
+    for (auto *field_label : labels)
+    {
+        field_label->set_halign(
+            Gtk::ALIGN_START);
+        field_label->set_valign(
+            Gtk::ALIGN_CENTER);
+    }
+
+    std::vector<std::string>
+        monitor_identifiers{"primary"};
+
+    DockMonitorManager monitor_manager;
+
+    for (const auto &monitor :
+         monitor_manager.available_monitors())
+    {
+        if (!monitor.identifier.empty() &&
+            std::find(
+                monitor_identifiers.begin(),
+                monitor_identifiers.end(),
+                monitor.identifier) ==
+                monitor_identifiers.end())
+        {
+            monitor_identifiers.push_back(
+                monitor.identifier);
+        }
+    }
+
+    Gtk::ScrolledWindow monitor_scroller;
+    Gtk::ListBox monitor_list;
+
+    monitor_scroller.set_policy(
+        Gtk::POLICY_NEVER,
+        Gtk::POLICY_AUTOMATIC);
+    monitor_scroller.set_shadow_type(
+        Gtk::SHADOW_IN);
+    monitor_scroller.set_size_request(
+        -1,
+        std::min(
+            130,
+            34 * static_cast<int>(
+                     monitor_identifiers
+                         .size())));
+    monitor_list.set_selection_mode(
+        Gtk::SELECTION_SINGLE);
+    monitor_list.set_activate_on_single_click(
+        true);
+
+    Gtk::ListBoxRow *selected_monitor_row =
+        nullptr;
+
+    for (const auto &identifier :
+         monitor_identifiers)
+    {
+        auto *row =
+            Gtk::manage(
+                new Gtk::ListBoxRow());
+
+        auto *name =
+            Gtk::manage(
+                new Gtk::Label(
+                    identifier));
+
+        name->set_halign(
+            Gtk::ALIGN_START);
+        name->set_margin_start(8);
+        name->set_margin_end(8);
+        name->set_margin_top(5);
+        name->set_margin_bottom(5);
+
+        row->add(*name);
+        monitor_list.append(*row);
+
+        if (identifier ==
+            current.settings.monitor())
+        {
+            selected_monitor_row = row;
+        }
+    }
+
+    monitor_scroller.add(
+        monitor_list);
+
+    if (!selected_monitor_row)
+    {
+        selected_monitor_row =
+            monitor_list.get_row_at_index(0);
+    }
+
+    if (selected_monitor_row)
+    {
+        monitor_list.select_row(
+            *selected_monitor_row);
+    }
+
+    Gtk::Box hover_choices(
+        Gtk::ORIENTATION_HORIZONTAL,
+        6);
+    Gtk::RadioButton hover_standard(
+        "Standard");
+    Gtk::RadioButton hover_zoom(
+        "Zoom");
+    Gtk::RadioButton hover_blur(
+        "Blur");
+
+    hover_zoom.join_group(
+        hover_standard);
+    hover_blur.join_group(
+        hover_standard);
+
+    hover_choices.pack_start(
+        hover_standard,
+        false,
+        false);
+    hover_choices.pack_start(
+        hover_zoom,
+        false,
+        false);
+    hover_choices.pack_start(
+        hover_blur,
+        false,
+        false);
+
+    switch (current.settings.hover_effect())
+    {
+    case DockHoverEffect::standard:
+        hover_standard.set_active(true);
+        break;
+    case DockHoverEffect::zoom:
+        hover_zoom.set_active(true);
+        break;
+    case DockHoverEffect::blur:
+        hover_blur.set_active(true);
+        break;
+    }
+
+    Gtk::Box indicator_choices(
+        Gtk::ORIENTATION_HORIZONTAL,
+        6);
+    Gtk::RadioButton indicator_lines(
+        "Lines");
+    Gtk::RadioButton indicator_dots(
+        "Dots");
+
+    indicator_dots.join_group(
+        indicator_lines);
+
+    indicator_choices.pack_start(
+        indicator_lines,
+        false,
+        false);
+    indicator_choices.pack_start(
+        indicator_dots,
+        false,
+        false);
+
+    if (current.settings.indicator() ==
+        DockIndicator::dots)
+    {
+        indicator_dots.set_active(true);
+    }
+    else
+    {
+        indicator_lines.set_active(true);
+    }
+
+    Gtk::Button indicator_color;
+    Gtk::DrawingArea indicator_color_preview;
+    Gdk::RGBA parsed_indicator_color;
+
+    if (!parsed_indicator_color.set(
+            current.settings
+                .indicator_color()))
+    {
+        parsed_indicator_color.set(
+            "#69aaff");
+    }
+
+    indicator_color_preview.set_size_request(
+        96,
+        24);
+    indicator_color_preview
+        .signal_draw()
+        .connect(
+            [&parsed_indicator_color](
+                const Cairo::RefPtr<
+                    Cairo::Context> &context)
+            {
+                context->set_source_rgba(
+                    parsed_indicator_color
+                        .get_red(),
+                    parsed_indicator_color
+                        .get_green(),
+                    parsed_indicator_color
+                        .get_blue(),
+                    parsed_indicator_color
+                        .get_alpha());
+                context->paint();
+
+                return true;
+            });
+
+    indicator_color.add(
+        indicator_color_preview);
+    indicator_color.set_tooltip_text(
+        "Choose indicator color");
+
+    auto icon_size_adjustment =
+        Gtk::Adjustment::create(
+            current.settings.icon_size(),
+            32.0,
+            128.0,
+            1.0,
+            4.0);
+
+    Gtk::SpinButton icon_size_spin(
+        icon_size_adjustment,
+        1.0,
+        0);
+    icon_size_spin.set_numeric(true);
+
+    Gtk::Box location_choices(
+        Gtk::ORIENTATION_HORIZONTAL,
+        6);
+    Gtk::RadioButton location_bottom(
+        "Bottom");
+    Gtk::RadioButton location_left(
+        "Left");
+    Gtk::RadioButton location_top(
+        "Top");
+    Gtk::RadioButton location_right(
+        "Right");
+
+    location_left.join_group(
+        location_bottom);
+    location_top.join_group(
+        location_bottom);
+    location_right.join_group(
+        location_bottom);
+
+    location_choices.pack_start(
+        location_bottom,
+        false,
+        false);
+    location_choices.pack_start(
+        location_left,
+        false,
+        false);
+    location_choices.pack_start(
+        location_top,
+        false,
+        false);
+    location_choices.pack_start(
+        location_right,
+        false,
+        false);
+
+    switch (current.layout_request.location)
+    {
+    case DockLocation::bottom:
+        location_bottom.set_active(true);
+        break;
+    case DockLocation::left:
+        location_left.set_active(true);
+        break;
+    case DockLocation::top:
+        location_top.set_active(true);
+        break;
+    case DockLocation::right:
+        location_right.set_active(true);
+        break;
+    }
+
+    Gtk::CheckButton rounded_corners;
+    rounded_corners.set_active(
+        current.layout_request
+            .rounded_corners);
+
+    auto corner_radius_adjustment =
+        Gtk::Adjustment::create(
+            current.layout_request
+                .corner_radius,
+            -1.0,
+            current.settings.icon_size() /
+                2.0,
+            1.0,
+            2.0);
+
+    Gtk::SpinButton corner_radius_spin(
+        corner_radius_adjustment,
+        1.0,
+        0);
+    corner_radius_spin.set_numeric(true);
+    corner_radius_spin.set_tooltip_text(
+        "-1 selects the automatic radius");
+
+    Gtk::Box alignment_choices(
+        Gtk::ORIENTATION_HORIZONTAL,
+        6);
+    Gtk::RadioButton alignment_start(
+        "Start");
+    Gtk::RadioButton alignment_center(
+        "Center");
+    Gtk::RadioButton alignment_end(
+        "End");
+    Gtk::RadioButton alignment_fill(
+        "Fill");
+
+    alignment_center.join_group(
+        alignment_start);
+    alignment_end.join_group(
+        alignment_start);
+    alignment_fill.join_group(
+        alignment_start);
+
+    alignment_choices.pack_start(
+        alignment_start,
+        false,
+        false);
+    alignment_choices.pack_start(
+        alignment_center,
+        false,
+        false);
+    alignment_choices.pack_start(
+        alignment_end,
+        false,
+        false);
+    alignment_choices.pack_start(
+        alignment_fill,
+        false,
+        false);
+
+    switch (current.layout_request.alignment)
+    {
+    case DockAlignment::start:
+        alignment_start.set_active(true);
+        break;
+    case DockAlignment::center:
+        alignment_center.set_active(true);
+        break;
+    case DockAlignment::end:
+        alignment_end.set_active(true);
+        break;
+    case DockAlignment::fill:
+        alignment_fill.set_active(true);
+        break;
+    }
+
+    Gtk::Box autohide_choices(
+        Gtk::ORIENTATION_HORIZONTAL,
+        6);
+    Gtk::RadioButton autohide_none(
+        "None");
+    Gtk::RadioButton autohide_always(
+        "Autohide");
+    Gtk::RadioButton autohide_intelligent(
+        "Intellihide");
+
+    autohide_always.join_group(
+        autohide_none);
+    autohide_intelligent.join_group(
+        autohide_none);
+
+    autohide_choices.pack_start(
+        autohide_none,
+        false,
+        false);
+    autohide_choices.pack_start(
+        autohide_always,
+        false,
+        false);
+    autohide_choices.pack_start(
+        autohide_intelligent,
+        false,
+        false);
+
+    switch (current.layout_request.autohide)
+    {
+    case DockAutohide::none:
+        autohide_none.set_active(true);
+        break;
+    case DockAutohide::autohide:
+        autohide_always.set_active(true);
+        break;
+    case DockAutohide::intellihide:
+        autohide_intelligent
+            .set_active(true);
+        break;
+    }
+
+    const std::vector<Gtk::Widget *>
+        fields = {
+            &monitor_scroller,
+            &hover_choices,
+            &indicator_choices,
+            &indicator_color,
+            &icon_size_spin,
+            &location_choices,
+            &rounded_corners,
+            &corner_radius_spin,
+            &alignment_choices,
+            &autohide_choices};
+
+    for (auto *field : fields)
+    {
+        field->set_hexpand(true);
+        field->set_halign(
+            Gtk::ALIGN_FILL);
+        field->set_valign(
+            Gtk::ALIGN_CENTER);
+    }
+
+    rounded_corners.set_halign(
+        Gtk::ALIGN_START);
+
+    grid.attach(
+        monitor_label,
+        0,
+        0,
+        1,
+        1);
+    grid.attach(
+        monitor_scroller,
+        1,
+        0,
+        1,
+        1);
+    grid.attach(
+        hover_label,
+        0,
+        1,
+        1,
+        1);
+    grid.attach(
+        hover_choices,
+        1,
+        1,
+        1,
+        1);
+    grid.attach(
+        indicator_label,
+        0,
+        2,
+        1,
+        1);
+    grid.attach(
+        indicator_choices,
+        1,
+        2,
+        1,
+        1);
+    grid.attach(
+        indicator_color_label,
+        0,
+        3,
+        1,
+        1);
+    grid.attach(
+        indicator_color,
+        1,
+        3,
+        1,
+        1);
+    grid.attach(
+        icon_size_label,
+        0,
+        4,
+        1,
+        1);
+    grid.attach(
+        icon_size_spin,
+        1,
+        4,
+        1,
+        1);
+    grid.attach(
+        location_label,
+        0,
+        5,
+        1,
+        1);
+    grid.attach(
+        location_choices,
+        1,
+        5,
+        1,
+        1);
+    grid.attach(
+        rounded_corners_label,
+        0,
+        6,
+        1,
+        1);
+    grid.attach(
+        rounded_corners,
+        1,
+        6,
+        1,
+        1);
+    grid.attach(
+        corner_radius_label,
+        0,
+        7,
+        1,
+        1);
+    grid.attach(
+        corner_radius_spin,
+        1,
+        7,
+        1,
+        1);
+    grid.attach(
+        alignment_label,
+        0,
+        8,
+        1,
+        1);
+    grid.attach(
+        alignment_choices,
+        1,
+        8,
+        1,
+        1);
+    grid.attach(
+        autohide_label,
+        0,
+        9,
+        1,
+        1);
+    grid.attach(
+        autohide_choices,
+        1,
+        9,
+        1,
+        1);
+
+    monitor_list
+        .signal_row_selected()
+        .connect(
+            [&configuration,
+             &monitor_identifiers](
+                Gtk::ListBoxRow *row)
+            {
+                if (!row)
+                    return;
+
+                const int index =
+                    row->get_index();
+
+                if (index < 0 ||
+                    index >=
+                        static_cast<int>(
+                            monitor_identifiers
+                                .size()))
+                {
+                    return;
+                }
+
+                configuration.save_setting(
+                    "monitor",
+                    monitor_identifiers[
+                        static_cast<
+                            std::size_t>(
+                            index)]);
+            });
+
+    const auto connect_radio =
+        [&configuration](
+            Gtk::RadioButton &button,
+            const std::string &key,
+            const std::string &value)
+    {
+        button.signal_toggled().connect(
+            [&configuration,
+             &button,
+             key,
+             value]()
+            {
+                if (button.get_active())
+                {
+                    configuration.save_setting(
+                        key,
+                        value);
+                }
+            });
+    };
+
+    connect_radio(
+        hover_standard,
+        "hover_effect",
+        "standard");
+    connect_radio(
+        hover_zoom,
+        "hover_effect",
+        "zoom");
+    connect_radio(
+        hover_blur,
+        "hover_effect",
+        "blur");
+    connect_radio(
+        indicator_lines,
+        "indicator",
+        "lines");
+    connect_radio(
+        indicator_dots,
+        "indicator",
+        "dots");
+    connect_radio(
+        location_bottom,
+        "location",
+        "bottom");
+    connect_radio(
+        location_left,
+        "location",
+        "left");
+    connect_radio(
+        location_top,
+        "location",
+        "top");
+    connect_radio(
+        location_right,
+        "location",
+        "right");
+    connect_radio(
+        alignment_start,
+        "alignment",
+        "start");
+    connect_radio(
+        alignment_center,
+        "alignment",
+        "center");
+    connect_radio(
+        alignment_end,
+        "alignment",
+        "end");
+    connect_radio(
+        alignment_fill,
+        "alignment",
+        "fill");
+    connect_radio(
+        autohide_none,
+        "autohide",
+        "none");
+    connect_radio(
+        autohide_always,
+        "autohide",
+        "autohide");
+    connect_radio(
+        autohide_intelligent,
+        "autohide",
+        "intellihide");
+
+    indicator_color
+        .signal_clicked()
+        .connect(
+            [&configuration,
+             &dialog,
+             &indicator_color_preview,
+             &parsed_indicator_color,
+             this]()
+            {
+                Gtk::ColorChooserDialog
+                    color_dialog(
+                        "Indicator color",
+                        dialog);
+
+                color_dialog.set_modal(true);
+                color_dialog.set_type_hint(
+                    Gdk::WINDOW_TYPE_HINT_DIALOG);
+                keep_dialog_above(
+                    color_dialog,
+                    dialog,
+                    "docklight6-color-chooser");
+                color_dialog.set_decorated(true);
+                color_dialog
+                    .property_destroy_with_parent() =
+                    true;
+                color_dialog
+                    .set_skip_taskbar_hint(true);
+                color_dialog
+                    .set_skip_pager_hint(true);
+                color_dialog.set_position(
+                    Gtk::WIN_POS_CENTER_ON_PARENT);
+                color_dialog.set_use_alpha(true);
+                color_dialog.set_rgba(
+                    parsed_indicator_color);
+
+                Gtk::HeaderBar color_header;
+                Gtk::Image color_header_icon;
+
+                color_header.set_title(
+                    "Indicator color");
+                color_header
+                    .set_show_close_button(true);
+                color_header.set_decoration_layout(
+                    ":close");
+
+                if (m_source_icon)
+                {
+                    color_dialog.set_icon(
+                        m_source_icon);
+
+                    const auto small_home_icon =
+                        m_source_icon->scale_simple(
+                            20,
+                            20,
+                            Gdk::INTERP_BILINEAR);
+
+                    if (small_home_icon)
+                    {
+                        color_header_icon.set(
+                            small_home_icon);
+                        color_header.pack_start(
+                            color_header_icon);
+                    }
+                }
+
+                color_dialog.set_titlebar(
+                    color_header);
+                color_dialog.show_all_children();
+                color_dialog.present();
+
+                if (color_dialog.run() !=
+                    Gtk::RESPONSE_OK)
+                {
+                    color_dialog.hide();
+                    return;
+                }
+
+                parsed_indicator_color =
+                    color_dialog.get_rgba();
+                indicator_color_preview
+                    .queue_draw();
+
+                configuration.save_setting(
+                    "indicator_color",
+                    parsed_indicator_color
+                        .to_string());
+
+                color_dialog.hide();
+            });
+
+    icon_size_spin
+        .signal_value_changed()
+        .connect(
+            [&configuration,
+             &icon_size_spin,
+             &corner_radius_spin,
+             &corner_radius_adjustment]()
+            {
+                const int icon_size =
+                    icon_size_spin
+                        .get_value_as_int();
+
+                configuration.save_setting(
+                    "icon_size",
+                    std::to_string(
+                        icon_size));
+
+                const int maximum_radius =
+                    icon_size / 2;
+
+                corner_radius_adjustment
+                    ->set_upper(
+                        maximum_radius);
+
+                const int corner_radius =
+                    corner_radius_spin
+                        .get_value_as_int();
+
+                if (corner_radius != -1 &&
+                    corner_radius >
+                        maximum_radius)
+                {
+                    corner_radius_spin
+                        .set_value(
+                            maximum_radius);
+                }
+            });
+
+    rounded_corners
+        .signal_toggled()
+        .connect(
+            [&configuration,
+             &rounded_corners]()
+            {
+                configuration.save_setting(
+                    "rounded_corners",
+                    rounded_corners
+                            .get_active()
+                        ? "true"
+                        : "false");
+            });
+
+    corner_radius_spin
+        .signal_value_changed()
+        .connect(
+            [&configuration,
+             &corner_radius_spin]()
+            {
+                configuration.save_setting(
+                    "corner_radius",
+                    std::to_string(
+                        corner_radius_spin
+                            .get_value_as_int()));
+            });
+
+    auto *content =
+        dialog.get_content_area();
+
+    content->pack_start(
+        grid,
+        false,
+        false);
+
+    dialog.show_all_children();
+    dialog.present();
+    dialog.run();
+    dialog.hide();
+}
+
+void DockHomeItem::show_about()
+{
+    Gtk::AboutDialog dialog;
+
+    dialog.set_transient_for(m_dock);
+    dialog.set_modal(true);
+    dialog.set_type_hint(
+        Gdk::WINDOW_TYPE_HINT_DIALOG);
+    keep_dialog_above(
+        dialog,
+        m_dock,
+        "docklight6-about");
+    dialog.set_decorated(true);
+    dialog.set_resizable(false);
+    dialog.property_destroy_with_parent() =
+        true;
+    dialog.set_skip_taskbar_hint(true);
+    dialog.set_skip_pager_hint(true);
+    dialog.set_position(
+        Gtk::WIN_POS_CENTER_ON_PARENT);
+    dialog.set_program_name(
+        "Docklight 6.0");
+    dialog.set_comments(
+        "A lightweight application dock.\n"
+        "Author/Maintener: yoosamui");
+    dialog.set_website(
+        "https://github.com/yoosamui/DockLight");
+    dialog.set_website_label(
+        "yoosamui/DockLight");
+
+    Gtk::HeaderBar header;
+    Gtk::Image header_icon;
+
+    header.set_title(
+        "About DockLight");
+    header.set_show_close_button(true);
+    header.set_decoration_layout(
+        ":close");
+
+    if (m_source_icon)
+    {
+        dialog.set_logo(m_source_icon);
+        dialog.set_icon(m_source_icon);
+
+        const auto small_home_icon =
+            m_source_icon->scale_simple(
+                20,
+                20,
+                Gdk::INTERP_BILINEAR);
+
+        if (small_home_icon)
+        {
+            header_icon.set(
+                small_home_icon);
+            header.pack_start(
+                header_icon);
+        }
+    }
+
+    dialog.set_titlebar(header);
+    dialog.show_all_children();
+    dialog.present();
+    dialog.run();
+    dialog.hide();
+}
+
+void DockHomeItem::exit_docklight()
+{
+    auto application =
+        Gio::Application::get_default();
+
+    if (application)
+        application->quit();
+    else
+        m_dock.hide();
 }

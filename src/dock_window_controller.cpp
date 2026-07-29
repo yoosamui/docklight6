@@ -384,6 +384,12 @@ void DockWindowController::update_effective_icon_size(
     auto items =
         m_window.dock_items();
 
+    const int item_count =
+        static_cast<int>(items.size()) +
+        (m_window.m_home_item
+             ? 1
+             : 0);
+
     const int previous_leading_margin =
         m_window.m_leading_main_axis_margin;
 
@@ -401,7 +407,7 @@ void DockWindowController::update_effective_icon_size(
             ? monitor.width
             : monitor.height;
 
-    if (!items.empty() && monitor_length > 0)
+    if (item_count > 0 && monitor_length > 0)
     {
         const int available_length =
             std::max(
@@ -411,7 +417,7 @@ void DockWindowController::update_effective_icon_size(
 
         const int maximum_item_size =
             available_length /
-            static_cast<int>(items.size());
+            item_count;
 
         const int maximum_icon_size =
             std::max(
@@ -434,10 +440,10 @@ void DockWindowController::update_effective_icon_size(
     const bool constrained =
         effective_icon_size < requested_icon_size;
 
-    if (constrained && !items.empty())
+    if (constrained && item_count > 0)
     {
         const int items_length =
-            static_cast<int>(items.size()) *
+            item_count *
             DockLayoutMetrics::item_size_for(
                 effective_icon_size);
 
@@ -468,6 +474,14 @@ void DockWindowController::update_effective_icon_size(
     {
         item->set_icon_size(
             m_window.m_effective_icon_size);
+    }
+
+    if (m_window.m_home_item)
+    {
+        m_window.m_home_item
+            ->set_icon_size(
+                m_window
+                    .m_effective_icon_size);
     }
 
     const bool margins_changed =

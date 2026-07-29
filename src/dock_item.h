@@ -152,3 +152,89 @@ private:
     bool m_hovered = false;
     bool m_single_main_window = false;
 };
+
+class DockHomeItem : public Gtk::EventBox
+{
+public:
+    DockHomeItem(
+        DockWindow &dock,
+        WindowRegistry *window_registry,
+        int icon_size);
+    ~DockHomeItem() override;
+
+    void set_icon_size(int icon_size);
+    void set_context_menu_corner_radius(
+        int corner_radius);
+
+private:
+    bool on_button_press_event(
+        GdkEventButton *event) override;
+    bool on_popup_menu();
+
+    void load_icon_once();
+    void update_icon();
+    void initialize_context_menu();
+    void refresh_context_menu();
+    void show_context_menu(
+        const GdkEvent *event);
+
+    bool minimize_all();
+    bool unminimize_all();
+    bool maximize_all();
+    bool close_all();
+
+    void open_settings();
+    void show_about();
+    void exit_docklight();
+
+private:
+    DockWindow &m_dock;
+    WindowRegistry *m_window_registry =
+        nullptr;
+
+    Glib::RefPtr<Gdk::Pixbuf>
+        m_source_icon;
+    Glib::RefPtr<Gdk::Pixbuf>
+        m_display_icon;
+    Glib::RefPtr<Gtk::CssProvider>
+        m_context_menu_css;
+
+    Gtk::Image m_image;
+    Gtk::Menu m_context_menu;
+
+    Gtk::MenuItem
+        m_settings_item{"_Settings", true};
+    Gtk::SeparatorMenuItem
+        m_window_separator;
+    Gtk::MenuItem
+        m_minimize_all_item{
+            "_Minimize all",
+            true};
+    Gtk::MenuItem
+        m_unminimize_all_item{
+            "_Unminimize all",
+            true};
+    Gtk::MenuItem
+        m_maximize_all_item{
+            "Ma_ximize all",
+            true};
+    Gtk::SeparatorMenuItem
+        m_close_separator;
+    Gtk::MenuItem
+        m_close_all_item{
+            "_Close all",
+            true};
+    Gtk::SeparatorMenuItem
+        m_about_separator;
+    Gtk::MenuItem
+        m_about_item{"A_bout", true};
+    Gtk::SeparatorMenuItem
+        m_exit_separator;
+    Gtk::MenuItem
+        m_exit_item{"_Exit", true};
+
+    sigc::connection m_settings_idle;
+
+    int m_icon_size = 0;
+    bool m_icon_load_attempted = false;
+};

@@ -361,6 +361,13 @@ void DockWindow::apply_visual_style()
             effective_radius);
     }
 
+    if (m_home_item)
+    {
+        m_home_item
+            ->set_context_menu_corner_radius(
+                effective_radius);
+    }
+
     m_overlay_window.set_rounded_corners(
         layout_request.rounded_corners,
         effective_radius,
@@ -437,8 +444,29 @@ void DockWindow::create_dock()
         m_leading_margin,
         Gtk::PACK_SHRINK);
 
+    m_home_item =
+        Gtk::manage(
+            new DockHomeItem(
+                *this,
+                m_window_registry,
+                m_controller
+                    ->settings()
+                    .icon_size()));
+
+    m_dock_box.pack_start(
+        *m_home_item,
+        Gtk::PACK_SHRINK);
+
+    ++count;
+
     for (const auto &launcher : apps)
     {
+        if (count >=
+            DockConstants::MAX_DOCK_ITEMS)
+        {
+            break;
+        }
+
         auto item =
             Gtk::manage(
                 new DockItem(
@@ -463,12 +491,6 @@ void DockWindow::create_dock()
             Gtk::PACK_SHRINK);
 
         ++count;
-
-        if (count >=
-            DockConstants::MAX_DOCK_ITEMS)
-        {
-            break;
-        }
     }
 
     m_dock_box.pack_start(

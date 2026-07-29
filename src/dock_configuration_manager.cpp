@@ -320,6 +320,52 @@ void DockConfigurationManager::start_monitoring()
     }
 }
 
+bool DockConfigurationManager::save_setting(
+    const std::string &key,
+    const std::string &value)
+{
+    if (key.empty())
+        return false;
+
+    Glib::KeyFile key_file;
+
+    try
+    {
+        if (!key_file.load_from_file(
+                m_config_path,
+                Glib::KEY_FILE_KEEP_COMMENTS))
+        {
+            return false;
+        }
+
+        key_file.set_value(
+            DOCK_GROUP,
+            key,
+            value);
+
+        Glib::file_set_contents(
+            m_config_path,
+            key_file.to_data());
+
+        g_message(
+            "Saved [dock] %s = %s",
+            key.c_str(),
+            value.c_str());
+
+        return true;
+    }
+    catch (const Glib::Error &error)
+    {
+        g_warning(
+            "Cannot save [dock] setting '%s' "
+            "to '%s': %s",
+            key.c_str(),
+            m_config_path.c_str(),
+            error.what().c_str());
+        return false;
+    }
+}
+
 void DockConfigurationManager::ensure_config_file()
 {
     try

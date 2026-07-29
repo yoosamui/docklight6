@@ -57,6 +57,8 @@ private:
     Gtk::Box m_leading_margin;
     Gtk::Box m_trailing_margin;
 
+    DockHomeItem *m_home_item = nullptr;
+
     // Visible empty widgets whose requested size becomes the dock's leading
     // and trailing content margin on the active orientation axis.
     int m_leading_main_axis_margin =

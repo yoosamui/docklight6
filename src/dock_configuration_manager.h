@@ -14,6 +14,9 @@ public:
     DockConfigurationManager();
 
     void start_monitoring();
+    bool save_setting(
+        const std::string &key,
+        const std::string &value);
 
     const DockConfiguration &current() const;
     const std::string &config_path() const;

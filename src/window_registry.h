@@ -52,6 +52,10 @@ public:
     bool set_window_maximized(
         const WindowId &window_id,
         bool maximized);
+    bool minimize_all();
+    bool unminimize_all();
+    bool maximize_all();
+    bool close_all();
     bool set_window_icon_geometry(
         const WindowId &window_id,
         const WindowIconGeometry &geometry);

@@ -2,6 +2,7 @@ bin_PROGRAMS = docklight6
 
 check_PROGRAMS = \
     dock_application_controller_test \
+    dock_configuration_manager_test \
     window_registry_test \
     kwin_window_backend_test \
     kwin_integration_service_test
@@ -86,6 +87,21 @@ dock_application_controller_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)
 
 dock_application_controller_test_LDADD = \
+    $(GTKMM_LIBS)
+
+dock_configuration_manager_test_SOURCES = \
+    tests/dock_configuration_manager_test.cpp \
+    dock_configuration.h \
+    dock_configuration_manager.h \
+    dock_configuration_manager.cpp \
+    dock_layout_types.h \
+    dock_settings.h \
+    dock_settings.cpp
+
+dock_configuration_manager_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+dock_configuration_manager_test_LDADD = \
     $(GTKMM_LIBS)
 
 window_registry_test_SOURCES = \

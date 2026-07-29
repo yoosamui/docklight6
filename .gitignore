@@ -105,6 +105,9 @@ clang-tidy.sh
 /src/dock_application_controller_test
 /src/dock_application_controller_test.log
 /src/dock_application_controller_test.trs
+/src/dock_configuration_manager_test
+/src/dock_configuration_manager_test.log
+/src/dock_configuration_manager_test.trs
 /src/test-suite.log
 /src/kwin_integration_service_test
 /src/kwin_integration_service_test.log

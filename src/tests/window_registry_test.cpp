@@ -238,6 +238,68 @@ void verifies_stacking_and_disconnect()
                "window-4"});
 }
 
+void verifies_global_window_actions()
+{
+    FakeWindowBackend backend;
+
+    auto active =
+        window(
+            "window-1",
+            "org.kde.dolphin");
+
+    auto other =
+        window(
+            "window-2",
+            "org.kde.konsole");
+
+    auto minimized =
+        window(
+            "window-3",
+            "org.mozilla.firefox");
+
+    minimized.minimized = true;
+
+    backend.set_snapshot(
+        {active, other, minimized},
+        {
+            "window-3",
+            "window-2",
+            "window-1"
+        },
+        WindowId{"window-1"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    assert(registry.minimize_all());
+
+    for (const auto &managed :
+         registry.windows())
+    {
+        assert(managed.minimized);
+    }
+
+    assert(registry.unminimize_all());
+
+    for (const auto &managed :
+         registry.windows())
+    {
+        assert(!managed.minimized);
+    }
+
+    assert(registry.maximize_all());
+
+    for (const auto &managed :
+         registry.windows())
+    {
+        assert(managed.maximized);
+        assert(!managed.minimized);
+    }
+
+    assert(registry.close_all());
+    assert(registry.windows().empty());
+}
+
 }
 
 int main()
@@ -245,6 +307,7 @@ int main()
     verifies_snapshot_and_grouping();
     verifies_incremental_updates();
     verifies_stacking_and_disconnect();
+    verifies_global_window_actions();
 
     return 0;
 }

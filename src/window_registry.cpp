@@ -269,6 +269,130 @@ bool WindowRegistry::set_window_maximized(
                    maximized);
 }
 
+bool WindowRegistry::minimize_all()
+{
+    if (!m_connected ||
+        !m_backend
+             .capabilities()
+             .can_minimize)
+    {
+        return false;
+    }
+
+    const auto windows_copy = m_windows;
+    bool accepted = false;
+
+    for (const auto &window : windows_copy)
+    {
+        if (!window.minimized)
+        {
+            accepted =
+                m_backend
+                    .set_window_minimized(
+                        window.id,
+                        true) ||
+                accepted;
+        }
+    }
+
+    return accepted;
+}
+
+bool WindowRegistry::unminimize_all()
+{
+    if (!m_connected ||
+        !m_backend
+             .capabilities()
+             .can_minimize)
+    {
+        return false;
+    }
+
+    const auto windows_copy = m_windows;
+    bool accepted = false;
+
+    for (const auto &window : windows_copy)
+    {
+        if (window.minimized)
+        {
+            accepted =
+                m_backend
+                    .set_window_minimized(
+                        window.id,
+                        false) ||
+                accepted;
+        }
+    }
+
+    return accepted;
+}
+
+bool WindowRegistry::maximize_all()
+{
+    if (!m_connected ||
+        !m_backend
+             .capabilities()
+             .can_maximize)
+    {
+        return false;
+    }
+
+    const auto windows_copy = m_windows;
+    const auto capabilities =
+        m_backend.capabilities();
+    bool accepted = false;
+
+    for (const auto &window : windows_copy)
+    {
+        if (window.minimized &&
+            capabilities.can_minimize)
+        {
+            accepted =
+                m_backend
+                    .set_window_minimized(
+                        window.id,
+                        false) ||
+                accepted;
+        }
+
+        if (!window.maximized)
+        {
+            accepted =
+                m_backend
+                    .set_window_maximized(
+                        window.id,
+                        true) ||
+                accepted;
+        }
+    }
+
+    return accepted;
+}
+
+bool WindowRegistry::close_all()
+{
+    if (!m_connected ||
+        !m_backend
+             .capabilities()
+             .can_close)
+    {
+        return false;
+    }
+
+    const auto windows_copy = m_windows;
+    bool accepted = false;
+
+    for (const auto &window : windows_copy)
+    {
+        accepted =
+            m_backend.close_window(
+                window.id) ||
+            accepted;
+    }
+
+    return accepted;
+}
+
 bool WindowRegistry::set_window_icon_geometry(
     const WindowId &window_id,
     const WindowIconGeometry &geometry)
