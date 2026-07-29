@@ -3,8 +3,26 @@
 #include "running_application.h"
 #include "window_registry.h"
 
+#include <algorithm>
+#include <iterator>
 #include <utility>
 #include <vector>
+
+namespace
+{
+
+bool contains_same_windows(
+    const std::vector<WindowId> &left,
+    const std::vector<WindowId> &right)
+{
+    return left.size() == right.size() &&
+           std::is_permutation(
+               left.begin(),
+               left.end(),
+               right.begin());
+}
+
+}
 
 DockApplicationController::
     DockApplicationController(
@@ -247,6 +265,136 @@ bool DockApplicationController::close_all()
     }
 
     return accepted;
+}
+
+bool DockApplicationController::cycle_window(
+    WindowCycleDirection direction)
+{
+    const auto running_application =
+        application();
+
+    if (!running_application ||
+        running_application
+            ->window_ids.empty())
+    {
+        reset_window_cycle();
+        return false;
+    }
+
+    if (!contains_same_windows(
+            m_cycle_window_ids,
+            running_application
+                ->window_ids))
+    {
+        reset_window_cycle();
+        m_cycle_window_ids =
+            running_application
+                ->window_ids;
+    }
+
+    auto current =
+        m_cycle_window_ids.end();
+
+    if (m_cycle_window_id)
+    {
+        current =
+            std::find(
+                m_cycle_window_ids.begin(),
+                m_cycle_window_ids.end(),
+                *m_cycle_window_id);
+    }
+
+    if (current ==
+            m_cycle_window_ids.end() &&
+        running_application
+            ->active_window_id)
+    {
+        current =
+            std::find(
+                m_cycle_window_ids.begin(),
+                m_cycle_window_ids.end(),
+                *running_application
+                     ->active_window_id);
+    }
+
+    auto target =
+        m_cycle_window_ids.begin();
+
+    if (current !=
+        m_cycle_window_ids.end())
+    {
+        if (direction ==
+            WindowCycleDirection::next)
+        {
+            target = std::next(current);
+
+            if (target ==
+                m_cycle_window_ids.end())
+            {
+                target =
+                    m_cycle_window_ids.begin();
+            }
+        }
+        else if (current ==
+                 m_cycle_window_ids.begin())
+        {
+            target =
+                std::prev(
+                    m_cycle_window_ids.end());
+        }
+        else
+        {
+            target =
+                std::prev(current);
+        }
+    }
+    else if (direction ==
+             WindowCycleDirection::previous)
+    {
+        target =
+            std::prev(
+                m_cycle_window_ids.end());
+    }
+
+    const auto window_id = *target;
+    const auto window =
+        m_registry->find_window(
+            window_id);
+
+    m_cycle_window_id =
+        window_id;
+
+    bool accepted = true;
+
+    if (window &&
+        window->minimized)
+    {
+        accepted =
+            m_registry
+                ->set_window_minimized(
+                    window_id,
+                    false) &&
+            accepted;
+    }
+
+    accepted =
+        m_registry->raise_window(
+            window_id) &&
+        accepted;
+
+    accepted =
+        m_registry->activate_window(
+            window_id) &&
+        accepted;
+
+    return accepted;
+}
+
+void DockApplicationController::
+    reset_window_cycle()
+{
+    m_cycle_window_ids.clear();
+    m_cycle_window_id.reset();
 }
 
 bool DockApplicationController::

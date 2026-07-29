@@ -2,11 +2,18 @@
 
 #include "window_icon_geometry.h"
 
+#include <optional>
 #include <string>
 #include <vector>
 
 class RunningApplication;
 class WindowRegistry;
+
+enum class WindowCycleDirection
+{
+    previous,
+    next
+};
 
 class DockApplicationController
 {
@@ -26,8 +33,12 @@ public:
     bool unminimize();
     bool maximize();
     bool close_all();
+    bool cycle_window(
+        WindowCycleDirection direction);
     bool set_icon_geometry(
         const WindowIconGeometry &geometry);
+
+    void reset_window_cycle();
 
 private:
     bool has_minimized_window() const;
@@ -37,8 +48,13 @@ private:
     application() const;
 
 private:
+    std::optional<std::string>
+        m_cycle_window_id;
+
     std::vector<std::string>
         m_application_identifiers;
+    std::vector<std::string>
+        m_cycle_window_ids;
 
     WindowRegistry *m_registry = nullptr;
 };

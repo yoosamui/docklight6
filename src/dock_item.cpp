@@ -343,7 +343,9 @@ DockItem::DockItem(
     add_events(
         Gdk::ENTER_NOTIFY_MASK |
         Gdk::LEAVE_NOTIFY_MASK |
-        Gdk::BUTTON_PRESS_MASK);
+        Gdk::BUTTON_PRESS_MASK |
+        Gdk::SCROLL_MASK |
+        Gdk::SMOOTH_SCROLL_MASK);
 
     image.set_halign(Gtk::ALIGN_CENTER);
     image.set_valign(Gtk::ALIGN_CENTER);
@@ -617,6 +619,10 @@ Glib::ustring DockItem::app_name() const
 bool DockItem::on_enter_notify_event(
     GdkEventCrossing *)
 {
+    m_application_controller
+        .reset_window_cycle();
+    m_scroll_delta_y = 0.0;
+
     m_hovered = true;
     apply_hover_effect();
 
@@ -634,6 +640,62 @@ bool DockItem::on_leave_notify_event(
     m_dock.schedule_hide_tooltip();
 
     return false;
+}
+
+bool DockItem::on_scroll_event(
+    GdkEventScroll *event)
+{
+    WindowCycleDirection direction;
+
+    switch (event->direction)
+    {
+    case GDK_SCROLL_UP:
+        m_scroll_delta_y = 0.0;
+        direction =
+            WindowCycleDirection::previous;
+        break;
+
+    case GDK_SCROLL_DOWN:
+        m_scroll_delta_y = 0.0;
+        direction =
+            WindowCycleDirection::next;
+        break;
+
+    case GDK_SCROLL_SMOOTH:
+        if (event->delta_y == 0.0)
+            return false;
+
+        m_scroll_delta_y +=
+            event->delta_y;
+
+        if (m_scroll_delta_y <= -1.0)
+        {
+            m_scroll_delta_y += 1.0;
+            direction =
+                WindowCycleDirection::
+                    previous;
+        }
+        else if (m_scroll_delta_y >= 1.0)
+        {
+            m_scroll_delta_y -= 1.0;
+            direction =
+                WindowCycleDirection::next;
+        }
+        else
+        {
+            return true;
+        }
+
+        break;
+
+    default:
+        return false;
+    }
+
+    m_application_controller
+        .cycle_window(direction);
+
+    return true;
 }
 
 void DockItem::set_vertical(bool vertical)

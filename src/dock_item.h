@@ -48,6 +48,9 @@ protected:
     bool on_leave_notify_event(
         GdkEventCrossing *event) override;
 
+    bool on_scroll_event(
+        GdkEventScroll *event) override;
+
 private:
     bool on_button_press_event(
         GdkEventButton *event) override;
@@ -105,6 +108,8 @@ private:
 
     DockHoverEffect m_hover_effect =
         DockHoverEffect::standard;
+
+    double m_scroll_delta_y = 0.0;
 
     int m_icon_size = 0;
     int m_zoom_frame = 0;

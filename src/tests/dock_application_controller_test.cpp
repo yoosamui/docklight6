@@ -138,6 +138,8 @@ void verifies_missing_application()
     assert(!controller.unminimize());
     assert(!controller.maximize());
     assert(!controller.close_all());
+    assert(!controller.cycle_window(
+        WindowCycleDirection::next));
 }
 
 void verifies_alternate_application_identity()
@@ -171,6 +173,115 @@ void verifies_alternate_application_identity()
     assert(controller.can_minimize());
 }
 
+void verifies_window_cycling()
+{
+    FakeWindowBackend backend;
+
+    backend.set_snapshot(
+        {
+            window("window-1", true),
+            window("window-2"),
+            window("window-3")
+        },
+        {
+            "window-1",
+            "window-2",
+            "window-3"
+        },
+        WindowId{"window-3"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::next));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-1"});
+    assert(!registry
+                .find_window("window-1")
+                ->minimized);
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::next));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-2"});
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::next));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-3"});
+
+    controller.reset_window_cycle();
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::previous));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-2"});
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::previous));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-1"});
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::previous));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-3"});
+}
+
+void verifies_window_cycle_tracks_group_changes()
+{
+    FakeWindowBackend backend;
+
+    backend.set_snapshot(
+        {
+            window("window-1"),
+            window("window-2"),
+            window("window-3")
+        },
+        {
+            "window-1",
+            "window-2",
+            "window-3"
+        },
+        WindowId{"window-3"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::next));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-1"});
+
+    backend.remove_window("window-2");
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::next));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-3"});
+}
+
 }
 
 int main()
@@ -178,6 +289,8 @@ int main()
     verifies_launcher_window_actions();
     verifies_missing_application();
     verifies_alternate_application_identity();
+    verifies_window_cycling();
+    verifies_window_cycle_tracks_group_changes();
 
     return 0;
 }
