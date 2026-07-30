@@ -31,6 +31,8 @@ DockWindow::DockWindow(
     set_decorated(false);
     set_resizable(false);
     set_app_paintable(true);
+    set_accept_focus(false);
+    set_focus_on_map(false);
 
     // Rounded CSS corners expose pixels from the toplevel underneath the
     // dock box. Give that toplevel an alpha-capable visual so those pixels
@@ -76,6 +78,9 @@ DockWindow::DockWindow(
         GTK_WINDOW(gobj());
 
     gtk_layer_init_for_window(gtk_win);
+    gtk_layer_set_keyboard_mode(
+        gtk_win,
+        GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
 
     gtk_layer_set_monitor(
         gtk_win,

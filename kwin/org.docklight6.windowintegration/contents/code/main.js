@@ -319,22 +319,6 @@
             handlePublishReply);
     }
 
-    function publishDesktopPresence() {
-        if (!connected) {
-            registerIntegration();
-            return;
-        }
-
-        for (const identifier in
-             trackedWindows) {
-            const window =
-                trackedWindows[identifier];
-
-            if (isTrackable(window))
-                publishWindow(window);
-        }
-    }
-
     function publishDockSurfaceGeometry() {
         if (!connected) {
             registerIntegration();
@@ -737,7 +721,7 @@
         publishActiveWindow);
     connectSignal(
         workspace.currentDesktopChanged,
-        publishDesktopPresence);
+        publishSnapshot);
 
     registerIntegration();
 }());

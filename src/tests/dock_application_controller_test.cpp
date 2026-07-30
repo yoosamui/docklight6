@@ -175,6 +175,301 @@ void verifies_alternate_application_identity()
     assert(controller.can_minimize());
 }
 
+void verifies_inactive_window_is_activated()
+{
+    FakeWindowBackend backend;
+
+    auto application_window =
+        window("window-1");
+    auto covering_window =
+        window(
+            "window-2",
+            false,
+            "org.mozilla.firefox");
+
+    backend.set_snapshot(
+        {
+            application_window,
+            covering_window
+        },
+        {
+            "window-1",
+            "window-2"
+        },
+        WindowId{"window-2"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    assert(controller
+               .toggle_minimized());
+    assert(!registry
+                .find_window("window-1")
+                ->minimized);
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-1"});
+}
+
+void verifies_other_desktop_window_is_activated()
+{
+    FakeWindowBackend backend;
+
+    auto application_window =
+        window("window-1");
+    application_window.on_current_desktop =
+        false;
+
+    backend.set_snapshot(
+        {
+            application_window
+        },
+        {
+            "window-1"
+        },
+        std::nullopt);
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    assert(controller
+               .toggle_minimized());
+    assert(!registry
+                .find_window("window-1")
+                ->minimized);
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-1"});
+}
+
+void verifies_desktop_groups_are_activated_in_order()
+{
+    FakeWindowBackend backend;
+
+    auto desktop_three_open =
+        window("desktop-3-open");
+    auto desktop_three_minimized =
+        window(
+            "desktop-3-minimized",
+            true);
+    auto desktop_four_open =
+        window("desktop-4-open");
+    auto desktop_four_minimized =
+        window(
+            "desktop-4-minimized",
+            true);
+    auto current_desktop_window =
+        window(
+            "desktop-1-other-app",
+            false,
+            "org.mozilla.firefox");
+
+    desktop_three_open.desktop_ids =
+        {"desktop-3"};
+    desktop_three_open.desktop_numbers =
+        {3};
+    desktop_three_open.on_current_desktop =
+        false;
+    desktop_three_minimized.desktop_ids =
+        {"desktop-3"};
+    desktop_three_minimized.desktop_numbers =
+        {3};
+    desktop_three_minimized
+        .on_current_desktop = false;
+
+    desktop_four_open.desktop_ids =
+        {"desktop-4"};
+    desktop_four_open.desktop_numbers =
+        {4};
+    desktop_four_open.on_current_desktop =
+        false;
+    desktop_four_minimized.desktop_ids =
+        {"desktop-4"};
+    desktop_four_minimized.desktop_numbers =
+        {4};
+    desktop_four_minimized
+        .on_current_desktop = false;
+
+    backend.set_snapshot(
+        {
+            desktop_three_minimized,
+            desktop_three_open,
+            desktop_four_minimized,
+            desktop_four_open,
+            current_desktop_window
+        },
+        {
+            "desktop-3-minimized",
+            "desktop-3-open",
+            "desktop-4-minimized",
+            "desktop-4-open",
+            "desktop-1-other-app"
+        },
+        WindowId{
+            "desktop-1-other-app"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    // Desktop 4 is the most recent group with an open window.
+    assert(controller
+               .toggle_minimized());
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "desktop-4-open"});
+    assert(!registry
+                .find_window(
+                    "desktop-4-minimized")
+                ->minimized);
+    assert(registry
+               .find_window(
+                   "desktop-3-minimized")
+               ->minimized);
+
+    // Simulate KWin's desktop-presence update after activation.
+    for (const auto &window_id :
+         std::vector<WindowId>{
+             "desktop-4-minimized",
+             "desktop-4-open"})
+    {
+        auto updated =
+            *registry.find_window(
+                window_id);
+        updated.on_current_desktop = true;
+        backend.update_window(updated);
+    }
+
+    // A second click hides the complete application group without switching
+    // away from Desktop 4.
+    assert(controller
+               .toggle_minimized());
+    assert(registry
+               .find_window(
+                   "desktop-4-minimized")
+               ->minimized);
+    assert(registry
+               .find_window(
+                   "desktop-4-open")
+               ->minimized);
+    assert(registry
+               .find_window(
+                   "desktop-3-open")
+               ->minimized);
+    assert(registry
+               .find_window(
+                   "desktop-3-minimized")
+               ->minimized);
+
+    backend.set_active_window(
+        std::nullopt);
+
+    // With every group hidden, the next click restores the current desktop's
+    // group instead of switching desktops.
+    assert(controller
+               .toggle_minimized());
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "desktop-4-open"});
+    assert(!registry
+                .find_window(
+                    "desktop-4-open")
+                ->minimized);
+    assert(registry
+               .find_window(
+                   "desktop-3-open")
+               ->minimized);
+}
+
+void verifies_active_group_hides_all_desktops()
+{
+    FakeWindowBackend backend;
+
+    auto desktop_one_window =
+        window("desktop-1-window");
+    auto desktop_four_first =
+        window("desktop-4-first");
+    auto desktop_four_second =
+        window("desktop-4-second");
+
+    desktop_one_window.desktop_ids =
+        {"desktop-1"};
+    desktop_one_window.desktop_numbers =
+        {1};
+    desktop_four_first.desktop_ids =
+        {"desktop-4"};
+    desktop_four_first.desktop_numbers =
+        {4};
+    desktop_four_first.on_current_desktop =
+        false;
+    desktop_four_second.desktop_ids =
+        {"desktop-4"};
+    desktop_four_second.desktop_numbers =
+        {4};
+    desktop_four_second.on_current_desktop =
+        false;
+
+    backend.set_snapshot(
+        {
+            desktop_one_window,
+            desktop_four_first,
+            desktop_four_second
+        },
+        {
+            "desktop-4-first",
+            "desktop-4-second",
+            "desktop-1-window"
+        },
+        WindowId{"desktop-1-window"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    assert(controller
+               .toggle_minimized());
+    assert(registry
+               .find_window(
+                   "desktop-1-window")
+               ->minimized);
+    assert(registry
+               .find_window(
+                   "desktop-4-first")
+               ->minimized);
+    assert(registry
+               .find_window(
+                   "desktop-4-second")
+               ->minimized);
+
+    // No activation was dispatched, so the selected desktop/window did not
+    // change while the complete group was hidden.
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "desktop-1-window"});
+}
+
 void verifies_window_cycling()
 {
     FakeWindowBackend backend;
@@ -391,6 +686,10 @@ int main()
     verifies_launcher_window_actions();
     verifies_missing_application();
     verifies_alternate_application_identity();
+    verifies_inactive_window_is_activated();
+    verifies_other_desktop_window_is_activated();
+    verifies_desktop_groups_are_activated_in_order();
+    verifies_active_group_hides_all_desktops();
     verifies_window_cycling();
     verifies_window_cycle_tracks_group_changes();
     verifies_grouped_window_entries();

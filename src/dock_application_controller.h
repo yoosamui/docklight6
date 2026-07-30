@@ -65,6 +65,24 @@ public:
     void reset_window_cycle();
 
 private:
+    std::vector<WindowId>
+    current_desktop_windows(
+        const RunningApplication
+            &application) const;
+    std::vector<WindowId>
+    most_recent_desktop_group(
+        const RunningApplication
+            &application,
+        bool require_unminimized) const;
+    bool activate_windows(
+        const std::vector<WindowId>
+            &window_ids);
+    bool minimize_windows(
+        const std::vector<WindowId>
+            &window_ids);
+    bool group_has_unminimized_window(
+        const std::vector<WindowId>
+            &window_ids) const;
     bool has_minimized_window() const;
     bool has_unminimized_window() const;
 

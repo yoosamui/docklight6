@@ -567,16 +567,26 @@ workspace.currentDesktopChanged.emit(
     workspace.currentDesktop);
 
 const desktopUpdate =
-    calls[calls.length - 1];
+    calls
+        .filter(
+            call =>
+                call.methodName ===
+                "StageWindow")
+        .at(-1);
 
-assert.strictEqual(
-    desktopUpdate.methodName,
-    "PublishWindow");
 assert.strictEqual(
     desktopUpdate.arguments[1]
         .split(",")
         .map(decodeURIComponent)[15],
     "1");
+
+assert(
+    calls.some(
+        call =>
+            call.methodName ===
+                "CommitSnapshot" &&
+            call.arguments[0] ===
+                desktopUpdate.arguments[0]));
 
 managedWindow.stackingOrderChanged.emit();
 

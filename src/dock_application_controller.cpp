@@ -22,6 +22,34 @@ bool contains_same_windows(
                right.begin());
 }
 
+bool belongs_to_activation_desktop(
+    const ManagedWindow &window,
+    const ManagedWindow &target)
+{
+    // KWin switches to the target window's first desktop during activation.
+    // Include only windows that will be visible on that same desktop.
+    if (!target.desktop_ids.empty())
+    {
+        return std::find(
+                   window.desktop_ids.begin(),
+                   window.desktop_ids.end(),
+                   target.desktop_ids.front()) !=
+               window.desktop_ids.end();
+    }
+
+    if (!target.desktop_numbers.empty())
+    {
+        return std::find(
+                   window.desktop_numbers.begin(),
+                   window.desktop_numbers.end(),
+                   target.desktop_numbers
+                       .front()) !=
+               window.desktop_numbers.end();
+    }
+
+    return window.id == target.id;
+}
+
 }
 
 DockApplicationController::
@@ -94,29 +122,241 @@ bool DockApplicationController::
         return false;
     }
 
-    if (has_unminimized_window())
-        return minimize();
+    // An active application is already presented to the user. Hide its
+    // complete group without raising or activating another window; this must
+    // not switch desktops even when the group spans several of them.
+    if (running_application->active_window_id)
+    {
+        const auto active_window =
+            m_registry->find_window(
+                *running_application
+                     ->active_window_id);
 
-    const auto window_id =
-        running_application
-            ->active_window_id
-            .value_or(
-                running_application
-                    ->window_ids.back());
+        if (active_window &&
+            !active_window->minimized)
+        {
+            return minimize();
+        }
+    }
 
-    bool accepted = unminimize();
+    const auto current_windows =
+        current_desktop_windows(
+            *running_application);
 
-    accepted =
-        m_registry->raise_window(
-            window_id) &&
-        accepted;
+    // Prefer visible windows on the current desktop. If that desktop only
+    // contains a group hidden by the previous click, continue with the most
+    // recent unminimized group on another desktop before restoring it.
+    if (!current_windows.empty() &&
+        group_has_unminimized_window(
+            current_windows))
+    {
+        return activate_windows(
+            current_windows);
+    }
+
+    auto target_windows =
+        most_recent_desktop_group(
+            *running_application,
+            true);
+
+    if (target_windows.empty() &&
+        !current_windows.empty())
+    {
+        target_windows = current_windows;
+    }
+
+    if (target_windows.empty())
+    {
+        target_windows =
+            most_recent_desktop_group(
+                *running_application,
+                false);
+    }
+
+    return activate_windows(
+        target_windows);
+}
+
+std::vector<WindowId>
+DockApplicationController::
+    current_desktop_windows(
+        const RunningApplication
+            &running_application) const
+{
+    std::vector<WindowId> window_ids;
+
+    for (const auto &window_id :
+         running_application.window_ids)
+    {
+        const auto window =
+            m_registry->find_window(
+                window_id);
+
+        if (window &&
+            window->on_current_desktop)
+        {
+            window_ids.push_back(
+                window_id);
+        }
+    }
+
+    return window_ids;
+}
+
+std::vector<WindowId>
+DockApplicationController::
+    most_recent_desktop_group(
+        const RunningApplication
+            &running_application,
+        bool require_unminimized) const
+{
+    const ManagedWindow *target = nullptr;
+
+    for (auto window_id =
+             running_application
+                 .window_ids.rbegin();
+         window_id !=
+             running_application
+                 .window_ids.rend();
+         ++window_id)
+    {
+        const auto window =
+            m_registry->find_window(
+                *window_id);
+
+        if (!window ||
+            window->on_current_desktop ||
+            (require_unminimized &&
+             window->minimized))
+        {
+            continue;
+        }
+
+        target = window;
+        break;
+    }
+
+    if (!target)
+        return {};
+
+    std::vector<WindowId> window_ids;
+
+    for (const auto &window_id :
+         running_application.window_ids)
+    {
+        const auto window =
+            m_registry->find_window(
+                window_id);
+
+        if (window &&
+            !window->on_current_desktop &&
+            belongs_to_activation_desktop(
+                *window,
+                *target))
+        {
+            window_ids.push_back(
+                window_id);
+        }
+    }
+
+    return window_ids;
+}
+
+bool DockApplicationController::activate_windows(
+    const std::vector<WindowId>
+        &window_ids)
+{
+    if (window_ids.empty())
+        return false;
+
+    bool accepted = true;
+
+    for (const auto &window_id :
+         window_ids)
+    {
+        const auto window =
+            m_registry->find_window(
+                window_id);
+
+        if (!window)
+        {
+            accepted = false;
+            continue;
+        }
+
+        if (window->minimized)
+        {
+            accepted =
+                m_registry
+                    ->set_window_minimized(
+                        window_id,
+                        false) &&
+                accepted;
+        }
+
+        accepted =
+            m_registry->raise_window(
+                window_id) &&
+            accepted;
+    }
 
     accepted =
         m_registry->activate_window(
-            window_id) &&
+            window_ids.back()) &&
         accepted;
 
     return accepted;
+}
+
+bool DockApplicationController::minimize_windows(
+    const std::vector<WindowId>
+        &window_ids)
+{
+    bool accepted = true;
+    bool dispatched = false;
+
+    for (const auto &window_id :
+         window_ids)
+    {
+        const auto window =
+            m_registry->find_window(
+                window_id);
+
+        if (!window ||
+            window->minimized)
+        {
+            continue;
+        }
+
+        dispatched = true;
+        accepted =
+            m_registry
+                ->set_window_minimized(
+                    window_id,
+                    true) &&
+            accepted;
+    }
+
+    return dispatched && accepted;
+}
+
+bool DockApplicationController::
+    group_has_unminimized_window(
+        const std::vector<WindowId>
+            &window_ids) const
+{
+    return std::any_of(
+        window_ids.begin(),
+        window_ids.end(),
+        [this](const WindowId &window_id)
+        {
+            const auto window =
+                m_registry->find_window(
+                    window_id);
+
+            return window &&
+                   !window->minimized;
+        });
 }
 
 bool DockApplicationController::minimize()
