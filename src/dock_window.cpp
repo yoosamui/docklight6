@@ -97,6 +97,18 @@ DockWindow::DockWindow(
     get_style_context()->add_class(
         "dock-window");
 
+    const std::vector<Gtk::TargetEntry>
+        drag_targets = {
+            Gtk::TargetEntry(
+                DockConstants::
+                    DOCK_ITEM_DRAG_TARGET,
+                Gtk::TARGET_SAME_APP)};
+
+    drag_dest_set(
+        drag_targets,
+        Gtk::DestDefaults(0),
+        Gdk::ACTION_MOVE);
+
     m_dock_box.get_style_context()
         ->add_class("dock-surface");
 
@@ -195,6 +207,276 @@ bool DockWindow::set_item_attached(
             : "Detached",
         item.desktop_id().c_str());
 
+    return true;
+}
+
+void DockWindow::begin_item_drag(
+    DockItem &item)
+{
+    m_dragged_item = &item;
+    hide_tooltip_immediately();
+}
+
+bool DockWindow::can_drop_item(
+    const DockItem &target)
+{
+    if (!m_dragged_item)
+        return false;
+
+    const auto items = dock_items();
+
+    return std::find(
+               items.begin(),
+               items.end(),
+               m_dragged_item) !=
+               items.end() &&
+           std::find(
+               items.begin(),
+               items.end(),
+               &target) !=
+               items.end();
+}
+
+bool DockWindow::drop_item(
+    DockItem &target,
+    int x,
+    int y)
+{
+    if (!can_drop_item(target))
+        return false;
+
+    auto items = dock_items();
+
+    if (!m_dragged_item->attached() &&
+        !set_item_attached(
+            *m_dragged_item,
+            true))
+    {
+        return false;
+    }
+
+    if (m_dragged_item == &target)
+        return apply_dragged_item_order(
+            items);
+
+    const bool horizontal =
+        m_controller
+            ->layout_request()
+            .location ==
+            DockLocation::bottom ||
+        m_controller
+            ->layout_request()
+            .location ==
+            DockLocation::top;
+
+    const auto allocation =
+        target.get_allocation();
+
+    const bool insert_after =
+        horizontal
+            ? x >= allocation.get_width() / 2
+            : y >= allocation.get_height() / 2;
+
+    items.erase(
+        std::remove(
+            items.begin(),
+            items.end(),
+            m_dragged_item),
+        items.end());
+
+    auto insertion =
+        std::find(
+            items.begin(),
+            items.end(),
+            &target);
+
+    if (insertion == items.end())
+        return false;
+
+    if (insert_after)
+        ++insertion;
+
+    items.insert(
+        insertion,
+        m_dragged_item);
+
+    return apply_dragged_item_order(
+        items);
+}
+
+void DockWindow::end_item_drag(
+    DockItem &item)
+{
+    if (m_dragged_item == &item)
+        m_dragged_item = nullptr;
+}
+
+bool DockWindow::on_drag_motion(
+    const Glib::RefPtr<
+        Gdk::DragContext> &context,
+    int x,
+    int y,
+    guint time)
+{
+    if (!is_first_item_drop_zone(
+            x,
+            y))
+    {
+        return false;
+    }
+
+    context->drag_status(
+        Gdk::ACTION_MOVE,
+        time);
+    return true;
+}
+
+bool DockWindow::on_drag_drop(
+    const Glib::RefPtr<
+        Gdk::DragContext> &context,
+    int x,
+    int y,
+    guint time)
+{
+    const bool accepted =
+        is_first_item_drop_zone(
+            x,
+            y) &&
+        drop_item_first();
+
+    context->drag_finish(
+        accepted,
+        false,
+        time);
+
+    return accepted;
+}
+
+bool DockWindow::is_first_item_drop_zone(
+    int x,
+    int y)
+{
+    if (!m_dragged_item)
+        return false;
+
+    const auto items = dock_items();
+
+    if (items.empty())
+        return false;
+
+    int first_x = 0;
+    int first_y = 0;
+
+    if (!items.front()
+             ->translate_coordinates(
+                 *this,
+                 0,
+                 0,
+                 first_x,
+                 first_y))
+    {
+        return false;
+    }
+
+    const auto allocation =
+        items.front()->get_allocation();
+
+    const bool horizontal =
+        m_controller
+            ->layout_request()
+            .location ==
+            DockLocation::bottom ||
+        m_controller
+            ->layout_request()
+            .location ==
+            DockLocation::top;
+
+    return horizontal
+               ? x <=
+                     first_x +
+                         allocation
+                             .get_width() /
+                             2
+               : y <=
+                     first_y +
+                         allocation
+                             .get_height() /
+                             2;
+}
+
+bool DockWindow::drop_item_first()
+{
+    if (!m_dragged_item)
+        return false;
+
+    auto items = dock_items();
+
+    if (std::find(
+            items.begin(),
+            items.end(),
+            m_dragged_item) ==
+        items.end())
+    {
+        return false;
+    }
+
+    if (!m_dragged_item->attached() &&
+        !set_item_attached(
+            *m_dragged_item,
+            true))
+    {
+        return false;
+    }
+
+    items.erase(
+        std::remove(
+            items.begin(),
+            items.end(),
+            m_dragged_item),
+        items.end());
+
+    items.insert(
+        items.begin(),
+        m_dragged_item);
+
+    return apply_dragged_item_order(
+        items);
+}
+
+bool DockWindow::apply_dragged_item_order(
+    const std::vector<DockItem *>
+        &items)
+{
+    int position = 2;
+
+    for (auto *item : items)
+    {
+        m_dock_box.reorder_child(
+            *item,
+            position++);
+    }
+
+    std::vector<std::string>
+        attached_ids;
+
+    for (const auto *item : items)
+    {
+        if (item->attached())
+        {
+            attached_ids.push_back(
+                item->desktop_id());
+        }
+    }
+
+    if (!m_launcher_manager
+             .reorder_attached(
+                 attached_ids))
+    {
+        g_warning(
+            "Cannot persist reordered dock items");
+    }
+
+    m_controller->dock_items_reordered();
     return true;
 }
 
@@ -600,11 +882,19 @@ void DockWindow::synchronize_dock_items()
     for (const auto &desktop_id :
          attached_ids)
     {
+        const auto app =
+            m_launcher_manager
+                .find_application(
+                    desktop_id);
+
         normalized_attached_ids
             .push_back(
                 LauncherManager::
                     normalize_desktop_id(
-                        desktop_id));
+                        app &&
+                                !app->get_id().empty()
+                            ? app->get_id()
+                            : desktop_id));
     }
 
     if (m_window_registry)
@@ -653,6 +943,64 @@ void DockWindow::synchronize_dock_items()
             DockConstants::MAX_DOCK_ITEMS -
                 1);
 
+    const auto current_items =
+        dock_items();
+
+    // Keep the live visual order, including positions where running,
+    // unattached applications have been dropped between attached launchers.
+    for (auto *item : current_items)
+    {
+        if (static_cast<int>(
+                desired_items.size()) >=
+            maximum_items)
+        {
+            break;
+        }
+
+        const auto normalized_id =
+            LauncherManager::
+                normalize_desktop_id(
+                    item->desktop_id());
+
+        const bool attached =
+            std::find(
+                normalized_attached_ids
+                    .begin(),
+                normalized_attached_ids
+                    .end(),
+                normalized_id) !=
+            normalized_attached_ids.end();
+
+        const bool running =
+            item->running();
+
+        if (!attached && !running)
+            continue;
+
+        const bool already_present =
+            std::any_of(
+                desired_items.begin(),
+                desired_items.end(),
+                [&normalized_id](
+                    const DesiredItem
+                        &candidate)
+                {
+                    return LauncherManager::
+                               normalize_desktop_id(
+                                   candidate
+                                       .desktop_id) ==
+                           normalized_id;
+                });
+
+        if (already_present)
+            continue;
+
+        desired_items.push_back(
+            {item->desktop_id(),
+             {},
+             attached});
+    }
+
     for (const auto &desktop_id :
          attached_ids)
     {
@@ -663,14 +1011,32 @@ void DockWindow::synchronize_dock_items()
             break;
         }
 
-        auto app =
-            m_launcher_manager
-                .find_application(
-                    desktop_id);
-
         const auto normalized_id =
             LauncherManager::
                 normalize_desktop_id(
+                    desktop_id);
+
+        const bool already_present =
+            std::any_of(
+                desired_items.begin(),
+                desired_items.end(),
+                [&normalized_id](
+                    const DesiredItem
+                        &candidate)
+                {
+                    return LauncherManager::
+                               normalize_desktop_id(
+                                   candidate
+                                       .desktop_id) ==
+                           normalized_id;
+                });
+
+        if (already_present)
+            continue;
+
+        auto app =
+            m_launcher_manager
+                .find_application(
                     desktop_id);
 
         if (!app &&
@@ -694,60 +1060,15 @@ void DockWindow::synchronize_dock_items()
             continue;
         }
 
+        const auto canonical_id =
+            !app->get_id().empty()
+                ? app->get_id()
+                : desktop_id;
+
         desired_items.push_back(
-            {desktop_id,
+            {canonical_id,
              std::move(app),
              true});
-    }
-
-    const auto current_items =
-        dock_items();
-
-    for (auto *item : current_items)
-    {
-        if (static_cast<int>(
-                desired_items.size()) >=
-            maximum_items)
-        {
-            break;
-        }
-
-        const auto normalized_id =
-            LauncherManager::
-                normalize_desktop_id(
-                    item->desktop_id());
-
-        const bool running =
-            std::binary_search(
-                normalized_running_ids
-                    .begin(),
-                normalized_running_ids
-                    .end(),
-                normalized_id);
-
-        const bool already_present =
-            std::any_of(
-                desired_items.begin(),
-                desired_items.end(),
-                [&normalized_id](
-                    const DesiredItem
-                        &candidate)
-                {
-                    return LauncherManager::
-                               normalize_desktop_id(
-                                   candidate
-                                       .desktop_id) ==
-                           normalized_id;
-                });
-
-        if (running &&
-            !already_present)
-        {
-            desired_items.push_back(
-                {item->desktop_id(),
-                 {},
-                 false});
-        }
     }
 
     if (m_window_registry)
@@ -763,11 +1084,24 @@ void DockWindow::synchronize_dock_items()
                 break;
             }
 
+            auto app =
+                application_for_running(
+                    running
+                        .desktop_file_name);
+
+            if (!app)
+                continue;
+
+            const auto canonical_id =
+                !app->get_id().empty()
+                    ? app->get_id()
+                    : running
+                          .desktop_file_name;
+
             const auto normalized_id =
                 LauncherManager::
                     normalize_desktop_id(
-                        running
-                            .desktop_file_name);
+                        canonical_id);
 
             const bool already_present =
                 std::any_of(
@@ -787,16 +1121,8 @@ void DockWindow::synchronize_dock_items()
             if (already_present)
                 continue;
 
-            auto app =
-                application_for_running(
-                    running
-                        .desktop_file_name);
-
-            if (!app)
-                continue;
-
             desired_items.push_back(
-                {running.desktop_file_name,
+                {canonical_id,
                  std::move(app),
                  false});
         }
@@ -807,6 +1133,8 @@ void DockWindow::synchronize_dock_items()
 
     std::vector<DockItem *>
         ordered_items;
+
+    bool children_changed = false;
 
     for (const auto &desired :
          desired_items)
@@ -882,6 +1210,7 @@ void DockWindow::synchronize_dock_items()
                 *item,
                 Gtk::PACK_SHRINK);
             item->show();
+            children_changed = true;
         }
 
         ordered_items.push_back(item);
@@ -891,7 +1220,10 @@ void DockWindow::synchronize_dock_items()
         hide_tooltip_immediately();
 
     for (auto *item : existing_items)
+    {
         m_dock_box.remove(*item);
+        children_changed = true;
+    }
 
     int position = 2;
 
@@ -906,8 +1238,14 @@ void DockWindow::synchronize_dock_items()
         m_trailing_margin,
         -1);
 
-    if (m_effective_icon_size > 0)
+    if (children_changed)
+    {
+        m_controller->dock_items_changed();
+    }
+    else if (m_effective_icon_size > 0)
+    {
         apply_visual_style();
+    }
 }
 
 void DockWindow::create_dock()

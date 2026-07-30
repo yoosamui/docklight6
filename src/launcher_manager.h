@@ -22,6 +22,9 @@ public:
     bool set_attached(
         const std::string &desktop_id,
         bool attached);
+    bool reorder_attached(
+        const std::vector<std::string>
+            &desktop_ids);
     bool is_attached(
         const std::string &desktop_id) const;
 
@@ -30,6 +33,8 @@ public:
         const std::string &desktop_id);
 
 private:
+    std::string normalize_resolved_id(
+        const std::string &desktop_id) const;
     std::vector<std::string>
     read_config() const;
     bool write_config(

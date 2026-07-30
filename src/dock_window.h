@@ -41,9 +41,38 @@ public:
     bool set_item_attached(
         DockItem &item,
         bool attached);
+    void begin_item_drag(DockItem &item);
+    bool can_drop_item(
+        const DockItem &target);
+    bool drop_item(
+        DockItem &target,
+        int x,
+        int y);
+    void end_item_drag(DockItem &item);
     DockLocation location() const;
 
+protected:
+    bool on_drag_motion(
+        const Glib::RefPtr<
+            Gdk::DragContext> &context,
+        int x,
+        int y,
+        guint time) override;
+    bool on_drag_drop(
+        const Glib::RefPtr<
+            Gdk::DragContext> &context,
+        int x,
+        int y,
+        guint time) override;
+
 private:
+    bool is_first_item_drop_zone(
+        int x,
+        int y);
+    bool drop_item_first();
+    bool apply_dragged_item_order(
+        const std::vector<
+            DockItem *> &items);
     void create_dock();
     void apply_dock_layout(
         const DockPlacement &placement);
@@ -96,6 +125,8 @@ private:
         m_synchronized_running_ids;
 
     std::unique_ptr<DockWindowController> m_controller;
+
+    DockItem *m_dragged_item = nullptr;
 
     bool m_has_synchronized_items = false;
 };

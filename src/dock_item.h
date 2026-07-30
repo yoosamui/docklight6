@@ -55,6 +55,11 @@ public:
     {
         return m_attached;
     }
+    bool running() const
+    {
+        return m_application_controller
+            .running();
+    }
 
 public:
     DockWindow &dock()
@@ -69,12 +74,38 @@ protected:
     bool on_leave_notify_event(
         GdkEventCrossing *event) override;
 
+    bool on_button_release_event(
+        GdkEventButton *event) override;
     bool on_scroll_event(
         GdkEventScroll *event) override;
 
 private:
     bool on_button_press_event(
         GdkEventButton *event) override;
+    void on_drag_begin(
+        const Glib::RefPtr<
+            Gdk::DragContext> &context) override;
+    void on_drag_end(
+        const Glib::RefPtr<
+            Gdk::DragContext> &context) override;
+    void on_drag_data_get(
+        const Glib::RefPtr<
+            Gdk::DragContext> &context,
+        Gtk::SelectionData &selection_data,
+        guint info,
+        guint time) override;
+    bool on_drag_motion(
+        const Glib::RefPtr<
+            Gdk::DragContext> &context,
+        int x,
+        int y,
+        guint time) override;
+    bool on_drag_drop(
+        const Glib::RefPtr<
+            Gdk::DragContext> &context,
+        int x,
+        int y,
+        guint time) override;
     bool on_popup_menu();
     bool advance_zoom_animation();
     bool advance_blur_animation();
@@ -116,6 +147,7 @@ private:
     std::string m_desktop_id;
     Glib::RefPtr<Gdk::Pixbuf> m_icon_pixbuf;
     Glib::RefPtr<Gdk::Pixbuf> m_hover_pixbuf;
+    Glib::RefPtr<Gdk::Pixbuf> m_drag_pixbuf;
     Glib::RefPtr<Gtk::CssProvider> m_context_menu_css;
 
     DockApplicationController
@@ -160,6 +192,8 @@ private:
     int m_zoom_target_frame = 0;
     int m_blur_frame = 0;
     int m_blur_target_frame = 0;
+    int m_drag_hot_x = 0;
+    int m_drag_hot_y = 0;
 
     std::size_t m_indicator_window_count = 0;
 
@@ -167,6 +201,8 @@ private:
     bool m_attached = false;
     bool m_updating_attach_state = false;
     bool m_single_main_window = false;
+    bool m_primary_button_pressed = false;
+    bool m_dragging = false;
 };
 
 class DockHomeItem : public Gtk::EventBox

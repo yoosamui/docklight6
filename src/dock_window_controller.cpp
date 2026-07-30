@@ -761,6 +761,21 @@ void DockWindowController::hide_tooltip_immediately()
     hide_tooltip();
 }
 
+void DockWindowController::dock_items_reordered()
+{
+    hide_tooltip_immediately();
+    schedule_icon_geometry_update();
+}
+
+void DockWindowController::dock_items_changed()
+{
+    // Adding an item at a large configured icon size can temporarily make a
+    // vertical dock taller than its output. Recalculate before returning to
+    // the compositor so the new item is included in the effective icon size.
+    m_layout_update.disconnect();
+    update_dock_layout();
+}
+
 void DockWindowController::show_tooltip(
     Gtk::Widget &item,
     const Glib::ustring &text)

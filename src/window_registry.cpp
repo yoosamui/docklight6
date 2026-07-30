@@ -854,6 +854,12 @@ WindowRegistry::normalize_desktop_file_name(
         normalized_name.begin(),
         [](unsigned char character)
         {
+            if (std::isspace(character) ||
+                character == '_')
+            {
+                return '-';
+            }
+
             return static_cast<char>(
                 std::tolower(character));
         });

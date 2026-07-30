@@ -1,5 +1,6 @@
 #include "launcher_manager.h"
 
+#include <gio/gdesktopappinfo.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 
@@ -112,11 +113,35 @@ LauncherManager::find_application(
         if (!app)
             continue;
 
-        if (normalize_desktop_id(
-                app->get_id()) ==
-            normalized_requested)
+        const auto matches =
+            [&normalized_requested](
+                const std::string &value)
+            {
+                return normalize_desktop_id(
+                           value) ==
+                       normalized_requested;
+            };
+
+        if (matches(app->get_id()) ||
+            matches(app->get_name()) ||
+            matches(app->get_display_name()))
         {
             return app;
+        }
+
+        if (G_IS_DESKTOP_APP_INFO(
+                app->gobj()))
+        {
+            const auto startup_wm_class =
+                g_desktop_app_info_get_startup_wm_class(
+                    G_DESKTOP_APP_INFO(
+                        app->gobj()));
+
+            if (startup_wm_class &&
+                matches(startup_wm_class))
+            {
+                return app;
+            }
         }
     }
 
@@ -128,7 +153,7 @@ bool LauncherManager::set_attached(
     bool attached)
 {
     const auto normalized_id =
-        normalize_desktop_id(
+        normalize_resolved_id(
             desktop_id);
 
     if (normalized_id.empty())
@@ -140,10 +165,10 @@ bool LauncherManager::set_attached(
         std::find_if(
             ids.begin(),
             ids.end(),
-            [&normalized_id](
+            [this, &normalized_id](
                 const std::string &candidate)
             {
-                return normalize_desktop_id(
+                return normalize_resolved_id(
                            candidate) ==
                        normalized_id;
             });
@@ -174,11 +199,94 @@ bool LauncherManager::set_attached(
     return write_config(ids);
 }
 
+bool LauncherManager::reorder_attached(
+    const std::vector<std::string>
+        &desktop_ids)
+{
+    const auto current_ids =
+        read_config();
+
+    std::vector<std::string> ordered_ids;
+    ordered_ids.reserve(
+        current_ids.size());
+
+    for (const auto &desktop_id :
+         desktop_ids)
+    {
+        const auto normalized_id =
+            normalize_resolved_id(
+                desktop_id);
+
+        const auto current =
+            std::find_if(
+                current_ids.begin(),
+                current_ids.end(),
+                [this, &normalized_id](
+                    const std::string
+                        &candidate)
+                {
+                    return normalize_resolved_id(
+                               candidate) ==
+                           normalized_id;
+                });
+
+        const bool already_added =
+            std::any_of(
+                ordered_ids.begin(),
+                ordered_ids.end(),
+                [this, &normalized_id](
+                    const std::string
+                        &candidate)
+                {
+                    return normalize_resolved_id(
+                               candidate) ==
+                           normalized_id;
+                });
+
+        if (current == current_ids.end() ||
+            already_added)
+        {
+            return false;
+        }
+
+        ordered_ids.push_back(
+            *current);
+    }
+
+    for (const auto &current_id :
+         current_ids)
+    {
+        const auto normalized_id =
+            normalize_resolved_id(
+                current_id);
+
+        const bool already_added =
+            std::any_of(
+                ordered_ids.begin(),
+                ordered_ids.end(),
+                [this, &normalized_id](
+                    const std::string
+                        &candidate)
+                {
+                    return normalize_resolved_id(
+                               candidate) ==
+                           normalized_id;
+                });
+
+        if (!already_added)
+            ordered_ids.push_back(
+                current_id);
+    }
+
+    return ordered_ids == current_ids ||
+           write_config(ordered_ids);
+}
+
 bool LauncherManager::is_attached(
     const std::string &desktop_id) const
 {
     const auto normalized_id =
-        normalize_desktop_id(
+        normalize_resolved_id(
             desktop_id);
 
     if (normalized_id.empty())
@@ -189,13 +297,28 @@ bool LauncherManager::is_attached(
     return std::any_of(
         ids.begin(),
         ids.end(),
-        [&normalized_id](
+        [this, &normalized_id](
             const std::string &candidate)
         {
-            return normalize_desktop_id(
+            return normalize_resolved_id(
                        candidate) ==
                    normalized_id;
         });
+}
+
+std::string
+LauncherManager::normalize_resolved_id(
+    const std::string &desktop_id) const
+{
+    const auto app =
+        find_application(
+            desktop_id);
+
+    return normalize_desktop_id(
+        app &&
+                !app->get_id().empty()
+            ? app->get_id()
+            : desktop_id);
 }
 
 std::string
@@ -225,6 +348,12 @@ LauncherManager::normalize_desktop_id(
         normalized.begin(),
         [](unsigned char character)
         {
+            if (std::isspace(character) ||
+                character == '_')
+            {
+                return '-';
+            }
+
             return static_cast<char>(
                 std::tolower(character));
         });
@@ -263,17 +392,17 @@ LauncherManager::read_config() const
             continue;
 
         const auto normalized_id =
-            normalize_desktop_id(line);
+            normalize_resolved_id(line);
 
         const bool duplicate =
             std::any_of(
                 ids.begin(),
                 ids.end(),
-                [&normalized_id](
+                [this, &normalized_id](
                     const std::string
                         &candidate)
                 {
-                    return normalize_desktop_id(
+                    return normalize_resolved_id(
                                candidate) ==
                            normalized_id;
                 });

@@ -1,5 +1,6 @@
 #include "dock_item.h"
 #include "dock_configuration_manager.h"
+#include "dock_constants.h"
 #include "dock_layout_metrics.h"
 #include "dock_monitor_manager.h"
 #include "dock_window.h"
@@ -183,6 +184,14 @@ namespace
         auto *desktop_app =
             G_DESKTOP_APP_INFO(
                 app->gobj());
+
+        // AppInfo objects created from a command line can use the
+        // GDesktopAppInfo type without having a backing key file.
+        if (!g_desktop_app_info_get_filename(
+                desktop_app))
+        {
+            return false;
+        }
 
         return g_desktop_app_info_get_boolean(
                    desktop_app,
@@ -473,8 +482,27 @@ DockItem::DockItem(
         Gdk::ENTER_NOTIFY_MASK |
         Gdk::LEAVE_NOTIFY_MASK |
         Gdk::BUTTON_PRESS_MASK |
+        Gdk::BUTTON_RELEASE_MASK |
         Gdk::SCROLL_MASK |
         Gdk::SMOOTH_SCROLL_MASK);
+
+    const std::vector<Gtk::TargetEntry>
+        drag_targets = {
+            Gtk::TargetEntry(
+                DockConstants::
+                    DOCK_ITEM_DRAG_TARGET,
+                Gtk::TARGET_SAME_APP)};
+
+    drag_source_set(
+        drag_targets,
+        Gdk::BUTTON1_MASK,
+        Gdk::ACTION_MOVE);
+
+    drag_dest_set(
+        drag_targets,
+        Gtk::DEST_DEFAULT_MOTION |
+            Gtk::DEST_DEFAULT_HIGHLIGHT,
+        Gdk::ACTION_MOVE);
 
     image.set_halign(Gtk::ALIGN_CENTER);
     image.set_valign(Gtk::ALIGN_CENTER);
@@ -1072,26 +1100,185 @@ void DockItem::set_vertical(bool vertical)
 
 bool DockItem::on_button_press_event(GdkEventButton *event)
 {
+    if (!event)
+        return false;
+
     if (event->button == GDK_BUTTON_SECONDARY)
     {
         show_context_menu(
             reinterpret_cast<GdkEvent *>(event));
+        return true;
     }
-    else if (event->button == GDK_BUTTON_PRIMARY)
+
+    if (event->button == GDK_BUTTON_PRIMARY)
     {
-        if (!m_application_controller
-                 .running())
+        const auto image_allocation =
+            image.get_allocation();
+
+        int image_x = 0;
+        int image_y = 0;
+
+        if (!image.translate_coordinates(
+                *this,
+                0,
+                0,
+                image_x,
+                image_y))
         {
-            launch_application();
+            image_x =
+                image_allocation.get_x();
+            image_y =
+                image_allocation.get_y();
         }
-        else
+
+        m_drag_pixbuf =
+            image.get_pixbuf();
+
+        if (!m_drag_pixbuf)
+            m_drag_pixbuf =
+                m_icon_pixbuf;
+
+        int pixbuf_x = image_x;
+        int pixbuf_y = image_y;
+
+        if (m_drag_pixbuf)
         {
-            m_application_controller
-                .toggle_minimized();
+            pixbuf_x +=
+                (image_allocation
+                     .get_width() -
+                 m_drag_pixbuf
+                     ->get_width()) /
+                2;
+            pixbuf_y +=
+                (image_allocation
+                     .get_height() -
+                 m_drag_pixbuf
+                     ->get_height()) /
+                2;
         }
+
+        m_drag_hot_x =
+            static_cast<int>(
+                event->x) -
+            pixbuf_x;
+        m_drag_hot_y =
+            static_cast<int>(
+                event->y) -
+            pixbuf_y;
+
+        m_primary_button_pressed = true;
+        return true;
+    }
+
+    return false;
+}
+
+bool DockItem::on_button_release_event(
+    GdkEventButton *event)
+{
+    if (!event ||
+        event->button !=
+            GDK_BUTTON_PRIMARY ||
+        !m_primary_button_pressed)
+    {
+        return false;
+    }
+
+    m_primary_button_pressed = false;
+
+    if (m_dragging)
+        return true;
+
+    if (!m_application_controller
+             .running())
+    {
+        launch_application();
+    }
+    else
+    {
+        m_application_controller
+            .toggle_minimized();
     }
 
     return true;
+}
+
+void DockItem::on_drag_begin(
+    const Glib::RefPtr<
+        Gdk::DragContext> &context)
+{
+    m_dragging = true;
+    m_primary_button_pressed = false;
+    m_dock.begin_item_drag(*this);
+
+    if (m_drag_pixbuf)
+    {
+        gtk_drag_set_icon_pixbuf(
+            context->gobj(),
+            m_drag_pixbuf->gobj(),
+            m_drag_hot_x,
+            m_drag_hot_y);
+    }
+}
+
+void DockItem::on_drag_end(
+    const Glib::RefPtr<
+        Gdk::DragContext> &)
+{
+    m_dock.end_item_drag(*this);
+    m_dragging = false;
+    m_primary_button_pressed = false;
+    m_drag_pixbuf.reset();
+}
+
+void DockItem::on_drag_data_get(
+    const Glib::RefPtr<
+        Gdk::DragContext> &,
+    Gtk::SelectionData &selection_data,
+    guint,
+    guint)
+{
+    selection_data.set(
+        DockConstants::
+            DOCK_ITEM_DRAG_TARGET,
+        m_desktop_id);
+}
+
+bool DockItem::on_drag_motion(
+    const Glib::RefPtr<
+        Gdk::DragContext> &context,
+    int,
+    int,
+    guint time)
+{
+    if (!m_dock.can_drop_item(*this))
+        return false;
+
+    context->drag_status(
+        Gdk::ACTION_MOVE,
+        time);
+    return true;
+}
+
+bool DockItem::on_drag_drop(
+    const Glib::RefPtr<
+        Gdk::DragContext> &context,
+    int x,
+    int y,
+    guint time)
+{
+    const bool accepted =
+        m_dock.drop_item(
+            *this,
+            x,
+            y);
+
+    context->drag_finish(
+        accepted,
+        false,
+        time);
+
+    return accepted;
 }
 
 bool DockItem::on_popup_menu()
@@ -3841,7 +4028,8 @@ void DockHomeItem::open_settings()
                 color_dialog.hide();
             });
 
-    icon_size_spin
+    auto icon_size_changed =
+        icon_size_spin
         .signal_value_changed()
         .connect(
             [&configuration,
@@ -3852,11 +4040,6 @@ void DockHomeItem::open_settings()
                 const int icon_size =
                     icon_size_spin
                         .get_value_as_int();
-
-                configuration.save_setting(
-                    "icon_size",
-                    std::to_string(
-                        icon_size));
 
                 const int maximum_radius =
                     icon_size / 2;
@@ -3877,6 +4060,14 @@ void DockHomeItem::open_settings()
                         .set_value(
                             maximum_radius);
                 }
+
+                // Saving triggers a monitored configuration reload. Finish
+                // touching dialog-owned GTK objects before that reload can
+                // reconfigure the dock and its transient settings dialog.
+                configuration.save_setting(
+                    "icon_size",
+                    std::to_string(
+                        icon_size));
             });
 
     rounded_corners
@@ -3893,7 +4084,8 @@ void DockHomeItem::open_settings()
                         : "false");
             });
 
-    corner_radius_spin
+    auto corner_radius_changed =
+        corner_radius_spin
         .signal_value_changed()
         .connect(
             [&configuration,
@@ -3917,6 +4109,14 @@ void DockHomeItem::open_settings()
     dialog.show_all_children();
     dialog.present();
     dialog.run();
+
+    // Gtk::SpinButton can emit value-changed while its controls are being
+    // torn down. The icon-size callback refers to corner-radius widgets that
+    // are destroyed earlier because they were constructed later, so detach
+    // both callbacks before leaving this scope.
+    icon_size_changed.disconnect();
+    corner_radius_changed.disconnect();
+
     dialog.hide();
 }
 

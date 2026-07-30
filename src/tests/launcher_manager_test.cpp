@@ -56,6 +56,12 @@ void verifies_order_and_persistence()
                 "ORG.EXAMPLE.FIRST.DESKTOP") ==
         "org.example.first.desktop");
 
+    assert(
+        LauncherManager::
+            normalize_desktop_id(
+                "Mullvad Browser") ==
+        "mullvad-browser.desktop");
+
     assert(manager.is_attached(
         "org.example.second"));
     assert(!manager.is_attached(
@@ -72,6 +78,26 @@ void verifies_order_and_persistence()
             "org.example.First.desktop",
             "org.example.Third.desktop"}));
 
+    assert(manager.reorder_attached(
+        {
+            "org.example.third",
+            "ORG.EXAMPLE.SECOND.DESKTOP",
+            "org.example.first"
+        }));
+
+    assert(
+        manager.attached_ids() ==
+        std::vector<std::string>({
+            "org.example.Third.desktop",
+            "org.example.Second.desktop",
+            "org.example.First.desktop"}));
+
+    assert(!manager.reorder_attached(
+        {
+            "org.example.third",
+            "org.example.missing"
+        }));
+
     assert(manager.set_attached(
         "ORG.EXAMPLE.SECOND",
         true));
@@ -87,8 +113,8 @@ void verifies_order_and_persistence()
     assert(
         manager.attached_ids() ==
         std::vector<std::string>({
-            "org.example.Second.desktop",
-            "org.example.Third.desktop"}));
+            "org.example.Third.desktop",
+            "org.example.Second.desktop"}));
 
     g_remove(data_path.c_str());
     g_rmdir(directory.c_str());

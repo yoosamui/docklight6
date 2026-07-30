@@ -37,6 +37,8 @@ public:
         const Glib::ustring &text);
     void schedule_hide_tooltip();
     void hide_tooltip_immediately();
+    void dock_items_reordered();
+    void dock_items_changed();
 
     const DockSettings &settings() const
     {

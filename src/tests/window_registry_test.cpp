@@ -42,7 +42,13 @@ void verifies_snapshot_and_grouping()
                 true),
             window(
                 "window-4",
-                "")
+                ""),
+            window(
+                "window-5",
+                "mullvad-browser"),
+            window(
+                "window-6",
+                "Mullvad Browser")
         },
         {
             "window-2",
@@ -55,7 +61,7 @@ void verifies_snapshot_and_grouping()
     registry.start();
 
     assert(registry.connected());
-    assert(registry.windows().size() == 3);
+    assert(registry.windows().size() == 5);
     assert(registry.windows()[0].id ==
            "window-2");
     assert(registry.windows()[1].id ==
@@ -83,6 +89,16 @@ void verifies_snapshot_and_grouping()
 
     assert(!registry.find_application(""));
     assert(!registry.find_window("window-3"));
+
+    const auto mullvad =
+        registry.find_application(
+            "mullvad-browser");
+
+    assert(mullvad);
+    assert(mullvad->window_ids ==
+           std::vector<WindowId>({
+               "window-5",
+               "window-6"}));
 }
 
 void verifies_incremental_updates()
