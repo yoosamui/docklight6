@@ -210,12 +210,20 @@ void verifies_incremental_revisions()
 
     updated_window.caption =
         "Home";
+    updated_window.desktop_ids =
+        {"desktop-1"};
+    updated_window.desktop_numbers =
+        {1};
+    updated_window.on_current_desktop =
+        false;
 
     assert(backend.publish_window(
         21,
         updated_window));
     assert(backend.windows()[0].caption ==
            "Home");
+    assert(!backend.windows()[0]
+                .on_current_desktop);
 
     updated_window.caption =
         "Stale title";
@@ -234,17 +242,35 @@ void verifies_incremental_revisions()
         WindowId{"window-1"}));
     assert(backend.windows()[0].active);
 
-    assert(backend.publish_stacking_order(
+    assert(backend.publish_current_desktop(
         23,
+        "desktop-1",
+        1));
+    assert(backend.windows()[0]
+               .on_current_desktop);
+
+    updated_window.caption =
+        "Current desktop update";
+    updated_window.on_current_desktop =
+        false;
+
+    assert(backend.publish_window(
+        24,
+        updated_window));
+    assert(backend.windows()[0]
+               .on_current_desktop);
+
+    assert(backend.publish_stacking_order(
+        25,
         {"window-1"}));
 
     assert(backend.publish_window_removed(
-        24,
+        26,
         "window-1"));
     assert(backend.windows().empty());
     assert(!backend.active_window());
     assert(backend.stacking_order().empty());
-    assert(backend.last_revision() == 24);
+    assert(backend.last_revision() == 26);
 }
 
 void verifies_atomic_resynchronization()
@@ -279,20 +305,29 @@ void verifies_atomic_resynchronization()
             ++registry_changes;
         });
 
-    assert(backend.begin_snapshot(40));
-    assert(!backend.begin_snapshot(39));
+    assert(backend.register_integration(
+        KWinIntegrationProtocol::VERSION));
+    assert(backend.connected());
+    assert(registry.connected());
+    assert(registry.windows().size() == 1);
+    assert(registry.find_window("window-1"));
+    assert(registry_changes == 0);
+    assert(backend.last_revision() == 0);
+
+    assert(backend.begin_snapshot(1));
+    assert(!backend.begin_snapshot(1));
     assert(!backend.stage_window(
-        39,
+        2,
         window(
             "wrong-revision",
             "org.kde.konsole")));
     assert(backend.stage_window(
-        40,
+        1,
         window(
             "window-2",
             "org.mozilla.firefox")));
     assert(backend.commit_snapshot(
-        40,
+        1,
         WindowId{"window-2"},
         {"window-2"}));
 

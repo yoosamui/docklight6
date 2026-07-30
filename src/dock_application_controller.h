@@ -56,6 +56,7 @@ public:
         const WindowId &window_id);
     bool set_icon_geometry(
         const WindowIconGeometry &geometry);
+    void set_manage_all_workspaces(bool enabled);
 
     std::size_t window_count() const;
 
@@ -77,12 +78,17 @@ private:
     bool activate_windows(
         const std::vector<WindowId>
             &window_ids);
+    bool restore_all_and_activate(
+        const RunningApplication
+            &application,
+        const std::vector<WindowId>
+            &current_window_ids);
     bool minimize_windows(
         const std::vector<WindowId>
             &window_ids);
-    bool group_has_unminimized_window(
-        const std::vector<WindowId>
-            &window_ids) const;
+    bool group_is_frontmost(
+        const RunningApplication
+            &application) const;
     bool has_minimized_window() const;
     bool has_unminimized_window() const;
 
@@ -99,4 +105,5 @@ private:
         m_cycle_window_ids;
 
     WindowRegistry *m_registry = nullptr;
+    bool m_manage_all_workspaces = true;
 };

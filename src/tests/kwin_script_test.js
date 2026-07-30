@@ -261,11 +261,11 @@ assert.strictEqual(
     "Register");
 assert.deepStrictEqual(
     calls[0].arguments,
-    ["5"]);
+    ["6"]);
 
 calls[0].callback(
     true,
-    "5");
+    "6");
 
 const beginSnapshot =
     calls.find(
@@ -550,6 +550,38 @@ assert.strictEqual(
         .map(decodeURIComponent)[2],
     "Downloads");
 
+const activePublishCount =
+    calls.filter(
+        call =>
+            call.methodName ===
+                "PublishActiveWindow")
+        .length;
+
+activeWindow = null;
+workspace.windowActivated.emit(
+    null);
+
+assert.strictEqual(
+    calls.filter(
+        call =>
+            call.methodName ===
+                "PublishActiveWindow")
+        .length,
+    activePublishCount);
+
+activeWindow = dockWindow;
+workspace.windowActivated.emit(
+    dockWindow);
+
+assert.strictEqual(
+    calls.filter(
+        call =>
+            call.methodName ===
+                "PublishActiveWindow")
+        .length,
+    activePublishCount);
+
+activeWindow = managedWindow;
 workspace.windowActivated.emit(
     managedWindow);
 
@@ -571,22 +603,15 @@ const desktopUpdate =
         .filter(
             call =>
                 call.methodName ===
-                "StageWindow")
+                "PublishCurrentDesktop")
         .at(-1);
 
 assert.strictEqual(
-    desktopUpdate.arguments[1]
-        .split(",")
-        .map(decodeURIComponent)[15],
-    "1");
-
-assert(
-    calls.some(
-        call =>
-            call.methodName ===
-                "CommitSnapshot" &&
-            call.arguments[0] ===
-                desktopUpdate.arguments[0]));
+    desktopUpdate.arguments[1],
+    "desktop,one");
+assert.strictEqual(
+    desktopUpdate.arguments[2],
+    2);
 
 managedWindow.stackingOrderChanged.emit();
 

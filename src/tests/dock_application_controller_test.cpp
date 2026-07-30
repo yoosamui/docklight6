@@ -217,6 +217,39 @@ void verifies_inactive_window_is_activated()
                "window-1"});
 }
 
+void verifies_frontmost_group_hides_without_active_window()
+{
+    FakeWindowBackend backend;
+
+    backend.set_snapshot(
+        {
+            window("window-1"),
+            window("window-2")
+        },
+        {
+            "window-1",
+            "window-2"
+        },
+        std::nullopt);
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    assert(controller.toggle_minimized());
+    assert(registry
+               .find_window("window-1")
+               ->minimized);
+    assert(registry
+               .find_window("window-2")
+               ->minimized);
+}
+
 void verifies_other_desktop_window_is_activated()
 {
     FakeWindowBackend backend;
@@ -381,8 +414,8 @@ void verifies_desktop_groups_are_activated_in_order()
     backend.set_active_window(
         std::nullopt);
 
-    // With every group hidden, the next click restores the current desktop's
-    // group instead of switching desktops.
+    // With every group hidden, the next click restores every desktop's
+    // windows in place and activates only the current desktop's group.
     assert(controller
                .toggle_minimized());
     assert(registry.active_window() ==
@@ -392,10 +425,81 @@ void verifies_desktop_groups_are_activated_in_order()
                 .find_window(
                     "desktop-4-open")
                 ->minimized);
-    assert(registry
+    assert(!registry
                .find_window(
                    "desktop-3-open")
                ->minimized);
+    assert(!registry
+                .find_window(
+                    "desktop-3-minimized")
+                ->minimized);
+}
+
+void verifies_minimized_current_group_precedes_open_remote_group()
+{
+    FakeWindowBackend backend;
+
+    auto desktop_two_window =
+        window("desktop-2-window");
+    auto desktop_four_first =
+        window("desktop-4-first", true);
+    auto desktop_four_second =
+        window("desktop-4-second", true);
+
+    desktop_two_window.desktop_ids =
+        {"desktop-2"};
+    desktop_two_window.desktop_numbers =
+        {2};
+    desktop_two_window.on_current_desktop =
+        false;
+
+    desktop_four_first.desktop_ids =
+        {"desktop-4"};
+    desktop_four_first.desktop_numbers =
+        {4};
+    desktop_four_second.desktop_ids =
+        {"desktop-4"};
+    desktop_four_second.desktop_numbers =
+        {4};
+
+    backend.set_snapshot(
+        {
+            desktop_two_window,
+            desktop_four_first,
+            desktop_four_second
+        },
+        {
+            "desktop-2-window",
+            "desktop-4-first",
+            "desktop-4-second"
+        },
+        WindowId{"desktop-2-window"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    assert(controller.toggle_minimized());
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "desktop-4-second"});
+    assert(!registry
+                .find_window(
+                    "desktop-4-first")
+                ->minimized);
+    assert(!registry
+                .find_window(
+                    "desktop-4-second")
+                ->minimized);
+    assert(!registry
+                .find_window(
+                    "desktop-2-window")
+                ->on_current_desktop);
 }
 
 void verifies_active_group_hides_all_desktops()
@@ -470,6 +574,85 @@ void verifies_active_group_hides_all_desktops()
                "desktop-1-window"});
 }
 
+void verifies_current_desktop_only_activation()
+{
+    FakeWindowBackend backend;
+
+    auto current_window =
+        window("desktop-2-window");
+    auto remote_window =
+        window("desktop-4-window");
+
+    current_window.desktop_ids =
+        {"desktop-2"};
+    current_window.desktop_numbers =
+        {2};
+    remote_window.desktop_ids =
+        {"desktop-4"};
+    remote_window.desktop_numbers =
+        {4};
+    remote_window.on_current_desktop =
+        false;
+
+    backend.set_snapshot(
+        {
+            current_window,
+            remote_window
+        },
+        {
+            "desktop-4-window",
+            "desktop-2-window"
+        },
+        WindowId{"desktop-2-window"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+    controller.set_manage_all_workspaces(
+        false);
+
+    assert(controller.toggle_minimized());
+    assert(registry
+               .find_window(
+                   "desktop-2-window")
+               ->minimized);
+    assert(!registry
+                .find_window(
+                    "desktop-4-window")
+                ->minimized);
+
+    backend.set_active_window(
+        std::nullopt);
+
+    assert(controller.toggle_minimized());
+    assert(!registry
+                .find_window(
+                    "desktop-2-window")
+                ->minimized);
+    assert(!registry
+                .find_window(
+                    "desktop-4-window")
+                ->minimized);
+
+    auto updated_current =
+        *registry.find_window(
+            "desktop-2-window");
+    updated_current.on_current_desktop =
+        false;
+    backend.update_window(
+        updated_current);
+    backend.set_active_window(
+        std::nullopt);
+
+    assert(!controller.toggle_minimized());
+    assert(!registry.active_window());
+}
+
 void verifies_window_cycling()
 {
     FakeWindowBackend backend;
@@ -495,6 +678,8 @@ void verifies_window_cycling()
         {
             "org.kde.dolphin.desktop"
         });
+    controller.set_manage_all_workspaces(
+        false);
 
     assert(controller.cycle_window(
         WindowCycleDirection::next));
@@ -538,6 +723,48 @@ void verifies_window_cycling()
                "window-3"});
 }
 
+void verifies_window_cycle_uses_all_desktops_when_enabled()
+{
+    FakeWindowBackend backend;
+
+    auto remote_window =
+        window("desktop-4-window");
+    remote_window.on_current_desktop =
+        false;
+    remote_window.desktop_ids =
+        {"desktop-4"};
+    remote_window.desktop_numbers =
+        {4};
+
+    backend.set_snapshot(
+        {
+            window("desktop-2-first"),
+            remote_window,
+            window("desktop-2-second")
+        },
+        {
+            "desktop-2-first",
+            "desktop-4-window",
+            "desktop-2-second"
+        },
+        WindowId{"desktop-2-first"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::next));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "desktop-4-window"});
+}
+
 void verifies_window_cycle_tracks_group_changes()
 {
     FakeWindowBackend backend;
@@ -577,6 +804,62 @@ void verifies_window_cycle_tracks_group_changes()
     assert(registry.active_window() ==
            std::optional<WindowId>{
                "window-3"});
+}
+
+void verifies_window_cycle_stays_on_current_desktop()
+{
+    FakeWindowBackend backend;
+
+    auto other_desktop_window =
+        window("desktop-4-window");
+    other_desktop_window
+        .on_current_desktop = false;
+    other_desktop_window.desktop_ids =
+        {"desktop-4"};
+    other_desktop_window.desktop_numbers =
+        {4};
+
+    backend.set_snapshot(
+        {
+            window("desktop-1-first"),
+            other_desktop_window,
+            window("desktop-1-second")
+        },
+        {
+            "desktop-1-first",
+            "desktop-4-window",
+            "desktop-1-second"
+        },
+        WindowId{"desktop-1-second"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+    controller.set_manage_all_workspaces(
+        false);
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::next));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "desktop-1-first"});
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::next));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "desktop-1-second"});
+
+    assert(controller.cycle_window(
+        WindowCycleDirection::previous));
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "desktop-1-first"});
 }
 
 void verifies_grouped_window_entries()
@@ -687,11 +970,16 @@ int main()
     verifies_missing_application();
     verifies_alternate_application_identity();
     verifies_inactive_window_is_activated();
+    verifies_frontmost_group_hides_without_active_window();
     verifies_other_desktop_window_is_activated();
     verifies_desktop_groups_are_activated_in_order();
+    verifies_minimized_current_group_precedes_open_remote_group();
     verifies_active_group_hides_all_desktops();
+    verifies_current_desktop_only_activation();
     verifies_window_cycling();
     verifies_window_cycle_tracks_group_changes();
+    verifies_window_cycle_stays_on_current_desktop();
+    verifies_window_cycle_uses_all_desktops_when_enabled();
     verifies_grouped_window_entries();
 
     return 0;

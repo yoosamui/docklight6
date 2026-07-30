@@ -166,14 +166,21 @@ bool KWinWindowBackend::register_integration(
         return false;
     }
 
-    const bool was_connected =
-        m_connected;
+    if (!m_connected)
+    {
+        clear_state();
+        m_registered = true;
+        return true;
+    }
 
-    clear_state();
+    // A script can re-register after one incremental update was rejected.
+    // Keep the last complete state visible until its replacement snapshot
+    // commits. Clearing here creates a false "application is closed" gap:
+    // clicking the dock item during that gap launches a duplicate window.
+    m_staged_windows.clear();
+    m_staged_revision.reset();
+    m_last_revision = 0;
     m_registered = true;
-
-    if (was_connected)
-        notify_connection_changed(false);
 
     return true;
 }
@@ -278,6 +285,7 @@ bool KWinWindowBackend::commit_snapshot(
     for (auto &window :
          m_windows)
     {
+        apply_current_desktop(window);
         window.active =
             m_active_window &&
             window.id ==
@@ -330,6 +338,7 @@ bool KWinWindowBackend::publish_window(
     current->active =
         m_active_window &&
         current->id == *m_active_window;
+    apply_current_desktop(*current);
 
     m_last_revision = revision;
 
@@ -338,6 +347,32 @@ bool KWinWindowBackend::publish_window(
     else
         notify_window_updated(*current);
 
+    return true;
+}
+
+bool KWinWindowBackend::
+    publish_current_desktop(
+        std::uint64_t revision,
+        const std::string &desktop_id,
+        unsigned int desktop_number)
+{
+    if (!accepts_incremental_revision(
+            revision) ||
+        (desktop_id.empty() &&
+         desktop_number == 0))
+    {
+        return false;
+    }
+
+    m_current_desktop_id = desktop_id;
+    m_current_desktop_number =
+        desktop_number;
+
+    for (auto &window : m_windows)
+        apply_current_desktop(window);
+
+    m_last_revision = revision;
+    notify_snapshot_changed();
     return true;
 }
 
@@ -552,6 +587,43 @@ bool KWinWindowBackend::
            revision > m_last_revision;
 }
 
+void KWinWindowBackend::apply_current_desktop(
+    ManagedWindow &window) const
+{
+    if (m_current_desktop_id.empty() &&
+        m_current_desktop_number == 0)
+    {
+        return;
+    }
+
+    if (window.desktop_ids.empty() &&
+        window.desktop_numbers.empty())
+    {
+        window.on_current_desktop = true;
+        return;
+    }
+
+    if (!m_current_desktop_id.empty() &&
+        !window.desktop_ids.empty())
+    {
+        window.on_current_desktop =
+            std::find(
+                window.desktop_ids.begin(),
+                window.desktop_ids.end(),
+                m_current_desktop_id) !=
+            window.desktop_ids.end();
+        return;
+    }
+
+    window.on_current_desktop =
+        m_current_desktop_number > 0 &&
+        std::find(
+            window.desktop_numbers.begin(),
+            window.desktop_numbers.end(),
+            m_current_desktop_number) !=
+            window.desktop_numbers.end();
+}
+
 bool KWinWindowBackend::dispatch_command(
     KWinWindowCommandType type,
     const WindowId &window_id,
@@ -580,6 +652,8 @@ void KWinWindowBackend::clear_state()
     m_active_window.reset();
     m_dock_surface_geometry.reset();
     m_staged_revision.reset();
+    m_current_desktop_id.clear();
+    m_current_desktop_number = 0;
 
     m_last_revision = 0;
 

@@ -88,6 +88,10 @@ public:
         std::uint64_t revision,
         const std::vector<WindowId>
             &stacking_order);
+    bool publish_current_desktop(
+        std::uint64_t revision,
+        const std::string &desktop_id,
+        unsigned int desktop_number);
     bool publish_dock_surface_geometry(
         std::uint64_t revision,
         const std::optional<
@@ -103,6 +107,8 @@ private:
 
     bool accepts_incremental_revision(
         std::uint64_t revision) const;
+    void apply_current_desktop(
+        ManagedWindow &window) const;
     bool dispatch_command(
         KWinWindowCommandType type,
         const WindowId &window_id,
@@ -120,6 +126,8 @@ private:
         m_dock_surface_geometry;
     std::optional<std::uint64_t>
         m_staged_revision;
+    std::string m_current_desktop_id;
+    unsigned int m_current_desktop_number = 0;
 
     KWinWindowCommandHandler
         m_command_handler;

@@ -1211,6 +1211,11 @@ void DockWindow::synchronize_dock_items()
                             ->settings()
                             .indicator_color()));
 
+            item->set_manage_all_workspaces(
+                m_controller
+                    ->settings()
+                    .manage_all_workspaces());
+
             m_dock_box.pack_start(
                 *item,
                 Gtk::PACK_SHRINK);

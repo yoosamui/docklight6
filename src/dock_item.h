@@ -35,6 +35,7 @@ public:
         DockIndicator indicator);
     void set_indicator_color(
         const std::string &color);
+    void set_manage_all_workspaces(bool enabled);
     void refresh_indicator();
     void set_context_menu_corner_radius(
         int corner_radius);
@@ -186,6 +187,7 @@ private:
     Gdk::RGBA m_indicator_color;
 
     double m_scroll_delta_y = 0.0;
+    gint64 m_last_primary_action_time = 0;
 
     int m_icon_size = 0;
     int m_zoom_frame = 0;

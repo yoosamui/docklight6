@@ -648,6 +648,14 @@ void DockItem::set_indicator_color(
     queue_draw();
 }
 
+void DockItem::set_manage_all_workspaces(
+    bool enabled)
+{
+    m_application_controller
+        .set_manage_all_workspaces(
+            enabled);
+}
+
 void DockItem::set_attached(
     bool attached)
 {
@@ -1204,6 +1212,20 @@ bool DockItem::on_button_release_event(
 
     if (m_dragging)
         return true;
+
+    const auto now =
+        g_get_monotonic_time();
+    constexpr gint64 action_debounce_time =
+        350 * 1000;
+
+    if (m_last_primary_action_time != 0 &&
+        now - m_last_primary_action_time <
+            action_debounce_time)
+    {
+        return true;
+    }
+
+    m_last_primary_action_time = now;
 
     if (!m_application_controller
              .running())
@@ -3027,6 +3049,8 @@ void DockHomeItem::open_settings()
         "Home icon");
     Gtk::Label display_tooltips_label(
         "Display tooltips");
+    Gtk::Label manage_all_workspaces_label(
+        "Manage all workspaces");
     Gtk::Label icon_size_label(
         "Icon size");
     Gtk::Label location_label(
@@ -3049,6 +3073,7 @@ void DockHomeItem::open_settings()
             &home_icon_enabled_label,
             &home_icon_path_label,
             &display_tooltips_label,
+            &manage_all_workspaces_label,
             &icon_size_label,
             &location_label,
             &rounded_corners_label,
@@ -3307,6 +3332,13 @@ void DockHomeItem::open_settings()
         current.settings
             .display_tooltips());
 
+    Gtk::CheckButton manage_all_workspaces;
+    manage_all_workspaces.set_active(
+        current.settings
+            .manage_all_workspaces());
+    manage_all_workspaces.set_tooltip_text(
+        "Apply icon actions and mouse-wheel cycling across all workspaces");
+
     auto icon_size_adjustment =
         Gtk::Adjustment::create(
             current.settings.icon_size(),
@@ -3499,6 +3531,7 @@ void DockHomeItem::open_settings()
             &home_icon_enabled,
             &home_icon_controls,
             &display_tooltips,
+            &manage_all_workspaces,
             &icon_size_spin,
             &location_choices,
             &rounded_corners,
@@ -3520,6 +3553,8 @@ void DockHomeItem::open_settings()
     home_icon_enabled.set_halign(
         Gtk::ALIGN_START);
     display_tooltips.set_halign(
+        Gtk::ALIGN_START);
+    manage_all_workspaces.set_halign(
         Gtk::ALIGN_START);
 
     grid.attach(
@@ -3607,75 +3642,87 @@ void DockHomeItem::open_settings()
         1,
         1);
     grid.attach(
-        icon_size_label,
+        manage_all_workspaces_label,
         0,
         7,
+        1,
+        1);
+    grid.attach(
+        manage_all_workspaces,
+        1,
+        7,
+        1,
+        1);
+    grid.attach(
+        icon_size_label,
+        0,
+        8,
         1,
         1);
     grid.attach(
         icon_size_spin,
         1,
-        7,
+        8,
         1,
         1);
     grid.attach(
         location_label,
         0,
-        8,
+        9,
         1,
         1);
     grid.attach(
         location_choices,
         1,
-        8,
+        9,
         1,
         1);
     grid.attach(
         rounded_corners_label,
         0,
-        9,
+        10,
         1,
         1);
     grid.attach(
         rounded_corners,
         1,
-        9,
+        10,
         1,
         1);
     grid.attach(
         corner_radius_label,
         0,
-        10,
+        11,
         1,
         1);
     grid.attach(
         corner_radius_spin,
         1,
-        10,
+        11,
         1,
         1);
     grid.attach(
         alignment_label,
         0,
-        11,
+        12,
         1,
         1);
     grid.attach(
         alignment_choices,
         1,
-        11,
+        12,
         1,
         1);
     grid.attach(
         autohide_label,
         0,
-        12,
+        13,
         1,
         1);
     grid.attach(
         autohide_choices,
         1,
-        12,
+        13,
         1,
         1);
 
@@ -3828,6 +3875,21 @@ void DockHomeItem::open_settings()
                 configuration.save_setting(
                     "display_tooltips",
                     display_tooltips
+                            .get_active()
+                        ? "true"
+                        : "false");
+            }));
+
+    settings_connections.push_back(
+        manage_all_workspaces
+            .signal_toggled()
+            .connect(
+            [&configuration,
+             &manage_all_workspaces]()
+            {
+                configuration.save_setting(
+                    "manage_all_workspaces",
+                    manage_all_workspaces
                             .get_active()
                         ? "true"
                         : "false");

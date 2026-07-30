@@ -263,7 +263,7 @@ void verifies_dbus_state_transport()
 
     assert(!registered);
     assert(supported_version_text ==
-           "5");
+           "6");
 
     result =
         call_method(
@@ -271,7 +271,7 @@ void verifies_dbus_state_transport()
             "Register",
             g_variant_new(
                 "(s)",
-                "5"));
+                "6"));
 
     g_variant_get(
         result,
@@ -365,6 +365,18 @@ void verifies_dbus_state_transport()
             window_parameters(
                 12,
                 "Stale"))));
+
+    assert(accepted(
+        call_method(
+            client,
+            "PublishCurrentDesktop",
+            g_variant_new(
+                "(ssi)",
+                "13",
+                "desktop-1",
+                2))));
+    assert(backend.windows()[0]
+               .on_current_desktop);
 
     assert(backend.activate_window(
         "window-1"));

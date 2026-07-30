@@ -105,3 +105,14 @@ void DockSettings::set_display_tooltips(
 {
     m_display_tooltips = enabled;
 }
+
+bool DockSettings::manage_all_workspaces() const
+{
+    return m_manage_all_workspaces;
+}
+
+void DockSettings::set_manage_all_workspaces(
+    bool enabled)
+{
+    m_manage_all_workspaces = enabled;
+}

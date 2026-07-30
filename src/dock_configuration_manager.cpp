@@ -75,6 +75,14 @@ display_tooltips = true
 
 )";
 
+// Configuration block added when the workspace-management setting is missing.
+const char *MANAGE_ALL_WORKSPACES_SETTING_TEMPLATE = R"(# Manage application windows across all virtual workspaces.
+# When false, icon actions and mouse-wheel cycling use only the current workspace.
+# Valid values: true, false
+manage_all_workspaces = true
+
+)";
+
 // Complete configuration written when no user configuration exists.
 const char *CONFIG_TEMPLATE = R"([dock]
 # Monitor used by the dock.
@@ -106,6 +114,11 @@ home_icon_path =
 # Display application tooltips while hovering over dock icons.
 # Valid values: true, false
 display_tooltips = true
+
+# Manage application windows across all virtual workspaces.
+# When false, icon actions and mouse-wheel cycling use only the current workspace.
+# Valid values: true, false
+manage_all_workspaces = true
 
 # Icon size in pixels.
 # Empty uses default: 46
@@ -278,6 +291,8 @@ bool same_configuration(
                right.settings.home_icon_path() &&
            left.settings.display_tooltips() ==
                right.settings.display_tooltips() &&
+           left.settings.manage_all_workspaces() ==
+               right.settings.manage_all_workspaces() &&
            left.settings.minimum_bottom_workarea_inset() ==
                right.settings.minimum_bottom_workarea_inset() &&
            left.layout_request.location ==
@@ -332,6 +347,9 @@ DockConfigurationManager::DockConfigurationManager()
     ensure_setting(
         "display_tooltips",
         DISPLAY_TOOLTIPS_SETTING_TEMPLATE);
+    ensure_setting(
+        "manage_all_workspaces",
+        MANAGE_ALL_WORKSPACES_SETTING_TEMPLATE);
     reload();
 }
 
@@ -733,6 +751,34 @@ void DockConfigurationManager::reload()
                 "Invalid [dock] display_tooltips '%s'; "
                 "keeping the previous value",
                 display_tooltips.c_str());
+        }
+
+        const auto manage_all_workspaces =
+            value_for(
+                key_file,
+                "manage_all_workspaces");
+
+        if (manage_all_workspaces.empty())
+        {
+            candidate.settings
+                .set_manage_all_workspaces(
+                    defaults.settings
+                        .manage_all_workspaces());
+        }
+        else if (const auto enabled =
+                     parse_boolean(
+                         manage_all_workspaces))
+        {
+            candidate.settings
+                .set_manage_all_workspaces(
+                    *enabled);
+        }
+        else
+        {
+            g_warning(
+                "Invalid [dock] manage_all_workspaces '%s'; "
+                "keeping the previous value",
+                manage_all_workspaces.c_str());
         }
 
         if (icon_size.empty())

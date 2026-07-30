@@ -56,6 +56,9 @@ int main()
         "display_tooltips",
         "false"));
     assert(configuration.save_setting(
+        "manage_all_workspaces",
+        "false"));
+    assert(configuration.save_setting(
         "icon_size",
         "64"));
     assert(configuration.save_setting(
@@ -90,6 +93,9 @@ int main()
     assert(contents.find(
                "display_tooltips=false") !=
            std::string::npos);
+    assert(contents.find(
+               "manage_all_workspaces=false") !=
+           std::string::npos);
 
     DockConfigurationManager reloaded;
     const auto &current =
@@ -109,6 +115,8 @@ int main()
            "/tmp/My Custom Icon.png");
     assert(!current.settings
                 .display_tooltips());
+    assert(!current.settings
+                .manage_all_workspaces());
     assert(current.settings.icon_size() == 64);
     assert(current.layout_request.location ==
            DockLocation::top);

@@ -122,6 +122,43 @@ bool DockApplicationController::
         return false;
     }
 
+    const auto current_windows =
+        current_desktop_windows(
+            *running_application);
+
+    if (!m_manage_all_workspaces)
+    {
+        if (current_windows.empty())
+            return false;
+
+        if (running_application->active_window_id)
+        {
+            const auto active_window =
+                m_registry->find_window(
+                    *running_application
+                         ->active_window_id);
+
+            if (active_window &&
+                !active_window->minimized &&
+                active_window
+                    ->on_current_desktop)
+            {
+                return minimize_windows(
+                    current_windows);
+            }
+        }
+
+        if (group_is_frontmost(
+                *running_application))
+        {
+            return minimize_windows(
+                current_windows);
+        }
+
+        return activate_windows(
+            current_windows);
+    }
+
     // An active application is already presented to the user. Hide its
     // complete group without raising or activating another window; this must
     // not switch desktops even when the group spans several of them.
@@ -133,23 +170,38 @@ bool DockApplicationController::
                      ->active_window_id);
 
         if (active_window &&
-            !active_window->minimized)
+            !active_window->minimized &&
+            active_window
+                ->on_current_desktop)
         {
             return minimize();
         }
     }
 
-    const auto current_windows =
-        current_desktop_windows(
-            *running_application);
-
-    // Prefer visible windows on the current desktop. If that desktop only
-    // contains a group hidden by the previous click, continue with the most
-    // recent unminimized group on another desktop before restoring it.
-    if (!current_windows.empty() &&
-        group_has_unminimized_window(
-            current_windows))
+    // KWin can clear activeWindow while the layer-shell dock handles the
+    // click. Use the authoritative stacking order as a fallback: if the
+    // top visible window on this desktop belongs to this group, the group is
+    // already presented and the click should hide it. If another app is on
+    // top, continue below and activate this group instead.
+    if (group_is_frontmost(
+            *running_application))
     {
+        return minimize();
+    }
+
+    // A group on the current desktop always has priority, including when its
+    // windows are minimized. If the preceding click hid the complete
+    // application, restore every workspace's windows in place, then raise
+    // and activate only the current desktop's group.
+    if (!current_windows.empty())
+    {
+        if (!has_unminimized_window())
+        {
+            return restore_all_and_activate(
+                *running_application,
+                current_windows);
+        }
+
         return activate_windows(
             current_windows);
     }
@@ -158,12 +210,6 @@ bool DockApplicationController::
         most_recent_desktop_group(
             *running_application,
             true);
-
-    if (target_windows.empty() &&
-        !current_windows.empty())
-    {
-        target_windows = current_windows;
-    }
 
     if (target_windows.empty())
     {
@@ -308,6 +354,54 @@ bool DockApplicationController::activate_windows(
     return accepted;
 }
 
+bool DockApplicationController::
+    restore_all_and_activate(
+        const RunningApplication
+            &running_application,
+        const std::vector<WindowId>
+            &current_window_ids)
+{
+    if (current_window_ids.empty())
+        return false;
+
+    bool accepted = true;
+
+    for (const auto &window_id :
+         running_application.window_ids)
+    {
+        const auto window =
+            m_registry->find_window(
+                window_id);
+
+        if (window &&
+            window->minimized)
+        {
+            accepted =
+                m_registry
+                    ->set_window_minimized(
+                        window_id,
+                        false) &&
+                accepted;
+        }
+    }
+
+    for (const auto &window_id :
+         current_window_ids)
+    {
+        accepted =
+            m_registry->raise_window(
+                window_id) &&
+            accepted;
+    }
+
+    accepted =
+        m_registry->activate_window(
+            current_window_ids.back()) &&
+        accepted;
+
+    return accepted;
+}
+
 bool DockApplicationController::minimize_windows(
     const std::vector<WindowId>
         &window_ids)
@@ -341,22 +435,33 @@ bool DockApplicationController::minimize_windows(
 }
 
 bool DockApplicationController::
-    group_has_unminimized_window(
-        const std::vector<WindowId>
-            &window_ids) const
+    group_is_frontmost(
+        const RunningApplication
+            &running_application) const
 {
-    return std::any_of(
-        window_ids.begin(),
-        window_ids.end(),
-        [this](const WindowId &window_id)
+    for (auto window =
+             m_registry->windows().rbegin();
+         window !=
+             m_registry->windows().rend();
+         ++window)
+    {
+        if (window->minimized ||
+            !window->on_current_desktop)
         {
-            const auto window =
-                m_registry->find_window(
-                    window_id);
+            continue;
+        }
 
-            return window &&
-                   !window->minimized;
-        });
+        return std::find(
+                   running_application
+                       .window_ids.begin(),
+                   running_application
+                       .window_ids.end(),
+                   window->id) !=
+               running_application
+                   .window_ids.end();
+    }
+
+    return false;
 }
 
 bool DockApplicationController::minimize()
@@ -521,15 +626,26 @@ bool DockApplicationController::cycle_window(
         return false;
     }
 
-    if (!contains_same_windows(
-            m_cycle_window_ids,
-            running_application
-                ->window_ids))
+    const auto available_window_ids =
+        m_manage_all_workspaces
+            ? running_application->window_ids
+            : current_desktop_windows(
+                  *running_application);
+
+    if (available_window_ids.empty())
     {
         reset_window_cycle();
+        return false;
+    }
+
+    if (!contains_same_windows(
+            m_cycle_window_ids,
+            available_window_ids))
+    {
+        reset_window_cycle();
+
         m_cycle_window_ids =
-            running_application
-                ->window_ids;
+            available_window_ids;
     }
 
     auto current =
@@ -602,6 +718,17 @@ bool DockApplicationController::cycle_window(
         window_id;
 
     return show_window(window_id);
+}
+
+void DockApplicationController::
+    set_manage_all_workspaces(
+        bool enabled)
+{
+    if (m_manage_all_workspaces == enabled)
+        return;
+
+    m_manage_all_workspaces = enabled;
+    reset_window_cycle();
 }
 
 bool DockApplicationController::show_window(

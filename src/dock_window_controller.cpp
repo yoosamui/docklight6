@@ -182,6 +182,9 @@ void DockWindowController::apply_configuration(
             m_settings.indicator());
         item->set_indicator_color(
             m_settings.indicator_color());
+        item->set_manage_all_workspaces(
+            m_settings
+                .manage_all_workspaces());
     }
 
     m_layout_request =

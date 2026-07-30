@@ -7,7 +7,7 @@
         "/org/docklight6/WindowIntegration";
     const INTERFACE_NAME =
         "org.docklight6.WindowIntegration1";
-    const PROTOCOL_VERSION = "5";
+    const PROTOCOL_VERSION = "6";
 
     let connected = false;
     let registering = false;
@@ -43,6 +43,14 @@
             windowId(window));
     }
 
+    function isDocklightWindow(window) {
+        return Boolean(
+            window &&
+            String(
+                window.resourceName || "") ===
+                "docklight6");
+    }
+
     function isDocklightSurface(window) {
         return Boolean(
             window &&
@@ -52,9 +60,7 @@
             !window.outline &&
             !window.desktopWindow &&
             window.skipTaskbar &&
-            String(
-                window.resourceName || "") ===
-                "docklight6");
+            isDocklightWindow(window));
     }
 
     function findDocklightSurface(
@@ -287,7 +293,28 @@
             window);
     }
 
-    function publishActiveWindow() {
+    function publishActiveWindow(window) {
+        // Clicking Docklight must not erase the previously active
+        // application. Otherwise the following icon release always looks
+        // like an inactive group and repeatedly raises it instead of
+        // toggling it hidden.
+        if (isDocklightWindow(window) ||
+            isDocklightWindow(
+                workspace.activeWindow)) {
+            return;
+        }
+
+        const identifier =
+            activeWindowId();
+
+        // KWin can briefly report no active window while a layer-shell dock
+        // handles a pointer click. Clearing the previous application here
+        // makes every dock click look like an activation request. Genuine
+        // focus changes publish the new window ID, while minimized and
+        // removed windows have their own state notifications.
+        if (!identifier)
+            return;
+
         if (!connected) {
             registerIntegration();
             return;
@@ -299,7 +326,7 @@
             INTERFACE_NAME,
             "PublishActiveWindow",
             nextRevision(),
-            activeWindowId(),
+            identifier,
             handlePublishReply);
     }
 
@@ -316,6 +343,25 @@
             "PublishStackingOrder",
             nextRevision(),
             stackingOrder(),
+            handlePublishReply);
+    }
+
+    function publishCurrentDesktop() {
+        if (!connected) {
+            registerIntegration();
+            return;
+        }
+
+        callDBus(
+            SERVICE_NAME,
+            OBJECT_PATH,
+            INTERFACE_NAME,
+            "PublishCurrentDesktop",
+            nextRevision(),
+            desktopId(
+                workspace.currentDesktop),
+            desktopNumber(
+                workspace.currentDesktop) || 0,
             handlePublishReply);
     }
 
@@ -635,6 +681,7 @@
                 revision = 0;
                 waitForCommand();
                 publishSnapshot();
+                publishCurrentDesktop();
             });
     }
 
@@ -721,7 +768,7 @@
         publishActiveWindow);
     connectSignal(
         workspace.currentDesktopChanged,
-        publishSnapshot);
+        publishCurrentDesktop);
 
     registerIntegration();
 }());

@@ -82,6 +82,12 @@ constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "      <arg type='s' direction='in' name='stacking_order'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
+"    <method name='PublishCurrentDesktop'>"
+"      <arg type='s' direction='in' name='revision'/>"
+"      <arg type='s' direction='in' name='desktop_id'/>"
+"      <arg type='i' direction='in' name='desktop_number'/>"
+    "      <arg type='b' direction='out' name='accepted'/>"
+    "    </method>"
     "    <method name='PublishDockSurfaceGeometry'>"
     "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='i' direction='in' name='x'/>"
@@ -1667,6 +1673,40 @@ void KWinIntegrationService::
         return_accepted(
             invocation,
             accepted);
+
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "PublishCurrentDesktop") == 0)
+    {
+        const char *revision_text = nullptr;
+        const char *desktop_id = nullptr;
+        gint desktop_number = 0;
+
+        g_variant_get(
+            parameters,
+            "(&s&si)",
+            &revision_text,
+            &desktop_id,
+            &desktop_number);
+
+        std::uint64_t revision = 0;
+
+        return_accepted(
+            invocation,
+            parse_integer(
+                revision_text,
+                revision) &&
+                m_backend
+                    .publish_current_desktop(
+                        revision,
+                        desktop_id,
+                        desktop_number > 0
+                            ? static_cast<unsigned int>(
+                                  desktop_number)
+                            : 0));
 
         return;
     }
