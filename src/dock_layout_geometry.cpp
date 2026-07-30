@@ -9,7 +9,7 @@
 
 ItemGeometry
 DockLayoutGeometry::item_geometry(
-    DockItem &item,
+    Gtk::Widget &item,
     DockWindow &dock) const
 {
     ItemGeometry geometry;

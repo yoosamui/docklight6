@@ -33,6 +33,9 @@ public:
         const Glib::RefPtr<Gdk::Monitor>
             &monitor);
     void schedule_show_tooltip(DockItem &item);
+    void schedule_show_tooltip(
+        Gtk::Widget &item,
+        const Glib::ustring &text);
     void schedule_hide_tooltip();
     void hide_tooltip_immediately();
     bool set_item_attached(

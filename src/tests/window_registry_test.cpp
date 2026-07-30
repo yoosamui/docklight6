@@ -306,11 +306,22 @@ void verifies_global_window_actions()
             "window-3",
             "org.mozilla.firefox");
 
+    auto docklight =
+        window(
+            "docklight-window",
+            "org.docklight6");
+
     minimized.minimized = true;
 
     backend.set_snapshot(
-        {active, other, minimized},
         {
+            active,
+            other,
+            minimized,
+            docklight
+        },
+        {
+            "docklight-window",
             "window-3",
             "window-2",
             "window-1"
@@ -319,6 +330,9 @@ void verifies_global_window_actions()
 
     WindowRegistry registry(backend);
     registry.start();
+
+    assert(!registry.find_window(
+        "docklight-window"));
 
     assert(registry.minimize_all());
 
@@ -347,6 +361,9 @@ void verifies_global_window_actions()
 
     assert(registry.close_all());
     assert(registry.windows().empty());
+    assert(backend.windows().size() == 1);
+    assert(backend.windows()[0].id ==
+           "docklight-window");
 }
 
 }

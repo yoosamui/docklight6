@@ -149,16 +149,25 @@ DockLayoutEngine::calculate_tooltip_position(
         (dock_reserves_space ? 0 : dock_width) +
         tooltip_distance;
 
-    // x/y are usable-area offsets relative to the selected output. This is
-    // important when only one edge has a panel or compositor safety inset.
-    int dock_x = monitor.x;
-    int dock_y = monitor.y;
+    // Prefer the compositor's current dock coordinates. During an
+    // asynchronous layer-shell relayout they can briefly differ from the
+    // position implied by the requested alignment, which would leave the
+    // tooltip off-centre.
+    int dock_x =
+        dock.has_position
+            ? dock.x
+            : monitor.x;
+
+    int dock_y =
+        dock.has_position
+            ? dock.y
+            : monitor.y;
 
     const bool horizontal =
         request.location == DockLocation::bottom ||
         request.location == DockLocation::top;
 
-    if (horizontal)
+    if (!dock.has_position && horizontal)
     {
         if (request.alignment == DockAlignment::center)
             dock_x +=
@@ -167,7 +176,7 @@ DockLayoutEngine::calculate_tooltip_position(
             dock_x +=
                 monitor.width - dock_width;
     }
-    else
+    else if (!dock.has_position)
     {
         if (request.alignment == DockAlignment::center)
             dock_y +=

@@ -185,6 +185,10 @@ public:
         int corner_radius);
 
 private:
+    bool on_enter_notify_event(
+        GdkEventCrossing *event) override;
+    bool on_leave_notify_event(
+        GdkEventCrossing *event) override;
     bool on_button_press_event(
         GdkEventButton *event) override;
     bool on_popup_menu();
@@ -195,6 +199,7 @@ private:
     void refresh_context_menu();
     void show_context_menu(
         const GdkEvent *event);
+    void schedule_open_settings();
 
     bool minimize_all();
     bool unminimize_all();

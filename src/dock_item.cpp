@@ -2166,6 +2166,8 @@ DockHomeItem::DockHomeItem(
     set_visible_window(false);
 
     add_events(
+        Gdk::ENTER_NOTIFY_MASK |
+        Gdk::LEAVE_NOTIFY_MASK |
         Gdk::BUTTON_PRESS_MASK);
 
     m_image.set_halign(
@@ -2251,16 +2253,42 @@ void DockHomeItem::
         "}");
 }
 
+bool DockHomeItem::on_enter_notify_event(
+    GdkEventCrossing *)
+{
+    m_dock.schedule_show_tooltip(
+        *this,
+        "Home");
+
+    return true;
+}
+
+bool DockHomeItem::on_leave_notify_event(
+    GdkEventCrossing *)
+{
+    m_dock.schedule_hide_tooltip();
+    return false;
+}
+
 bool DockHomeItem::on_button_press_event(
     GdkEventButton *event)
 {
-    if (event &&
-        event->button ==
-            GDK_BUTTON_SECONDARY)
+    if (!event)
+        return false;
+
+    if (event->button ==
+        GDK_BUTTON_SECONDARY)
     {
         show_context_menu(
             reinterpret_cast<GdkEvent *>(
                 event));
+        return true;
+    }
+
+    if (event->button ==
+        GDK_BUTTON_PRIMARY)
+    {
+        schedule_open_settings();
         return true;
     }
 
@@ -2448,15 +2476,7 @@ void DockHomeItem::
         .connect(
             [this]()
             {
-                m_settings_idle.disconnect();
-
-                m_settings_idle =
-                    Glib::signal_idle().connect(
-                        [this]()
-                        {
-                            open_settings();
-                            return false;
-                        });
+                schedule_open_settings();
             });
 
     m_minimize_all_item
@@ -2642,6 +2662,20 @@ void DockHomeItem::show_context_menu(
             GTK_WINDOW(menu_toplevel),
             TRUE);
     }
+}
+
+void DockHomeItem::schedule_open_settings()
+{
+    m_dock.hide_tooltip_immediately();
+    m_settings_idle.disconnect();
+
+    m_settings_idle =
+        Glib::signal_idle().connect(
+            [this]()
+            {
+                open_settings();
+                return false;
+            });
 }
 
 bool DockHomeItem::minimize_all()

@@ -21,6 +21,17 @@ bool has_desktop_suffix(
                suffix) == 0;
 }
 
+bool is_docklight_window(
+    const ManagedWindow &window)
+{
+    return window.desktop_file_name ==
+               "org.docklight6.desktop" ||
+           window.desktop_file_name ==
+               "docklight6.desktop" ||
+           window.desktop_file_name ==
+               "docklight.desktop";
+}
+
 }
 
 WindowRegistry::WindowRegistry(
@@ -429,8 +440,7 @@ void WindowRegistry::load_snapshot()
     for (auto window :
          m_backend.windows())
     {
-        if (window.skip_taskbar ||
-            window.id.empty())
+        if (window.id.empty())
         {
             continue;
         }
@@ -438,6 +448,12 @@ void WindowRegistry::load_snapshot()
         window.desktop_file_name =
             normalize_desktop_file_name(
                 window.desktop_file_name);
+
+        if (window.skip_taskbar ||
+            is_docklight_window(window))
+        {
+            continue;
+        }
 
         m_windows.push_back(
             std::move(window));
@@ -638,6 +654,14 @@ void WindowRegistry::on_window_updated(
     if (window.id.empty())
         return;
 
+    ManagedWindow normalized_window =
+        window;
+
+    normalized_window
+        .desktop_file_name =
+        normalize_desktop_file_name(
+            window.desktop_file_name);
+
     const auto current =
         std::find_if(
             m_windows.begin(),
@@ -650,7 +674,9 @@ void WindowRegistry::on_window_updated(
                        window.id;
             });
 
-    if (window.skip_taskbar)
+    if (normalized_window.skip_taskbar ||
+        is_docklight_window(
+            normalized_window))
     {
         if (current == m_windows.end())
             return;
@@ -666,14 +692,6 @@ void WindowRegistry::on_window_updated(
     }
     else
     {
-        ManagedWindow normalized_window =
-            window;
-
-        normalized_window
-            .desktop_file_name =
-            normalize_desktop_file_name(
-                window.desktop_file_name);
-
         normalized_window.active =
             m_active_window &&
             *m_active_window == window.id;

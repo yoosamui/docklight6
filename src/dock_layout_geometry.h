@@ -5,14 +5,18 @@
 
 #include <gdkmm/monitor.h>
 
-class DockItem;
 class DockWindow;
+
+namespace Gtk
+{
+class Widget;
+}
 
 class DockLayoutGeometry
 {
 public:
     ItemGeometry item_geometry(
-        DockItem &item,
+        Gtk::Widget &item,
         DockWindow &dock) const;
 
     DockWindowGeometry dock_geometry(

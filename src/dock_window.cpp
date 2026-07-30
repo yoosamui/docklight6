@@ -150,7 +150,17 @@ void DockWindow::schedule_show_tooltip(
     DockItem &item)
 {
     m_controller->schedule_show_tooltip(
-        item);
+        item,
+        item.app_name());
+}
+
+void DockWindow::schedule_show_tooltip(
+    Gtk::Widget &item,
+    const Glib::ustring &text)
+{
+    m_controller->schedule_show_tooltip(
+        item,
+        text);
 }
 
 void DockWindow::schedule_hide_tooltip()

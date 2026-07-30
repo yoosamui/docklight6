@@ -157,6 +157,7 @@ void DockWindowController::apply_configuration(
     cancel_show_timer();
     cancel_hide_timer();
     m_pending_item = nullptr;
+    m_pending_tooltip_text.clear();
     hide_tooltip();
 
     m_settings =
@@ -549,7 +550,7 @@ void DockWindowController::
     }
 
     const auto dock_position =
-        dock_screen_position();
+        dock_screen_position(true);
 
     for (auto *item :
          m_window.dock_items())
@@ -576,26 +577,10 @@ void DockWindowController::
 }
 
 ScreenPosition
-DockWindowController::dock_screen_position()
+DockWindowController::dock_screen_position(
+    bool prefer_surface_geometry)
     const
 {
-    if (m_window.m_window_registry)
-    {
-        const auto surface_geometry =
-            m_window
-                .m_window_registry
-                ->dock_surface_geometry();
-
-        if (surface_geometry &&
-            surface_geometry->width > 0 &&
-            surface_geometry->height > 0)
-        {
-            return {
-                surface_geometry->x,
-                surface_geometry->y};
-        }
-    }
-
     const int width =
         std::max(
             1,
@@ -605,6 +590,26 @@ DockWindowController::dock_screen_position()
         std::max(
             1,
             m_window.get_allocated_height());
+
+    if (prefer_surface_geometry &&
+        m_window.m_window_registry)
+    {
+        const auto surface_geometry =
+            m_window
+                .m_window_registry
+                ->dock_surface_geometry();
+
+        if (surface_geometry &&
+            surface_geometry->width ==
+                width &&
+            surface_geometry->height ==
+                height)
+        {
+            return {
+                surface_geometry->x,
+                surface_geometry->y};
+        }
+    }
 
     ScreenPosition position;
 
@@ -706,7 +711,8 @@ void DockWindowController::reload_icons()
 }
 
 void DockWindowController::schedule_show_tooltip(
-    DockItem &item)
+    Gtk::Widget &item,
+    const Glib::ustring &text)
 {
     if (!m_settings.display_tooltips())
     {
@@ -718,15 +724,21 @@ void DockWindowController::schedule_show_tooltip(
     cancel_show_timer();
 
     m_pending_item = &item;
+    m_pending_tooltip_text = text;
 
     m_show_timer =
         Glib::signal_timeout().connect(
             [this]()
             {
                 if (m_pending_item)
-                    show_tooltip(*m_pending_item);
+                {
+                    show_tooltip(
+                        *m_pending_item,
+                        m_pending_tooltip_text);
+                }
 
                 m_pending_item = nullptr;
+                m_pending_tooltip_text.clear();
                 return false;
             },
             DockConstants::TOOLTIP_SHOW_DELAY_MS);
@@ -736,6 +748,7 @@ void DockWindowController::schedule_hide_tooltip()
 {
     cancel_show_timer();
     m_pending_item = nullptr;
+    m_pending_tooltip_text.clear();
     start_hide_timer();
 }
 
@@ -744,11 +757,13 @@ void DockWindowController::hide_tooltip_immediately()
     cancel_show_timer();
     cancel_hide_timer();
     m_pending_item = nullptr;
+    m_pending_tooltip_text.clear();
     hide_tooltip();
 }
 
 void DockWindowController::show_tooltip(
-    DockItem &item)
+    Gtk::Widget &item,
+    const Glib::ustring &text)
 {
     if (!m_settings.display_tooltips())
         return;
@@ -756,7 +771,7 @@ void DockWindowController::show_tooltip(
     const int tooltip_width =
         m_window.m_overlay_window
             .preferred_width_for(
-                item.app_name());
+                text);
 
     auto item_geometry =
         m_layout_geometry.item_geometry(
@@ -766,6 +781,22 @@ void DockWindowController::show_tooltip(
     auto dock_geometry =
         m_layout_geometry.dock_geometry(
             m_window);
+
+    // KWin can publish a resized surface before its new centred position.
+    // Use the synchronous layout placement for tooltips so adding or
+    // removing a dock item cannot shift them to a stale surface origin.
+    const auto dock_position =
+        dock_screen_position(false);
+
+    // The calculated dock position is global, while tooltip layer-shell
+    // margins are relative to the selected output.
+    dock_geometry.x =
+        dock_position.x -
+        m_output_geometry.x;
+    dock_geometry.y =
+        dock_position.y -
+        m_output_geometry.y;
+    dock_geometry.has_position = true;
 
     auto monitor_geometry =
         m_usable_monitor_geometry;
@@ -796,7 +827,7 @@ void DockWindowController::show_tooltip(
                 .tooltip_distance());
 
     m_window.m_overlay_window.show_tooltip(
-        item.app_name(),
+        text,
         m_layout_request.location,
         tooltip_width,
         position);

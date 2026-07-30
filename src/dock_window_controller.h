@@ -5,11 +5,16 @@
 #include "dock_layout_geometry.h"
 
 #include <gdkmm/monitor.h>
+#include <glibmm/ustring.h>
 #include <gtkmm/icontheme.h>
 #include <sigc++/connection.h>
 
-class DockItem;
 class DockWindow;
+
+namespace Gtk
+{
+class Widget;
+}
 
 class DockWindowController
 {
@@ -28,7 +33,8 @@ public:
         const Glib::RefPtr<Gdk::Monitor>
             &monitor);
     void schedule_show_tooltip(
-        DockItem &item);
+        Gtk::Widget &item,
+        const Glib::ustring &text);
     void schedule_hide_tooltip();
     void hide_tooltip_immediately();
 
@@ -60,10 +66,13 @@ private:
     void schedule_layout_update();
     void schedule_icon_geometry_update();
     void update_icon_geometries();
-    ScreenPosition dock_screen_position() const;
+    ScreenPosition dock_screen_position(
+        bool prefer_surface_geometry) const;
     void schedule_icon_refresh();
     void reload_icons();
-    void show_tooltip(DockItem &item);
+    void show_tooltip(
+        Gtk::Widget &item,
+        const Glib::ustring &text);
     void hide_tooltip();
     void start_hide_timer();
     void cancel_show_timer();
@@ -106,7 +115,8 @@ private:
     sigc::connection m_dock_add;
     sigc::connection m_dock_remove;
 
-    DockItem *m_pending_item = nullptr;
+    Gtk::Widget *m_pending_item = nullptr;
+    Glib::ustring m_pending_tooltip_text;
 
     bool m_has_applied_layout = false;
 };
