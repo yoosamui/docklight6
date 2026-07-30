@@ -760,9 +760,35 @@ bool KWinIntegrationService::enqueue_command(
     constexpr std::size_t maximum_commands =
         64; // Maximum queued KWin commands
 
-    if (m_sender.empty() ||
-        m_commands.size() >=
-            maximum_commands)
+    if (m_sender.empty())
+        return false;
+
+    const auto pending =
+        std::find_if(
+            m_commands.begin(),
+            m_commands.end(),
+            [&command](
+                const KWinWindowCommand
+                    &candidate)
+            {
+                return candidate.type ==
+                           command.type &&
+                       candidate.window_id ==
+                           command.window_id;
+            });
+
+    if (pending != m_commands.end())
+    {
+        // Keep only the newest requested state for each window. Rapid clicks
+        // can otherwise enqueue the same group action repeatedly while KWin
+        // is still animating the first request, producing seconds of stale
+        // work and making the desktop appear frozen.
+        pending->state = command.state;
+        return true;
+    }
+
+    if (m_commands.size() >=
+        maximum_commands)
     {
         return false;
     }

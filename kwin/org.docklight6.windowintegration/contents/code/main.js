@@ -544,9 +544,10 @@
                 publishWindow(window);
             };
 
-        connectSignal(
-            window.frameGeometryChanged,
-            publish);
+        // Normal-window geometry is included in snapshots, but DockLight
+        // does not use continuous geometry changes. Effects such as Magic
+        // Lamp and interactive moves can emit this signal every frame and
+        // overwhelm the D-Bus/GTK event loops.
         connectSignal(
             window.skipTaskbarChanged,
             publish);

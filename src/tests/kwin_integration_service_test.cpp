@@ -397,6 +397,9 @@ void verifies_dbus_state_transport()
     assert(backend.set_window_minimized(
         "window-1",
         true));
+    assert(backend.set_window_minimized(
+        "window-1",
+        false));
 
     result =
         call_method(
@@ -415,7 +418,7 @@ void verifies_dbus_state_transport()
            "set-minimized");
     assert(std::string(window_id) ==
            "window-1");
-    assert(command_state);
+    assert(!command_state);
 
     g_variant_unref(result);
 

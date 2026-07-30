@@ -182,9 +182,9 @@ void DockTooltipWindow::show_tooltip(
 
     cancel_reveal();
 
-    // Change layer-shell anchors and margins only while hidden. Updating an
-    // already mapped RIGHT-anchored surface can cause KWin to briefly remap
-    // it, followed by our intentional remap below.
+    // Update layer-shell placement while the tooltip is unmapped, then reveal
+    // it again below. The hide/show transition is what lets KWin apply the
+    // configured tooltip effect for each dock item.
     hide();
 
     m_has_request = true;
@@ -202,10 +202,6 @@ void DockTooltipWindow::show_tooltip(
         m_tooltip_height);
 
     apply_position(location, position);
-
-    // Re-map the layer-shell surface once for each item. This deliberately
-    // relies on the compositor's standard tooltip/show animation; no custom
-    // visual effect is applied here.
 
     m_reveal_timer =
         Glib::signal_timeout().connect(

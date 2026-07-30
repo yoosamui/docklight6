@@ -32,6 +32,34 @@ bool is_docklight_window(
                "docklight.desktop";
 }
 
+bool has_same_dock_state(
+    const ManagedWindow &left,
+    const ManagedWindow &right)
+{
+    // Frame geometry is retained in the registry, but it does not affect any
+    // dock item state. KWin effects and interactive moves can update it many
+    // times per frame, so it must not trigger a full dock refresh.
+    return left.id == right.id &&
+           left.desktop_file_name ==
+               right.desktop_file_name &&
+           left.caption == right.caption &&
+           left.icon_name == right.icon_name &&
+           left.icon_png == right.icon_png &&
+           left.activity_ids ==
+               right.activity_ids &&
+           left.desktop_ids ==
+               right.desktop_ids &&
+           left.desktop_numbers ==
+               right.desktop_numbers &&
+           left.process_id == right.process_id &&
+           left.minimized == right.minimized &&
+           left.maximized == right.maximized &&
+           left.skip_taskbar ==
+               right.skip_taskbar &&
+           left.on_current_desktop ==
+               right.on_current_desktop;
+}
+
 }
 
 WindowRegistry::WindowRegistry(
@@ -704,9 +732,17 @@ void WindowRegistry::on_window_updated(
         }
         else
         {
+            const bool dock_state_changed =
+                !has_same_dock_state(
+                    *current,
+                    normalized_window);
+
             *current =
                 std::move(
                     normalized_window);
+
+            if (!dock_state_changed)
+                return;
         }
     }
 

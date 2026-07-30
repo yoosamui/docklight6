@@ -1009,8 +1009,16 @@ Glib::ustring DockItem::tooltip_text() const
 }
 
 bool DockItem::on_enter_notify_event(
-    GdkEventCrossing *)
+    GdkEventCrossing *event)
 {
+    if ((event &&
+         event->detail ==
+             GDK_NOTIFY_INFERIOR) ||
+        m_hovered)
+    {
+        return false;
+    }
+
     m_application_controller
         .reset_window_cycle();
     m_scroll_delta_y = 0.0;
@@ -1024,8 +1032,16 @@ bool DockItem::on_enter_notify_event(
 }
 
 bool DockItem::on_leave_notify_event(
-    GdkEventCrossing *)
+    GdkEventCrossing *event)
 {
+    if ((event &&
+         event->detail ==
+             GDK_NOTIFY_INFERIOR) ||
+        !m_hovered)
+    {
+        return false;
+    }
+
     m_hovered = false;
     apply_hover_effect();
 
@@ -2460,8 +2476,15 @@ void DockHomeItem::
 }
 
 bool DockHomeItem::on_enter_notify_event(
-    GdkEventCrossing *)
+    GdkEventCrossing *event)
 {
+    if (event &&
+        event->detail ==
+            GDK_NOTIFY_INFERIOR)
+    {
+        return false;
+    }
+
     m_dock.schedule_show_tooltip(
         *this,
         "Home");
@@ -2470,8 +2493,15 @@ bool DockHomeItem::on_enter_notify_event(
 }
 
 bool DockHomeItem::on_leave_notify_event(
-    GdkEventCrossing *)
+    GdkEventCrossing *event)
 {
+    if (event &&
+        event->detail ==
+            GDK_NOTIFY_INFERIOR)
+    {
+        return false;
+    }
+
     m_dock.schedule_hide_tooltip();
     return false;
 }
@@ -3649,9 +3679,13 @@ void DockHomeItem::open_settings()
         1,
         1);
 
-    monitor_list
-        .signal_row_selected()
-        .connect(
+    std::vector<sigc::connection>
+        settings_connections;
+
+    settings_connections.push_back(
+        monitor_list
+            .signal_row_selected()
+            .connect(
             [&configuration,
              &monitor_identifiers](
                 Gtk::ListBoxRow *row)
@@ -3677,27 +3711,31 @@ void DockHomeItem::open_settings()
                         static_cast<
                             std::size_t>(
                             index)]);
-            });
+            }));
 
     const auto connect_radio =
-        [&configuration](
+        [&configuration,
+         &settings_connections](
             Gtk::RadioButton &button,
             const std::string &key,
             const std::string &value)
     {
-        button.signal_toggled().connect(
-            [&configuration,
-             &button,
-             key,
-             value]()
-            {
-                if (button.get_active())
+        settings_connections.push_back(
+            button
+                .signal_toggled()
+                .connect(
+                [&configuration,
+                 &button,
+                 key,
+                 value]()
                 {
-                    configuration.save_setting(
-                        key,
-                        value);
-                }
-            });
+                    if (button.get_active())
+                    {
+                        configuration.save_setting(
+                            key,
+                            value);
+                    }
+                }));
     };
 
     connect_radio(
@@ -3765,9 +3803,10 @@ void DockHomeItem::open_settings()
         "autohide",
         "intellihide");
 
-    home_icon_enabled
-        .signal_toggled()
-        .connect(
+    settings_connections.push_back(
+        home_icon_enabled
+            .signal_toggled()
+            .connect(
             [&configuration,
              &home_icon_enabled]()
             {
@@ -3777,11 +3816,12 @@ void DockHomeItem::open_settings()
                             .get_active()
                         ? "true"
                         : "false");
-            });
+            }));
 
-    display_tooltips
-        .signal_toggled()
-        .connect(
+    settings_connections.push_back(
+        display_tooltips
+            .signal_toggled()
+            .connect(
             [&configuration,
              &display_tooltips]()
             {
@@ -3791,11 +3831,12 @@ void DockHomeItem::open_settings()
                             .get_active()
                         ? "true"
                         : "false");
-            });
+            }));
 
-    select_home_icon
-        .signal_clicked()
-        .connect(
+    settings_connections.push_back(
+        select_home_icon
+            .signal_clicked()
+            .connect(
             [&configuration,
              &dialog,
              &home_icon_path,
@@ -3922,11 +3963,12 @@ void DockHomeItem::open_settings()
                 }
 
                 icon_dialog.hide();
-            });
+            }));
 
-    use_default_home_icon
-        .signal_clicked()
-        .connect(
+    settings_connections.push_back(
+        use_default_home_icon
+            .signal_clicked()
+            .connect(
             [&configuration,
              &home_icon_path]()
             {
@@ -3936,11 +3978,12 @@ void DockHomeItem::open_settings()
                 configuration.save_setting(
                     "home_icon_path",
                     "");
-            });
+            }));
 
-    indicator_color
-        .signal_clicked()
-        .connect(
+    settings_connections.push_back(
+        indicator_color
+            .signal_clicked()
+            .connect(
             [&configuration,
              &dialog,
              &indicator_color_preview,
@@ -4026,9 +4069,9 @@ void DockHomeItem::open_settings()
                         .to_string());
 
                 color_dialog.hide();
-            });
+            }));
 
-    auto icon_size_changed =
+    settings_connections.push_back(
         icon_size_spin
         .signal_value_changed()
         .connect(
@@ -4068,11 +4111,12 @@ void DockHomeItem::open_settings()
                     "icon_size",
                     std::to_string(
                         icon_size));
-            });
+            }));
 
-    rounded_corners
-        .signal_toggled()
-        .connect(
+    settings_connections.push_back(
+        rounded_corners
+            .signal_toggled()
+            .connect(
             [&configuration,
              &rounded_corners]()
             {
@@ -4082,9 +4126,9 @@ void DockHomeItem::open_settings()
                             .get_active()
                         ? "true"
                         : "false");
-            });
+            }));
 
-    auto corner_radius_changed =
+    settings_connections.push_back(
         corner_radius_spin
         .signal_value_changed()
         .connect(
@@ -4096,7 +4140,7 @@ void DockHomeItem::open_settings()
                     std::to_string(
                         corner_radius_spin
                             .get_value_as_int()));
-            });
+            }));
 
     auto *content =
         dialog.get_content_area();
@@ -4110,12 +4154,14 @@ void DockHomeItem::open_settings()
     dialog.present();
     dialog.run();
 
-    // Gtk::SpinButton can emit value-changed while its controls are being
-    // torn down. The icon-size callback refers to corner-radius widgets that
-    // are destroyed earlier because they were constructed later, so detach
-    // both callbacks before leaving this scope.
-    icon_size_changed.disconnect();
-    corner_radius_changed.disconnect();
+    // Several GTK controls can emit signals while being torn down. Their
+    // callbacks refer to other stack-owned dialog controls, whose destruction
+    // order is different, so detach every callback before leaving this scope.
+    for (auto &connection :
+         settings_connections)
+    {
+        connection.disconnect();
+    }
 
     dialog.hide();
 }

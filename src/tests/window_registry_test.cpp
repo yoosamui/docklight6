@@ -140,6 +140,23 @@ void verifies_incremental_updates()
     assert(registry.find_application(
         "org.mozilla.firefox"));
 
+    const int changes_before_move =
+        changes;
+
+    updated_window.frame_geometry.x = 320;
+    updated_window.frame_geometry.y = 180;
+    backend.update_window(
+        updated_window);
+
+    assert(changes ==
+           changes_before_move);
+    assert(registry
+               .find_window("window-1")
+               ->frame_geometry.x == 320);
+    assert(registry
+               .find_window("window-1")
+               ->frame_geometry.y == 180);
+
     backend.set_active_window(
         WindowId{"window-1"});
 

@@ -726,6 +726,9 @@ void DockWindowController::schedule_show_tooltip(
     m_pending_item = &item;
     m_pending_tooltip_text = text;
 
+    // Always use the show timer, including when another item's tooltip is
+    // still visible during its hide grace period. This keeps show and hide
+    // timing active while moving between dock items.
     m_show_timer =
         Glib::signal_timeout().connect(
             [this]()
@@ -769,11 +772,32 @@ void DockWindowController::dock_items_reordered()
 
 void DockWindowController::dock_items_changed()
 {
-    // Adding an item at a large configured icon size can temporarily make a
-    // vertical dock taller than its output. Recalculate before returning to
-    // the compositor so the new item is included in the effective icon size.
-    m_layout_update.disconnect();
-    update_dock_layout();
+    // Fit the children immediately so a newly added item cannot overflow a
+    // full-height dock. Defer layer-shell surface changes until the current
+    // window-registry callback has returned; resizing the surface here can
+    // re-enter compositor and GTK processing while the child list is changing.
+    const auto orientation =
+        m_layout_request.location ==
+                    DockLocation::left ||
+                m_layout_request.location ==
+                    DockLocation::right
+            ? DockOrientation::vertical
+            : DockOrientation::horizontal;
+
+    auto monitor = m_usable_monitor_geometry;
+
+    if (monitor.width <= 0 ||
+        monitor.height <= 0)
+    {
+        monitor =
+            m_layout_geometry.output_geometry(
+                m_monitor);
+    }
+
+    update_effective_icon_size(
+        monitor,
+        orientation);
+    schedule_layout_update();
 }
 
 void DockWindowController::show_tooltip(
