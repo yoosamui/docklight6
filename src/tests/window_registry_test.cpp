@@ -142,6 +142,55 @@ void verifies_incremental_updates()
     assert(!registry.active_window());
 }
 
+void verifies_group_lifetime()
+{
+    FakeWindowBackend backend;
+
+    backend.set_snapshot(
+        {
+            window(
+                "window-1",
+                "org.videolan.vlc"),
+            window(
+                "window-2",
+                "org.videolan.vlc")
+        },
+        {
+            "window-1",
+            "window-2"
+        },
+        WindowId{"window-2"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    auto application =
+        registry.find_application(
+            "org.videolan.vlc");
+
+    assert(application);
+    assert(application->window_ids.size() ==
+           2);
+
+    backend.remove_window(
+        "window-1");
+
+    application =
+        registry.find_application(
+            "org.videolan.vlc");
+
+    assert(application);
+    assert(application->window_ids ==
+           std::vector<WindowId>({
+               "window-2"}));
+
+    backend.remove_window(
+        "window-2");
+
+    assert(!registry.find_application(
+        "org.videolan.vlc"));
+}
+
 void verifies_stacking_and_disconnect()
 {
     FakeWindowBackend backend;
@@ -306,6 +355,7 @@ int main()
 {
     verifies_snapshot_and_grouping();
     verifies_incremental_updates();
+    verifies_group_lifetime();
     verifies_stacking_and_disconnect();
     verifies_global_window_actions();
 
