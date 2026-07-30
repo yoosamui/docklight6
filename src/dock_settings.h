@@ -17,6 +17,10 @@ public:
     void set_indicator_color(
         const std::string &color);
     void set_minimum_bottom_workarea_inset(int inset);
+    void set_home_icon_enabled(bool enabled);
+    void set_home_icon_path(
+        const std::string &path);
+    void set_display_tooltips(bool enabled);
 
     const std::string &monitor() const;
 
@@ -27,6 +31,9 @@ public:
 
     int icon_size() const;
     int minimum_bottom_workarea_inset() const;
+    bool home_icon_enabled() const;
+    const std::string &home_icon_path() const;
+    bool display_tooltips() const;
 
 private:
     std::string m_monitor = "primary";
@@ -48,4 +55,8 @@ private:
 
     std::string m_indicator_color =
         "#69aaff";
+
+    bool m_home_icon_enabled = true;
+    std::string m_home_icon_path;
+    bool m_display_tooltips = true;
 };

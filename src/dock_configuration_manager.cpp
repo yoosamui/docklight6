@@ -50,6 +50,24 @@ indicator_color = #69aaff
 
 )";
 
+const char *HOME_ICON_ENABLED_SETTING_TEMPLATE = R"(# Display the static DockLight home icon.
+# Valid values: true, false
+home_icon_enabled = true
+
+)";
+
+const char *HOME_ICON_PATH_SETTING_TEMPLATE = R"(# Custom image for the static home icon.
+# Empty uses the built-in DockLight icon
+home_icon_path =
+
+)";
+
+const char *DISPLAY_TOOLTIPS_SETTING_TEMPLATE = R"(# Display application tooltips while hovering over dock icons.
+# Valid values: true, false
+display_tooltips = true
+
+)";
+
 const char *CONFIG_TEMPLATE = R"([dock]
 # Monitor used by the dock.
 # Empty uses default: primary
@@ -68,6 +86,18 @@ indicator = lines
 # Running-window indicator fill color.
 # Accepts GTK colors such as #rrggbb, rgb(), rgba(), or a named color
 indicator_color = #69aaff
+
+# Display the static DockLight home icon.
+# Valid values: true, false
+home_icon_enabled = true
+
+# Custom image for the static home icon.
+# Empty uses the built-in DockLight icon
+home_icon_path =
+
+# Display application tooltips while hovering over dock icons.
+# Valid values: true, false
+display_tooltips = true
 
 # Icon size in pixels.
 # Empty uses default: 46
@@ -174,6 +204,18 @@ std::optional<int> parse_integer(
     }
 }
 
+std::optional<bool> parse_boolean(
+    const std::string &value)
+{
+    if (value == "true")
+        return true;
+
+    if (value == "false")
+        return false;
+
+    return {};
+}
+
 std::string value_for(
     const Glib::KeyFile &key_file,
     const char *key)
@@ -222,6 +264,12 @@ bool same_configuration(
                right.settings.indicator() &&
            left.settings.indicator_color() ==
                right.settings.indicator_color() &&
+           left.settings.home_icon_enabled() ==
+               right.settings.home_icon_enabled() &&
+           left.settings.home_icon_path() ==
+               right.settings.home_icon_path() &&
+           left.settings.display_tooltips() ==
+               right.settings.display_tooltips() &&
            left.settings.minimum_bottom_workarea_inset() ==
                right.settings.minimum_bottom_workarea_inset() &&
            left.layout_request.location ==
@@ -267,6 +315,15 @@ DockConfigurationManager::DockConfigurationManager()
     ensure_setting(
         "indicator_color",
         INDICATOR_COLOR_SETTING_TEMPLATE);
+    ensure_setting(
+        "home_icon_enabled",
+        HOME_ICON_ENABLED_SETTING_TEMPLATE);
+    ensure_setting(
+        "home_icon_path",
+        HOME_ICON_PATH_SETTING_TEMPLATE);
+    ensure_setting(
+        "display_tooltips",
+        DISPLAY_TOOLTIPS_SETTING_TEMPLATE);
     reload();
 }
 
@@ -608,6 +665,67 @@ void DockConfigurationManager::reload()
             value_for(
                 key_file,
                 "icon_size");
+
+        const auto home_icon_enabled =
+            value_for(
+                key_file,
+                "home_icon_enabled");
+
+        if (home_icon_enabled.empty())
+        {
+            candidate.settings
+                .set_home_icon_enabled(
+                    defaults.settings
+                        .home_icon_enabled());
+        }
+        else if (const auto enabled =
+                     parse_boolean(
+                         home_icon_enabled))
+        {
+            candidate.settings
+                .set_home_icon_enabled(
+                    *enabled);
+        }
+        else
+        {
+            g_warning(
+                "Invalid [dock] home_icon_enabled '%s'; "
+                "keeping the previous value",
+                home_icon_enabled.c_str());
+        }
+
+        candidate.settings.set_home_icon_path(
+            text_value_for(
+                key_file,
+                "home_icon_path"));
+
+        const auto display_tooltips =
+            value_for(
+                key_file,
+                "display_tooltips");
+
+        if (display_tooltips.empty())
+        {
+            candidate.settings
+                .set_display_tooltips(
+                    defaults.settings
+                        .display_tooltips());
+        }
+        else if (const auto enabled =
+                     parse_boolean(
+                         display_tooltips))
+        {
+            candidate.settings
+                .set_display_tooltips(
+                    *enabled);
+        }
+        else
+        {
+            g_warning(
+                "Invalid [dock] display_tooltips '%s'; "
+                "keeping the previous value",
+                display_tooltips.c_str());
+        }
 
         if (icon_size.empty())
         {

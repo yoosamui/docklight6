@@ -160,10 +160,13 @@ public:
     DockHomeItem(
         DockWindow &dock,
         WindowRegistry *window_registry,
-        int icon_size);
+        int icon_size,
+        const std::string &icon_path);
     ~DockHomeItem() override;
 
     void set_icon_size(int icon_size);
+    void set_icon_path(
+        const std::string &icon_path);
     void set_context_menu_corner_radius(
         int corner_radius);
 
@@ -236,6 +239,7 @@ private:
 
     sigc::connection m_settings_idle;
 
+    std::string m_icon_path;
     int m_icon_size = 0;
     bool m_icon_load_attempted = false;
 };

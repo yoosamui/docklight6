@@ -47,6 +47,15 @@ int main()
         "indicator_color",
         "#112233"));
     assert(configuration.save_setting(
+        "home_icon_enabled",
+        "false"));
+    assert(configuration.save_setting(
+        "home_icon_path",
+        "/tmp/My Custom Icon.png"));
+    assert(configuration.save_setting(
+        "display_tooltips",
+        "false"));
+    assert(configuration.save_setting(
         "icon_size",
         "64"));
     assert(configuration.save_setting(
@@ -72,6 +81,15 @@ int main()
     assert(contents.find(
                "# Icon size in pixels.") !=
            std::string::npos);
+    assert(contents.find(
+               "home_icon_enabled=false") !=
+           std::string::npos);
+    assert(contents.find(
+               "home_icon_path=/tmp/My Custom Icon.png") !=
+           std::string::npos);
+    assert(contents.find(
+               "display_tooltips=false") !=
+           std::string::npos);
 
     DockConfigurationManager reloaded;
     const auto &current =
@@ -85,6 +103,12 @@ int main()
            DockIndicator::dots);
     assert(current.settings.indicator_color() ==
            "#112233");
+    assert(!current.settings
+                .home_icon_enabled());
+    assert(current.settings.home_icon_path() ==
+           "/tmp/My Custom Icon.png");
+    assert(!current.settings
+                .display_tooltips());
     assert(current.settings.icon_size() == 64);
     assert(current.layout_request.location ==
            DockLocation::top);

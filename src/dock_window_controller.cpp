@@ -159,6 +159,17 @@ void DockWindowController::apply_configuration(
     m_settings =
         configuration.settings;
 
+    if (m_window.m_home_item)
+    {
+        m_window.m_home_item->set_icon_path(
+            m_settings.home_icon_path());
+
+        if (m_settings.home_icon_enabled())
+            m_window.m_home_item->show();
+        else
+            m_window.m_home_item->hide();
+    }
+
     for (auto *item : m_window.dock_items())
     {
         item->set_hover_effect(
@@ -386,7 +397,8 @@ void DockWindowController::update_effective_icon_size(
 
     const int item_count =
         static_cast<int>(items.size()) +
-        (m_window.m_home_item
+        (m_window.m_home_item &&
+             m_settings.home_icon_enabled()
              ? 1
              : 0);
 
@@ -693,6 +705,12 @@ void DockWindowController::reload_icons()
 void DockWindowController::schedule_show_tooltip(
     DockItem &item)
 {
+    if (!m_settings.display_tooltips())
+    {
+        hide_tooltip_immediately();
+        return;
+    }
+
     cancel_hide_timer();
     cancel_show_timer();
 
@@ -729,6 +747,9 @@ void DockWindowController::hide_tooltip_immediately()
 void DockWindowController::show_tooltip(
     DockItem &item)
 {
+    if (!m_settings.display_tooltips())
+        return;
+
     const int tooltip_width =
         m_window.m_overlay_window
             .preferred_width_for(

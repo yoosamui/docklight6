@@ -2097,9 +2097,11 @@ DockItem::create_standard_hover_pixbuf(
 DockHomeItem::DockHomeItem(
     DockWindow &dock,
     WindowRegistry *window_registry,
-    int icon_size)
+    int icon_size,
+    const std::string &icon_path)
     : m_dock(dock),
-      m_window_registry(window_registry)
+      m_window_registry(window_registry),
+      m_icon_path(icon_path)
 {
     set_visible_window(false);
 
@@ -2145,6 +2147,22 @@ void DockHomeItem::set_icon_size(
             icon_size),
         DockLayoutMetrics::item_size_for(
             icon_size));
+}
+
+void DockHomeItem::set_icon_path(
+    const std::string &icon_path)
+{
+    if (icon_path == m_icon_path)
+        return;
+
+    m_icon_path = icon_path;
+    m_icon_load_attempted = false;
+    m_source_icon.reset();
+    m_display_icon.reset();
+    m_image.clear();
+
+    load_icon_once();
+    update_icon();
 }
 
 void DockHomeItem::
@@ -2202,8 +2220,13 @@ void DockHomeItem::load_icon_once()
 
     m_icon_load_attempted = true;
 
+    std::vector<std::string> icon_paths;
+
+    if (!m_icon_path.empty())
+        icon_paths.push_back(m_icon_path);
+
     const std::vector<std::string>
-        icon_paths = {
+        default_icon_paths = {
             Glib::build_filename(
                 DOCKLIGHT_DATA_DIR,
                 "icons",
@@ -2221,6 +2244,11 @@ void DockHomeItem::load_icon_once()
                 "icons",
                 "128x128",
                 "docklight.home.png")};
+
+    icon_paths.insert(
+        icon_paths.end(),
+        default_icon_paths.begin(),
+        default_icon_paths.end());
 
     for (const auto &icon_path :
          icon_paths)
@@ -2663,6 +2691,12 @@ void DockHomeItem::open_settings()
         "Indicator");
     Gtk::Label indicator_color_label(
         "Indicator color");
+    Gtk::Label home_icon_enabled_label(
+        "Display home icon");
+    Gtk::Label home_icon_path_label(
+        "Home icon");
+    Gtk::Label display_tooltips_label(
+        "Display tooltips");
     Gtk::Label icon_size_label(
         "Icon size");
     Gtk::Label location_label(
@@ -2682,6 +2716,9 @@ void DockHomeItem::open_settings()
             &hover_label,
             &indicator_label,
             &indicator_color_label,
+            &home_icon_enabled_label,
+            &home_icon_path_label,
+            &display_tooltips_label,
             &icon_size_label,
             &location_label,
             &rounded_corners_label,
@@ -2896,6 +2933,50 @@ void DockHomeItem::open_settings()
     indicator_color.set_tooltip_text(
         "Choose indicator color");
 
+    Gtk::CheckButton home_icon_enabled;
+    home_icon_enabled.set_active(
+        current.settings
+            .home_icon_enabled());
+
+    Gtk::Box home_icon_controls(
+        Gtk::ORIENTATION_HORIZONTAL,
+        6);
+    Gtk::Entry home_icon_path;
+    Gtk::Button select_home_icon(
+        "Select...");
+    Gtk::Button use_default_home_icon(
+        "Use default");
+
+    const auto configured_home_icon_path =
+        current.settings.home_icon_path();
+
+    home_icon_path.set_editable(false);
+    home_icon_path.set_hexpand(true);
+    home_icon_path.set_placeholder_text(
+        "Built-in DockLight icon");
+    home_icon_path.set_text(
+        configured_home_icon_path);
+    home_icon_path.set_tooltip_text(
+        configured_home_icon_path);
+
+    home_icon_controls.pack_start(
+        home_icon_path,
+        true,
+        true);
+    home_icon_controls.pack_start(
+        select_home_icon,
+        false,
+        false);
+    home_icon_controls.pack_start(
+        use_default_home_icon,
+        false,
+        false);
+
+    Gtk::CheckButton display_tooltips;
+    display_tooltips.set_active(
+        current.settings
+            .display_tooltips());
+
     auto icon_size_adjustment =
         Gtk::Adjustment::create(
             current.settings.icon_size(),
@@ -3085,6 +3166,9 @@ void DockHomeItem::open_settings()
             &hover_choices,
             &indicator_choices,
             &indicator_color,
+            &home_icon_enabled,
+            &home_icon_controls,
+            &display_tooltips,
             &icon_size_spin,
             &location_choices,
             &rounded_corners,
@@ -3102,6 +3186,10 @@ void DockHomeItem::open_settings()
     }
 
     rounded_corners.set_halign(
+        Gtk::ALIGN_START);
+    home_icon_enabled.set_halign(
+        Gtk::ALIGN_START);
+    display_tooltips.set_halign(
         Gtk::ALIGN_START);
 
     grid.attach(
@@ -3153,75 +3241,111 @@ void DockHomeItem::open_settings()
         1,
         1);
     grid.attach(
-        icon_size_label,
+        home_icon_enabled_label,
         0,
         4,
+        1,
+        1);
+    grid.attach(
+        home_icon_enabled,
+        1,
+        4,
+        1,
+        1);
+    grid.attach(
+        home_icon_path_label,
+        0,
+        5,
+        1,
+        1);
+    grid.attach(
+        home_icon_controls,
+        1,
+        5,
+        1,
+        1);
+    grid.attach(
+        display_tooltips_label,
+        0,
+        6,
+        1,
+        1);
+    grid.attach(
+        display_tooltips,
+        1,
+        6,
+        1,
+        1);
+    grid.attach(
+        icon_size_label,
+        0,
+        7,
         1,
         1);
     grid.attach(
         icon_size_spin,
         1,
-        4,
+        7,
         1,
         1);
     grid.attach(
         location_label,
         0,
-        5,
+        8,
         1,
         1);
     grid.attach(
         location_choices,
         1,
-        5,
+        8,
         1,
         1);
     grid.attach(
         rounded_corners_label,
         0,
-        6,
+        9,
         1,
         1);
     grid.attach(
         rounded_corners,
         1,
-        6,
+        9,
         1,
         1);
     grid.attach(
         corner_radius_label,
         0,
-        7,
+        10,
         1,
         1);
     grid.attach(
         corner_radius_spin,
         1,
-        7,
+        10,
         1,
         1);
     grid.attach(
         alignment_label,
         0,
-        8,
+        11,
         1,
         1);
     grid.attach(
         alignment_choices,
         1,
-        8,
+        11,
         1,
         1);
     grid.attach(
         autohide_label,
         0,
-        9,
+        12,
         1,
         1);
     grid.attach(
         autohide_choices,
         1,
-        9,
+        12,
         1,
         1);
 
@@ -3340,6 +3464,179 @@ void DockHomeItem::open_settings()
         autohide_intelligent,
         "autohide",
         "intellihide");
+
+    home_icon_enabled
+        .signal_toggled()
+        .connect(
+            [&configuration,
+             &home_icon_enabled]()
+            {
+                configuration.save_setting(
+                    "home_icon_enabled",
+                    home_icon_enabled
+                            .get_active()
+                        ? "true"
+                        : "false");
+            });
+
+    display_tooltips
+        .signal_toggled()
+        .connect(
+            [&configuration,
+             &display_tooltips]()
+            {
+                configuration.save_setting(
+                    "display_tooltips",
+                    display_tooltips
+                            .get_active()
+                        ? "true"
+                        : "false");
+            });
+
+    select_home_icon
+        .signal_clicked()
+        .connect(
+            [&configuration,
+             &dialog,
+             &home_icon_path,
+             this]()
+            {
+                Gtk::Dialog
+                    icon_dialog(
+                        "Select home icon",
+                        dialog,
+                        true);
+
+                icon_dialog.add_button(
+                    "_Cancel",
+                    Gtk::RESPONSE_CANCEL);
+                icon_dialog.add_button(
+                    "_Open",
+                    Gtk::RESPONSE_OK);
+                icon_dialog.set_type_hint(
+                    Gdk::WINDOW_TYPE_HINT_DIALOG);
+                keep_dialog_above(
+                    icon_dialog,
+                    dialog,
+                    "docklight6-icon-chooser");
+                icon_dialog.set_decorated(true);
+                icon_dialog.set_resizable(true);
+                icon_dialog
+                    .property_destroy_with_parent() =
+                    true;
+                icon_dialog
+                    .set_skip_taskbar_hint(true);
+                icon_dialog
+                    .set_skip_pager_hint(true);
+                icon_dialog.set_position(
+                    Gtk::WIN_POS_CENTER_ON_PARENT);
+                icon_dialog.set_default_size(
+                    760,
+                    520);
+
+                Gtk::HeaderBar icon_header;
+                Gtk::Image icon_header_icon;
+
+                icon_header.set_title(
+                    "Select home icon");
+                icon_header
+                    .set_show_close_button(true);
+                icon_header.set_decoration_layout(
+                    ":close");
+
+                if (m_source_icon)
+                {
+                    icon_dialog.set_icon(
+                        m_source_icon);
+
+                    const auto small_home_icon =
+                        m_source_icon->scale_simple(
+                            20,
+                            20,
+                            Gdk::INTERP_BILINEAR);
+
+                    if (small_home_icon)
+                    {
+                        icon_header_icon.set(
+                            small_home_icon);
+                        icon_header.pack_start(
+                            icon_header_icon);
+                    }
+                }
+
+                icon_dialog.set_titlebar(
+                    icon_header);
+
+                Gtk::FileChooserWidget
+                    icon_chooser(
+                        Gtk::
+                            FILE_CHOOSER_ACTION_OPEN);
+
+                auto image_filter =
+                    Gtk::FileFilter::create();
+                image_filter->set_name(
+                    "Image files");
+                image_filter
+                    ->add_pixbuf_formats();
+                icon_chooser.add_filter(
+                    image_filter);
+
+                const auto current_path =
+                    home_icon_path.get_text();
+
+                if (!current_path.empty())
+                {
+                    icon_chooser.set_filename(
+                        current_path);
+                }
+
+                auto *icon_content =
+                    icon_dialog.get_content_area();
+
+                icon_content->pack_start(
+                    icon_chooser,
+                    true,
+                    true);
+
+                icon_dialog.show_all_children();
+                icon_dialog.present();
+
+                if (icon_dialog.run() ==
+                    Gtk::RESPONSE_OK)
+                {
+                    const auto selected_path =
+                        icon_chooser
+                            .get_filename();
+
+                    if (!selected_path.empty())
+                    {
+                        home_icon_path.set_text(
+                            selected_path);
+                        home_icon_path
+                            .set_tooltip_text(
+                                selected_path);
+                        configuration.save_setting(
+                            "home_icon_path",
+                            selected_path);
+                    }
+                }
+
+                icon_dialog.hide();
+            });
+
+    use_default_home_icon
+        .signal_clicked()
+        .connect(
+            [&configuration,
+             &home_icon_path]()
+            {
+                home_icon_path.set_text("");
+                home_icon_path
+                    .set_tooltip_text("");
+                configuration.save_setting(
+                    "home_icon_path",
+                    "");
+            });
 
     indicator_color
         .signal_clicked()
@@ -3532,6 +3829,7 @@ void DockHomeItem::show_about()
         Gtk::WIN_POS_CENTER_ON_PARENT);
     dialog.set_program_name(
         "Docklight 6.0");
+    dialog.set_version(VERSION);
     dialog.set_comments(
         "A lightweight application dock.\n"
         "Author/Maintener: yoosamui");

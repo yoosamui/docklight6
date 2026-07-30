@@ -172,6 +172,9 @@ DockWindow::content_geometry() const
     for (auto *child :
          m_dock_box.get_children())
     {
+        if (!child->get_visible())
+            continue;
+
         int minimum_width = 0;
         int natural_width = 0;
         int minimum_height = 0;
@@ -451,7 +454,10 @@ void DockWindow::create_dock()
                 m_window_registry,
                 m_controller
                     ->settings()
-                    .icon_size()));
+                    .icon_size(),
+                m_controller
+                    ->settings()
+                    .home_icon_path()));
 
     m_dock_box.pack_start(
         *m_home_item,
@@ -499,4 +505,11 @@ void DockWindow::create_dock()
 
     add(m_dock_box);
     m_dock_box.show_all();
+
+    if (!m_controller
+             ->settings()
+             .home_icon_enabled())
+    {
+        m_home_item->hide();
+    }
 }

@@ -71,3 +71,37 @@ void DockSettings::set_minimum_bottom_workarea_inset(
     m_minimum_bottom_workarea_inset =
         std::max(0, inset);
 }
+
+bool DockSettings::home_icon_enabled() const
+{
+    return m_home_icon_enabled;
+}
+
+void DockSettings::set_home_icon_enabled(
+    bool enabled)
+{
+    m_home_icon_enabled = enabled;
+}
+
+const std::string &
+DockSettings::home_icon_path() const
+{
+    return m_home_icon_path;
+}
+
+void DockSettings::set_home_icon_path(
+    const std::string &path)
+{
+    m_home_icon_path = path;
+}
+
+bool DockSettings::display_tooltips() const
+{
+    return m_display_tooltips;
+}
+
+void DockSettings::set_display_tooltips(
+    bool enabled)
+{
+    m_display_tooltips = enabled;
+}
