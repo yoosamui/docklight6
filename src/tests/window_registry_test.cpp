@@ -1,7 +1,15 @@
 #include "fake_window_backend.h"
 #include "window_registry.h"
 
+#include <giomm/init.h>
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <unistd.h>
+
+#include <algorithm>
 #include <cassert>
+#include <cctype>
+#include <fstream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -22,6 +30,149 @@ ManagedWindow window(
     window.skip_taskbar = skip_taskbar;
 
     return window;
+}
+
+std::string executable_desktop_id()
+{
+    GError *error = nullptr;
+    auto executable_path =
+        g_file_read_link(
+            "/proc/self/exe",
+            &error);
+
+    assert(executable_path);
+    assert(!error);
+
+    auto executable_name =
+        g_path_get_basename(
+            executable_path);
+
+    assert(executable_name);
+
+    std::string desktop_id =
+        executable_name;
+
+    g_free(executable_name);
+    g_free(executable_path);
+
+    std::transform(
+        desktop_id.begin(),
+        desktop_id.end(),
+        desktop_id.begin(),
+        [](unsigned char character)
+        {
+            if (std::isspace(character) ||
+                character == '_')
+            {
+                return '-';
+            }
+
+            return static_cast<char>(
+                std::tolower(character));
+        });
+
+    desktop_id += ".desktop";
+    return desktop_id;
+}
+
+std::string install_test_desktop_file()
+{
+    GError *error = nullptr;
+    auto temporary_directory =
+        g_dir_make_tmp(
+            "docklight-registry-XXXXXX",
+            &error);
+
+    assert(temporary_directory);
+    assert(!error);
+
+    const std::string data_directory =
+        temporary_directory;
+
+    g_free(temporary_directory);
+
+    const auto applications_directory =
+        data_directory + "/applications";
+
+    assert(
+        g_mkdir_with_parents(
+            applications_directory.c_str(),
+            0700) == 0);
+
+    const auto desktop_file =
+        applications_directory + "/" +
+        executable_desktop_id();
+
+    {
+        std::ofstream output(
+            desktop_file);
+
+        output
+            << "[Desktop Entry]\n"
+            << "Type=Application\n"
+            << "Name=Window Registry Test\n"
+            << "Exec=/bin/true\n"
+            << "Icon=application-x-executable\n";
+
+        assert(output);
+    }
+
+    assert(
+        g_setenv(
+            "XDG_DATA_HOME",
+            data_directory.c_str(),
+            true));
+
+    return data_directory;
+}
+
+void remove_test_desktop_file(
+    const std::string &data_directory)
+{
+    const auto applications_directory =
+        data_directory + "/applications";
+    const auto desktop_file =
+        applications_directory + "/" +
+        executable_desktop_id();
+
+    g_remove(desktop_file.c_str());
+    g_rmdir(applications_directory.c_str());
+    g_rmdir(data_directory.c_str());
+}
+
+void verifies_process_executable_fallback()
+{
+    FakeWindowBackend backend;
+
+    auto transient_window =
+        window(
+            "transient-window",
+            "org.example.dynamic-123-456");
+
+    transient_window.process_id =
+        static_cast<std::int64_t>(
+            getpid());
+
+    backend.set_snapshot(
+        {transient_window},
+        {"transient-window"},
+        WindowId{"transient-window"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    const auto canonical_id =
+        executable_desktop_id();
+
+    assert(registry.find_application(
+        canonical_id));
+    assert(!registry.find_application(
+        "org.example.dynamic-123-456"));
+    assert(registry.windows().size() == 1);
+    assert(
+        registry.windows()[0]
+            .desktop_file_name ==
+        canonical_id);
 }
 
 void verifies_snapshot_and_grouping()
@@ -403,11 +554,20 @@ void verifies_global_window_actions()
 
 int main()
 {
+    Gio::init();
+
+    const auto test_data_directory =
+        install_test_desktop_file();
+
+    verifies_process_executable_fallback();
     verifies_snapshot_and_grouping();
     verifies_incremental_updates();
     verifies_group_lifetime();
     verifies_stacking_and_disconnect();
     verifies_global_window_actions();
+
+    remove_test_desktop_file(
+        test_data_directory);
 
     return 0;
 }

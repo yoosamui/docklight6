@@ -1,5 +1,8 @@
 #include "window_registry.h"
 
+#include <giomm/desktopappinfo.h>
+#include <glib.h>
+
 #include <algorithm>
 #include <cctype>
 #include <iterator>
@@ -479,6 +482,7 @@ WindowRegistry::
 void WindowRegistry::load_snapshot()
 {
     m_windows.clear();
+    m_canonical_desktop_file_names.clear();
 
     for (auto window :
          m_backend.windows())
@@ -489,8 +493,8 @@ void WindowRegistry::load_snapshot()
         }
 
         window.desktop_file_name =
-            normalize_desktop_file_name(
-                window.desktop_file_name);
+            canonical_desktop_file_name(
+                window);
 
         if (window.skip_taskbar ||
             is_docklight_window(window))
@@ -523,6 +527,7 @@ void WindowRegistry::clear()
     m_windows.clear();
     m_running_applications.clear();
     m_active_window.reset();
+    m_canonical_desktop_file_names.clear();
     m_connected = false;
 
     if (had_state)
@@ -702,8 +707,8 @@ void WindowRegistry::on_window_updated(
 
     normalized_window
         .desktop_file_name =
-        normalize_desktop_file_name(
-            window.desktop_file_name);
+        canonical_desktop_file_name(
+            window);
 
     const auto current =
         std::find_if(
@@ -768,6 +773,23 @@ void WindowRegistry::on_window_updated(
 void WindowRegistry::on_window_removed(
     const WindowId &window_id)
 {
+    const auto removed_window =
+        std::find_if(
+            m_windows.begin(),
+            m_windows.end(),
+            [&window_id](
+                const ManagedWindow
+                    &window)
+            {
+                return window.id ==
+                       window_id;
+            });
+
+    const auto removed_process_id =
+        removed_window == m_windows.end()
+            ? std::int64_t{0}
+            : removed_window->process_id;
+
     const auto previous_size =
         m_windows.size();
 
@@ -786,6 +808,29 @@ void WindowRegistry::on_window_removed(
 
     if (m_windows.size() == previous_size)
         return;
+
+    if (removed_process_id > 0)
+    {
+        for (auto cached =
+                 m_canonical_desktop_file_names
+                     .begin();
+             cached !=
+                 m_canonical_desktop_file_names
+                     .end();)
+        {
+            if (cached->first.first ==
+                removed_process_id)
+            {
+                cached =
+                    m_canonical_desktop_file_names
+                        .erase(cached);
+            }
+            else
+            {
+                ++cached;
+            }
+        }
+    }
 
     if (m_active_window &&
         *m_active_window == window_id)
@@ -916,4 +961,150 @@ WindowRegistry::normalize_desktop_file_name(
         });
 
     return normalized_name;
+}
+
+std::string
+WindowRegistry::canonical_desktop_file_name(
+    const ManagedWindow &window)
+{
+    const auto reported_name =
+        normalize_desktop_file_name(
+            window.desktop_file_name);
+
+    if (reported_name.empty())
+        return {};
+
+    const auto cache_key =
+        std::make_pair(
+            window.process_id,
+            reported_name);
+
+    const auto cached =
+        m_canonical_desktop_file_names.find(
+            cache_key);
+
+    if (cached !=
+        m_canonical_desktop_file_names.end())
+    {
+        return cached->second;
+    }
+
+    auto canonical_name =
+        installed_desktop_file_name(
+            reported_name);
+
+    if (!canonical_name &&
+        window.process_id > 0)
+    {
+        const auto process_name =
+            executable_name(
+                window.process_id);
+
+        if (!process_name.empty())
+        {
+            canonical_name =
+                installed_desktop_file_name(
+                    process_name);
+        }
+    }
+
+    const auto result =
+        canonical_name.value_or(
+            reported_name);
+
+    m_canonical_desktop_file_names.emplace(
+        cache_key,
+        result);
+
+    return result;
+}
+
+std::optional<std::string>
+WindowRegistry::installed_desktop_file_name(
+    const std::string &desktop_file_name)
+{
+    const auto normalized_name =
+        normalize_desktop_file_name(
+            desktop_file_name);
+
+    if (normalized_name.empty())
+        return std::nullopt;
+
+    try
+    {
+        const auto application =
+            Gio::DesktopAppInfo::create(
+                normalized_name);
+
+        if (!application)
+            return std::nullopt;
+
+        const auto installed_name =
+            normalize_desktop_file_name(
+                application->get_id());
+
+        return installed_name.empty()
+                   ? std::optional<std::string>{
+                         normalized_name}
+                   : std::optional<std::string>{
+                         installed_name};
+    }
+    catch (const Glib::Error &)
+    {
+        return std::nullopt;
+    }
+}
+
+std::string WindowRegistry::executable_name(
+    std::int64_t process_id)
+{
+    if (process_id <= 0)
+        return {};
+
+    const auto executable_link =
+        "/proc/" +
+        std::to_string(process_id) +
+        "/exe";
+
+    GError *error = nullptr;
+    auto executable_path =
+        g_file_read_link(
+            executable_link.c_str(),
+            &error);
+
+    if (!executable_path)
+    {
+        g_clear_error(&error);
+        return {};
+    }
+
+    auto process_name =
+        g_path_get_basename(
+            executable_path);
+
+    std::string result =
+        process_name
+            ? process_name
+            : "";
+
+    g_free(process_name);
+    g_free(executable_path);
+
+    constexpr char deleted_suffix[] =
+        " (deleted)";
+
+    if (result.size() >=
+            sizeof(deleted_suffix) - 1 &&
+        result.compare(
+            result.size() -
+                (sizeof(deleted_suffix) - 1),
+            sizeof(deleted_suffix) - 1,
+            deleted_suffix) == 0)
+    {
+        result.erase(
+            result.size() -
+            (sizeof(deleted_suffix) - 1));
+    }
+
+    return result;
 }

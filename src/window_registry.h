@@ -6,8 +6,11 @@
 #include <sigc++/connection.h>
 #include <sigc++/signal.h>
 
+#include <cstdint>
+#include <map>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 class WindowRegistry
@@ -104,6 +107,14 @@ private:
     normalize_desktop_file_name(
         const std::string
             &desktop_file_name);
+    std::string canonical_desktop_file_name(
+        const ManagedWindow &window);
+    static std::optional<std::string>
+    installed_desktop_file_name(
+        const std::string
+            &desktop_file_name);
+    static std::string executable_name(
+        std::int64_t process_id);
 
 private:
     WindowBackend &m_backend;
@@ -113,6 +124,13 @@ private:
         m_running_applications;
 
     std::optional<WindowId> m_active_window;
+
+    std::map<
+        std::pair<
+            std::int64_t,
+            std::string>,
+        std::string>
+        m_canonical_desktop_file_names;
 
     std::vector<sigc::connection> m_connections;
 
