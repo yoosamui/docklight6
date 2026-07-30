@@ -151,7 +151,7 @@ void DockWindow::schedule_show_tooltip(
 {
     m_controller->schedule_show_tooltip(
         item,
-        item.app_name());
+        item.tooltip_text());
 }
 
 void DockWindow::schedule_show_tooltip(

@@ -46,6 +46,7 @@ public:
     ItemGeometry icon_geometry();
 
     Glib::ustring app_name() const;
+    Glib::ustring tooltip_text() const;
     const std::string &desktop_id() const
     {
         return m_desktop_id;

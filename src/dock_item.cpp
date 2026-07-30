@@ -961,6 +961,25 @@ Glib::ustring DockItem::app_name() const
     return m_app->get_display_name();
 }
 
+Glib::ustring DockItem::tooltip_text() const
+{
+    auto text = app_name();
+
+    const auto window_count =
+        m_application_controller
+            .window_count();
+
+    if (window_count > 1)
+    {
+        text += " (";
+        text += std::to_string(
+            window_count);
+        text += ")";
+    }
+
+    return text;
+}
+
 bool DockItem::on_enter_notify_event(
     GdkEventCrossing *)
 {
