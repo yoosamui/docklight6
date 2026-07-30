@@ -17,13 +17,13 @@ class DockLayoutMetrics
 public:
     // Dock
 
-    static constexpr int DOCK_HEIGHT = 48;
+    static constexpr int DOCK_HEIGHT = 48; // Baseline dock height in pixels
     // Empty space inside the dock before the first and after the last item.
-    static constexpr int DOCK_MARGIN = 8;
+    static constexpr int DOCK_MARGIN = 8; // Horizontal dock content margin
 
     // Icon size is the primary user setting. Item size is derived from it so
     // icon, padding, indicators, and later hover animation share one scale.
-    static constexpr int DOCK_ITEM_PADDING = 8;
+    static constexpr int DOCK_ITEM_PADDING = 8; // Space around each application icon
 
     static int item_size_for(int icon_size)
     {
@@ -39,14 +39,14 @@ public:
 
     // All tooltip values use the same 48px baseline as the original dock.
     // Scaling from the icon size keeps the tooltip proportionate to its dock.
-    static constexpr int BASE_ICON_SIZE = 48;
-    static constexpr int TOOLTIP_MIN_WIDTH = 80;
-    static constexpr int TOOLTIP_HEIGHT = 38;
-    static constexpr int TOOLTIP_DISTANCE = 12;
+    static constexpr int BASE_ICON_SIZE = 48; // Baseline used to scale visual metrics
+    static constexpr int TOOLTIP_MIN_WIDTH = 80; // Baseline tooltip minimum width
+    static constexpr int TOOLTIP_HEIGHT = 38; // Baseline tooltip height
+    static constexpr int TOOLTIP_DISTANCE = 12; // Baseline gap from the dock
     // Minimum gap between a tooltip and either end of the monitor axis.
-    static constexpr int TOOLTIP_EDGE_MARGIN = 8;
-    static constexpr int TOOLTIP_LABEL_PADDING = 12;
-    static constexpr int TOOLTIP_FONT_SIZE = 12;
+    static constexpr int TOOLTIP_EDGE_MARGIN = 8; // Minimum gap from monitor edges
+    static constexpr int TOOLTIP_LABEL_PADDING = 12; // Baseline horizontal label padding
+    static constexpr int TOOLTIP_FONT_SIZE = 12; // Baseline tooltip font size
 
     static int scale_from_icon_size(
         int value,
@@ -100,5 +100,5 @@ public:
 
     // Animation
 
-    static constexpr int HOVER_ZOOM_PERCENT = 120;
+    static constexpr int HOVER_ZOOM_PERCENT = 120; // Icon scale at maximum zoom
 };

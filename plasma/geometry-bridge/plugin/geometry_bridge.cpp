@@ -13,13 +13,13 @@ namespace
 {
 
 constexpr char SERVICE_NAME[] =
-    "org.docklight6.WindowIntegration";
+    "org.docklight6.WindowIntegration"; // DockLight D-Bus service name
 
 constexpr char OBJECT_PATH[] =
-    "/org/docklight6/WindowIntegration";
+    "/org/docklight6/WindowIntegration"; // DockLight D-Bus object path
 
 constexpr char INTERFACE_NAME[] =
-    "org.docklight6.WindowIntegration1";
+    "org.docklight6.WindowIntegration1"; // DockLight D-Bus interface name
 
 }
 

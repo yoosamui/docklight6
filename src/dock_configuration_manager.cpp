@@ -16,14 +16,15 @@
 namespace
 {
 
-constexpr int MIN_ICON_SIZE = 32;
-constexpr int MAX_ICON_SIZE = 128;
-constexpr int MIN_CORNER_RADIUS = 2;
-constexpr unsigned int RELOAD_DELAY_MS = 200;
+constexpr int MIN_ICON_SIZE = 32; // Smallest accepted dock icon size
+constexpr int MAX_ICON_SIZE = 128; // Largest accepted dock icon size
+constexpr int MIN_CORNER_RADIUS = 2; // Smallest explicit dock corner radius
+constexpr unsigned int RELOAD_DELAY_MS = 200; // Delay before reloading changed settings
 
-const char *CONFIG_FILENAME = "docklight.conf";
-const char *DOCK_GROUP = "dock";
+const char *CONFIG_FILENAME = "docklight.conf"; // Per-user configuration filename
+const char *DOCK_GROUP = "dock"; // Configuration group containing dock settings
 
+// Configuration block added when the monitor setting is missing.
 const char *MONITOR_SETTING_TEMPLATE = R"(# Monitor used by the dock.
 # Empty uses default: primary
 # Run "docklight6 --list-monitors" to show accepted identifiers
@@ -31,6 +32,7 @@ monitor =
 
 )";
 
+// Configuration block added when the hover-effect setting is missing.
 const char *HOVER_EFFECT_SETTING_TEMPLATE = R"(# Effect shown while the pointer is over an icon.
 # Empty uses default: standard
 # Valid values: standard, zoom, blur
@@ -38,36 +40,42 @@ hover_effect =
 
 )";
 
+// Configuration block added when the indicator setting is missing.
 const char *INDICATOR_SETTING_TEMPLATE = R"(# Running-window indicator style.
 # Valid values: lines, dots
 indicator = lines
 
 )";
 
+// Configuration block added when the indicator-color setting is missing.
 const char *INDICATOR_COLOR_SETTING_TEMPLATE = R"(# Running-window indicator fill color.
 # Accepts GTK colors such as #rrggbb, rgb(), rgba(), or a named color
 indicator_color = #69aaff
 
 )";
 
+// Configuration block added when the home-icon visibility setting is missing.
 const char *HOME_ICON_ENABLED_SETTING_TEMPLATE = R"(# Display the static DockLight home icon.
 # Valid values: true, false
 home_icon_enabled = true
 
 )";
 
+// Configuration block added when the home-icon path setting is missing.
 const char *HOME_ICON_PATH_SETTING_TEMPLATE = R"(# Custom image for the static home icon.
 # Empty uses the built-in DockLight icon
 home_icon_path =
 
 )";
 
+// Configuration block added when the tooltip visibility setting is missing.
 const char *DISPLAY_TOOLTIPS_SETTING_TEMPLATE = R"(# Display application tooltips while hovering over dock icons.
 # Valid values: true, false
 display_tooltips = true
 
 )";
 
+// Complete configuration written when no user configuration exists.
 const char *CONFIG_TEMPLATE = R"([dock]
 # Monitor used by the dock.
 # Empty uses default: primary

@@ -18,9 +18,9 @@
 namespace
 {
 
-constexpr unsigned int MONITOR_SAMPLE_INTERVAL_MS = 300;
-constexpr int REQUIRED_STABLE_SAMPLES = 2;
-constexpr int MAX_SAMPLE_ATTEMPTS = 7;
+constexpr unsigned int MONITOR_SAMPLE_INTERVAL_MS = 300; // Delay between monitor samples
+constexpr int REQUIRED_STABLE_SAMPLES = 2; // Matching samples required before applying
+constexpr int MAX_SAMPLE_ATTEMPTS = 7; // Maximum attempts before accepting a sample
 
 struct KdeOutput
 {

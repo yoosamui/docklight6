@@ -19,7 +19,7 @@
 namespace
 {
 
-constexpr char INTROSPECTION_XML[] =
+constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "<node>"
     "  <interface name='org.docklight6.WindowIntegration1'>"
     "    <method name='Ping'>"
@@ -112,20 +112,20 @@ constexpr char INTROSPECTION_XML[] =
 
 const std::string PROTOCOL_VERSION_TEXT =
     std::to_string(
-        KWinIntegrationProtocol::VERSION);
+        KWinIntegrationProtocol::VERSION); // Protocol version formatted for string messages
 
 constexpr guint32 DBUS_NAME_FLAG_DO_NOT_QUEUE =
-    4;
+    4; // D-Bus flag that rejects queued name ownership
 constexpr guint32 DBUS_REQUEST_NAME_PRIMARY_OWNER =
-    1;
+    1; // D-Bus result for newly acquired ownership
 constexpr guint32 DBUS_REQUEST_NAME_ALREADY_OWNER =
-    4;
+    4; // D-Bus result for existing ownership
 constexpr char MINIMIZE_EFFECT_ID[] =
-    "org.docklight6.minimize";
+    "org.docklight6.minimize"; // DockLight KWin minimize-effect ID
 constexpr char MINIMIZE_EFFECT_GROUP[] =
-    "Effect-org.docklight6.minimize";
+    "Effect-org.docklight6.minimize"; // KWin configuration group for the effect
 constexpr guint EFFECT_GEOMETRY_UPDATE_DELAY_MS =
-    50;
+    50; // Delay used to coalesce effect geometry updates
 
 bool minimize_effect_is_installed()
 {
@@ -758,7 +758,7 @@ bool KWinIntegrationService::enqueue_command(
     const KWinWindowCommand &command)
 {
     constexpr std::size_t maximum_commands =
-        64;
+        64; // Maximum queued KWin commands
 
     if (m_sender.empty() ||
         m_commands.size() >=

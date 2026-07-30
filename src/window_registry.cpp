@@ -10,9 +10,9 @@ namespace
 bool has_desktop_suffix(
     const std::string &value)
 {
-    constexpr char suffix[] = ".desktop";
+    constexpr char suffix[] = ".desktop"; // Desktop-entry filename suffix
     constexpr std::size_t suffix_length =
-        sizeof(suffix) - 1;
+        sizeof(suffix) - 1; // Suffix length without the null terminator
 
     return value.size() >= suffix_length &&
            value.compare(

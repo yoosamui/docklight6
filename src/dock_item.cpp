@@ -18,25 +18,25 @@
 namespace
 {
 
-    constexpr int ZOOM_FRAME_COUNT = 9;
-    constexpr unsigned int ZOOM_FRAME_INTERVAL_MS = 16;
-    constexpr int BLUR_FRAME_COUNT = 9;
-    constexpr unsigned int BLUR_FRAME_INTERVAL_MS = 16;
-    constexpr int BLUR_OUTER_RED = 105;
-    constexpr int BLUR_OUTER_GREEN = 170;
-    constexpr int BLUR_OUTER_BLUE = 255;
-    constexpr int BLUR_INNER_RED = 235;
-    constexpr int BLUR_INNER_GREEN = 245;
-    constexpr int BLUR_INNER_BLUE = 255;
-    constexpr int BLUR_OUTER_MAX_ALPHA = 225;
-    constexpr int BLUR_INNER_MAX_ALPHA = 190;
-    constexpr int CONTEXT_MENU_ICON_SIZE = 20;
-    constexpr int CONTEXT_MENU_TITLE_WIDTH = 48;
+    constexpr int ZOOM_FRAME_COUNT = 9; // Frames in a complete zoom transition
+    constexpr unsigned int ZOOM_FRAME_INTERVAL_MS = 16; // Delay between zoom frames
+    constexpr int BLUR_FRAME_COUNT = 9; // Frames in a complete blur transition
+    constexpr unsigned int BLUR_FRAME_INTERVAL_MS = 16; // Delay between blur frames
+    constexpr int BLUR_OUTER_RED = 105; // Outer glow red channel
+    constexpr int BLUR_OUTER_GREEN = 170; // Outer glow green channel
+    constexpr int BLUR_OUTER_BLUE = 255; // Outer glow blue channel
+    constexpr int BLUR_INNER_RED = 235; // Inner glow red channel
+    constexpr int BLUR_INNER_GREEN = 245; // Inner glow green channel
+    constexpr int BLUR_INNER_BLUE = 255; // Inner glow blue channel
+    constexpr int BLUR_OUTER_MAX_ALPHA = 225; // Maximum outer glow opacity
+    constexpr int BLUR_INNER_MAX_ALPHA = 190; // Maximum inner glow opacity
+    constexpr int CONTEXT_MENU_ICON_SIZE = 20; // Window icon size in menu rows
+    constexpr int CONTEXT_MENU_TITLE_WIDTH = 48; // Maximum menu title width in characters
     constexpr double INDICATOR_THICKNESS = 2.0;  // Line height
-    constexpr double INDICATOR_LINE_INSET = 1.0; // Shortens 2 px on each side
-    constexpr double INDICATOR_DOT_RADIUS = 2.0;
-    constexpr double INDICATOR_DOT_GAP = 6.0;
-    constexpr double INDICATOR_PI = 3.14159265358979323846;
+    constexpr double INDICATOR_LINE_INSET = 1.0; // Shortens 1 px on each side
+    constexpr double INDICATOR_DOT_RADIUS = 2.0; // Dot radius in pixels
+    constexpr double INDICATOR_DOT_GAP = 6.0; // Space between paired dots
+    constexpr double INDICATOR_PI = 3.14159265358979323846; // Circle angle calculation
 
     void keep_dialog_above(
         Gtk::Window &dialog,
@@ -203,7 +203,7 @@ namespace
         // Desktop action identifiers are chosen by each application.
         // Prefer the widely used freedesktop-style spelling, while also
         // supporting identifiers used by Firefox and Visual Studio Code.
-        constexpr const char *candidates[] = {
+        constexpr const char *candidates[] = { // Known desktop new-window action IDs
             "new-window",
             "NewWindow",
             "new-empty-window"};

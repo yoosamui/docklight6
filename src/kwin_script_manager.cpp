@@ -9,19 +9,19 @@ namespace
 {
 
 constexpr char KWIN_SERVICE[] =
-    "org.kde.KWin";
+    "org.kde.KWin"; // KWin D-Bus service
 constexpr char SCRIPTING_OBJECT_PATH[] =
-    "/Scripting";
+    "/Scripting"; // KWin scripting D-Bus object path
 constexpr char SCRIPTING_INTERFACE[] =
-    "org.kde.kwin.Scripting";
+    "org.kde.kwin.Scripting"; // KWin scripting D-Bus interface
 constexpr char SCRIPT_ID[] =
-    "org.docklight6.windowintegration";
+    "org.docklight6.windowintegration"; // Installed DockLight KWin script ID
 constexpr char SCRIPT_RELATIVE_PATH[] =
     "kwin/scripts/"
     "org.docklight6.windowintegration/"
-    "contents/code/main.js";
+    "contents/code/main.js"; // KWin script path below a data directory
 constexpr int DBUS_TIMEOUT_MILLISECONDS =
-    2000;
+    2000; // KWin D-Bus call timeout
 
 GVariant *call_scripting_method(
     GDBusConnection *connection,

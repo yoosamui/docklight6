@@ -9,19 +9,19 @@ namespace
 {
 
 constexpr char PLASMA_SERVICE[] =
-    "org.kde.plasmashell";
+    "org.kde.plasmashell"; // Plasma Shell D-Bus service
 constexpr char PLASMA_OBJECT_PATH[] =
-    "/PlasmaShell";
+    "/PlasmaShell"; // Plasma Shell D-Bus object path
 constexpr char PLASMA_INTERFACE[] =
-    "org.kde.PlasmaShell";
+    "org.kde.PlasmaShell"; // Plasma Shell D-Bus interface
 constexpr char BRIDGE_METADATA_RELATIVE_PATH[] =
     "plasma/plasmoids/"
     "org.docklight6.geometrybridge/"
-    "metadata.json";
+    "metadata.json"; // Installed geometry-bridge metadata path
 constexpr char ENSURE_SCRIPT_NAME[] =
-    "ensure-geometry-bridge.js";
+    "ensure-geometry-bridge.js"; // Geometry-bridge repair script filename
 constexpr int DBUS_TIMEOUT_MILLISECONDS =
-    3000;
+    3000; // Plasma D-Bus call timeout
 
 std::string file_path_if_regular(
     const std::string &path)
