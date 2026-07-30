@@ -1528,12 +1528,13 @@ void DockItem::rebuild_window_menu_items()
     {
         auto item =
             std::make_unique<
-                Gtk::MenuItem>();
+                Gtk::ImageMenuItem>();
 
         item->set_halign(
             Gtk::ALIGN_FILL);
         item->set_valign(
             Gtk::ALIGN_CENTER);
+        item->set_hexpand(true);
 
         auto row =
             Gtk::manage(
@@ -1545,6 +1546,7 @@ void DockItem::rebuild_window_menu_items()
             Gtk::ALIGN_FILL);
         row->set_valign(
             Gtk::ALIGN_CENTER);
+        row->set_hexpand(true);
 
         auto icon =
             Gtk::manage(
@@ -1565,6 +1567,10 @@ void DockItem::rebuild_window_menu_items()
         if (pixbuf)
             icon->set(pixbuf);
 
+        item->set_image(*icon);
+        item->set_always_show_image(
+            true);
+
         auto window_label =
             Gtk::manage(
                 new Gtk::Label(
@@ -1577,17 +1583,13 @@ void DockItem::rebuild_window_menu_items()
             Gtk::ALIGN_FILL);
         window_label->set_valign(
             Gtk::ALIGN_CENTER);
+        window_label->set_hexpand(true);
         window_label->set_xalign(0.0F);
         window_label->set_yalign(0.5F);
         window_label->set_ellipsize(
             Pango::ELLIPSIZE_END);
         window_label->set_max_width_chars(
             CONTEXT_MENU_TITLE_WIDTH);
-
-        row->pack_start(
-            *icon,
-            false,
-            false);
 
         if (!entry.on_current_desktop &&
             !entry.desktop_numbers.empty())
