@@ -166,6 +166,17 @@
             window.desktopFileName || "");
     }
 
+    function applicationId(window) {
+        if (!window)
+            return "";
+
+        return String(
+            window.desktopFileName ||
+            window.resourceClass ||
+            window.resourceName ||
+            "");
+    }
+
     function maximized(window) {
         if (typeof window.maximized ===
             "boolean") {
@@ -203,8 +214,7 @@
         const payload =
             encodedList([
                 windowId(window),
-                String(
-                    window.desktopFileName || ""),
+                applicationId(window),
                 String(window.caption || ""),
                 iconName(window),
                 integerText(window.pid),
@@ -560,6 +570,12 @@
             publish);
         connectSignal(
             window.desktopFileNameChanged,
+            publish);
+        connectSignal(
+            window.resourceClassChanged,
+            publish);
+        connectSignal(
+            window.resourceNameChanged,
             publish);
         connectSignal(
             window.stackingOrderChanged,

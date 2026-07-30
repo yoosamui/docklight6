@@ -79,6 +79,10 @@ function createWindow(
             new Signal(),
         desktopFileNameChanged:
             new Signal(),
+        resourceClassChanged:
+            new Signal(),
+        resourceNameChanged:
+            new Signal(),
         stackingOrderChanged:
             new Signal(),
         closeWindow() {
@@ -302,6 +306,41 @@ assert.deepStrictEqual(
         800,
         600
     ]);
+
+const vlcWindow =
+    createWindow(
+        "vlc-window",
+        "");
+
+vlcWindow.resourceClass = "vlc";
+workspace.stackingOrder.push(
+    vlcWindow);
+workspace.windowAdded.emit(
+    vlcWindow);
+
+const vlcUpdate =
+    calls
+        .filter(
+            call =>
+                call.methodName ===
+                "PublishWindow")
+        .at(-1);
+
+assert.strictEqual(
+    vlcUpdate.methodName,
+    "PublishWindow");
+assert.strictEqual(
+    vlcUpdate.arguments[1]
+        .split(",")
+        .map(decodeURIComponent)[1],
+    "vlc");
+
+workspace.stackingOrder =
+    workspace.stackingOrder.filter(
+        window =>
+            window !== vlcWindow);
+workspace.windowRemoved.emit(
+    vlcWindow);
 
 const dockGeometryCount =
     calls.filter(
