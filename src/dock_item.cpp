@@ -3809,10 +3809,11 @@ void DockHomeItem::open_settings()
 
 void DockHomeItem::show_about()
 {
-    Gtk::AboutDialog dialog;
+    Gtk::Dialog dialog(
+        "About DockLight",
+        m_dock,
+        true);
 
-    dialog.set_transient_for(m_dock);
-    dialog.set_modal(true);
     dialog.set_type_hint(
         Gdk::WINDOW_TYPE_HINT_DIALOG);
     keep_dialog_above(
@@ -3827,16 +3828,12 @@ void DockHomeItem::show_about()
     dialog.set_skip_pager_hint(true);
     dialog.set_position(
         Gtk::WIN_POS_CENTER_ON_PARENT);
-    dialog.set_program_name(
-        "Docklight 6.0");
-    dialog.set_version(VERSION);
-    dialog.set_comments(
-        "A lightweight application dock.\n"
-        "Author/Maintener: yoosamui");
-    dialog.set_website(
-        "https://github.com/yoosamui/DockLight");
-    dialog.set_website_label(
-        "yoosamui/DockLight");
+    dialog.set_default_size(
+        600,
+        -1);
+    dialog.set_size_request(
+        600,
+        -1);
 
     Gtk::HeaderBar header;
     Gtk::Image header_icon;
@@ -3849,7 +3846,6 @@ void DockHomeItem::show_about()
 
     if (m_source_icon)
     {
-        dialog.set_logo(m_source_icon);
         dialog.set_icon(m_source_icon);
 
         const auto small_home_icon =
@@ -3868,6 +3864,79 @@ void DockHomeItem::show_about()
     }
 
     dialog.set_titlebar(header);
+
+    dialog.add_button(
+        "_Close",
+        Gtk::RESPONSE_CLOSE);
+
+    Gtk::Box about_content(
+        Gtk::ORIENTATION_VERTICAL,
+        10);
+    Gtk::Image logo;
+    Gtk::Label program_name;
+    Gtk::Label version(
+        std::string("Version ") +
+        VERSION);
+    Gtk::Label comments(
+        "A lightweight application dock.\n"
+        "Author/Maintener: yoosamui");
+    Gtk::LinkButton website(
+        "https://github.com/yoosamui/DockLight",
+        "yoosamui/DockLight");
+
+    about_content.set_border_width(20);
+
+    if (m_source_icon)
+    {
+        const auto logo_pixbuf =
+            m_source_icon->scale_simple(
+                96,
+                96,
+                Gdk::INTERP_BILINEAR);
+
+        if (logo_pixbuf)
+            logo.set(logo_pixbuf);
+    }
+
+    program_name.set_markup(
+        "<span size=\"xx-large\" "
+        "weight=\"bold\">Docklight 6.0</span>");
+    program_name.set_justify(
+        Gtk::JUSTIFY_CENTER);
+    version.set_justify(
+        Gtk::JUSTIFY_CENTER);
+    comments.set_justify(
+        Gtk::JUSTIFY_CENTER);
+    website.set_halign(
+        Gtk::ALIGN_CENTER);
+
+    about_content.pack_start(
+        logo,
+        false,
+        false);
+    about_content.pack_start(
+        program_name,
+        false,
+        false);
+    about_content.pack_start(
+        version,
+        false,
+        false);
+    about_content.pack_start(
+        comments,
+        false,
+        false);
+    about_content.pack_start(
+        website,
+        false,
+        false);
+
+    dialog.get_content_area()
+        ->pack_start(
+            about_content,
+            true,
+            true);
+
     dialog.show_all_children();
     dialog.present();
     dialog.run();
