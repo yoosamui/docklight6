@@ -3,6 +3,7 @@ bin_PROGRAMS = docklight6
 check_PROGRAMS = \
     dock_application_controller_test \
     dock_configuration_manager_test \
+    launcher_manager_test \
     window_registry_test \
     kwin_window_backend_test \
     kwin_integration_service_test
@@ -102,6 +103,17 @@ dock_configuration_manager_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)
 
 dock_configuration_manager_test_LDADD = \
+    $(GTKMM_LIBS)
+
+launcher_manager_test_SOURCES = \
+    tests/launcher_manager_test.cpp \
+    launcher_manager.h \
+    launcher_manager.cpp
+
+launcher_manager_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+launcher_manager_test_LDADD = \
     $(GTKMM_LIBS)
 
 window_registry_test_SOURCES = \

@@ -6,6 +6,7 @@
 #include "dock_layout_types.h"
 #include "dock_tooltip_window.h"
 #include "dock_window_geometry.h"
+#include "launcher_manager.h"
 
 #include <gdkmm/monitor.h>
 #include <gtkmm/box.h>
@@ -34,6 +35,9 @@ public:
     void schedule_show_tooltip(DockItem &item);
     void schedule_hide_tooltip();
     void hide_tooltip_immediately();
+    bool set_item_attached(
+        DockItem &item,
+        bool attached);
     DockLocation location() const;
 
 private:
@@ -45,6 +49,11 @@ private:
     void apply_visual_style();
     void apply_main_axis_end_margins(
         DockOrientation orientation);
+    void synchronize_dock_items();
+    void schedule_dock_item_sync();
+    Glib::RefPtr<Gio::AppInfo>
+    application_for_running(
+        const std::string &desktop_id) const;
     std::vector<DockItem *> dock_items();
     DockWindowGeometry content_geometry() const;
 
@@ -75,5 +84,15 @@ private:
     WindowRegistry *m_window_registry =
         nullptr;
 
+    LauncherManager m_launcher_manager;
+    sigc::connection m_dock_item_sync;
+
+    std::vector<std::string>
+        m_synchronized_attached_ids;
+    std::vector<std::string>
+        m_synchronized_running_ids;
+
     std::unique_ptr<DockWindowController> m_controller;
+
+    bool m_has_synchronized_items = false;
 };

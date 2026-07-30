@@ -4,11 +4,16 @@
 #include "dock_layout_metrics.h"
 #include "dock_window_controller.h"
 #include "launcher_manager.h"
+#include "running_application.h"
+#include "window_registry.h"
 
 #include <gtk-layer-shell.h>
 
 #include <algorithm>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 DockWindow::DockWindow(
     const DockConfiguration &configuration,
@@ -122,7 +127,10 @@ DockWindow::DockWindow(
     m_controller->initialize();
 }
 
-DockWindow::~DockWindow() = default;
+DockWindow::~DockWindow()
+{
+    m_dock_item_sync.disconnect();
+}
 
 void DockWindow::apply_configuration(
     const DockConfiguration &configuration)
@@ -153,6 +161,31 @@ void DockWindow::schedule_hide_tooltip()
 void DockWindow::hide_tooltip_immediately()
 {
     m_controller->hide_tooltip_immediately();
+}
+
+bool DockWindow::set_item_attached(
+    DockItem &item,
+    bool attached)
+{
+    if (!m_launcher_manager
+             .set_attached(
+                 item.desktop_id(),
+                 attached))
+    {
+        return false;
+    }
+
+    item.set_attached(attached);
+    schedule_dock_item_sync();
+
+    g_message(
+        "%s launcher %s",
+        attached
+            ? "Attached"
+            : "Detached",
+        item.desktop_id().c_str());
+
+    return true;
 }
 
 DockLocation DockWindow::location() const
@@ -434,15 +467,441 @@ DockWindow::dock_items()
     return items;
 }
 
+Glib::RefPtr<Gio::AppInfo>
+DockWindow::application_for_running(
+    const std::string &desktop_id) const
+{
+    auto app =
+        m_launcher_manager
+            .find_application(
+                desktop_id);
+
+    if (app)
+        return app;
+
+    std::string display_name =
+        desktop_id;
+
+    if (m_window_registry)
+    {
+        const auto normalized_id =
+            LauncherManager::
+                normalize_desktop_id(
+                    desktop_id);
+
+        const auto window =
+            std::find_if(
+                m_window_registry
+                    ->windows()
+                    .begin(),
+                m_window_registry
+                    ->windows()
+                    .end(),
+                [&normalized_id](
+                    const ManagedWindow
+                        &candidate)
+                {
+                    return LauncherManager::
+                               normalize_desktop_id(
+                                   candidate
+                                       .desktop_file_name) ==
+                           normalized_id;
+                });
+
+        if (window !=
+                m_window_registry
+                    ->windows()
+                    .end() &&
+            !window->caption.empty())
+        {
+            display_name =
+                window->caption;
+        }
+    }
+
+    auto command =
+        LauncherManager::
+            normalize_desktop_id(
+                desktop_id);
+
+    constexpr char suffix[] =
+        ".desktop"; // Desktop-entry filename suffix
+
+    if (command.size() >=
+        sizeof(suffix) - 1)
+    {
+        command.erase(
+            command.size() -
+            (sizeof(suffix) - 1));
+    }
+
+    try
+    {
+        return Gio::AppInfo::
+            create_from_commandline(
+                command,
+                display_name,
+                Gio::APP_INFO_CREATE_NONE);
+    }
+    catch (const Glib::Error &error)
+    {
+        g_warning(
+            "Cannot create a dock item for running application '%s': %s",
+            desktop_id.c_str(),
+            error.what().c_str());
+        return {};
+    }
+}
+
+void DockWindow::schedule_dock_item_sync()
+{
+    if (m_dock_item_sync.connected())
+        return;
+
+    m_dock_item_sync =
+        Glib::signal_idle().connect(
+            [this]()
+            {
+                synchronize_dock_items();
+                return false;
+            });
+}
+
+void DockWindow::synchronize_dock_items()
+{
+    struct DesiredItem
+    {
+        std::string desktop_id;
+        Glib::RefPtr<Gio::AppInfo> app;
+        bool attached = false;
+    };
+
+    std::vector<DesiredItem> desired_items;
+
+    const auto attached_ids =
+        m_launcher_manager
+            .attached_ids();
+
+    std::vector<std::string>
+        normalized_attached_ids;
+    std::vector<std::string>
+        normalized_running_ids;
+
+    for (const auto &desktop_id :
+         attached_ids)
+    {
+        normalized_attached_ids
+            .push_back(
+                LauncherManager::
+                    normalize_desktop_id(
+                        desktop_id));
+    }
+
+    if (m_window_registry)
+    {
+        for (const auto &running :
+             m_window_registry
+                 ->running_applications())
+        {
+            normalized_running_ids
+                .push_back(
+                    LauncherManager::
+                        normalize_desktop_id(
+                            running
+                                .desktop_file_name));
+        }
+    }
+
+    std::sort(
+        normalized_running_ids.begin(),
+        normalized_running_ids.end());
+
+    normalized_running_ids.erase(
+        std::unique(
+            normalized_running_ids.begin(),
+            normalized_running_ids.end()),
+        normalized_running_ids.end());
+
+    if (m_has_synchronized_items &&
+        normalized_attached_ids ==
+            m_synchronized_attached_ids &&
+        normalized_running_ids ==
+            m_synchronized_running_ids)
+    {
+        return;
+    }
+
+    m_synchronized_attached_ids =
+        normalized_attached_ids;
+    m_synchronized_running_ids =
+        normalized_running_ids;
+    m_has_synchronized_items = true;
+
+    const int maximum_items =
+        std::max(
+            0,
+            DockConstants::MAX_DOCK_ITEMS -
+                1);
+
+    for (const auto &desktop_id :
+         attached_ids)
+    {
+        if (static_cast<int>(
+                desired_items.size()) >=
+            maximum_items)
+        {
+            break;
+        }
+
+        auto app =
+            m_launcher_manager
+                .find_application(
+                    desktop_id);
+
+        const auto normalized_id =
+            LauncherManager::
+                normalize_desktop_id(
+                    desktop_id);
+
+        if (!app &&
+            std::binary_search(
+                normalized_running_ids
+                    .begin(),
+                normalized_running_ids
+                    .end(),
+                normalized_id))
+        {
+            app =
+                application_for_running(
+                    desktop_id);
+        }
+
+        if (!app)
+        {
+            g_warning(
+                "Attached launcher '%s' is not installed",
+                desktop_id.c_str());
+            continue;
+        }
+
+        desired_items.push_back(
+            {desktop_id,
+             std::move(app),
+             true});
+    }
+
+    const auto current_items =
+        dock_items();
+
+    for (auto *item : current_items)
+    {
+        if (static_cast<int>(
+                desired_items.size()) >=
+            maximum_items)
+        {
+            break;
+        }
+
+        const auto normalized_id =
+            LauncherManager::
+                normalize_desktop_id(
+                    item->desktop_id());
+
+        const bool running =
+            std::binary_search(
+                normalized_running_ids
+                    .begin(),
+                normalized_running_ids
+                    .end(),
+                normalized_id);
+
+        const bool already_present =
+            std::any_of(
+                desired_items.begin(),
+                desired_items.end(),
+                [&normalized_id](
+                    const DesiredItem
+                        &candidate)
+                {
+                    return LauncherManager::
+                               normalize_desktop_id(
+                                   candidate
+                                       .desktop_id) ==
+                           normalized_id;
+                });
+
+        if (running &&
+            !already_present)
+        {
+            desired_items.push_back(
+                {item->desktop_id(),
+                 {},
+                 false});
+        }
+    }
+
+    if (m_window_registry)
+    {
+        for (const auto &running :
+             m_window_registry
+                 ->running_applications())
+        {
+            if (static_cast<int>(
+                    desired_items.size()) >=
+                maximum_items)
+            {
+                break;
+            }
+
+            const auto normalized_id =
+                LauncherManager::
+                    normalize_desktop_id(
+                        running
+                            .desktop_file_name);
+
+            const bool already_present =
+                std::any_of(
+                    desired_items.begin(),
+                    desired_items.end(),
+                    [&normalized_id](
+                        const DesiredItem
+                            &candidate)
+                    {
+                        return LauncherManager::
+                                   normalize_desktop_id(
+                                       candidate
+                                           .desktop_id) ==
+                               normalized_id;
+                    });
+
+            if (already_present)
+                continue;
+
+            auto app =
+                application_for_running(
+                    running
+                        .desktop_file_name);
+
+            if (!app)
+                continue;
+
+            desired_items.push_back(
+                {running.desktop_file_name,
+                 std::move(app),
+                 false});
+        }
+    }
+
+    auto existing_items =
+        dock_items();
+
+    std::vector<DockItem *>
+        ordered_items;
+
+    for (const auto &desired :
+         desired_items)
+    {
+        const auto normalized_id =
+            LauncherManager::
+                normalize_desktop_id(
+                    desired.desktop_id);
+
+        const auto existing =
+            std::find_if(
+                existing_items.begin(),
+                existing_items.end(),
+                [&normalized_id](
+                    DockItem *item)
+                {
+                    return LauncherManager::
+                               normalize_desktop_id(
+                                   item
+                                       ->desktop_id()) ==
+                           normalized_id;
+                });
+
+        DockItem *item = nullptr;
+
+        if (existing !=
+            existing_items.end())
+        {
+            item = *existing;
+            existing_items.erase(
+                existing);
+            item->set_attached(
+                desired.attached);
+        }
+        else
+        {
+            auto app = desired.app;
+
+            if (!app)
+            {
+                app =
+                    application_for_running(
+                        desired.desktop_id);
+            }
+
+            if (!app)
+                continue;
+
+            item =
+                Gtk::manage(
+                    new DockItem(
+                        *this,
+                        app,
+                        desired.desktop_id,
+                        desired.attached,
+                        m_window_registry,
+                        m_effective_icon_size > 0
+                            ? m_effective_icon_size
+                            : m_controller
+                                  ->settings()
+                                  .icon_size(),
+                        m_controller
+                            ->settings()
+                            .hover_effect(),
+                        m_controller
+                            ->settings()
+                            .indicator(),
+                        m_controller
+                            ->settings()
+                            .indicator_color()));
+
+            m_dock_box.pack_start(
+                *item,
+                Gtk::PACK_SHRINK);
+            item->show();
+        }
+
+        ordered_items.push_back(item);
+    }
+
+    if (!existing_items.empty())
+        hide_tooltip_immediately();
+
+    for (auto *item : existing_items)
+        m_dock_box.remove(*item);
+
+    int position = 2;
+
+    for (auto *item : ordered_items)
+    {
+        m_dock_box.reorder_child(
+            *item,
+            position++);
+    }
+
+    m_dock_box.reorder_child(
+        m_trailing_margin,
+        -1);
+
+    if (m_effective_icon_size > 0)
+        apply_visual_style();
+}
+
 void DockWindow::create_dock()
 {
-    LauncherManager manager;
-
-    auto apps =
-        manager.load_applications();
-
-    int count = 0;
-
     m_dock_box.pack_start(
         m_leading_margin,
         Gtk::PACK_SHRINK);
@@ -463,47 +922,12 @@ void DockWindow::create_dock()
         *m_home_item,
         Gtk::PACK_SHRINK);
 
-    ++count;
-
-    for (const auto &launcher : apps)
-    {
-        if (count >=
-            DockConstants::MAX_DOCK_ITEMS)
-        {
-            break;
-        }
-
-        auto item =
-            Gtk::manage(
-                new DockItem(
-                    *this,
-                    launcher.app,
-                    m_window_registry,
-                    m_controller
-                        ->settings()
-                        .icon_size(),
-                    m_controller
-                        ->settings()
-                        .hover_effect(),
-                    m_controller
-                        ->settings()
-                        .indicator(),
-                    m_controller
-                        ->settings()
-                        .indicator_color()));
-
-        m_dock_box.pack_start(
-            *item,
-            Gtk::PACK_SHRINK);
-
-        ++count;
-    }
-
     m_dock_box.pack_start(
         m_trailing_margin,
         Gtk::PACK_SHRINK);
 
     add(m_dock_box);
+    synchronize_dock_items();
     m_dock_box.show_all();
 
     if (!m_controller

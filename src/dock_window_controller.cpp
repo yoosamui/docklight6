@@ -80,6 +80,9 @@ void DockWindowController::initialize()
                 .connect(
                     [this]()
                     {
+                        m_window
+                            .synchronize_dock_items();
+
                         for (auto *item :
                              m_window
                                  .dock_items())

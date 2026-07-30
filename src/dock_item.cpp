@@ -108,7 +108,8 @@ namespace
 
     std::vector<std::string>
     application_identifiers(
-        const Glib::RefPtr<Gio::AppInfo> &app)
+        const Glib::RefPtr<Gio::AppInfo> &app,
+        const std::string &desktop_id)
     {
         std::vector<std::string> identifiers;
 
@@ -132,6 +133,7 @@ namespace
             identifiers.push_back(identifier);
         };
 
+        add_identifier(desktop_id);
         add_identifier(app->get_id());
         add_identifier(app->get_executable());
 
@@ -436,6 +438,8 @@ namespace
 DockItem::DockItem(
     DockWindow &dock,
     Glib::RefPtr<Gio::AppInfo> app,
+    const std::string &desktop_id,
+    bool attached,
     WindowRegistry *window_registry,
     int icon_size,
     DockHoverEffect hover_effect,
@@ -444,11 +448,15 @@ DockItem::DockItem(
         &indicator_color)
     : m_dock(dock),
       m_app(app),
+      m_desktop_id(desktop_id),
       m_application_controller(
           window_registry,
-          application_identifiers(app)),
+          application_identifiers(
+              app,
+              desktop_id)),
       m_hover_effect(hover_effect),
       m_indicator(indicator),
+      m_attached(attached),
       m_single_main_window(
           has_single_main_window(app))
 {
@@ -483,6 +491,8 @@ DockItem::DockItem(
             &DockItem::draw_indicator),
         true);
 
+    m_attach_item.set_active(
+        m_attached);
     initialize_context_menu();
     set_icon_size(icon_size);
     refresh_indicator();
@@ -608,6 +618,23 @@ void DockItem::set_indicator_color(
 
     m_indicator_color = parsed;
     queue_draw();
+}
+
+void DockItem::set_attached(
+    bool attached)
+{
+    m_attached = attached;
+
+    if (m_attach_item.get_active() ==
+        attached)
+    {
+        return;
+    }
+
+    m_updating_attach_state = true;
+    m_attach_item.set_active(
+        attached);
+    m_updating_attach_state = false;
 }
 
 void DockItem::refresh_indicator()
@@ -803,6 +830,26 @@ void DockItem::reload_icon()
                 icon,
                 m_icon_size,
                 Gtk::ICON_LOOKUP_USE_BUILTIN);
+    }
+
+    if (!icon_info)
+    {
+        for (const auto &entry :
+             m_application_controller
+                 .window_entries())
+        {
+            if (entry.icon_name.empty())
+                continue;
+
+            icon_info =
+                icon_theme->lookup_icon(
+                    entry.icon_name,
+                    m_icon_size,
+                    Gtk::ICON_LOOKUP_USE_BUILTIN);
+
+            if (icon_info)
+                break;
+        }
     }
 
     if (!icon_info)
@@ -1101,12 +1148,25 @@ void DockItem::initialize_context_menu()
         m_close_all_item);
 
     m_attach_item
-        .signal_activate()
+        .signal_toggled()
         .connect(
             [this]()
             {
-                log_context_action(
-                    "Attach");
+                if (m_updating_attach_state)
+                    return;
+
+                const bool requested =
+                    m_attach_item
+                        .get_active();
+
+                if (!m_dock
+                         .set_item_attached(
+                             *this,
+                             requested))
+                {
+                    set_attached(
+                        m_attached);
+                }
             });
 
     m_open_new_window_item

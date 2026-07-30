@@ -18,6 +18,8 @@ public:
     DockItem(
         DockWindow &dock,
         Glib::RefPtr<Gio::AppInfo> app,
+        const std::string &desktop_id,
+        bool attached,
         WindowRegistry *window_registry,
         int icon_size,
         DockHoverEffect hover_effect,
@@ -38,11 +40,20 @@ public:
         int corner_radius);
     void reload_icon();
     void set_vertical(bool vertical);
+    void set_attached(bool attached);
     void publish_icon_geometry(
         const WindowIconGeometry &geometry);
     ItemGeometry icon_geometry();
 
     Glib::ustring app_name() const;
+    const std::string &desktop_id() const
+    {
+        return m_desktop_id;
+    }
+    bool attached() const
+    {
+        return m_attached;
+    }
 
 public:
     DockWindow &dock()
@@ -101,6 +112,7 @@ private:
     DockWindow &m_dock;
 
     Glib::RefPtr<Gio::AppInfo> m_app;
+    std::string m_desktop_id;
     Glib::RefPtr<Gdk::Pixbuf> m_icon_pixbuf;
     Glib::RefPtr<Gdk::Pixbuf> m_hover_pixbuf;
     Glib::RefPtr<Gtk::CssProvider> m_context_menu_css;
@@ -151,6 +163,8 @@ private:
     std::size_t m_indicator_window_count = 0;
 
     bool m_hovered = false;
+    bool m_attached = false;
+    bool m_updating_attach_state = false;
     bool m_single_main_window = false;
 };
 
