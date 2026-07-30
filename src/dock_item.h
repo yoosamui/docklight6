@@ -135,6 +135,8 @@ private:
     Glib::RefPtr<Gdk::Pixbuf>
     context_menu_window_icon(
         const std::string &icon_name) const;
+    Glib::RefPtr<Gdk::Pixbuf>
+    context_menu_minimized_icon() const;
 
     Glib::RefPtr<Gdk::Pixbuf>
     create_standard_hover_pixbuf(
@@ -174,6 +176,8 @@ private:
     std::vector<
         std::unique_ptr<Gtk::MenuItem>>
         m_window_menu_items;
+    std::vector<WindowId>
+        m_window_menu_order;
 
     sigc::connection m_zoom_animation;
     sigc::connection m_blur_animation;

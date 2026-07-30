@@ -1517,14 +1517,75 @@ void DockItem::rebuild_window_menu_items()
 
     m_window_menu_items.clear();
 
-    const auto entries =
+    auto entries =
         m_application_controller
             .window_entries();
+
+    m_window_menu_order.erase(
+        std::remove_if(
+            m_window_menu_order.begin(),
+            m_window_menu_order.end(),
+            [&entries](
+                const WindowId &window_id)
+            {
+                return std::none_of(
+                    entries.begin(),
+                    entries.end(),
+                    [&window_id](
+                        const ApplicationWindowEntry
+                            &entry)
+                    {
+                        return entry.id ==
+                               window_id;
+                    });
+            }),
+        m_window_menu_order.end());
+
+    for (const auto &entry : entries)
+    {
+        if (std::find(
+                m_window_menu_order.begin(),
+                m_window_menu_order.end(),
+                entry.id) ==
+            m_window_menu_order.end())
+        {
+            m_window_menu_order.push_back(
+                entry.id);
+        }
+    }
+
+    std::vector<ApplicationWindowEntry>
+        ordered_entries;
+
+    ordered_entries.reserve(
+        entries.size());
+
+    for (const auto &window_id :
+         m_window_menu_order)
+    {
+        const auto entry =
+            std::find_if(
+                entries.begin(),
+                entries.end(),
+                [&window_id](
+                    const ApplicationWindowEntry
+                        &candidate)
+                {
+                    return candidate.id ==
+                           window_id;
+                });
+
+        if (entry != entries.end())
+        {
+            ordered_entries.push_back(
+                std::move(*entry));
+        }
+    }
 
     int position = 0;
 
     for (const auto &entry :
-         entries)
+         ordered_entries)
     {
         auto item =
             std::make_unique<
@@ -1561,8 +1622,10 @@ void DockItem::rebuild_window_menu_items()
             CONTEXT_MENU_ICON_SIZE);
 
         const auto pixbuf =
-            context_menu_window_icon(
-                entry.icon_name);
+            entry.minimized
+                ? context_menu_minimized_icon()
+                : context_menu_window_icon(
+                      entry.icon_name);
 
         if (pixbuf)
             icon->set(pixbuf);
@@ -1841,6 +1904,41 @@ DockItem::context_menu_window_icon(
                 m_icon_pixbuf->get_height() *
                 scale)),
         Gdk::INTERP_BILINEAR);
+}
+
+Glib::RefPtr<Gdk::Pixbuf>
+DockItem::context_menu_minimized_icon() const
+{
+    const auto icon_theme =
+        Gtk::IconTheme::get_default();
+
+    if (!icon_theme)
+        return {};
+
+    constexpr const char *icon_names[] = {
+        "view-hidden",
+        "object-hidden-symbolic"};
+
+    for (const auto *icon_name :
+         icon_names)
+    {
+        try
+        {
+            const auto icon =
+                icon_theme->load_icon(
+                    icon_name,
+                    CONTEXT_MENU_ICON_SIZE,
+                    Gtk::ICON_LOOKUP_USE_BUILTIN);
+
+            if (icon)
+                return icon;
+        }
+        catch (const Glib::Error &)
+        {
+        }
+    }
+
+    return {};
 }
 
 void DockItem::launch_application()
