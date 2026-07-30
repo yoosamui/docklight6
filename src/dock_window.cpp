@@ -887,19 +887,11 @@ void DockWindow::synchronize_dock_items()
     for (const auto &desktop_id :
          attached_ids)
     {
-        const auto app =
-            m_launcher_manager
-                .find_application(
-                    desktop_id);
-
         normalized_attached_ids
             .push_back(
                 LauncherManager::
                     normalize_desktop_id(
-                        app &&
-                                !app->get_id().empty()
-                            ? app->get_id()
-                            : desktop_id));
+                        desktop_id));
     }
 
     if (m_window_registry)

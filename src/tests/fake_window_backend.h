@@ -28,6 +28,12 @@ public:
 
     bool activate_window(
         const WindowId &window_id) override;
+    bool present_windows(
+        const std::vector<WindowId>
+            &window_ids) override;
+    bool hide_windows(
+        const std::vector<WindowId>
+            &window_ids) override;
     bool raise_window(
         const WindowId &window_id) override;
     bool close_window(

@@ -161,8 +161,12 @@ void verifies_window_commands()
     assert(backend.set_window_maximized(
         "window-1",
         false));
+    assert(backend.present_windows(
+        {"window-1"}));
+    assert(backend.hide_windows(
+        {"window-1"}));
 
-    assert(commands.size() == 5);
+    assert(commands.size() == 7);
     assert(commands[0].type ==
            KWinWindowCommandType::ACTIVATE);
     assert(commands[1].type ==
@@ -177,6 +181,16 @@ void verifies_window_commands()
            KWinWindowCommandType::
                SET_MAXIMIZED);
     assert(!commands[4].state);
+    assert(commands[5].type ==
+           KWinWindowCommandType::PRESENT);
+    assert(commands[5].window_ids ==
+           std::vector<WindowId>({
+               "window-1"}));
+    assert(commands[6].type ==
+           KWinWindowCommandType::HIDE);
+    assert(commands[6].window_ids ==
+           std::vector<WindowId>({
+               "window-1"}));
 
     assert(!backend.activate_window(
         "missing-window"));
@@ -185,6 +199,87 @@ void verifies_window_commands()
 
     assert(!backend.activate_window(
         "window-1"));
+}
+
+void verifies_legacy_script_uses_present_fallback()
+{
+    KWinWindowBackend backend;
+    backend.start();
+
+    auto first =
+        window(
+            "window-1",
+            "org.kde.dolphin");
+    auto second =
+        window(
+            "window-2",
+            "org.kde.dolphin");
+    first.minimized = true;
+    second.minimized = true;
+
+    assert(backend.register_integration(
+        KWinIntegrationProtocol::
+            LEGACY_VERSION));
+    assert(backend.begin_snapshot(16));
+    assert(backend.stage_window(
+        16,
+        first));
+    assert(backend.stage_window(
+        16,
+        second));
+    assert(backend.commit_snapshot(
+        16,
+        std::nullopt,
+        {
+            "window-1",
+            "window-2"
+        }));
+
+    std::vector<KWinWindowCommand>
+        commands;
+    backend.set_command_handler(
+        [&commands](
+            const KWinWindowCommand
+                &command)
+        {
+            commands.push_back(command);
+            return true;
+        });
+
+    assert(backend.present_windows(
+        {
+            "window-1",
+            "window-2"
+        }));
+    assert(commands.size() == 5);
+    assert(commands[0].type ==
+           KWinWindowCommandType::
+               SET_MINIMIZED);
+    assert(commands[1].type ==
+           KWinWindowCommandType::RAISE);
+    assert(commands[2].type ==
+           KWinWindowCommandType::
+               SET_MINIMIZED);
+    assert(commands[3].type ==
+           KWinWindowCommandType::RAISE);
+    assert(commands[4].type ==
+           KWinWindowCommandType::ACTIVATE);
+
+    commands.clear();
+    assert(backend.hide_windows(
+        {
+            "window-1",
+            "window-2"
+        }));
+    assert(commands.size() == 2);
+    assert(commands[0].type ==
+           KWinWindowCommandType::
+               SET_MINIMIZED);
+    assert(commands[0].state);
+    assert(commands[1].type ==
+           KWinWindowCommandType::
+               SET_MINIMIZED);
+    assert(commands[1].state);
 }
 
 void verifies_incremental_revisions()
@@ -377,6 +472,7 @@ int main()
 {
     verifies_registration_and_snapshot();
     verifies_window_commands();
+    verifies_legacy_script_uses_present_fallback();
     verifies_incremental_revisions();
     verifies_atomic_resynchronization();
     verifies_cancelled_snapshot();

@@ -7,12 +7,15 @@
         "/org/docklight6/WindowIntegration";
     const INTERFACE_NAME =
         "org.docklight6.WindowIntegration1";
-    const PROTOCOL_VERSION = "6";
+    const PROTOCOL_VERSION = "7";
 
     let connected = false;
     let registering = false;
-    let waitingForCommand = false;
+    let pendingCommandWaits = 0;
     let revision = 0;
+    let commandTransactionDepth = 0;
+    let stackingOrderDirty = false;
+    let lastPublishedStackingOrder = "";
 
     const trackedWindows = {};
     let dockSurface = null;
@@ -121,6 +124,17 @@
         return result.join(",");
     }
 
+    function decodedList(encoded) {
+        if (!encoded)
+            return [];
+
+        return encoded
+            .split(",")
+            .map(
+                value =>
+                    decodeURIComponent(value));
+    }
+
     function desktopId(desktop) {
         if (!desktop)
             return "";
@@ -207,7 +221,7 @@
             return;
 
         connected = false;
-        waitingForCommand = false;
+        pendingCommandWaits = 0;
         registerIntegration();
     }
 
@@ -336,13 +350,25 @@
             return;
         }
 
+        if (commandTransactionDepth > 0) {
+            stackingOrderDirty = true;
+            return;
+        }
+
+        const order = stackingOrder();
+
+        if (order === lastPublishedStackingOrder)
+            return;
+
+        lastPublishedStackingOrder = order;
+
         callDBus(
             SERVICE_NAME,
             OBJECT_PATH,
             INTERFACE_NAME,
             "PublishStackingOrder",
             nextRevision(),
-            stackingOrder(),
+            order,
             handlePublishReply);
     }
 
@@ -484,6 +510,62 @@
         command,
         identifier,
         state) {
+        if (command === "hide") {
+            const identifiers =
+                decodedList(identifier);
+
+            for (let index = 0;
+                 index < identifiers.length;
+                 ++index) {
+                const candidate =
+                    trackedWindows[
+                        identifiers[index]];
+
+                if (candidate &&
+                    isTrackable(candidate)) {
+                    candidate.minimized =
+                        true;
+                }
+            }
+
+            return;
+        }
+
+        if (command === "present") {
+            const identifiers =
+                decodedList(identifier);
+            const windows = [];
+
+            for (let index = 0;
+                 index < identifiers.length;
+                 ++index) {
+                const candidate =
+                    trackedWindows[
+                        identifiers[index]];
+
+                if (candidate &&
+                    isTrackable(candidate)) {
+                    windows.push(candidate);
+                }
+            }
+
+            if (windows.length === 0)
+                return;
+
+            for (let index = 0;
+                 index < windows.length;
+                 ++index) {
+                windows[index].minimized =
+                    false;
+                workspace.raiseWindow(
+                    windows[index]);
+            }
+
+            activateWindow(
+                windows[windows.length - 1]);
+            return;
+        }
+
         const window =
             trackedWindows[identifier];
 
@@ -510,43 +592,58 @@
     }
 
     function waitForCommand() {
-        if (!connected ||
-            waitingForCommand)
+        const commandWaitCount = 2;
+
+        if (!connected)
             return;
 
-        waitingForCommand = true;
+        while (pendingCommandWaits <
+               commandWaitCount) {
+            ++pendingCommandWaits;
 
-        callDBus(
-            SERVICE_NAME,
-            OBJECT_PATH,
-            INTERFACE_NAME,
-            "WaitForCommand",
-            function (
-                command,
-                identifier,
-                state) {
-                waitingForCommand = false;
+            callDBus(
+                SERVICE_NAME,
+                OBJECT_PATH,
+                INTERFACE_NAME,
+                "WaitForCommand",
+                function (
+                    command,
+                    identifier,
+                    state) {
+                    --pendingCommandWaits;
 
-                if (!connected)
-                    return;
+                    if (!connected)
+                        return;
 
-                try {
-                    executeCommand(
-                        command,
-                        identifier,
-                        state);
-                } catch (error) {
-                    print(
-                        "Docklight command failed:",
-                        command,
-                        identifier,
-                        String(error));
-                } finally {
-                    // A failed KWin operation must not terminate the
-                    // long-running command channel.
+                    // Replenish the consumed request before executing. One
+                    // other long poll remains pending at Docklight while
+                    // KWin processes this window transaction.
                     waitForCommand();
-                }
-            });
+
+                    ++commandTransactionDepth;
+
+                    try {
+                        executeCommand(
+                            command,
+                            identifier,
+                            state);
+                    } catch (error) {
+                        print(
+                            "Docklight command failed:",
+                            command,
+                            identifier,
+                            String(error));
+                    } finally {
+                        --commandTransactionDepth;
+
+                        if (commandTransactionDepth === 0 &&
+                            stackingOrderDirty) {
+                            stackingOrderDirty = false;
+                            publishStackingOrder();
+                        }
+                    }
+                });
+        }
     }
 
     function connectSignal(
@@ -654,6 +751,9 @@
             stackingOrder(),
             handlePublishReply);
 
+        lastPublishedStackingOrder =
+            stackingOrder();
+
         publishDockSurfaceGeometry();
     }
 
@@ -674,7 +774,7 @@
                 connected = accepted === true;
 
                 if (!connected) {
-                    waitingForCommand = false;
+                    pendingCommandWaits = 0;
                     return;
                 }
 

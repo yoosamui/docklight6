@@ -315,43 +315,8 @@ bool DockApplicationController::activate_windows(
     if (window_ids.empty())
         return false;
 
-    bool accepted = true;
-
-    for (const auto &window_id :
-         window_ids)
-    {
-        const auto window =
-            m_registry->find_window(
-                window_id);
-
-        if (!window)
-        {
-            accepted = false;
-            continue;
-        }
-
-        if (window->minimized)
-        {
-            accepted =
-                m_registry
-                    ->set_window_minimized(
-                        window_id,
-                        false) &&
-                accepted;
-        }
-
-        accepted =
-            m_registry->raise_window(
-                window_id) &&
-            accepted;
-    }
-
-    accepted =
-        m_registry->activate_window(
-            window_ids.back()) &&
-        accepted;
-
-    return accepted;
+    return m_registry->present_windows(
+        window_ids);
 }
 
 bool DockApplicationController::
@@ -364,11 +329,25 @@ bool DockApplicationController::
     if (current_window_ids.empty())
         return false;
 
-    bool accepted = true;
+    const auto all_window_ids =
+        running_application.window_ids;
+
+    bool accepted =
+        m_registry->present_windows(
+            current_window_ids);
 
     for (const auto &window_id :
-         running_application.window_ids)
+         all_window_ids)
     {
+        if (std::find(
+                current_window_ids.begin(),
+                current_window_ids.end(),
+                window_id) !=
+            current_window_ids.end())
+        {
+            continue;
+        }
+
         const auto window =
             m_registry->find_window(
                 window_id);
@@ -385,20 +364,6 @@ bool DockApplicationController::
         }
     }
 
-    for (const auto &window_id :
-         current_window_ids)
-    {
-        accepted =
-            m_registry->raise_window(
-                window_id) &&
-            accepted;
-    }
-
-    accepted =
-        m_registry->activate_window(
-            current_window_ids.back()) &&
-        accepted;
-
     return accepted;
 }
 
@@ -406,8 +371,10 @@ bool DockApplicationController::minimize_windows(
     const std::vector<WindowId>
         &window_ids)
 {
-    bool accepted = true;
-    bool dispatched = false;
+    std::vector<WindowId>
+        visible_window_ids;
+    visible_window_ids.reserve(
+        window_ids.size());
 
     for (const auto &window_id :
          window_ids)
@@ -422,16 +389,12 @@ bool DockApplicationController::minimize_windows(
             continue;
         }
 
-        dispatched = true;
-        accepted =
-            m_registry
-                ->set_window_minimized(
-                    window_id,
-                    true) &&
-            accepted;
+        visible_window_ids.push_back(
+            window_id);
     }
 
-    return dispatched && accepted;
+    return m_registry->hide_windows(
+        visible_window_ids);
 }
 
 bool DockApplicationController::
@@ -475,32 +438,8 @@ bool DockApplicationController::minimize()
     const auto window_ids =
         running_application->window_ids;
 
-    bool accepted = true;
-    bool dispatched = false;
-
-    for (const auto &window_id :
-         window_ids)
-    {
-        const auto window =
-            m_registry->find_window(
-                window_id);
-
-        if (!window ||
-            window->minimized)
-        {
-            continue;
-        }
-
-        dispatched = true;
-        accepted =
-            m_registry
-                ->set_window_minimized(
-                    window_id,
-                    true) &&
-            accepted;
-    }
-
-    return dispatched && accepted;
+    return minimize_windows(
+        window_ids);
 }
 
 bool DockApplicationController::unminimize()

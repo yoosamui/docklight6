@@ -56,6 +56,31 @@ LauncherManager::LauncherManager(
                     "docklight.data")
               : std::move(data_path))
 {
+    m_app_info_monitor =
+        g_app_info_monitor_get();
+
+    if (m_app_info_monitor)
+    {
+        m_app_info_changed_handler =
+            g_signal_connect(
+                m_app_info_monitor,
+                "changed",
+                G_CALLBACK(
+                    LauncherManager::
+                        on_applications_changed),
+                this);
+    }
+}
+
+LauncherManager::~LauncherManager()
+{
+    if (m_app_info_monitor &&
+        m_app_info_changed_handler != 0)
+    {
+        g_signal_handler_disconnect(
+            m_app_info_monitor,
+            m_app_info_changed_handler);
+    }
 }
 
 std::vector<std::string>
@@ -105,10 +130,8 @@ LauncherManager::find_application(
         normalize_desktop_id(
             requested);
 
-    const auto apps =
-        Gio::AppInfo::get_all();
-
-    for (const auto &app : apps)
+    for (const auto &app :
+         applications())
     {
         if (!app)
             continue;
@@ -146,6 +169,34 @@ LauncherManager::find_application(
     }
 
     return {};
+}
+
+void LauncherManager::
+    on_applications_changed(
+        GAppInfoMonitor *,
+        gpointer user_data)
+{
+    auto *manager =
+        static_cast<LauncherManager *>(
+            user_data);
+
+    manager->m_applications.clear();
+    manager->m_applications_loaded =
+        false;
+}
+
+const std::vector<
+    Glib::RefPtr<Gio::AppInfo>> &
+LauncherManager::applications() const
+{
+    if (!m_applications_loaded)
+    {
+        m_applications =
+            Gio::AppInfo::get_all();
+        m_applications_loaded = true;
+    }
+
+    return m_applications;
 }
 
 bool LauncherManager::set_attached(
@@ -392,17 +443,17 @@ LauncherManager::read_config() const
             continue;
 
         const auto normalized_id =
-            normalize_resolved_id(line);
+            normalize_desktop_id(line);
 
         const bool duplicate =
             std::any_of(
                 ids.begin(),
                 ids.end(),
-                [this, &normalized_id](
+                [&normalized_id](
                     const std::string
                         &candidate)
                 {
-                    return normalize_resolved_id(
+                    return normalize_desktop_id(
                                candidate) ==
                            normalized_id;
                 });

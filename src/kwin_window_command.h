@@ -3,6 +3,7 @@
 #include "managed_window.h"
 
 #include <functional>
+#include <vector>
 
 enum class KWinWindowCommandType
 {
@@ -10,7 +11,9 @@ enum class KWinWindowCommandType
     RAISE,
     CLOSE,
     SET_MINIMIZED,
-    SET_MAXIMIZED
+    SET_MAXIMIZED,
+    PRESENT,
+    HIDE
 };
 
 struct KWinWindowCommand
@@ -21,6 +24,8 @@ struct KWinWindowCommand
         KWinWindowCommandType::ACTIVATE;
 
     bool state = false;
+
+    std::vector<WindowId> window_ids;
 };
 
 using KWinWindowCommandHandler =

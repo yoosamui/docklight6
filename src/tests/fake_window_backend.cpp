@@ -82,6 +82,65 @@ bool FakeWindowBackend::activate_window(
     return true;
 }
 
+bool FakeWindowBackend::present_windows(
+    const std::vector<WindowId>
+        &window_ids)
+{
+    if (window_ids.empty())
+        return false;
+
+    for (const auto &window_id :
+         window_ids)
+    {
+        auto window =
+            find_window(window_id);
+
+        if (!window)
+            return false;
+
+        window->minimized = false;
+        notify_window_updated(*window);
+
+        m_stacking_order.erase(
+            std::remove(
+                m_stacking_order.begin(),
+                m_stacking_order.end(),
+                window_id),
+            m_stacking_order.end());
+        m_stacking_order.push_back(
+            window_id);
+    }
+
+    notify_stacking_order_changed(
+        m_stacking_order);
+    set_active_window(
+        window_ids.back());
+    return true;
+}
+
+bool FakeWindowBackend::hide_windows(
+    const std::vector<WindowId>
+        &window_ids)
+{
+    if (window_ids.empty())
+        return false;
+
+    for (const auto &window_id :
+         window_ids)
+    {
+        auto window =
+            find_window(window_id);
+
+        if (!window)
+            return false;
+
+        window->minimized = true;
+        notify_window_updated(*window);
+    }
+
+    return true;
+}
+
 bool FakeWindowBackend::raise_window(
     const WindowId &window_id)
 {

@@ -270,6 +270,26 @@ bool WindowRegistry::activate_window(
                window_id);
 }
 
+bool WindowRegistry::present_windows(
+    const std::vector<WindowId>
+        &window_ids)
+{
+    return m_connected &&
+           !window_ids.empty() &&
+           m_backend.present_windows(
+               window_ids);
+}
+
+bool WindowRegistry::hide_windows(
+    const std::vector<WindowId>
+        &window_ids)
+{
+    return m_connected &&
+           !window_ids.empty() &&
+           m_backend.hide_windows(
+               window_ids);
+}
+
 bool WindowRegistry::raise_window(
     const WindowId &window_id)
 {
@@ -318,23 +338,18 @@ bool WindowRegistry::minimize_all()
         return false;
     }
 
-    const auto windows_copy = m_windows;
-    bool accepted = false;
+    std::vector<WindowId> window_ids;
 
-    for (const auto &window : windows_copy)
+    for (const auto &window : m_windows)
     {
         if (!window.minimized)
         {
-            accepted =
-                m_backend
-                    .set_window_minimized(
-                        window.id,
-                        true) ||
-                accepted;
+            window_ids.push_back(
+                window.id);
         }
     }
 
-    return accepted;
+    return hide_windows(window_ids);
 }
 
 bool WindowRegistry::unminimize_all()

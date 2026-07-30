@@ -250,6 +250,73 @@ void verifies_frontmost_group_hides_without_active_window()
                ->minimized);
 }
 
+void verifies_fully_minimized_group_is_presented_once()
+{
+    FakeWindowBackend backend;
+
+    backend.set_snapshot(
+        {
+            window("window-1"),
+            window("window-2"),
+            window("window-3"),
+            window(
+                "covering-window",
+                false,
+                "org.mozilla.firefox")
+        },
+        {
+            "window-1",
+            "window-2",
+            "window-3",
+            "covering-window"
+        },
+        WindowId{"window-3"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {
+            "org.kde.dolphin.desktop"
+        });
+
+    assert(controller.toggle_minimized());
+    backend.set_active_window(
+        WindowId{"covering-window"});
+
+    unsigned int stacking_changes = 0;
+    backend
+        .signal_stacking_order_changed()
+        .connect(
+            [&stacking_changes](
+                const std::vector<WindowId> &)
+            {
+                ++stacking_changes;
+            });
+
+    assert(controller.toggle_minimized());
+    assert(stacking_changes == 1);
+    assert(!registry
+                .find_window("window-1")
+                ->minimized);
+    assert(!registry
+                .find_window("window-2")
+                ->minimized);
+    assert(!registry
+                .find_window("window-3")
+                ->minimized);
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "window-3"});
+    assert(backend.stacking_order() ==
+           std::vector<WindowId>({
+               "covering-window",
+               "window-1",
+               "window-2",
+               "window-3"}));
+}
+
 void verifies_other_desktop_window_is_activated()
 {
     FakeWindowBackend backend;
@@ -971,6 +1038,7 @@ int main()
     verifies_alternate_application_identity();
     verifies_inactive_window_is_activated();
     verifies_frontmost_group_hides_without_active_window();
+    verifies_fully_minimized_group_is_presented_once();
     verifies_other_desktop_window_is_activated();
     verifies_desktop_groups_are_activated_in_order();
     verifies_minimized_current_group_precedes_open_remote_group();

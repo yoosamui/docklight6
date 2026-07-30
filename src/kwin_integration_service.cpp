@@ -243,6 +243,32 @@ bool parse_string_array(
     return true;
 }
 
+std::string encode_string_array(
+    const std::vector<std::string>
+        &values)
+{
+    std::ostringstream encoded;
+
+    for (auto value = values.begin();
+         value != values.end();
+         ++value)
+    {
+        if (value != values.begin())
+            encoded << ',';
+
+        auto escaped =
+            g_uri_escape_string(
+                value->c_str(),
+                nullptr,
+                true);
+
+        encoded << escaped;
+        g_free(escaped);
+    }
+
+    return encoded.str();
+}
+
 bool parse_desktop_numbers(
     const char *encoded_values,
     std::vector<unsigned int> &numbers)
@@ -789,7 +815,7 @@ bool KWinIntegrationService::enqueue_command(
         // can otherwise enqueue the same group action repeatedly while KWin
         // is still animating the first request, producing seconds of stale
         // work and making the desktop appear frozen.
-        pending->state = command.state;
+        *pending = command;
         return true;
     }
 
@@ -1264,7 +1290,7 @@ void KWinIntegrationService::
 void KWinIntegrationService::
     deliver_next_command()
 {
-    if (!m_command_invocation ||
+    if (m_command_invocations.empty() ||
         m_commands.empty())
     {
         return;
@@ -1275,6 +1301,8 @@ void KWinIntegrationService::
     m_commands.pop_front();
 
     const char *command_name = "";
+    std::string identifier =
+        command.window_id;
 
     switch (command.type)
     {
@@ -1295,25 +1323,38 @@ void KWinIntegrationService::
         SET_MAXIMIZED:
         command_name = "set-maximized";
         break;
+    case KWinWindowCommandType::PRESENT:
+        command_name = "present";
+        identifier =
+            encode_string_array(
+                command.window_ids);
+        break;
+    case KWinWindowCommandType::HIDE:
+        command_name = "hide";
+        identifier =
+            encode_string_array(
+                command.window_ids);
+        break;
     }
 
     auto invocation =
-        m_command_invocation;
+        m_command_invocations.front();
+    m_command_invocations.pop_front();
 
-    m_command_invocation = nullptr;
-    cancel_command_keepalive();
+    if (m_command_invocations.empty())
+        cancel_command_keepalive();
 
     g_message(
         "KWin window command delivered: %s %s",
         command_name,
-        command.window_id.c_str());
+        identifier.c_str());
 
     g_dbus_method_invocation_return_value(
         invocation,
         g_variant_new(
             "(ssb)",
             command_name,
-            command.window_id.c_str(),
+            identifier.c_str(),
             command.state));
 
     g_object_unref(invocation);
@@ -1337,20 +1378,19 @@ void KWinIntegrationService::clear_commands()
     m_commands.clear();
     cancel_command_keepalive();
 
-    if (!m_command_invocation)
-        return;
+    while (!m_command_invocations.empty())
+    {
+        auto invocation =
+            m_command_invocations.front();
+        m_command_invocations.pop_front();
 
-    auto invocation =
-        m_command_invocation;
+        g_dbus_method_invocation_return_dbus_error(
+            invocation,
+            "org.docklight6.Error.Disconnected",
+            "The KWin integration disconnected");
 
-    m_command_invocation = nullptr;
-
-    g_dbus_method_invocation_return_dbus_error(
-        invocation,
-        "org.docklight6.Error.Disconnected",
-        "The KWin integration disconnected");
-
-    g_object_unref(invocation);
+        g_object_unref(invocation);
+    }
 }
 
 void KWinIntegrationService::
@@ -1455,25 +1495,32 @@ void KWinIntegrationService::
             method_name,
             "WaitForCommand") == 0)
     {
-        if (m_command_invocation)
+        constexpr std::size_t
+            maximum_command_waits = 2;
+
+        if (m_command_invocations.size() >=
+            maximum_command_waits)
         {
             g_dbus_method_invocation_return_dbus_error(
                 invocation,
                 "org.docklight6.Error.AlreadyWaiting",
-                "The KWin integration already has a pending command request");
+                "The KWin integration already has two pending command requests");
             return;
         }
 
-        m_command_invocation =
+        m_command_invocations.push_back(
             G_DBUS_METHOD_INVOCATION(
-                g_object_ref(invocation));
+                g_object_ref(invocation)));
 
-        m_command_keepalive_id =
-            g_timeout_add_seconds(
-                20,
-                &KWinIntegrationService::
-                    on_command_keepalive,
-                this);
+        if (m_command_keepalive_id == 0)
+        {
+            m_command_keepalive_id =
+                g_timeout_add_seconds(
+                    20,
+                    &KWinIntegrationService::
+                        on_command_keepalive,
+                    this);
+        }
 
         deliver_next_command();
         return;
@@ -1786,23 +1833,35 @@ gboolean KWinIntegrationService::
 
     service->m_command_keepalive_id = 0;
 
-    if (!service->m_command_invocation)
+    if (service
+            ->m_command_invocations
+            .empty())
+    {
         return G_SOURCE_REMOVE;
+    }
 
-    auto invocation =
-        service->m_command_invocation;
+    while (!service
+                ->m_command_invocations
+                .empty())
+    {
+        auto invocation =
+            service
+                ->m_command_invocations
+                .front();
+        service
+            ->m_command_invocations
+            .pop_front();
 
-    service->m_command_invocation = nullptr;
+        g_dbus_method_invocation_return_value(
+            invocation,
+            g_variant_new(
+                "(ssb)",
+                "none",
+                "",
+                false));
 
-    g_dbus_method_invocation_return_value(
-        invocation,
-        g_variant_new(
-            "(ssb)",
-            "none",
-            "",
-            false));
-
-    g_object_unref(invocation);
+        g_object_unref(invocation);
+    }
 
     return G_SOURCE_REMOVE;
 }

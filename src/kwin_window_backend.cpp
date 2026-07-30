@@ -86,6 +86,130 @@ bool KWinWindowBackend::activate_window(
         window_id);
 }
 
+bool KWinWindowBackend::present_windows(
+    const std::vector<WindowId>
+        &window_ids)
+{
+    if (!m_connected ||
+        !m_command_handler ||
+        window_ids.empty() ||
+        std::any_of(
+            window_ids.begin(),
+            window_ids.end(),
+            [this](
+                const WindowId &window_id)
+            {
+                return !find_window(
+                    window_id);
+            }))
+    {
+        return false;
+    }
+
+    if (m_registered_protocol_version <
+        KWinIntegrationProtocol::VERSION)
+    {
+        bool accepted = true;
+
+        for (const auto &window_id :
+             window_ids)
+        {
+            const auto window =
+                find_window(window_id);
+
+            if (window->minimized)
+            {
+                accepted =
+                    m_command_handler(
+                        KWinWindowCommand{
+                            window_id,
+                            KWinWindowCommandType::
+                                SET_MINIMIZED,
+                            false,
+                            {}}) &&
+                    accepted;
+            }
+
+            accepted =
+                m_command_handler(
+                    KWinWindowCommand{
+                        window_id,
+                        KWinWindowCommandType::RAISE,
+                        false,
+                        {}}) &&
+                accepted;
+        }
+
+        accepted =
+            m_command_handler(
+                KWinWindowCommand{
+                    window_ids.back(),
+                    KWinWindowCommandType::ACTIVATE,
+                    false,
+                    {}}) &&
+            accepted;
+
+        return accepted;
+    }
+
+    return m_command_handler(
+        KWinWindowCommand{
+            window_ids.back(),
+            KWinWindowCommandType::PRESENT,
+            false,
+            window_ids});
+}
+
+bool KWinWindowBackend::hide_windows(
+    const std::vector<WindowId>
+        &window_ids)
+{
+    if (!m_connected ||
+        !m_command_handler ||
+        window_ids.empty() ||
+        std::any_of(
+            window_ids.begin(),
+            window_ids.end(),
+            [this](
+                const WindowId &window_id)
+            {
+                return !find_window(
+                    window_id);
+            }))
+    {
+        return false;
+    }
+
+    if (m_registered_protocol_version <
+        KWinIntegrationProtocol::VERSION)
+    {
+        bool accepted = true;
+
+        for (const auto &window_id :
+             window_ids)
+        {
+            accepted =
+                m_command_handler(
+                    KWinWindowCommand{
+                        window_id,
+                        KWinWindowCommandType::
+                            SET_MINIMIZED,
+                        true,
+                        {}}) &&
+                accepted;
+        }
+
+        return accepted;
+    }
+
+    return m_command_handler(
+        KWinWindowCommand{
+            window_ids.back(),
+            KWinWindowCommandType::HIDE,
+            true,
+            window_ids});
+}
+
 bool KWinWindowBackend::raise_window(
     const WindowId &window_id)
 {
@@ -160,8 +284,11 @@ bool KWinWindowBackend::register_integration(
     std::uint32_t protocol_version)
 {
     if (!m_started ||
-        protocol_version !=
-            KWinIntegrationProtocol::VERSION)
+        (protocol_version !=
+             KWinIntegrationProtocol::VERSION &&
+         protocol_version !=
+             KWinIntegrationProtocol::
+                 LEGACY_VERSION))
     {
         return false;
     }
@@ -170,6 +297,8 @@ bool KWinWindowBackend::register_integration(
     {
         clear_state();
         m_registered = true;
+        m_registered_protocol_version =
+            protocol_version;
         return true;
     }
 
@@ -181,6 +310,8 @@ bool KWinWindowBackend::register_integration(
     m_staged_revision.reset();
     m_last_revision = 0;
     m_registered = true;
+    m_registered_protocol_version =
+        protocol_version;
 
     return true;
 }
@@ -640,7 +771,8 @@ bool KWinWindowBackend::dispatch_command(
         KWinWindowCommand{
             window_id,
             type,
-            state});
+            state,
+            {}});
 }
 
 void KWinWindowBackend::clear_state()
@@ -656,6 +788,7 @@ void KWinWindowBackend::clear_state()
     m_current_desktop_number = 0;
 
     m_last_revision = 0;
+    m_registered_protocol_version = 0;
 
     m_registered = false;
     m_connected = false;

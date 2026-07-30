@@ -37,6 +37,12 @@ public:
 
     bool activate_window(
         const WindowId &window_id) override;
+    bool present_windows(
+        const std::vector<WindowId>
+            &window_ids) override;
+    bool hide_windows(
+        const std::vector<WindowId>
+            &window_ids) override;
     bool raise_window(
         const WindowId &window_id) override;
     bool close_window(
@@ -136,6 +142,8 @@ private:
         m_icon_geometry_handler;
 
     std::uint64_t m_last_revision = 0;
+    std::uint32_t
+        m_registered_protocol_version = 0;
 
     bool m_started = false;
     bool m_registered = false;

@@ -113,8 +113,8 @@ private:
     sigc::connection
         m_dock_surface_geometry_changed;
 
-    GDBusMethodInvocation *
-        m_command_invocation = nullptr;
+    std::deque<GDBusMethodInvocation *>
+        m_command_invocations;
 
     guint m_object_registration_id = 0;
     guint m_sender_watch_id = 0;

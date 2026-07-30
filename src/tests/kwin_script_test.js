@@ -152,8 +152,23 @@ const workspace = {
         new Signal(),
     activatedWindow: null,
     raisedWindow: null,
+    raisedWindows: [],
     raiseWindow(window) {
         this.raisedWindow = window;
+        this.raisedWindows.push(window);
+
+        this.stackingOrder =
+            this.stackingOrder.filter(
+                candidate =>
+                    candidate !== window);
+        this.stackingOrder.push(window);
+
+        for (const candidate of
+             this.stackingOrder) {
+            candidate
+                .stackingOrderChanged
+                .emit();
+        }
     }
 };
 
@@ -261,11 +276,11 @@ assert.strictEqual(
     "Register");
 assert.deepStrictEqual(
     calls[0].arguments,
-    ["6"]);
+    ["7"]);
 
 calls[0].callback(
     true,
-    "6");
+    "7");
 
 const beginSnapshot =
     calls.find(
@@ -393,7 +408,8 @@ assert.deepStrictEqual(
 
 function deliverCommand(
     command,
-    state) {
+    state,
+    identifier = "window-1") {
     const wait =
         calls
             .filter(
@@ -407,7 +423,7 @@ function deliverCommand(
 
     wait.callback(
         command,
-        "window-1",
+        identifier,
         state);
 }
 
@@ -430,6 +446,92 @@ deliverCommand(
 assert.strictEqual(
     workspace.raisedWindow,
     managedWindow);
+
+const secondManagedWindow =
+    createWindow(
+        "window-2",
+        "org.kde.dolphin");
+secondManagedWindow.minimized = true;
+workspace.stackingOrder.push(
+    secondManagedWindow);
+workspace.windowAdded.emit(
+    secondManagedWindow);
+workspace.raisedWindows = [];
+
+const stackingPublishesBeforePresent =
+    calls.filter(
+        call =>
+            call.methodName ===
+            "PublishStackingOrder")
+        .length;
+
+deliverCommand(
+    "present",
+    false,
+    "window-2,window-1");
+assert.strictEqual(
+    secondManagedWindow.minimized,
+    false);
+assert.deepStrictEqual(
+    workspace.raisedWindows,
+    [
+        secondManagedWindow,
+        managedWindow
+    ]);
+assert.strictEqual(
+    workspace.activatedWindow,
+    managedWindow);
+assert.strictEqual(
+    calls.filter(
+        call =>
+            call.methodName ===
+            "PublishStackingOrder")
+        .length,
+    stackingPublishesBeforePresent + 1);
+
+const waitCountBeforeHide =
+    calls.filter(
+        call =>
+            call.methodName ===
+            "WaitForCommand")
+        .length;
+let secondWindowMinimized = false;
+let nextWaitReadyBeforeHide = false;
+
+Object.defineProperty(
+    secondManagedWindow,
+    "minimized",
+    {
+        configurable: true,
+        get() {
+            return secondWindowMinimized;
+        },
+        set(value) {
+            secondWindowMinimized =
+                value;
+            nextWaitReadyBeforeHide =
+                calls.filter(
+                    call =>
+                        call.methodName ===
+                        "WaitForCommand")
+                    .length ===
+                waitCountBeforeHide + 1;
+        }
+    });
+
+deliverCommand(
+    "hide",
+    true,
+    "window-2,window-1");
+assert.strictEqual(
+    secondManagedWindow.minimized,
+    true);
+assert.strictEqual(
+    managedWindow.minimized,
+    true);
+assert.strictEqual(
+    nextWaitReadyBeforeHide,
+    true);
 
 deliverCommand(
     "set-minimized",
@@ -616,8 +718,12 @@ assert.strictEqual(
 managedWindow.stackingOrderChanged.emit();
 
 assert.strictEqual(
-    calls[calls.length - 1].methodName,
-    "PublishStackingOrder");
+    calls.filter(
+        call =>
+            call.methodName ===
+            "PublishStackingOrder")
+        .length,
+    stackingPublishesBeforePresent + 1);
 
 workspace.stackingOrder = [
     dockWindow

@@ -48,6 +48,12 @@ public:
 
     virtual bool activate_window(
         const WindowId &window_id) = 0;
+    virtual bool present_windows(
+        const std::vector<WindowId>
+            &window_ids) = 0;
+    virtual bool hide_windows(
+        const std::vector<WindowId>
+            &window_ids) = 0;
     virtual bool raise_window(
         const WindowId &window_id) = 0;
     virtual bool close_window(

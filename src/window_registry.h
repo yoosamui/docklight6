@@ -42,6 +42,12 @@ public:
 
     bool activate_window(
         const WindowId &window_id);
+    bool present_windows(
+        const std::vector<WindowId>
+            &window_ids);
+    bool hide_windows(
+        const std::vector<WindowId>
+            &window_ids);
     bool raise_window(
         const WindowId &window_id);
     bool close_window(
