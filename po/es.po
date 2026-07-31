@@ -4,13 +4,13 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Docklight-5\n"
+"Project-Id-Version: Docklight 6\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
 "POT-Creation-Date: 2026-07-31 14:36+0700\n"
-"PO-Revision-Date: 2024-12-24 13:07+0700\n"
+"PO-Revision-Date: 2026-07-31 15:20+0700\n"
 "Last-Translator: yoo <j-gonzalez@email.de>\n"
-"Language-Team: English - United States <j-gonzalez@email.de>\n"
-"Language: en_US\n"
+"Language-Team: Spanish <j-gonzalez@email.de>\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -18,296 +18,286 @@ msgstr ""
 "X-Generator: Poedit 3.2.2\n"
 
 #: src/dock_item.cpp:531
-#, fuzzy
 msgid "_Attach"
-msgstr "Agarrar"
+msgstr "_Anclar"
 
 #: src/dock_item.cpp:534
 msgid "_Open New Window"
-msgstr ""
+msgstr "Abrir una _ventana nueva"
 
 #: src/dock_item.cpp:537 src/dock_item.cpp:2643
-#, fuzzy
 msgid "_Close All"
-msgstr "Cerrar"
+msgstr "_Cerrar todo"
 
 #: src/dock_item.cpp:540
-#, fuzzy
 msgid "_Minimize"
-msgstr "Minimizar todo"
+msgstr "_Minimizar"
 
 #: src/dock_item.cpp:543
-#, fuzzy
 msgid "_Unminimize"
-msgstr "Minimizar todo"
+msgstr "_Restaurar"
 
 #: src/dock_item.cpp:546
-#, fuzzy
 msgid "_Maximize"
-msgstr "Maximizar todo"
+msgstr "Ma_ximizar"
 
 #: src/dock_item.cpp:2631
 msgid "_Settings"
-msgstr ""
+msgstr "_Configuración"
 
 #: src/dock_item.cpp:2634
-#, fuzzy
 msgid "_Minimize All"
-msgstr "Minimizar todo"
+msgstr "_Minimizar todo"
 
 #: src/dock_item.cpp:2637
-#, fuzzy
 msgid "_Unminimize All"
-msgstr "Minimizar todo"
+msgstr "_Restaurar todo"
 
 #: src/dock_item.cpp:2640
-#, fuzzy
 msgid "_Maximize All"
-msgstr "Maximizar todo"
+msgstr "Ma_ximizar todo"
 
 #: src/dock_item.cpp:2646
 msgid "_About"
-msgstr ""
+msgstr "_Acerca de"
 
 #: src/dock_item.cpp:2649
 msgid "_Exit"
-msgstr ""
+msgstr "_Salir"
 
 #: src/dock_item.cpp:2753
 msgctxt "dock tooltip"
 msgid "Home"
-msgstr ""
+msgstr "Inicio"
 
 #: src/dock_item.cpp:3220 src/dock_item.cpp:3245
 msgid "DockLight Settings"
-msgstr ""
+msgstr "Configuración de DockLight"
 
 #: src/dock_item.cpp:3273 src/dock_item.cpp:4540
-#, fuzzy
 msgid "_Close"
-msgstr "Cerrar"
+msgstr "_Cerrar"
 
 #: src/dock_item.cpp:3285
-#, fuzzy
 msgid "Monitor"
-msgstr "monitor"
+msgstr "Monitor"
 
 #: src/dock_item.cpp:3287
 msgid "Hover Effect"
-msgstr ""
+msgstr "Efecto al pasar el cursor"
 
 #: src/dock_item.cpp:3289
 msgid "Indicator"
-msgstr ""
+msgstr "Indicador"
 
 #: src/dock_item.cpp:3291 src/dock_item.cpp:4307 src/dock_item.cpp:4335
 msgid "Indicator Color"
-msgstr ""
+msgstr "Color del indicador"
 
 #: src/dock_item.cpp:3293
 msgid "Display Home Icon"
-msgstr ""
+msgstr "Mostrar icono de inicio"
 
 #: src/dock_item.cpp:3295
 msgid "Home Icon"
-msgstr ""
+msgstr "Icono de inicio"
 
 #: src/dock_item.cpp:3297
 msgid "Display Tooltips"
-msgstr ""
+msgstr "Mostrar información sobre herramientas"
 
 #: src/dock_item.cpp:3299
 msgid "Manage All Workspaces"
-msgstr ""
+msgstr "Gestionar todos los espacios de trabajo"
 
 #: src/dock_item.cpp:3301
 msgid "Icon Size"
-msgstr ""
+msgstr "Tamaño de los iconos"
 
 #: src/dock_item.cpp:3303
-#, fuzzy
 msgid "Location"
-msgstr " ubicación"
+msgstr "Ubicación"
 
 #: src/dock_item.cpp:3305
 msgid "Rounded Corners"
-msgstr ""
+msgstr "Esquinas redondeadas"
 
 #: src/dock_item.cpp:3307
 msgid "Corner Radius"
-msgstr ""
+msgstr "Radio de las esquinas"
 
 #: src/dock_item.cpp:3309
-#, fuzzy
 msgid "Alignment"
-msgstr " alineación"
+msgstr "Alineación"
 
 #: src/dock_item.cpp:3311
 msgid "Autohide"
-msgstr ""
+msgstr "Ocultación automática"
 
 #: src/dock_item.cpp:3394
 msgctxt "monitor identifier"
 msgid "Primary"
-msgstr ""
+msgstr "Principal"
 
 #: src/dock_item.cpp:3433
 msgctxt "hover effect"
 msgid "Standard"
-msgstr ""
+msgstr "Estándar"
 
 #: src/dock_item.cpp:3435
 msgctxt "hover effect"
 msgid "Zoom"
-msgstr ""
+msgstr "Ampliación"
 
 #: src/dock_item.cpp:3437
 msgctxt "hover effect"
 msgid "Blur"
-msgstr ""
+msgstr "Desenfoque"
 
 #: src/dock_item.cpp:3474
 msgctxt "running indicator style"
 msgid "Lines"
-msgstr ""
+msgstr "Líneas"
 
 #: src/dock_item.cpp:3476
 msgctxt "running indicator style"
 msgid "Dots"
-msgstr ""
+msgstr "Puntos"
 
 #: src/dock_item.cpp:3539
 msgid "Choose the indicator color"
-msgstr ""
+msgstr "Elegir el color del indicador"
 
 #: src/dock_item.cpp:3551
 msgid "Select…"
-msgstr ""
+msgstr "Seleccionar…"
 
 #: src/dock_item.cpp:3553
 msgid "Use Default"
-msgstr ""
+msgstr "Usar predeterminado"
 
 #: src/dock_item.cpp:3561
 msgid "Built-in DockLight icon"
-msgstr ""
+msgstr "Icono integrado de DockLight"
 
 #: src/dock_item.cpp:3590
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr ""
+"Aplicar las acciones de los iconos y el desplazamiento con la rueda del "
+"ratón en todos los espacios de trabajo"
 
 #: src/dock_item.cpp:3610
 msgctxt "dock location"
 msgid "Bottom"
-msgstr ""
+msgstr "Inferior"
 
 #: src/dock_item.cpp:3612
 msgctxt "dock location"
 msgid "Left"
-msgstr ""
+msgstr "Izquierda"
 
 #: src/dock_item.cpp:3614
 msgctxt "dock location"
 msgid "Top"
-msgstr ""
+msgstr "Superior"
 
 #: src/dock_item.cpp:3616
-#, fuzzy
 msgctxt "dock location"
 msgid "Right"
-msgstr "Altura"
+msgstr "Derecha"
 
 #: src/dock_item.cpp:3679
 msgid "-1 selects the automatic radius"
-msgstr ""
+msgstr "-1 selecciona el radio automático"
 
 #: src/dock_item.cpp:3685
 msgctxt "dock alignment"
 msgid "Start"
-msgstr ""
+msgstr "Inicio"
 
 #: src/dock_item.cpp:3687
 msgctxt "dock alignment"
 msgid "Center"
-msgstr ""
+msgstr "Centro"
 
 #: src/dock_item.cpp:3689
 msgctxt "dock alignment"
 msgid "End"
-msgstr ""
+msgstr "Final"
 
 #: src/dock_item.cpp:3691
 msgctxt "dock alignment"
 msgid "Fill"
-msgstr ""
+msgstr "Rellenar"
 
 #: src/dock_item.cpp:3737
 msgctxt "autohide mode"
 msgid "None"
-msgstr ""
+msgstr "Ninguna"
 
 #: src/dock_item.cpp:3739
 msgctxt "autohide mode"
 msgid "Autohide"
-msgstr ""
+msgstr "Ocultación automática"
 
 #: src/dock_item.cpp:3741
 msgctxt "autohide mode"
 msgid "Intellihide"
-msgstr ""
+msgstr "Ocultación inteligente"
 
 #: src/dock_item.cpp:4159 src/dock_item.cpp:4194
 msgid "Select Home Icon"
-msgstr ""
+msgstr "Seleccionar icono de inicio"
 
 #: src/dock_item.cpp:4164
 msgid "_Cancel"
-msgstr ""
+msgstr "_Cancelar"
 
 #: src/dock_item.cpp:4167
 msgid "_Open"
-msgstr ""
+msgstr "_Abrir"
 
 #: src/dock_item.cpp:4231
 msgid "Image Files"
-msgstr ""
+msgstr "Archivos de imagen"
 
 #: src/dock_item.cpp:4484 src/dock_item.cpp:4513
-#, fuzzy
 msgid "About DockLight"
-msgstr "Docklight"
+msgstr "Acerca de DockLight"
 
 #: src/dock_item.cpp:4550
 msgid "Version %1"
-msgstr ""
+msgstr "Versión %1"
 
 #: src/dock_item.cpp:4553
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui"
 msgstr ""
+"Un dock de aplicaciones ligero.\n"
+"Autor y mantenedor: yoosamui"
 
 #: src/dock_monitor_manager.cpp:471
 msgid "No monitors are available."
-msgstr ""
+msgstr "No hay monitores disponibles."
 
 #: src/dock_monitor_manager.cpp:477
 msgid "Available monitors:"
-msgstr ""
+msgstr "Monitores disponibles:"
 
 #: src/dock_monitor_manager.cpp:493
 msgid "Scale"
-msgstr ""
+msgstr "Escala"
 
 #: src/dock_monitor_manager.cpp:500
 msgctxt "monitor status"
 msgid "Primary"
-msgstr ""
+msgstr "Principal"
 
 #: src/dock_monitor_manager.cpp:510
 msgctxt "monitor status"
 msgid "default"
-msgstr ""
+msgstr "predeterminado"
 
 #~ msgid "Application start."
 #~ msgstr "Inicio de la aplicación."
