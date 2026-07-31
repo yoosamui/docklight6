@@ -49,7 +49,7 @@ bool belongs_to_activation_desktop(
     const ManagedWindow &target)
 {
     // KWin switches to the target window's first desktop during activation.
-    // Include only windows that will be visible on that same desktop.
+    // Include only windows that will be visible on that git same desktop.
     if (!target.desktop_ids.empty())
     {
         return std::find(
