@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-24 14:12+0700\n"
+"Report-Msgid-Bugs-To: yoosamui@example.com\n"
+"POT-Creation-Date: 2026-07-31 14:36+0700\n"
 "PO-Revision-Date: 2024-12-24 13:36+0700\n"
 "Last-Translator: \n"
 "Language-Team: THAI <LL@li.org>\n"
@@ -17,122 +17,374 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.2.2\n"
 
-#: ../src/translations.h:31
-msgid "Application start."
-msgstr "Démarrage de l'application"
-
-#: ../src/translations.h:33
-msgid "Application activated."
-msgstr "Application activée"
-
-#: ../src/translations.h:35
-msgid "Initialize panel."
-msgstr "Initialiser le panneau"
-
-#: ../src/translations.h:37
-msgid ""
-"Sets the primary Monitor.Settings are primary oder the monitor name e.g DP-3"
-msgstr ""
-"Sets the primary Monitor.Settings are primary oder the monitor name e.g "
-"DP-3\n"
-"Définit le moniteur principal. Les paramètres sont primaires ou le nom du "
-"moniteur, par exemple DP-3"
-
-#: ../src/translations.h:39
-msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
-msgstr ""
-"Définit l'emplacement du panneau : haut, droite, bas ou gauche. Par défaut "
-"en bas"
-
-#: ../src/translations.h:41
-msgid ""
-"The dock alignment settings are start, end, center or fill. Default center."
-msgstr ""
-"Les paramètres d'alignement de l'ancrage sont début, fin, centre ou remplir. "
-"Par défaut au centre"
-
-#: ../src/translations.h:43
-msgid "The icon alignment settings are start, end or center. Default center."
-msgstr ""
-"Les paramètres d'alignement des icônes sont début, fin ou centre. Par défaut "
-"au centre"
-
-#: ../src/translations.h:45
-msgid "parsed values"
-msgstr "valeurs analysées"
-
-#: ../src/translations.h:47
-#, c-format
-msgid "Free the %s object."
-msgstr "Libérer l'objet %s"
-
-#: ../src/translations.h:49
-msgid "Display detected monitors"
-msgstr "Afficher les moniteurs détectés"
-
-#: ../src/translations.h:51
-msgid "Default monitor"
-msgstr "Moniteur par défaut"
-
-#: ../src/translations.h:53
-msgid "monitor"
-msgstr "moniteur"
-
-#: ../src/translations.h:55
-msgid "Geometry"
-msgstr "Géométrie"
-
-#: ../src/translations.h:57
-msgid "Workarea"
-msgstr "Zone de travail"
-
-#: ../src/translations.h:59
-msgid "Width"
-msgstr "Largeur"
-
-#: ../src/translations.h:61
-msgid "Height"
-msgstr "Hauteur"
-
-#: ../src/translations.h:63
-msgid "Model"
-msgstr "Modèle"
-
-#: ../src/translations.h:65
-msgid "Quit"
-msgstr "Quitter"
-
-#: ../src/translations.h:67
-msgid "Close all"
-msgstr "Fermer toutes les applications"
-
-#: ../src/translations.h:69
-msgid "Maximize"
-msgstr "Maximiser tout"
-
-#: ../src/translations.h:71
-msgid "Minimize"
-msgstr "Minimiser  tout"
-
-#: ../src/translations.h:73
-msgid "Close all windows"
-msgstr "Fermer toutes les applications"
-
-#: ../src/translations.h:75
-msgid "New"
-msgstr "Nouveau"
-
-#: ../src/translations.h:77
-msgid "Attach"
+#: src/dock_item.cpp:531
+#, fuzzy
+msgid "_Attach"
 msgstr "Attacher au Dock"
 
-#: ../src/translations.h:79
-msgid "Minimize all windows"
-msgstr "Maximiser toutes les fenêtres"
-
-#: ../src/translations.h:81
-msgid "Maximinize all windows"
+#: src/dock_item.cpp:534
+msgid "_Open New Window"
 msgstr ""
+
+#: src/dock_item.cpp:537 src/dock_item.cpp:2643
+#, fuzzy
+msgid "_Close All"
+msgstr "Fermer toutes les applications"
+
+#: src/dock_item.cpp:540
+#, fuzzy
+msgid "_Minimize"
+msgstr "Minimiser  tout"
+
+#: src/dock_item.cpp:543
+#, fuzzy
+msgid "_Unminimize"
+msgstr "Minimiser  tout"
+
+#: src/dock_item.cpp:546
+#, fuzzy
+msgid "_Maximize"
+msgstr "Maximiser tout"
+
+#: src/dock_item.cpp:2631
+msgid "_Settings"
+msgstr ""
+
+#: src/dock_item.cpp:2634
+#, fuzzy
+msgid "_Minimize All"
+msgstr "Minimiser  tout"
+
+#: src/dock_item.cpp:2637
+#, fuzzy
+msgid "_Unminimize All"
+msgstr "Minimiser  tout"
+
+#: src/dock_item.cpp:2640
+#, fuzzy
+msgid "_Maximize All"
+msgstr "Maximiser tout"
+
+#: src/dock_item.cpp:2646
+#, fuzzy
+msgid "_About"
+msgstr "A propos de "
+
+#: src/dock_item.cpp:2649
+msgid "_Exit"
+msgstr ""
+
+#: src/dock_item.cpp:2753
+msgctxt "dock tooltip"
+msgid "Home"
+msgstr ""
+
+#: src/dock_item.cpp:3220 src/dock_item.cpp:3245
+msgid "DockLight Settings"
+msgstr ""
+
+#: src/dock_item.cpp:3273 src/dock_item.cpp:4540
+#, fuzzy
+msgid "_Close"
+msgstr "fermer"
+
+#: src/dock_item.cpp:3285
+#, fuzzy
+msgid "Monitor"
+msgstr "moniteur"
+
+#: src/dock_item.cpp:3287
+msgid "Hover Effect"
+msgstr ""
+
+#: src/dock_item.cpp:3289
+msgid "Indicator"
+msgstr ""
+
+#: src/dock_item.cpp:3291 src/dock_item.cpp:4307 src/dock_item.cpp:4335
+msgid "Indicator Color"
+msgstr ""
+
+#: src/dock_item.cpp:3293
+msgid "Display Home Icon"
+msgstr ""
+
+#: src/dock_item.cpp:3295
+#, fuzzy
+msgid "Home Icon"
+msgstr "Choisir l'icône"
+
+#: src/dock_item.cpp:3297
+msgid "Display Tooltips"
+msgstr ""
+
+#: src/dock_item.cpp:3299
+msgid "Manage All Workspaces"
+msgstr ""
+
+#: src/dock_item.cpp:3301
+#, fuzzy
+msgid "Icon Size"
+msgstr "icône:"
+
+#: src/dock_item.cpp:3303
+#, fuzzy
+msgid "Location"
+msgstr "application"
+
+#: src/dock_item.cpp:3305
+msgid "Rounded Corners"
+msgstr ""
+
+#: src/dock_item.cpp:3307
+msgid "Corner Radius"
+msgstr ""
+
+#: src/dock_item.cpp:3309
+msgid "Alignment"
+msgstr ""
+
+#: src/dock_item.cpp:3311
+msgid "Autohide"
+msgstr "Autohide"
+
+#: src/dock_item.cpp:3394
+msgctxt "monitor identifier"
+msgid "Primary"
+msgstr ""
+
+#: src/dock_item.cpp:3433
+msgctxt "hover effect"
+msgid "Standard"
+msgstr ""
+
+#: src/dock_item.cpp:3435
+msgctxt "hover effect"
+msgid "Zoom"
+msgstr ""
+
+#: src/dock_item.cpp:3437
+msgctxt "hover effect"
+msgid "Blur"
+msgstr ""
+
+#: src/dock_item.cpp:3474
+msgctxt "running indicator style"
+msgid "Lines"
+msgstr ""
+
+#: src/dock_item.cpp:3476
+msgctxt "running indicator style"
+msgid "Dots"
+msgstr ""
+
+#: src/dock_item.cpp:3539
+msgid "Choose the indicator color"
+msgstr ""
+
+#: src/dock_item.cpp:3551
+msgid "Select…"
+msgstr ""
+
+#: src/dock_item.cpp:3553
+msgid "Use Default"
+msgstr ""
+
+#: src/dock_item.cpp:3561
+msgid "Built-in DockLight icon"
+msgstr ""
+
+#: src/dock_item.cpp:3590
+msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
+msgstr ""
+
+#: src/dock_item.cpp:3610
+msgctxt "dock location"
+msgid "Bottom"
+msgstr ""
+
+#: src/dock_item.cpp:3612
+msgctxt "dock location"
+msgid "Left"
+msgstr ""
+
+#: src/dock_item.cpp:3614
+msgctxt "dock location"
+msgid "Top"
+msgstr ""
+
+#: src/dock_item.cpp:3616
+#, fuzzy
+msgctxt "dock location"
+msgid "Right"
+msgstr "Hauteur"
+
+#: src/dock_item.cpp:3679
+msgid "-1 selects the automatic radius"
+msgstr ""
+
+#: src/dock_item.cpp:3685
+msgctxt "dock alignment"
+msgid "Start"
+msgstr ""
+
+#: src/dock_item.cpp:3687
+msgctxt "dock alignment"
+msgid "Center"
+msgstr ""
+
+#: src/dock_item.cpp:3689
+msgctxt "dock alignment"
+msgid "End"
+msgstr ""
+
+#: src/dock_item.cpp:3691
+msgctxt "dock alignment"
+msgid "Fill"
+msgstr ""
+
+#: src/dock_item.cpp:3737
+msgctxt "autohide mode"
+msgid "None"
+msgstr ""
+
+#: src/dock_item.cpp:3739
+#, fuzzy
+msgctxt "autohide mode"
+msgid "Autohide"
+msgstr "Autohide"
+
+#: src/dock_item.cpp:3741
+msgctxt "autohide mode"
+msgid "Intellihide"
+msgstr ""
+
+#: src/dock_item.cpp:4159 src/dock_item.cpp:4194
+msgid "Select Home Icon"
+msgstr ""
+
+#: src/dock_item.cpp:4164
+msgid "_Cancel"
+msgstr "_Annuler"
+
+#: src/dock_item.cpp:4167
+msgid "_Open"
+msgstr "_Ouvrir"
+
+#: src/dock_item.cpp:4231
+#, fuzzy
+msgid "Image Files"
+msgstr "Les fichiers d'image"
+
+#: src/dock_item.cpp:4484 src/dock_item.cpp:4513
+msgid "About DockLight"
+msgstr ""
+
+#: src/dock_item.cpp:4550
+msgid "Version %1"
+msgstr ""
+
+#: src/dock_item.cpp:4553
+msgid ""
+"A lightweight application dock.\n"
+"Author and Maintainer: yoosamui"
+msgstr ""
+
+#: src/dock_monitor_manager.cpp:471
+msgid "No monitors are available."
+msgstr ""
+
+#: src/dock_monitor_manager.cpp:477
+#, fuzzy
+msgid "Available monitors:"
+msgstr "disponible"
+
+#: src/dock_monitor_manager.cpp:493
+msgid "Scale"
+msgstr ""
+
+#: src/dock_monitor_manager.cpp:500
+msgctxt "monitor status"
+msgid "Primary"
+msgstr ""
+
+#: src/dock_monitor_manager.cpp:510
+msgctxt "monitor status"
+msgid "default"
+msgstr ""
+
+#~ msgid "Application start."
+#~ msgstr "Démarrage de l'application"
+
+#~ msgid "Application activated."
+#~ msgstr "Application activée"
+
+#~ msgid "Initialize panel."
+#~ msgstr "Initialiser le panneau"
+
+#~ msgid ""
+#~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
+#~ "DP-3"
+#~ msgstr ""
+#~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
+#~ "DP-3\n"
+#~ "Définit le moniteur principal. Les paramètres sont primaires ou le nom du "
+#~ "moniteur, par exemple DP-3"
+
+#~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
+#~ msgstr ""
+#~ "Définit l'emplacement du panneau : haut, droite, bas ou gauche. Par "
+#~ "défaut en bas"
+
+#~ msgid ""
+#~ "The dock alignment settings are start, end, center or fill. Default "
+#~ "center."
+#~ msgstr ""
+#~ "Les paramètres d'alignement de l'ancrage sont début, fin, centre ou "
+#~ "remplir. Par défaut au centre"
+
+#~ msgid ""
+#~ "The icon alignment settings are start, end or center. Default center."
+#~ msgstr ""
+#~ "Les paramètres d'alignement des icônes sont début, fin ou centre. Par "
+#~ "défaut au centre"
+
+#~ msgid "parsed values"
+#~ msgstr "valeurs analysées"
+
+#, c-format
+#~ msgid "Free the %s object."
+#~ msgstr "Libérer l'objet %s"
+
+#~ msgid "Display detected monitors"
+#~ msgstr "Afficher les moniteurs détectés"
+
+#~ msgid "Default monitor"
+#~ msgstr "Moniteur par défaut"
+
+#~ msgid "Geometry"
+#~ msgstr "Géométrie"
+
+#~ msgid "Workarea"
+#~ msgstr "Zone de travail"
+
+#~ msgid "Width"
+#~ msgstr "Largeur"
+
+#~ msgid "Model"
+#~ msgstr "Modèle"
+
+#~ msgid "Quit"
+#~ msgstr "Quitter"
+
+#~ msgid "Close all windows"
+#~ msgstr "Fermer toutes les applications"
+
+#~ msgid "New"
+#~ msgstr "Nouveau"
+
+#~ msgid "Minimize all windows"
+#~ msgstr "Maximiser toutes les fenêtres"
 
 #~ msgid ""
 #~ "This program is a lightweight Dock Launcher for opening common "
@@ -156,26 +408,14 @@ msgstr ""
 #~ msgid "Choose command"
 #~ msgstr "Choisissez une commande"
 
-#~ msgid "Choose Icon"
-#~ msgstr "Choisir l'icône"
-
-#~ msgid "Available"
-#~ msgstr "disponible"
-
 #~ msgid "Name: "
 #~ msgstr "Nom:"
 
 #~ msgid "Comment: "
 #~ msgstr "commentaire:"
 
-#~ msgid "Icon: "
-#~ msgstr "icône:"
-
 #~ msgid "Categories: "
 #~ msgstr "catégories:"
-
-#~ msgid "Close"
-#~ msgstr "fermer"
 
 #~ msgid "Docklight Launcher"
 #~ msgstr "Démarrage de Docklight"
@@ -187,9 +427,6 @@ msgstr ""
 #~ msgstr ""
 #~ "Le démarrage pour %s est introuvable.\n"
 #~ "Vous devez créer un démarrage pour cette application."
-
-#~ msgid " Application"
-#~ msgstr "application"
 
 #~ msgid "Launcher test Failed!"
 #~ msgstr "Echec du test de lancement!"
@@ -267,15 +504,6 @@ msgstr ""
 #~ msgid "Please choose a file"
 #~ msgstr "S'il vous plaît choisissez un fichier"
 
-#~ msgid "_Cancel"
-#~ msgstr "_Annuler"
-
-#~ msgid "_Open"
-#~ msgstr "_Ouvrir"
-
-#~ msgid "Image files"
-#~ msgstr "Les fichiers d'image"
-
 #~ msgid "Browser could not be found!\n"
 #~ msgstr "Le Browser est introuvable!\n"
 
@@ -284,9 +512,6 @@ msgstr ""
 
 #~ msgid "Desktop"
 #~ msgstr "Bureau"
-
-#~ msgid "Autohide"
-#~ msgstr "Autohide"
 
 #~ msgid "Show all"
 #~ msgstr "Montrer tous"
@@ -305,9 +530,6 @@ msgstr ""
 
 #~ msgid "Help"
 #~ msgstr "Aider"
-
-#~ msgid "About"
-#~ msgstr "A propos de "
 
 #~ msgid "Open new"
 #~ msgstr "Ouvrir une nouvelle"

@@ -32,6 +32,7 @@
 
 #include <gio/gdesktopappinfo.h>
 #include <giomm/application.h>
+#include <glibmm/i18n.h>
 #include <glibmm/miscutils.h>
 #include <gtk-layer-shell.h>
 
@@ -517,6 +518,33 @@ DockItem::DockItem(
       m_single_main_window(
           has_single_main_window(app))
 {
+    const auto set_menu_label =
+        [](Gtk::MenuItem &item,
+           const Glib::ustring &text)
+    {
+        item.set_label(text);
+        item.set_use_underline(true);
+    };
+
+    set_menu_label(
+        m_attach_item,
+        _("_Attach"));
+    set_menu_label(
+        m_open_new_window_item,
+        _("_Open New Window"));
+    set_menu_label(
+        m_close_all_item,
+        _("_Close All"));
+    set_menu_label(
+        m_minimize_item,
+        _("_Minimize"));
+    set_menu_label(
+        m_unminimize_item,
+        _("_Unminimize"));
+    set_menu_label(
+        m_maximize_item,
+        _("_Maximize"));
+
     if (!m_indicator_color.set(
             indicator_color))
     {
@@ -1377,7 +1405,6 @@ void DockItem::initialize_context_menu()
 {
     auto initialize_item =
         [](Gtk::MenuItem &item,
-           unsigned int mnemonic_index,
            bool bold = false)
     {
         item.set_halign(Gtk::ALIGN_FILL);
@@ -1404,10 +1431,23 @@ void DockItem::initialize_context_menu()
                 create_attr_underline(
                     Pango::UNDERLINE_SINGLE);
 
+        const auto mnemonic_index =
+            item.get_label()
+                .raw()
+                .find('_');
+
+        if (mnemonic_index ==
+            std::string::npos)
+        {
+            return;
+        }
+
         underline.set_start_index(
-            mnemonic_index);
+            static_cast<unsigned int>(
+                mnemonic_index));
         underline.set_end_index(
-            mnemonic_index + 1);
+            static_cast<unsigned int>(
+                mnemonic_index + 1));
         attributes.insert(underline);
 
         if (bold)
@@ -1422,15 +1462,14 @@ void DockItem::initialize_context_menu()
         label->set_attributes(attributes);
     };
 
-    initialize_item(m_attach_item, 1);
+    initialize_item(m_attach_item);
     initialize_item(
         m_open_new_window_item,
-        0,
         true);
-    initialize_item(m_minimize_item, 1);
-    initialize_item(m_unminimize_item, 0);
-    initialize_item(m_maximize_item, 1);
-    initialize_item(m_close_all_item, 0);
+    initialize_item(m_minimize_item);
+    initialize_item(m_unminimize_item);
+    initialize_item(m_maximize_item);
+    initialize_item(m_close_all_item);
 
     m_context_menu.append(
         m_group_separator);
@@ -2579,6 +2618,36 @@ DockHomeItem::DockHomeItem(
       m_window_registry(window_registry),
       m_icon_path(icon_path)
 {
+    const auto set_menu_label =
+        [](Gtk::MenuItem &item,
+           const Glib::ustring &text)
+    {
+        item.set_label(text);
+        item.set_use_underline(true);
+    };
+
+    set_menu_label(
+        m_settings_item,
+        _("_Settings"));
+    set_menu_label(
+        m_minimize_all_item,
+        _("_Minimize All"));
+    set_menu_label(
+        m_unminimize_all_item,
+        _("_Unminimize All"));
+    set_menu_label(
+        m_maximize_all_item,
+        _("_Maximize All"));
+    set_menu_label(
+        m_close_all_item,
+        _("_Close All"));
+    set_menu_label(
+        m_about_item,
+        _("_About"));
+    set_menu_label(
+        m_exit_item,
+        _("_Exit"));
+
     set_visible_window(false);
 
     add_events(
@@ -2681,7 +2750,7 @@ bool DockHomeItem::on_enter_notify_event(
 
     m_dock.schedule_show_tooltip(
         *this,
-        "Home");
+        C_("dock tooltip", "Home"));
 
     return true;
 }
@@ -2824,8 +2893,7 @@ void DockHomeItem::
     initialize_context_menu()
 {
     const auto initialize_mnemonic =
-        [](Gtk::MenuItem &item,
-           unsigned int mnemonic_index)
+        [](Gtk::MenuItem &item)
     {
         item.set_halign(Gtk::ALIGN_FILL);
         item.set_valign(Gtk::ALIGN_CENTER);
@@ -2848,35 +2916,41 @@ void DockHomeItem::
                 create_attr_underline(
                     Pango::UNDERLINE_SINGLE);
 
+        const auto mnemonic_index =
+            item.get_label()
+                .raw()
+                .find('_');
+
+        if (mnemonic_index ==
+            std::string::npos)
+        {
+            return;
+        }
+
         underline.set_start_index(
-            mnemonic_index);
+            static_cast<unsigned int>(
+                mnemonic_index));
         underline.set_end_index(
-            mnemonic_index + 1);
+            static_cast<unsigned int>(
+                mnemonic_index + 1));
         attributes.insert(underline);
         label->set_attributes(attributes);
     };
 
     initialize_mnemonic(
-        m_settings_item,
-        0);
+        m_settings_item);
     initialize_mnemonic(
-        m_minimize_all_item,
-        0);
+        m_minimize_all_item);
     initialize_mnemonic(
-        m_unminimize_all_item,
-        0);
+        m_unminimize_all_item);
     initialize_mnemonic(
-        m_maximize_all_item,
-        2);
+        m_maximize_all_item);
     initialize_mnemonic(
-        m_close_all_item,
-        0);
+        m_close_all_item);
     initialize_mnemonic(
-        m_about_item,
-        1);
+        m_about_item);
     initialize_mnemonic(
-        m_exit_item,
-        0);
+        m_exit_item);
 
     m_context_menu.append(
         m_settings_item);
@@ -3143,7 +3217,7 @@ void DockHomeItem::open_settings()
         configuration.current();
 
     Gtk::Dialog dialog(
-        "DockLight Settings",
+        _("DockLight Settings"),
         m_dock,
         true);
 
@@ -3168,7 +3242,7 @@ void DockHomeItem::open_settings()
     Gtk::Image header_icon;
 
     header.set_title(
-        "DockLight Settings");
+        _("DockLight Settings"));
     header.set_show_close_button(true);
     header.set_decoration_layout(
         ":close");
@@ -3196,7 +3270,7 @@ void DockHomeItem::open_settings()
     dialog.set_titlebar(header);
 
     dialog.add_button(
-        "_Close",
+        _("_Close"),
         Gtk::RESPONSE_CLOSE);
 
     Gtk::Grid grid;
@@ -3208,33 +3282,33 @@ void DockHomeItem::open_settings()
     grid.set_column_homogeneous(false);
 
     Gtk::Label monitor_label(
-        "Monitor");
+        _("Monitor"));
     Gtk::Label hover_label(
-        "Hover effect");
+        _("Hover Effect"));
     Gtk::Label indicator_label(
-        "Indicator");
+        _("Indicator"));
     Gtk::Label indicator_color_label(
-        "Indicator color");
+        _("Indicator Color"));
     Gtk::Label home_icon_enabled_label(
-        "Display home icon");
+        _("Display Home Icon"));
     Gtk::Label home_icon_path_label(
-        "Home icon");
+        _("Home Icon"));
     Gtk::Label display_tooltips_label(
-        "Display tooltips");
+        _("Display Tooltips"));
     Gtk::Label manage_all_workspaces_label(
-        "Manage all workspaces");
+        _("Manage All Workspaces"));
     Gtk::Label icon_size_label(
-        "Icon size");
+        _("Icon Size"));
     Gtk::Label location_label(
-        "Location");
+        _("Location"));
     Gtk::Label rounded_corners_label(
-        "Rounded corners");
+        _("Rounded Corners"));
     Gtk::Label corner_radius_label(
-        "Corner radius");
+        _("Corner Radius"));
     Gtk::Label alignment_label(
-        "Alignment");
+        _("Alignment"));
     Gtk::Label autohide_label(
-        "Autohide");
+        _("Autohide"));
 
     const std::vector<Gtk::Label *>
         labels = {
@@ -3314,7 +3388,11 @@ void DockHomeItem::open_settings()
         auto *name =
             Gtk::manage(
                 new Gtk::Label(
-                    identifier));
+                    identifier == "primary"
+                        ? C_(
+                              "monitor identifier",
+                              "Primary")
+                        : identifier));
 
         name->set_halign(
             Gtk::ALIGN_START);
@@ -3352,11 +3430,11 @@ void DockHomeItem::open_settings()
         Gtk::ORIENTATION_HORIZONTAL,
         6);
     Gtk::RadioButton hover_standard(
-        "Standard");
+        C_("hover effect", "Standard"));
     Gtk::RadioButton hover_zoom(
-        "Zoom");
+        C_("hover effect", "Zoom"));
     Gtk::RadioButton hover_blur(
-        "Blur");
+        C_("hover effect", "Blur"));
 
     hover_zoom.join_group(
         hover_standard);
@@ -3393,9 +3471,9 @@ void DockHomeItem::open_settings()
         Gtk::ORIENTATION_HORIZONTAL,
         6);
     Gtk::RadioButton indicator_lines(
-        "Lines");
+        C_("running indicator style", "Lines"));
     Gtk::RadioButton indicator_dots(
-        "Dots");
+        C_("running indicator style", "Dots"));
 
     indicator_dots.join_group(
         indicator_lines);
@@ -3458,7 +3536,7 @@ void DockHomeItem::open_settings()
     indicator_color.add(
         indicator_color_preview);
     indicator_color.set_tooltip_text(
-        "Choose indicator color");
+        _("Choose the indicator color"));
 
     Gtk::CheckButton home_icon_enabled;
     home_icon_enabled.set_active(
@@ -3470,9 +3548,9 @@ void DockHomeItem::open_settings()
         6);
     Gtk::Entry home_icon_path;
     Gtk::Button select_home_icon(
-        "Select...");
+        _("Select…"));
     Gtk::Button use_default_home_icon(
-        "Use default");
+        _("Use Default"));
 
     const auto configured_home_icon_path =
         current.settings.home_icon_path();
@@ -3480,7 +3558,7 @@ void DockHomeItem::open_settings()
     home_icon_path.set_editable(false);
     home_icon_path.set_hexpand(true);
     home_icon_path.set_placeholder_text(
-        "Built-in DockLight icon");
+        _("Built-in DockLight icon"));
     home_icon_path.set_text(
         configured_home_icon_path);
     home_icon_path.set_tooltip_text(
@@ -3509,7 +3587,7 @@ void DockHomeItem::open_settings()
         current.settings
             .manage_all_workspaces());
     manage_all_workspaces.set_tooltip_text(
-        "Apply icon actions and mouse-wheel cycling across all workspaces");
+        _("Apply icon actions and mouse-wheel cycling across all workspaces"));
 
     auto icon_size_adjustment =
         Gtk::Adjustment::create(
@@ -3529,13 +3607,13 @@ void DockHomeItem::open_settings()
         Gtk::ORIENTATION_HORIZONTAL,
         6);
     Gtk::RadioButton location_bottom(
-        "Bottom");
+        C_("dock location", "Bottom"));
     Gtk::RadioButton location_left(
-        "Left");
+        C_("dock location", "Left"));
     Gtk::RadioButton location_top(
-        "Top");
+        C_("dock location", "Top"));
     Gtk::RadioButton location_right(
-        "Right");
+        C_("dock location", "Right"));
 
     location_left.join_group(
         location_bottom);
@@ -3598,19 +3676,19 @@ void DockHomeItem::open_settings()
         0);
     corner_radius_spin.set_numeric(true);
     corner_radius_spin.set_tooltip_text(
-        "-1 selects the automatic radius");
+        _("-1 selects the automatic radius"));
 
     Gtk::Box alignment_choices(
         Gtk::ORIENTATION_HORIZONTAL,
         6);
     Gtk::RadioButton alignment_start(
-        "Start");
+        C_("dock alignment", "Start"));
     Gtk::RadioButton alignment_center(
-        "Center");
+        C_("dock alignment", "Center"));
     Gtk::RadioButton alignment_end(
-        "End");
+        C_("dock alignment", "End"));
     Gtk::RadioButton alignment_fill(
-        "Fill");
+        C_("dock alignment", "Fill"));
 
     alignment_center.join_group(
         alignment_start);
@@ -3656,11 +3734,11 @@ void DockHomeItem::open_settings()
         Gtk::ORIENTATION_HORIZONTAL,
         6);
     Gtk::RadioButton autohide_none(
-        "None");
+        C_("autohide mode", "None"));
     Gtk::RadioButton autohide_always(
-        "Autohide");
+        C_("autohide mode", "Autohide"));
     Gtk::RadioButton autohide_intelligent(
-        "Intellihide");
+        C_("autohide mode", "Intellihide"));
 
     autohide_always.join_group(
         autohide_none);
@@ -4078,15 +4156,15 @@ void DockHomeItem::open_settings()
             {
                 Gtk::Dialog
                     icon_dialog(
-                        "Select home icon",
+                        _("Select Home Icon"),
                         dialog,
                         true);
 
                 icon_dialog.add_button(
-                    "_Cancel",
+                    _("_Cancel"),
                     Gtk::RESPONSE_CANCEL);
                 icon_dialog.add_button(
-                    "_Open",
+                    _("_Open"),
                     Gtk::RESPONSE_OK);
                 icon_dialog.set_type_hint(
                     Gdk::WINDOW_TYPE_HINT_DIALOG);
@@ -4113,7 +4191,7 @@ void DockHomeItem::open_settings()
                 Gtk::Image icon_header_icon;
 
                 icon_header.set_title(
-                    "Select home icon");
+                    _("Select Home Icon"));
                 icon_header
                     .set_show_close_button(true);
                 icon_header.set_decoration_layout(
@@ -4150,7 +4228,7 @@ void DockHomeItem::open_settings()
                 auto image_filter =
                     Gtk::FileFilter::create();
                 image_filter->set_name(
-                    "Image files");
+                    _("Image Files"));
                 image_filter
                     ->add_pixbuf_formats();
                 icon_chooser.add_filter(
@@ -4226,7 +4304,7 @@ void DockHomeItem::open_settings()
             {
                 Gtk::ColorChooserDialog
                     color_dialog(
-                        "Indicator color",
+                        _("Indicator Color"),
                         dialog);
 
                 color_dialog.set_modal(true);
@@ -4254,7 +4332,7 @@ void DockHomeItem::open_settings()
                 Gtk::Image color_header_icon;
 
                 color_header.set_title(
-                    "Indicator color");
+                    _("Indicator Color"));
                 color_header
                     .set_show_close_button(true);
                 color_header.set_decoration_layout(
@@ -4403,7 +4481,7 @@ void DockHomeItem::open_settings()
 void DockHomeItem::show_about()
 {
     Gtk::Dialog dialog(
-        "About DockLight",
+        _("About DockLight"),
         m_dock,
         true);
 
@@ -4432,7 +4510,7 @@ void DockHomeItem::show_about()
     Gtk::Image header_icon;
 
     header.set_title(
-        "About DockLight");
+        _("About DockLight"));
     header.set_show_close_button(true);
     header.set_decoration_layout(
         ":close");
@@ -4459,7 +4537,7 @@ void DockHomeItem::show_about()
     dialog.set_titlebar(header);
 
     dialog.add_button(
-        "_Close",
+        _("_Close"),
         Gtk::RESPONSE_CLOSE);
 
     Gtk::Box about_content(
@@ -4468,11 +4546,12 @@ void DockHomeItem::show_about()
     Gtk::Image logo;
     Gtk::Label program_name;
     Gtk::Label version(
-        std::string("Version ") +
-        VERSION);
+        Glib::ustring::compose(
+            _("Version %1"),
+            VERSION));
     Gtk::Label comments(
-        "A lightweight application dock.\n"
-        "Author/Maintener: yoosamui");
+        _("A lightweight application dock.\n"
+          "Author and Maintainer: yoosamui"));
     Gtk::LinkButton website(
         "https://github.com/yoosamui/DockLight",
         "yoosamui/DockLight");

@@ -21,11 +21,13 @@
 // ------------------------------------------------------------
 
 #include "dock_monitor_manager.h"
+#include "config.h"
 
 #include <gdkmm/rectangle.h>
 #include <gdkmm/screen.h>
 #include <giomm/file.h>
 #include <glib.h>
+#include <glibmm/i18n.h>
 #include <glibmm/main.h>
 #include <glibmm/miscutils.h>
 #include <glibmm/spawn.h>
@@ -466,13 +468,13 @@ void DockMonitorManager::print_available_monitors() const
     if (monitors.empty())
     {
         std::cerr
-            << "No monitors are available."
+            << _("No monitors are available.")
             << std::endl;
         return;
     }
 
     std::cout
-        << "Available monitors:"
+        << _("Available monitors:")
         << std::endl;
 
     for (const auto &monitor : monitors)
@@ -487,12 +489,16 @@ void DockMonitorManager::print_available_monitors() const
 
         if (monitor.scale > 1)
             std::cout
-                << " scale="
+                << " "
+                << _("Scale")
+                << "="
                 << monitor.scale;
 
         if (monitor.primary)
             std::cout
-                << "  [primary]";
+                << "  ["
+                << C_("monitor status", "Primary")
+                << "]";
 
         std::cout
             << std::endl;
@@ -500,7 +506,9 @@ void DockMonitorManager::print_available_monitors() const
 
     std::cout
         << "  monitor = primary"
-        << "  (default)"
+        << "  ("
+        << C_("monitor status", "default")
+        << ")"
         << std::endl;
 }
 

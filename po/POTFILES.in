@@ -1,1 +1,2 @@
-src/main.cpp
+src/dock_item.cpp
+src/dock_monitor_manager.cpp

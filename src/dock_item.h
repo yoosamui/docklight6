@@ -191,14 +191,14 @@ private:
     Gtk::Menu m_context_menu;
     Gtk::SeparatorMenuItem
         m_group_separator;
-    Gtk::CheckMenuItem m_attach_item{"A_ttach", true};
+    Gtk::CheckMenuItem m_attach_item;
     Gtk::SeparatorMenuItem m_attach_separator;
-    Gtk::MenuItem m_open_new_window_item{"_Open New Window", true};
+    Gtk::MenuItem m_open_new_window_item;
     Gtk::SeparatorMenuItem m_window_separator;
-    Gtk::MenuItem m_close_all_item{"_Close All", true};
-    Gtk::MenuItem m_minimize_item{"M_inimize", true};
-    Gtk::MenuItem m_unminimize_item{"_Unminimize", true};
-    Gtk::MenuItem m_maximize_item{"M_aximize", true};
+    Gtk::MenuItem m_close_all_item;
+    Gtk::MenuItem m_minimize_item;
+    Gtk::MenuItem m_unminimize_item;
+    Gtk::MenuItem m_maximize_item;
     Gtk::SeparatorMenuItem m_close_separator;
 
     std::vector<Glib::RefPtr<Gdk::Pixbuf>> m_zoom_frames;
@@ -298,36 +298,21 @@ private:
     Gtk::Image m_image;
     Gtk::Menu m_context_menu;
 
-    Gtk::MenuItem
-        m_settings_item{"_Settings", true};
+    Gtk::MenuItem m_settings_item;
     Gtk::SeparatorMenuItem
         m_window_separator;
-    Gtk::MenuItem
-        m_minimize_all_item{
-            "_Minimize all",
-            true};
-    Gtk::MenuItem
-        m_unminimize_all_item{
-            "_Unminimize all",
-            true};
-    Gtk::MenuItem
-        m_maximize_all_item{
-            "Ma_ximize all",
-            true};
+    Gtk::MenuItem m_minimize_all_item;
+    Gtk::MenuItem m_unminimize_all_item;
+    Gtk::MenuItem m_maximize_all_item;
     Gtk::SeparatorMenuItem
         m_close_separator;
-    Gtk::MenuItem
-        m_close_all_item{
-            "_Close all",
-            true};
+    Gtk::MenuItem m_close_all_item;
     Gtk::SeparatorMenuItem
         m_about_separator;
-    Gtk::MenuItem
-        m_about_item{"A_bout", true};
+    Gtk::MenuItem m_about_item;
     Gtk::SeparatorMenuItem
         m_exit_separator;
-    Gtk::MenuItem
-        m_exit_item{"_Exit", true};
+    Gtk::MenuItem m_exit_item;
 
     sigc::connection m_settings_idle;
 

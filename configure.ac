@@ -23,6 +23,16 @@ AS_IF(
     [test -z "$MSGFMT"],
     [AC_MSG_ERROR([msgfmt is required to build translation catalogs])])
 
+AC_PATH_PROG([XGETTEXT], [xgettext])
+AS_IF(
+    [test -z "$XGETTEXT"],
+    [AC_MSG_ERROR([xgettext is required to extract translatable strings])])
+
+AC_PATH_PROG([MSGMERGE], [msgmerge])
+AS_IF(
+    [test -z "$MSGMERGE"],
+    [AC_MSG_ERROR([msgmerge is required to update translation catalogs])])
+
 ALL_LINGUAS=`sed -e '/^#/d' -e '/^$/d' "$srcdir/po/LINGUAS" | tr '\n' ' '`
 AC_SUBST([ALL_LINGUAS])
 
