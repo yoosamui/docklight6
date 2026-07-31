@@ -238,6 +238,31 @@ namespace
         return nullptr;
     }
 
+    Glib::RefPtr<Gdk::AppLaunchContext>
+    application_launch_context(
+        const Glib::RefPtr<Gio::AppInfo> &app)
+    {
+        const auto display =
+            Gdk::Display::get_default();
+
+        if (!display)
+            return {};
+
+        auto context =
+            display->get_app_launch_context();
+
+        if (!context)
+            return {};
+
+        context->set_timestamp(
+            gtk_get_current_event_time());
+
+        if (app)
+            context->set_icon(app->get_icon());
+
+        return context;
+    }
+
     Glib::RefPtr<Gdk::Pixbuf>
     create_transparent_pixbuf(
         int width,
@@ -1329,7 +1354,8 @@ void DockItem::initialize_context_menu()
 {
     auto initialize_item =
         [](Gtk::MenuItem &item,
-           unsigned int mnemonic_index)
+           unsigned int mnemonic_index,
+           bool bold = false)
     {
         item.set_halign(Gtk::ALIGN_FILL);
         item.set_valign(Gtk::ALIGN_CENTER);
@@ -1360,11 +1386,24 @@ void DockItem::initialize_context_menu()
         underline.set_end_index(
             mnemonic_index + 1);
         attributes.insert(underline);
+
+        if (bold)
+        {
+            auto weight =
+                Pango::Attribute::
+                    create_attr_weight(
+                        Pango::WEIGHT_BOLD);
+            attributes.insert(weight);
+        }
+
         label->set_attributes(attributes);
     };
 
     initialize_item(m_attach_item, 1);
-    initialize_item(m_open_new_window_item, 0);
+    initialize_item(
+        m_open_new_window_item,
+        0,
+        true);
     initialize_item(m_minimize_item, 1);
     initialize_item(m_unminimize_item, 0);
     initialize_item(m_maximize_item, 1);
@@ -1949,7 +1988,10 @@ void DockItem::launch_application()
             Glib::RefPtr<Gio::File>>
             files;
 
-        m_app->launch(files);
+        m_app->launch(
+            files,
+            application_launch_context(
+                m_app));
     }
     catch (const Glib::Error &error)
     {
@@ -1975,10 +2017,17 @@ void DockItem::launch_new_window()
 
         if (action)
         {
+            const auto context =
+                application_launch_context(
+                    m_app);
+
             g_desktop_app_info_launch_action(
                 desktop_app,
                 action,
-                nullptr);
+                context
+                    ? G_APP_LAUNCH_CONTEXT(
+                          context->gobj())
+                    : nullptr);
 
             g_message(
                 "Launched desktop action '%s' for %s",
