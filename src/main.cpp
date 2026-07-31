@@ -20,14 +20,16 @@
 //
 // ------------------------------------------------------------
 
-#include <gtkmm.h>
-
 #include "dock_configuration_manager.h"
 #include "dock_monitor_manager.h"
 #include "dock_window.h"
 #include "window_system_controller.h"
 #include "config.h"
 
+#include <gtkmm.h>
+
+#include <clocale>
+#include <libintl.h>
 #include <string>
 
 namespace
@@ -67,6 +69,17 @@ bool take_list_monitors_option(
 // configuration and monitor changes for the GTK application lifetime.
 int main(int argc, char *argv[])
 {
+    // Initialize the process locale and translation domain before GTK creates
+    // widgets whose labels may be translated.
+    std::setlocale(LC_ALL, "");
+    bindtextdomain(
+        GETTEXT_PACKAGE,
+        LOCALEDIR);
+    bind_textdomain_codeset(
+        GETTEXT_PACKAGE,
+        "UTF-8");
+    textdomain(GETTEXT_PACKAGE);
+
     const bool list_monitors =
         take_list_monitors_option(
             argc,

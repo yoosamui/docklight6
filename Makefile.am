@@ -1,4 +1,4 @@
-SUBDIRS = src
+SUBDIRS = src po
 
 EXTRA_DIST = \
     kwin/install-minimize-effect.sh \

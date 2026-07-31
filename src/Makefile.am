@@ -63,6 +63,7 @@ docklight6_SOURCES = \
 docklight6_CPPFLAGS = \
     $(AM_CPPFLAGS) \
     -DDOCKLIGHT_DATA_DIR=\"$(pkgdatadir)\" \
+    -DLOCALEDIR=\"$(localedir)\" \
     $(GTKMM_CFLAGS) \
     $(GTK_LAYER_SHELL_CFLAGS)
 
