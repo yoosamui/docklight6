@@ -1,3 +1,18 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Defines the plain command values passed from the generic window API
+// to the KWin integration transport.
+//
+// Commands own their identifiers and group members by value. The
+// handler type does not prescribe transport or object ownership.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "managed_window.h"

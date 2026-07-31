@@ -1,3 +1,22 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_configuration_manager_test.cpp
+//
+// Test scope:
+// Verifies configuration creation, parsing, validation, migration of
+// missing settings, and persistence of supported values.
+//
+// Temporary user directories isolate filesystem side effects from the
+// developer's real Docklight configuration.
+//
+// ------------------------------------------------------------
+
 #include "dock_configuration_manager.h"
 
 #include <glib.h>

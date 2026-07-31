@@ -1,3 +1,26 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// kwin_window_backend.cpp
+//
+// Implementation overview:
+// Implements the in-process KWin state model, snapshot transaction,
+// revision ordering, capability reporting, and command dispatch.
+//
+// Important implementation decisions:
+// - Complete snapshots are staged and committed atomically.
+// - Incremental messages must advance the accepted revision.
+// - Current-desktop state is applied consistently to every window.
+// - Backend notifications occur only after authoritative state changes.
+// - Action calls contain no D-Bus code and use injected handlers.
+//
+// ------------------------------------------------------------
+
 #include "kwin_window_backend.h"
 
 #include "kwin_integration_protocol.h"
@@ -383,6 +406,9 @@ bool KWinWindowBackend::stage_window(
     return true;
 }
 
+// Atomically replaces the visible backend state with a fully staged
+// revision. Consumers are notified only after the snapshot is complete, so
+// they never observe a partially synchronized KWin window list.
 bool KWinWindowBackend::commit_snapshot(
     std::uint64_t revision,
     const std::optional<WindowId>

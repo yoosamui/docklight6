@@ -1,3 +1,22 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_application_controller_test.cpp
+//
+// Test scope:
+// Exercises grouped launcher actions, desktop-aware activation and
+// minimization, alternate identities, window entries, and cycle state.
+//
+// The tests use FakeWindowBackend through WindowRegistry so controller
+// policy is verified without a running compositor or GTK session.
+//
+// ------------------------------------------------------------
+
 #include "dock_application_controller.h"
 #include "fake_window_backend.h"
 #include "window_registry.h"

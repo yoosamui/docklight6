@@ -1,3 +1,26 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_window_controller.cpp
+//
+// Implementation overview:
+// Coordinates dock layout, work-area adjustments, tooltip scheduling,
+// icon refreshes, and publication of compositor effect geometry.
+//
+// Important implementation decisions:
+// - Expensive GTK reactions are coalesced through idle callbacks.
+// - Pure placement is calculated before DockWindow applies side effects.
+// - Effective icon size is derived from available monitor space.
+// - Published icon geometry prefers compositor surface coordinates.
+// - Timers enforce tooltip intent without embedding timing in widgets.
+//
+// ------------------------------------------------------------
+
 #include "dock_window_controller.h"
 
 #include "dock_constants.h"
@@ -225,6 +248,9 @@ void DockWindowController::set_monitor(
     schedule_layout_update();
 }
 
+// Reads current monitor and dock geometry, calculates placement, and then
+// asks DockWindow to apply it. This is the orchestration boundary between
+// live GTK state and the side-effect-free layout engine.
 void DockWindowController::update_dock_layout()
 {
     auto output_geometry =

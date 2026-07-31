@@ -1,3 +1,25 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_configuration_manager.cpp
+//
+// Implementation overview:
+// Implements configuration-file creation, schema migration,
+// validation, persistence, and change monitoring.
+//
+// Important implementation decisions:
+// - Invalid values fall back through centralized parsing rules.
+// - Missing settings are appended without rewriting user choices.
+// - Directory events are debounced before the file is reloaded.
+// - Change signals are emitted only for a materially new snapshot.
+//
+// ------------------------------------------------------------
+
 #include "dock_configuration_manager.h"
 
 #include <giomm/file.h>
@@ -547,6 +569,9 @@ void DockConfigurationManager::ensure_setting(
     }
 }
 
+// Builds and validates a complete configuration snapshot from disk.
+// Keeping fallback and normalization rules here ensures every consumer sees
+// the same typed values and never interprets the key file independently.
 void DockConfigurationManager::reload()
 {
     ensure_config_file();

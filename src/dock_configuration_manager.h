@@ -1,3 +1,32 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_configuration_manager.h
+//
+// Purpose:
+// Declares loading, validation, persistence, and monitoring of the
+// per-user Docklight configuration.
+//
+// Responsibilities:
+// - Ensure the configuration file and supported settings exist.
+// - Convert text values into a validated DockConfiguration snapshot.
+// - Coalesce filesystem events and notify consumers after changes.
+//
+// Dependencies and ownership:
+// The manager owns its Gio file monitor, reload timer, current
+// snapshot, and change signal. Signal subscribers own their state.
+//
+// Design notes:
+// Consumers receive a complete snapshot, preventing UI components
+// from interpreting configuration text independently.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "dock_configuration.h"

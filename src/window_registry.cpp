@@ -1,3 +1,26 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// window_registry.cpp
+//
+// Implementation overview:
+// Implements backend synchronization, desktop-identity normalization,
+// application grouping, stacking policy, and action forwarding.
+//
+// Important implementation decisions:
+// - Docklight's own utility windows are excluded from application groups.
+// - Desktop identity may fall back through installed entries and process data.
+// - Geometry-only updates do not trigger full dock-state refreshes.
+// - Backend snapshots remain authoritative after reconnects.
+// - Public change signals are emitted only for dock-relevant state.
+//
+// ------------------------------------------------------------
+
 #include "window_registry.h"
 
 #include <giomm/desktopappinfo.h>
@@ -534,6 +557,9 @@ void WindowRegistry::clear()
         m_signal_changed.emit();
 }
 
+// Rebuilds the application-oriented view from the authoritative window
+// snapshot. Centralizing grouping here keeps backend identity quirks and
+// stacking policy out of dock items.
 void WindowRegistry::rebuild_applications()
 {
     m_running_applications.clear();

@@ -1,3 +1,25 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// geometry_bridge.cpp
+//
+// Implementation overview:
+// Implements the asynchronous D-Bus client used by the Plasma QML
+// plugin to mirror Docklight icon and surface geometry.
+//
+// Important implementation decisions:
+// - Initial snapshots and incremental signals update the same cache.
+// - Service registration changes reset or repopulate bridge state.
+// - D-Bus replies are handled asynchronously to avoid blocking QML.
+// - Published revisions let consumers react without copying internals.
+//
+// ------------------------------------------------------------
+
 #include "geometry_bridge.h"
 
 #include <QDBusConnection>
@@ -180,6 +202,9 @@ QVariantMap GeometryBridge::geometryFor(
     return {};
 }
 
+// Requests a complete geometry snapshot after connecting or reconnecting.
+// Incremental signals may arrive around the request, so the resulting cache
+// is still updated through the same normalized representation.
 void GeometryBridge::loadSnapshot()
 {
     auto interface =

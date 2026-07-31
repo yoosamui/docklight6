@@ -1,3 +1,26 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_window.cpp
+//
+// Implementation overview:
+// Implements the main dock surface, item synchronization, launcher
+// ordering, drag-and-drop, and application of calculated placement.
+//
+// Important implementation decisions:
+// - Dock item identity is based on normalized desktop identifiers.
+// - The controller calculates placement; this file performs GTK effects.
+// - Item synchronization preserves configured order while merging apps.
+// - Drag reorder writes through LauncherManager before rebuilding widgets.
+// - Visible spacer widgets express main-axis content margins.
+//
+// ------------------------------------------------------------
+
 #include "dock_window.h"
 
 #include "dock_constants.h"
@@ -539,6 +562,9 @@ DockWindow::content_geometry() const
     return geometry;
 }
 
+// Applies a previously calculated placement to the GTK layer-shell surface.
+// This function performs compositor-facing side effects but does not derive
+// geometry or monitor policy.
 void DockWindow::apply_dock_layout(
     const DockPlacement &placement)
 {
@@ -1250,6 +1276,9 @@ void DockWindow::synchronize_dock_items()
     }
 }
 
+// Creates the persistent dock container and its initial items after the
+// controller is available. Separating construction from the window
+// constructor also gives later synchronization a single widget setup path.
 void DockWindow::create_dock()
 {
     m_dock_box.pack_start(

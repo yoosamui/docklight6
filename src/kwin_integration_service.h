@@ -1,3 +1,33 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// kwin_integration_service.h
+//
+// Purpose:
+// Declares the session D-Bus service connecting Docklight's KWin
+// backend with the installed KWin script and Plasma geometry consumers.
+//
+// Responsibilities:
+// - Validate and receive versioned window snapshots and updates.
+// - Queue window commands for retrieval by the KWin script.
+// - Publish icon and dock-surface geometry to effects and QML clients.
+// - Track the single accepted script sender and its lifecycle.
+//
+// Dependencies and ownership:
+// The service borrows KWinWindowBackend. It owns D-Bus registrations,
+// pending invocations, command queues, geometry cache, and GLib sources.
+//
+// Design notes:
+// Protocol parsing and transport stay here; authoritative window state
+// and revision rules remain in KWinWindowBackend.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "kwin_window_command.h"

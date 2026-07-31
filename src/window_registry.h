@@ -1,3 +1,33 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// window_registry.h
+//
+// Purpose:
+// Declares the normalized, queryable window and application model used
+// by dock items independently from a concrete window-system backend.
+//
+// Responsibilities:
+// - Mirror backend snapshots and incremental state notifications.
+// - Normalize desktop-file identities and group windows by application.
+// - Preserve stacking and active-window information for dock policy.
+// - Forward supported window actions to the active backend.
+//
+// Dependencies and ownership:
+// The registry borrows WindowBackend and owns its normalized snapshots,
+// application groups, identity cache, subscriptions, and public signals.
+//
+// Design notes:
+// Backend transport details end at this boundary; UI consumers observe
+// stable application-oriented state.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "running_application.h"

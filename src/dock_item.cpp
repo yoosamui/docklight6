@@ -1,3 +1,26 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_item.cpp
+//
+// Implementation overview:
+// Implements launcher and home-item rendering, interaction, menus,
+// drag-and-drop, hover animation, and application actions.
+//
+// Important implementation decisions:
+// - GTK event handlers coordinate UI state but delegate window policy.
+// - Animation frames are cached and timers advance lightweight state.
+// - Drag payloads use Docklight's private target and stable desktop IDs.
+// - Dialogs and menus are kept compatible with layer-shell surfaces.
+// - Icon geometry is converted to plain data before publication.
+//
+// ------------------------------------------------------------
+
 #include "dock_item.h"
 #include "dock_configuration_manager.h"
 #include "dock_constants.h"

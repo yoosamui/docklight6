@@ -1,3 +1,22 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// kwin_integration_service_test.cpp
+//
+// Test scope:
+// Exercises D-Bus registration, snapshot transport, incremental state,
+// command delivery, and geometry publication through the real service.
+//
+// A private test interaction with the session bus verifies serialization
+// and asynchronous protocol behavior around KWinWindowBackend.
+//
+// ------------------------------------------------------------
+
 #include "kwin_integration_protocol.h"
 #include "kwin_integration_service.h"
 #include "kwin_window_backend.h"

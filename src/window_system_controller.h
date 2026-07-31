@@ -1,3 +1,33 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// window_system_controller.h
+//
+// Purpose:
+// Declares lifecycle ownership for Docklight's optional KDE Wayland
+// window-integration stack.
+//
+// Responsibilities:
+// - Detect whether the current desktop can use the KWin integration.
+// - Construct and start backend, registry, and D-Bus service in order.
+// - Provision companion KWin and Plasma components after connection.
+// - Tear the integration stack down safely.
+//
+// Dependencies and ownership:
+// The controller uniquely owns its backend, registry, and service.
+// Callers receive borrowed registry pointers valid for its lifetime.
+//
+// Design notes:
+// Desktop-specific startup is isolated here so the core dock can run
+// without window-management features on unsupported sessions.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include <sigc++/connection.h>

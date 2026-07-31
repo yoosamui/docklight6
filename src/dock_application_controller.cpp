@@ -1,3 +1,25 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_application_controller.cpp
+//
+// Implementation overview:
+// Implements launcher-to-window resolution and the policy for acting
+// on application window groups across virtual desktops.
+//
+// Important implementation decisions:
+// - Registry capabilities are checked before backend actions.
+// - Activation follows the target window's desktop grouping.
+// - Cycling state is reset when the eligible window set changes.
+// - The registry remains the source of truth for live window state.
+//
+// ------------------------------------------------------------
+
 #include "dock_application_controller.h"
 
 #include "running_application.h"

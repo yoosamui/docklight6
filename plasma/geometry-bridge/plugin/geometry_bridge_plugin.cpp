@@ -1,3 +1,19 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Registers GeometryBridge as the QML type provided by the Docklight
+// Plasma geometry-bridge plugin.
+//
+// Qt owns plugin and QML-created object lifetimes. This translation
+// unit contains registration only; D-Bus behavior remains in
+// GeometryBridge.
+//
+// ------------------------------------------------------------
+
 #include "geometry_bridge.h"
 
 #include <QQmlExtensionPlugin>

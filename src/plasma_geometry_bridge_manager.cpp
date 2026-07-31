@@ -1,3 +1,24 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// plasma_geometry_bridge_manager.cpp
+//
+// Implementation overview:
+// Locates installed Plasma package metadata and runs the packaged
+// installation helper when the geometry bridge must be provisioned.
+//
+// Important implementation decisions:
+// - Candidate paths support installed and development executions.
+// - Regular-file checks precede launching any helper.
+// - The helper owns package mutation; this class only coordinates it.
+//
+// ------------------------------------------------------------
+
 #include "plasma_geometry_bridge_manager.h"
 
 #include <gio/gio.h>

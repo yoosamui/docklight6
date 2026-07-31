@@ -1,3 +1,32 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_window.h
+//
+// Purpose:
+// Declares the main GTK layer-shell surface and its dock-item container.
+//
+// Responsibilities:
+// - Own and synchronize launcher, running-app, and home widgets.
+// - Apply calculated dock placement, orientation, and visual styling.
+// - Coordinate item ordering, attachment, drag-and-drop, and tooltips.
+// - Provide the GTK surface used by DockWindowController.
+//
+// Dependencies and ownership:
+// DockWindow owns its GTK children, tooltip, launcher manager, and
+// controller. It borrows WindowRegistry and shares the selected monitor.
+//
+// Design notes:
+// Layout calculations and timing policy are delegated to the controller
+// and layout engine; this class applies results to GTK and layer-shell.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "dock_configuration.h"

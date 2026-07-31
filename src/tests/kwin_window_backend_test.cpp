@@ -1,3 +1,22 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// kwin_window_backend_test.cpp
+//
+// Test scope:
+// Verifies protocol registration, atomic snapshots, incremental revision
+// ordering, command dispatch, compatibility fallback, and cancellation.
+//
+// Tests drive the backend directly so state-machine behavior is isolated
+// from D-Bus transport and a running KWin instance.
+//
+// ------------------------------------------------------------
+
 #include "kwin_integration_protocol.h"
 #include "kwin_window_backend.h"
 #include "window_registry.h"

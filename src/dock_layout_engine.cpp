@@ -1,8 +1,33 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_layout_engine.cpp
+//
+// Implementation overview:
+// Contains the geometry and edge-placement rules declared by
+// DockLayoutEngine.
+//
+// Important implementation decisions:
+// - Calculations use plain data structures and have no GTK effects.
+// - Dock placement is expressed as anchors and compositor margins.
+// - Tooltip positions use monitor coordinates and edge clamping.
+// - Orientation-specific branches remain explicit at the rule boundary.
+//
+// ------------------------------------------------------------
+
 #include "dock_layout_engine.h"
 #include "dock_layout_metrics.h"
 
 #include <algorithm>
 
+// Calculates dock anchors, margins, orientation, and requested size from
+// plain geometry. Keeping this outside DockWindow prevents layer-shell side
+// effects from becoming mixed with placement policy.
 DockPlacement
 DockLayoutEngine::calculate_dock_layout(
     const DockLayoutRequest &request,
@@ -119,6 +144,9 @@ DockLayoutEngine::calculate_dock_layout(
     return placement;
 }
 
+// Calculates tooltip screen coordinates relative to the dock item and clamps
+// the result to the selected monitor. The caller applies the returned values
+// to the tooltip window after measurement is complete.
 ScreenPosition
 DockLayoutEngine::calculate_tooltip_position(
     const DockLayoutRequest &request,

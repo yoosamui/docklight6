@@ -1,3 +1,18 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Implements the typed DockSettings accessors and local value
+// normalization used after configuration parsing.
+//
+// This file does not read configuration files or update GTK widgets;
+// it only maintains settings owned by a DockSettings instance.
+//
+// ------------------------------------------------------------
+
 #include "dock_settings.h"
 
 #include <algorithm>

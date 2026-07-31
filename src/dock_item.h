@@ -1,3 +1,33 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_item.h
+//
+// Purpose:
+// Declares interactive launcher items and the Docklight home item.
+//
+// Responsibilities:
+// - Render launcher icons, indicators, hover effects, and menus.
+// - Translate pointer, scroll, and drag events into dock actions.
+// - Publish launcher icon geometry for compositor effects.
+// - Provide global window and settings actions through the home item.
+//
+// Dependencies and ownership:
+// Items are GTK widgets owned by their container. They borrow
+// DockWindow and WindowRegistry, while owning their menus, animation
+// state, pixbuf references, and application controller.
+//
+// Design notes:
+// Window-group policy is delegated to DockApplicationController and
+// dock-wide layout and ordering remain DockWindow responsibilities.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "dock_application_controller.h"

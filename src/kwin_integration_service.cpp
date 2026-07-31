@@ -1,3 +1,26 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// kwin_integration_service.cpp
+//
+// Implementation overview:
+// Implements the versioned D-Bus protocol used to exchange KWin window
+// state, commands, and compositor-effect geometry.
+//
+// Important implementation decisions:
+// - Only the registered sender may mutate backend state.
+// - D-Bus values are validated before crossing into typed backend data.
+// - Commands are queued and paired with their pending D-Bus invocations.
+// - Geometry updates are coalesced before publishing effect properties.
+// - Stop and sender-loss paths release every registration and callback.
+//
+// ------------------------------------------------------------
+
 #include "kwin_integration_service.h"
 
 #include "kwin_integration_protocol.h"
@@ -1393,6 +1416,9 @@ void KWinIntegrationService::clear_commands()
     }
 }
 
+// Validates and dispatches one D-Bus method at the transport boundary.
+// Backend state is changed only after sender, protocol, and value checks
+// succeed, keeping untrusted variant parsing out of the state model.
 void KWinIntegrationService::
     handle_method_call(
         const char *sender,

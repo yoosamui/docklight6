@@ -1,3 +1,25 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_layout_geometry.cpp
+//
+// Implementation overview:
+// Converts live GTK widget and GDK monitor allocations into the plain
+// coordinate structures consumed by DockLayoutEngine.
+//
+// Important implementation decisions:
+// - Item coordinates are translated into the dock window's space.
+// - Work-area and full-output geometry are exposed separately.
+// - Missing native windows produce safe empty geometry values.
+// - No placement policy is applied while reading geometry.
+//
+// ------------------------------------------------------------
+
 #include "dock_layout_geometry.h"
 
 #include "dock_item.h"
@@ -7,6 +29,8 @@
 #include <gdkmm/rectangle.h>
 #include <gdkmm/window.h>
 
+// Reads the item's current allocation relative to DockWindow. Returning a
+// plain geometry value keeps GTK objects out of layout calculations.
 ItemGeometry
 DockLayoutGeometry::item_geometry(
     Gtk::Widget &item,

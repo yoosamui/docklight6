@@ -1,3 +1,25 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_monitor_manager.cpp
+//
+// Implementation overview:
+// Implements monitor enumeration and selection across GDK and KDE
+// output metadata, then observes the selected monitor for stable changes.
+//
+// Important implementation decisions:
+// - User identifiers are normalized before matching output metadata.
+// - A missing requested output falls back to the primary monitor.
+// - Repeated samples prevent transient geometry from reaching layout code.
+// - Monitor logs describe applied state rather than raw event traffic.
+//
+// ------------------------------------------------------------
+
 #include "dock_monitor_manager.h"
 
 #include <gdkmm/rectangle.h>
@@ -600,6 +622,9 @@ DockMonitorManager::signal_monitor_changed()
     return m_signal_monitor_changed;
 }
 
+// Resolves the configured output identifier and reports whether primary
+// monitor fallback was required. Matching is isolated here so all callers
+// observe the same normalization and fallback policy.
 Glib::RefPtr<Gdk::Monitor>
 DockMonitorManager::resolve_requested_monitor(
     bool &used_fallback) const

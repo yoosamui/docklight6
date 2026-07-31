@@ -1,3 +1,32 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_layout_geometry.h
+//
+// Purpose:
+// Declares the adapter that reads GTK and monitor allocations into
+// plain geometry values used by the layout engine.
+//
+// Responsibilities:
+// - Read item geometry relative to DockWindow.
+// - Read dock-surface size and monitor work-area geometry.
+// - Expose full output geometry for deterministic layer placement.
+//
+// Dependencies and ownership:
+// The adapter borrows widgets, DockWindow, and Gdk::Monitor objects
+// only while reading them. It owns no GTK or display resources.
+//
+// Design notes:
+// GTK geometry extraction is isolated here so DockLayoutEngine stays
+// independent from toolkit and compositor APIs.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "dock_layout_types.h"

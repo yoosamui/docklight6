@@ -1,3 +1,31 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_application_controller.h
+//
+// Purpose:
+// Declares application-level window actions used by a dock item.
+//
+// Responsibilities:
+// - Resolve one launcher identity to its managed window group.
+// - Apply minimize, activate, maximize, close, and cycling policy.
+// - Present window entries without exposing backend details to the UI.
+//
+// Dependencies and ownership:
+// The controller borrows WindowRegistry; it does not own backend
+// windows. Cycle state and launcher identifiers are stored by value.
+//
+// Design notes:
+// Group-action policy is centralized here so DockItem remains focused
+// on GTK interaction and presentation.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "managed_window.h"

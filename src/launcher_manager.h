@@ -1,3 +1,32 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// launcher_manager.h
+//
+// Purpose:
+// Declares discovery and persistence of launchers attached to the dock.
+//
+// Responsibilities:
+// - Read and preserve the user's launcher order.
+// - Resolve desktop identifiers to installed Gio applications.
+// - Attach, detach, and reorder launchers atomically.
+// - Invalidate the application cache when desktop entries change.
+//
+// Dependencies and ownership:
+// The manager owns its persisted path, application cache, and GLib
+// monitor subscription. Gio application objects use shared references.
+//
+// Design notes:
+// Identifier normalization is centralized so configuration, running
+// windows, drag payloads, and installed desktop files compare reliably.
+//
+// ------------------------------------------------------------
+
 #ifndef LAUNCHER_MANAGER_H
 #define LAUNCHER_MANAGER_H
 

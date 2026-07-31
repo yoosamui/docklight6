@@ -1,3 +1,31 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// window_backend.h
+//
+// Purpose:
+// Declares the desktop-neutral window-system boundary used by the dock.
+//
+// Responsibilities:
+// - Expose backend capabilities and normalized window snapshots.
+// - Accept window actions without leaking transport-specific APIs.
+// - Notify WindowRegistry of state, connection, and geometry changes.
+//
+// Dependencies and ownership:
+// Concrete backends own native integration state. WindowBackend owns
+// only its signals and does not own returned window-system objects.
+//
+// Design notes:
+// Capability flags keep higher layers from assuming every desktop
+// integration supports the same state or actions.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "managed_window.h"

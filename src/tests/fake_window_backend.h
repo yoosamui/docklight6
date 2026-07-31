@@ -1,3 +1,26 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// fake_window_backend.h
+//
+// Purpose:
+// Declares an in-memory WindowBackend for deterministic unit tests.
+//
+// Responsibilities:
+// - Store controllable window, stacking, active, and geometry state.
+// - Apply requested actions directly to that state.
+// - Emit the same notifications expected from production backends.
+//
+// Ownership:
+// The fake owns every snapshot value and no native window resources.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "window_backend.h"

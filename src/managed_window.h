@@ -1,3 +1,18 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Defines the normalized window identity, metadata, geometry, desktop
+// membership, and state shared across window backends and the registry.
+//
+// These plain value types own their copied data and contain no backend,
+// D-Bus, KWin, or GTK behavior.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include <cstdint>

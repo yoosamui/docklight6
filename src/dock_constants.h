@@ -1,3 +1,18 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Defines shared interaction limits, timing defaults, and protocol
+// identifiers used by dock items, tooltips, and the dock surface.
+//
+// These compile-time values own no resources. Runtime layout choices
+// belong to DockConfiguration and DockLayoutRequest.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 namespace DockConstants

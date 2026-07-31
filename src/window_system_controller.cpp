@@ -1,3 +1,25 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// window_system_controller.cpp
+//
+// Implementation overview:
+// Detects KDE Wayland sessions and coordinates the KWin backend,
+// registry, D-Bus service, script, and Plasma geometry bridge.
+//
+// Important implementation decisions:
+// - Unsupported sessions keep the dock usable without window control.
+// - Owned components are created and destroyed in dependency order.
+// - Companion integrations are ensured only after backend connection.
+// - Availability reflects a live registry rather than environment alone.
+//
+// ------------------------------------------------------------
+
 #include "window_system_controller.h"
 
 #include "kwin_integration_service.h"

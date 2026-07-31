@@ -1,3 +1,25 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// launcher_manager.cpp
+//
+// Implementation overview:
+// Implements launcher-file persistence, installed application lookup,
+// desktop-ID normalization, and application-cache invalidation.
+//
+// Important implementation decisions:
+// - Stored order is preserved while duplicate identities are removed.
+// - Desktop IDs compare case-insensitively with a canonical suffix.
+// - Writes replace the complete ordered list to keep reorder atomic.
+// - Gio application enumeration is cached until its monitor reports change.
+//
+// ------------------------------------------------------------
+
 #include "launcher_manager.h"
 
 #include <gio/gdesktopappinfo.h>
@@ -465,6 +487,9 @@ LauncherManager::read_config() const
     return ids;
 }
 
+// Persists the complete launcher order after validation by the caller.
+// Rewriting one canonical list avoids partial reorder state and keeps the
+// file representation independent from GTK widget order.
 bool LauncherManager::write_config(
     const std::vector<std::string>
         &desktop_ids) const

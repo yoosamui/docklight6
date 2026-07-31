@@ -1,3 +1,21 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// launcher_manager_test.cpp
+//
+// Test scope:
+// Verifies launcher order, duplicate removal, identifier normalization,
+// attachment changes, reorder validation, and persistence.
+//
+// A temporary data file contains all filesystem side effects.
+//
+// ------------------------------------------------------------
+
 #include "launcher_manager.h"
 
 #include <glib.h>

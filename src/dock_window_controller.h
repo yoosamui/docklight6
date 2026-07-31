@@ -1,3 +1,33 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_window_controller.h
+//
+// Purpose:
+// Declares orchestration between configuration, geometry calculation,
+// GTK lifecycle events, tooltip timing, and icon-geometry publication.
+//
+// Responsibilities:
+// - Recalculate layout when configuration or monitor state changes.
+// - Clamp effective icon size to the selected output.
+// - Schedule tooltip, icon refresh, and geometry updates.
+// - Keep DockWindow side effects ordered after GTK realization.
+//
+// Dependencies and ownership:
+// The controller borrows its DockWindow, shares monitor and icon-theme
+// references, and owns calculation objects and signal connections.
+//
+// Design notes:
+// The controller is the boundary between pure layout rules and the
+// event-driven GTK surface that applies those rules.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "dock_configuration.h"

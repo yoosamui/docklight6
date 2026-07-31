@@ -1,3 +1,33 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// kwin_window_backend.h
+//
+// Purpose:
+// Declares the WindowBackend implementation backed by versioned state
+// supplied by the Docklight KWin script.
+//
+// Responsibilities:
+// - Stage and atomically commit complete window snapshots.
+// - Accept ordered incremental updates and current-desktop changes.
+// - Dispatch requested window actions through an injected handler.
+// - Advertise capabilities and notify generic backend consumers.
+//
+// Dependencies and ownership:
+// The backend owns its snapshots and handlers. Transport objects are
+// owned by KWinIntegrationService and communicate through this API.
+//
+// Design notes:
+// Revision checks prevent stale D-Bus messages from corrupting state,
+// while staged snapshots prevent consumers from seeing partial refreshes.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "kwin_window_command.h"

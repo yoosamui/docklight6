@@ -1,3 +1,22 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// window_registry_test.cpp
+//
+// Test scope:
+// Exercises snapshot and incremental synchronization, application
+// grouping, identity fallback, stacking, disconnects, and global actions.
+//
+// FakeWindowBackend isolates registry policy; temporary desktop entries
+// cover executable-to-application identity resolution.
+//
+// ------------------------------------------------------------
+
 #include "fake_window_backend.h"
 #include "window_registry.h"
 

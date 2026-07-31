@@ -1,3 +1,25 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// main.cpp
+//
+// Implementation overview:
+// Provides the Docklight process entry point, command-line monitor
+// listing, subsystem startup, and construction of the main dock window.
+//
+// Important implementation decisions:
+// - Configuration and monitor selection are established before the UI.
+// - Window-system integration is optional outside supported sessions.
+// - Long-lived managers remain in main for the GTK application lifetime.
+// - Configuration and monitor changes are forwarded as complete updates.
+//
+// ------------------------------------------------------------
+
 #include <gtkmm.h>
 
 #include "dock_configuration_manager.h"
@@ -41,6 +63,8 @@ bool take_list_monitors_option(
 
 }
 
+// Establishes long-lived managers before creating DockWindow, then forwards
+// configuration and monitor changes for the GTK application lifetime.
 int main(int argc, char *argv[])
 {
     const bool list_monitors =

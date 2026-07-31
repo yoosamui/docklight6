@@ -1,3 +1,25 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_tooltip_window.cpp
+//
+// Implementation overview:
+// Implements tooltip measurement, styling, delayed remapping, and
+// application of precomputed layer-shell margins.
+//
+// Important implementation decisions:
+// - Text is measured before the layout engine chooses a position.
+// - Repeated identical requests do not restart visible tooltip state.
+// - Input is transparent so the overlay never interrupts dock hovering.
+// - Remapping is delayed briefly to replay compositor show animation.
+//
+// ------------------------------------------------------------
+
 #include "dock_tooltip_window.h"
 
 #include "dock_constants.h"

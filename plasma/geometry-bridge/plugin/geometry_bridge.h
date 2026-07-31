@@ -1,3 +1,32 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// geometry_bridge.h
+//
+// Purpose:
+// Declares the QML-facing bridge for Docklight icon and dock-surface
+// geometry published over the session D-Bus.
+//
+// Responsibilities:
+// - Maintain the latest geometry snapshot received from Docklight.
+// - Expose connection state, revisions, and geometry to QML.
+// - Translate the D-Bus geometry structure to Qt value types.
+//
+// Dependencies and ownership:
+// GeometryBridge owns its Qt containers and service watcher. QObject
+// parent ownership applies to asynchronous D-Bus watchers.
+//
+// Design notes:
+// The bridge keeps Plasma/QML consumers independent from Docklight's
+// GTK implementation and normalizes window identifiers at its boundary.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include <QDBusArgument>

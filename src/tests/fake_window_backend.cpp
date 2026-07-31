@@ -1,3 +1,18 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Implements the in-memory WindowBackend used by registry and
+// application-controller tests.
+//
+// Mutators update owned state and emit production-equivalent signals;
+// no desktop session, compositor, or D-Bus connection is required.
+//
+// ------------------------------------------------------------
+
 #include "fake_window_backend.h"
 
 #include <algorithm>

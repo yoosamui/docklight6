@@ -1,17 +1,22 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Defines compile-time visual baselines and pure scaling helpers used
+// to derive dock-item, tooltip, and hover dimensions.
+//
+// Runtime preferences are passed in as values; this class owns no
+// resources and performs no rendering or placement.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include <algorithm>
 
-//
-// Stores compile-time visual metrics used by the dock.
-//
-// Runtime choices belong in DockLayoutRequest and placement decisions belong
-// in DockLayoutEngine.
-//
-// Responsibility:
-//
-// Stores the layout configuration of the dock.
-//
 class DockLayoutMetrics
 {
 public:

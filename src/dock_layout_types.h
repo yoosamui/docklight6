@@ -1,3 +1,18 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Defines the plain orientation, location, request, monitor, item, and
+// placement types shared by Docklight layout components.
+//
+// The declarations contain no GTK behavior and own no external
+// resources. They form the data boundary around DockLayoutEngine.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 enum class DockOrientation

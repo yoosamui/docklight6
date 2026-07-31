@@ -1,3 +1,31 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_tooltip_window.h
+//
+// Purpose:
+// Declares the non-interactive layer-shell window used for dock labels.
+//
+// Responsibilities:
+// - Measure text before layout placement is calculated.
+// - Apply a calculated position without deriving screen geometry.
+// - Manage tooltip styling, remapping, and input transparency.
+//
+// Dependencies and ownership:
+// The GTK window owns its child widgets, CSS provider reference, and
+// reveal timer. Monitor references use shared Glib ownership.
+//
+// Design notes:
+// Placement remains in DockLayoutEngine; this class performs only the
+// GTK and layer-shell side effects needed to display the result.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "dock_layout_metrics.h"

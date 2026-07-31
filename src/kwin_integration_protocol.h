@@ -1,3 +1,18 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Defines the version and stable D-Bus names shared by Docklight, its
+// KWin script, and the Plasma geometry bridge.
+//
+// These protocol constants own no resources. Compatibility changes
+// must be coordinated with every producer and consumer.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include <cstdint>

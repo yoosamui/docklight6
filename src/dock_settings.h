@@ -1,3 +1,18 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Defines the validated runtime settings consumed by dock widgets and
+// layout orchestration.
+//
+// Values are owned by DockSettings and exposed through typed accessors.
+// File parsing and persistence belong to DockConfigurationManager.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "dock_layout_types.h"

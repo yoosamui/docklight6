@@ -1,3 +1,24 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// kwin_script_manager.cpp
+//
+// Implementation overview:
+// Locates the installed Docklight KWin script and asks KWin's scripting
+// service to unload, load, and start it.
+//
+// Important implementation decisions:
+// - Candidate paths support installed and development layouts.
+// - Script lifecycle is controlled through KWin's public D-Bus API.
+// - Failures are reported without retaining partial manager state.
+//
+// ------------------------------------------------------------
+
 #include "kwin_script_manager.h"
 
 #include <gio/gio.h>

@@ -1,3 +1,18 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// Implements WindowBackend's transport-neutral signal accessors and
+// protected notification helpers.
+//
+// Concrete backends decide when state changes; this file only delivers
+// those changes to WindowRegistry and other subscribers.
+//
+// ------------------------------------------------------------
+
 #include "window_backend.h"
 
 sigc::signal<

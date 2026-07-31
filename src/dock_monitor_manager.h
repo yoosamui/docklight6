@@ -1,3 +1,32 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_monitor_manager.h
+//
+// Purpose:
+// Declares monitor discovery, selection, and stable change tracking.
+//
+// Responsibilities:
+// - Resolve configured monitor identifiers with a primary fallback.
+// - Present human-readable monitor information to command-line users.
+// - Observe topology, geometry, work-area, and scale changes.
+// - Emit only after a monitor state has stabilized.
+//
+// Dependencies and ownership:
+// The manager owns GDK/GIO references and signal connections. Returned
+// monitor references share ownership through Glib::RefPtr.
+//
+// Design notes:
+// Sampling and stabilization absorb transient compositor updates before
+// DockWindowController recalculates the dock layout.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include <gdkmm/display.h>
