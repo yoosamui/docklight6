@@ -45,6 +45,7 @@
 #include <vector>
 
 class DockWindowController;
+class DockHomeItem;
 class WindowRegistry;
 
 class DockWindow : public Gtk::Window

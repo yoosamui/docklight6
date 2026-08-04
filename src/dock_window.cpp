@@ -22,6 +22,7 @@
 // ------------------------------------------------------------
 
 #include "dock_window.h"
+#include "dock_home_item.h"
 
 #include "dock_constants.h"
 #include "dock_layout_metrics.h"

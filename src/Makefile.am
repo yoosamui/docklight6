@@ -3,9 +3,11 @@ bin_PROGRAMS = docklight6
 check_PROGRAMS = \
     dock_application_controller_test \
     dock_configuration_manager_test \
+    dock_icon_renderer_test \
     launcher_manager_test \
     window_registry_test \
     kwin_window_backend_test \
+    kwin_protocol_codec_test \
     kwin_integration_service_test
 
 TESTS = \
@@ -33,6 +35,8 @@ docklight6_SOURCES = \
     window_system_controller.h \
     window_system_controller.cpp \
     kwin_integration_protocol.h \
+    kwin_protocol_codec.h \
+    kwin_protocol_codec.cpp \
     kwin_integration_service.h \
     kwin_integration_service.cpp \
     kwin_script_manager.h \
@@ -52,6 +56,14 @@ docklight6_SOURCES = \
     dock_window_controller.h \
     dock_window_controller.cpp \
     dock_window.cpp \
+    dock_home_item.h \
+    dock_home_item.cpp \
+    dock_settings_dialog.h \
+    dock_settings_dialog.cpp \
+    dock_about_dialog.h \
+    dock_about_dialog.cpp \
+    dock_icon_renderer.h \
+    dock_icon_renderer.cpp \
     dock_settings.cpp \
     launcher_manager.cpp \
     dock_layout_geometry.cpp \
@@ -106,6 +118,20 @@ dock_configuration_manager_test_CPPFLAGS = \
 dock_configuration_manager_test_LDADD = \
     $(GTKMM_LIBS)
 
+dock_icon_renderer_test_SOURCES = \
+    tests/dock_icon_renderer_test.cpp \
+    dock_icon_renderer.h \
+    dock_icon_renderer.cpp \
+    dock_layout_metrics.h \
+    dock_layout_metrics.cpp \
+    dock_layout_types.h
+
+dock_icon_renderer_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+dock_icon_renderer_test_LDADD = \
+    $(GTKMM_LIBS)
+
 launcher_manager_test_SOURCES = \
     tests/launcher_manager_test.cpp \
     launcher_manager.h \
@@ -155,6 +181,18 @@ kwin_window_backend_test_CPPFLAGS = \
 kwin_window_backend_test_LDADD = \
     $(GTKMM_LIBS)
 
+kwin_protocol_codec_test_SOURCES = \
+    tests/kwin_protocol_codec_test.cpp \
+    managed_window.h \
+    kwin_protocol_codec.h \
+    kwin_protocol_codec.cpp
+
+kwin_protocol_codec_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+kwin_protocol_codec_test_LDADD = \
+    $(GTKMM_LIBS)
+
 kwin_integration_service_test_SOURCES = \
     tests/kwin_integration_service_test.cpp \
     managed_window.h \
@@ -162,6 +200,8 @@ kwin_integration_service_test_SOURCES = \
     window_backend.h \
     window_backend.cpp \
     kwin_integration_protocol.h \
+    kwin_protocol_codec.h \
+    kwin_protocol_codec.cpp \
     kwin_integration_service.h \
     kwin_integration_service.cpp \
     kwin_window_command.h \
