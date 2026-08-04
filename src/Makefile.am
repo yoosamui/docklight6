@@ -2,6 +2,7 @@ bin_PROGRAMS = docklight6
 
 check_PROGRAMS = \
     dock_application_controller_test \
+    dock_autohide_layout_test \
     dock_configuration_manager_test \
     dock_icon_renderer_test \
     launcher_manager_test \
@@ -53,6 +54,10 @@ docklight6_SOURCES = \
     dock_configuration_manager.cpp \
     dock_monitor_manager.h \
     dock_monitor_manager.cpp \
+    dock_reveal_window.h \
+    dock_reveal_window.cpp \
+    dock_autohide_controller.h \
+    dock_autohide_controller.cpp \
     dock_window_controller.h \
     dock_window_controller.cpp \
     dock_window.cpp \
@@ -101,6 +106,19 @@ dock_application_controller_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)
 
 dock_application_controller_test_LDADD = \
+    $(GTKMM_LIBS)
+
+dock_autohide_layout_test_SOURCES = \
+    tests/dock_autohide_layout_test.cpp \
+    dock_layout_types.h \
+    dock_window_geometry.h \
+    dock_layout_engine.h \
+    dock_layout_engine.cpp
+
+dock_autohide_layout_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+dock_autohide_layout_test_LDADD = \
     $(GTKMM_LIBS)
 
 dock_configuration_manager_test_SOURCES = \

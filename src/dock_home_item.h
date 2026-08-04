@@ -80,8 +80,11 @@ private:
     Gtk::MenuItem m_exit_item;
 
     sigc::connection m_settings_idle;
+    sigc::connection m_context_menu_map;
+    sigc::connection m_context_menu_unmap;
 
     std::string m_icon_path;
     int m_icon_size = 0;
     bool m_icon_load_attempted = false;
+    bool m_context_menu_mapped = false;
 };

@@ -68,6 +68,8 @@ public:
         const Glib::ustring &text);
     void schedule_hide_tooltip();
     void hide_tooltip_immediately();
+    void inhibit_autohide();
+    void uninhibit_autohide();
     bool set_item_attached(
         DockItem &item,
         bool attached);
@@ -157,6 +159,7 @@ private:
     std::unique_ptr<DockWindowController> m_controller;
 
     DockItem *m_dragged_item = nullptr;
+    bool m_item_drop_accepted = false;
 
     bool m_has_synchronized_items = false;
 };

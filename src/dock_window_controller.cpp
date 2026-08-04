@@ -23,6 +23,7 @@
 
 #include "dock_window_controller.h"
 
+#include "dock_autohide_controller.h"
 #include "dock_constants.h"
 #include "dock_home_item.h"
 #include "dock_item.h"
@@ -42,6 +43,10 @@ DockWindowController::DockWindowController(
     const Glib::RefPtr<Gdk::Monitor>
         &monitor)
     : m_window(window),
+      m_autohide_controller(
+          std::make_unique<
+              DockAutohideController>(
+              window)),
       m_monitor(monitor),
       m_settings(configuration.settings),
       m_layout_request(
@@ -68,6 +73,12 @@ DockWindowController::~DockWindowController()
 
 void DockWindowController::initialize()
 {
+    m_autohide_controller->initialize();
+    m_autohide_controller->set_monitor(
+        m_monitor);
+    m_autohide_controller->set_mode(
+        m_layout_request.autohide);
+
     // A launcher mutation changes the maximum size available to every item.
     // Coalesce GTK's add/remove notifications and recalculate after the
     // container has finished updating its child list.
@@ -214,6 +225,9 @@ void DockWindowController::apply_configuration(
     m_layout_request =
         configuration.layout_request;
 
+    m_autohide_controller->set_mode(
+        m_layout_request.autohide);
+
     // Icon size, orientation, alignment, reservation, and visual settings all
     // converge in update_dock_layout(). Coalesce rapid configuration saves
     // into one recalculation on the GTK main loop.
@@ -241,6 +255,9 @@ void DockWindowController::set_monitor(
             m_monitor->gobj());
 
         m_window.m_overlay_window.set_monitor(
+            m_monitor);
+
+        m_autohide_controller->set_monitor(
             m_monitor);
     }
 
@@ -361,6 +378,9 @@ void DockWindowController::update_dock_layout()
 
     m_window.apply_dock_layout(placement);
 
+    m_autohide_controller->set_placement(
+        placement);
+
     m_placement = placement;
     m_applied_location =
         m_layout_request.location;
@@ -385,6 +405,23 @@ void DockWindowController::update_dock_layout()
     }
 
     schedule_icon_geometry_update();
+}
+
+void DockWindowController::inhibit_autohide()
+{
+    m_autohide_controller->inhibit();
+}
+
+void DockWindowController::uninhibit_autohide()
+{
+    m_autohide_controller->uninhibit();
+}
+
+void DockWindowController::finish_autohide_drag(
+    bool accepted)
+{
+    m_autohide_controller->finish_drag(
+        accepted);
 }
 
 void DockWindowController::apply_workarea_insets(

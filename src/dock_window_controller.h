@@ -39,7 +39,10 @@
 #include <gtkmm/icontheme.h>
 #include <sigc++/connection.h>
 
+#include <memory>
+
 class DockWindow;
+class DockAutohideController;
 
 namespace Gtk
 {
@@ -69,6 +72,9 @@ public:
     void hide_tooltip_immediately();
     void dock_items_reordered();
     void dock_items_changed();
+    void inhibit_autohide();
+    void uninhibit_autohide();
+    void finish_autohide_drag(bool accepted);
 
     const DockSettings &settings() const
     {
@@ -112,6 +118,9 @@ private:
 
 private:
     DockWindow &m_window;
+
+    std::unique_ptr<DockAutohideController>
+        m_autohide_controller;
 
     Glib::RefPtr<Gdk::Monitor> m_monitor;
     Glib::RefPtr<Gtk::IconTheme> m_icon_theme;

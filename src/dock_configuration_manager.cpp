@@ -171,7 +171,8 @@ alignment =
 # Dock hiding mode.
 # Empty uses default: none
 # Valid values: none, autohide, intellihide
-# The hiding behavior will be implemented later.
+# autohide hides after the pointer leaves and reveals at the screen edge.
+# intellihide currently disables space reservation but remains visible.
 autohide =
 )";
 

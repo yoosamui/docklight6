@@ -344,6 +344,8 @@ DockItem::~DockItem()
     m_zoom_animation.disconnect();
     m_blur_animation.disconnect();
     m_window_action_idle.disconnect();
+    m_context_menu_map.disconnect();
+    m_context_menu_unmap.disconnect();
 }
 
 void DockItem::set_icon_size(int icon_size)
@@ -1341,6 +1343,28 @@ void DockItem::initialize_context_menu()
 
     m_context_menu.show_all();
     m_group_separator.hide();
+
+    m_context_menu_map =
+        m_context_menu.signal_map().connect(
+            [this]()
+            {
+                if (m_context_menu_mapped)
+                    return;
+
+                m_context_menu_mapped = true;
+                m_dock.inhibit_autohide();
+            });
+
+    m_context_menu_unmap =
+        m_context_menu.signal_unmap().connect(
+            [this]()
+            {
+                if (!m_context_menu_mapped)
+                    return;
+
+                m_context_menu_mapped = false;
+                m_dock.uninhibit_autohide();
+            });
 }
 
 void DockItem::rebuild_window_menu_items()

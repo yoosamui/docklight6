@@ -206,6 +206,8 @@ private:
     sigc::connection m_zoom_animation;
     sigc::connection m_blur_animation;
     sigc::connection m_window_action_idle;
+    sigc::connection m_context_menu_map;
+    sigc::connection m_context_menu_unmap;
 
     DockHoverEffect m_hover_effect =
         DockHoverEffect::standard;
@@ -233,4 +235,5 @@ private:
     bool m_single_main_window = false;
     bool m_primary_button_pressed = false;
     bool m_dragging = false;
+    bool m_context_menu_mapped = false;
 };

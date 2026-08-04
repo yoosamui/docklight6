@@ -214,6 +214,16 @@ void DockWindow::hide_tooltip_immediately()
     m_controller->hide_tooltip_immediately();
 }
 
+void DockWindow::inhibit_autohide()
+{
+    m_controller->inhibit_autohide();
+}
+
+void DockWindow::uninhibit_autohide()
+{
+    m_controller->uninhibit_autohide();
+}
+
 bool DockWindow::set_item_attached(
     DockItem &item,
     bool attached)
@@ -242,7 +252,11 @@ bool DockWindow::set_item_attached(
 void DockWindow::begin_item_drag(
     DockItem &item)
 {
+    if (!m_dragged_item)
+        inhibit_autohide();
+
     m_dragged_item = &item;
+    m_item_drop_accepted = false;
     hide_tooltip_immediately();
 }
 
@@ -285,8 +299,12 @@ bool DockWindow::drop_item(
     }
 
     if (m_dragged_item == &target)
-        return apply_dragged_item_order(
-            items);
+    {
+        m_item_drop_accepted =
+            apply_dragged_item_order(
+                items);
+        return m_item_drop_accepted;
+    }
 
     const bool horizontal =
         m_controller
@@ -329,15 +347,22 @@ bool DockWindow::drop_item(
         insertion,
         m_dragged_item);
 
-    return apply_dragged_item_order(
-        items);
+    m_item_drop_accepted =
+        apply_dragged_item_order(
+            items);
+    return m_item_drop_accepted;
 }
 
 void DockWindow::end_item_drag(
     DockItem &item)
 {
     if (m_dragged_item == &item)
+    {
         m_dragged_item = nullptr;
+        m_controller->finish_autohide_drag(
+            m_item_drop_accepted);
+        m_item_drop_accepted = false;
+    }
 }
 
 bool DockWindow::on_drag_motion(
@@ -468,8 +493,10 @@ bool DockWindow::drop_item_first()
         items.begin(),
         m_dragged_item);
 
-    return apply_dragged_item_order(
-        items);
+    m_item_drop_accepted =
+        apply_dragged_item_order(
+            items);
+    return m_item_drop_accepted;
 }
 
 bool DockWindow::apply_dragged_item_order(

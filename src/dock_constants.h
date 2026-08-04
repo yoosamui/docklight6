@@ -26,6 +26,11 @@ namespace DockConstants
     // its standard show animation is replayed for every dock item.
     constexpr int TOOLTIP_REMAP_DELAY_MS = 20; // Delay before remapping a tooltip
 
+    // Autohide behaviour
+
+    constexpr int AUTOHIDE_HIDE_DELAY_MS = 800;
+    constexpr int AUTOHIDE_REVEAL_SIZE = 2;
+
     // Internal drag-and-drop target shared by dock items and the dock surface.
     constexpr char DOCK_ITEM_DRAG_TARGET[] =
         "application/x-docklight-item";
@@ -33,5 +38,5 @@ namespace DockConstants
     // Safety limits
 
     constexpr int MAX_DOCK_ITEMS = 20; // Maximum applications shown in the dock
-    constexpr int TOOLTIP_MARGIN = 8; // Minimum tooltip margin in pixels
+    constexpr int TOOLTIP_MARGIN = 8;  // Minimum tooltip margin in pixels
 }

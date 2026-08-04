@@ -88,6 +88,8 @@ DockHomeItem::DockHomeItem(
 DockHomeItem::~DockHomeItem()
 {
     m_settings_idle.disconnect();
+    m_context_menu_map.disconnect();
+    m_context_menu_unmap.disconnect();
 }
 
 void DockHomeItem::set_icon_size(
@@ -456,6 +458,28 @@ void DockHomeItem::
             1);
 
     m_context_menu.show_all();
+
+    m_context_menu_map =
+        m_context_menu.signal_map().connect(
+            [this]()
+            {
+                if (m_context_menu_mapped)
+                    return;
+
+                m_context_menu_mapped = true;
+                m_dock.inhibit_autohide();
+            });
+
+    m_context_menu_unmap =
+        m_context_menu.signal_unmap().connect(
+            [this]()
+            {
+                if (!m_context_menu_mapped)
+                    return;
+
+                m_context_menu_mapped = false;
+                m_dock.uninhibit_autohide();
+            });
 }
 
 void DockHomeItem::refresh_context_menu()
@@ -624,16 +648,20 @@ bool DockHomeItem::close_all()
 
 void DockHomeItem::open_settings()
 {
+    m_dock.inhibit_autohide();
     DockSettingsDialog::show(
         m_dock,
         m_source_icon);
+    m_dock.uninhibit_autohide();
 }
 
 void DockHomeItem::show_about()
 {
+    m_dock.inhibit_autohide();
     DockAboutDialog::show(
         m_dock,
         m_source_icon);
+    m_dock.uninhibit_autohide();
 }
 
 void DockHomeItem::exit_docklight()
