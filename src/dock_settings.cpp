@@ -41,6 +41,21 @@ void DockSettings::set_icon_size(int size)
     m_icon_size = size;
 }
 
+int DockSettings::preview_card_height() const
+{
+    return m_preview_card_height;
+}
+
+void DockSettings::set_preview_card_height(
+    int height)
+{
+    m_preview_card_height =
+        height == 0 ||
+                (height >= 64 && height <= 512)
+            ? height
+            : 0;
+}
+
 DockHoverEffect DockSettings::hover_effect() const
 {
     return m_hover_effect;

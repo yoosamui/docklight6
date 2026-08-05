@@ -101,5 +101,36 @@ int main()
         dock_window,
         {adjacent}));
 
+    DockLayoutRequest preview_request;
+    preview_request.location = DockLocation::left;
+    preview_request.autohide = DockAutohide::autohide;
+
+    const DockWindowGeometry vertical_dock{
+        0,
+        0,
+        64,
+        400,
+        true};
+    const ItemGeometry first_item{
+        0,
+        0,
+        64,
+        64,
+        32,
+        32};
+
+    const auto preview_position =
+        engine.calculate_tooltip_position(
+            preview_request,
+            monitor,
+            vertical_dock,
+            first_item,
+            512,
+            512,
+            12);
+
+    assert(preview_position.x == 76);
+    assert(preview_position.y == 8);
+
     return 0;
 }

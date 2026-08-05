@@ -81,6 +81,9 @@ int main()
         "icon_size",
         "64"));
     assert(configuration.save_setting(
+        "preview_card_height",
+        "256"));
+    assert(configuration.save_setting(
         "location",
         "top"));
     assert(configuration.save_setting(
@@ -102,6 +105,9 @@ int main()
 
     assert(contents.find(
                "# Icon size in pixels.") !=
+           std::string::npos);
+    assert(contents.find(
+               "preview_card_height=256") !=
            std::string::npos);
     assert(contents.find(
                "home_icon_enabled=false") !=
@@ -137,6 +143,8 @@ int main()
     assert(!current.settings
                 .manage_all_workspaces());
     assert(current.settings.icon_size() == 64);
+    assert(current.settings
+               .preview_card_height() == 256);
     assert(current.layout_request.location ==
            DockLocation::top);
     assert(!current.layout_request

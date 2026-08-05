@@ -21,6 +21,7 @@ namespace DockConstants
 
     constexpr int TOOLTIP_SHOW_DELAY_MS = 200; // Delay before showing a tooltip
     constexpr int TOOLTIP_HIDE_DELAY_MS = 250; // Delay before hiding a tooltip
+    constexpr int PREVIEW_SHOW_DELAY_MS = 500; // Intentional hover before previews
 
     // Leave one compositor frame between unmapping and mapping the tooltip so
     // its standard show animation is replayed for every dock item.
@@ -37,6 +38,6 @@ namespace DockConstants
 
     // Safety limits
 
-    constexpr int MAX_DOCK_ITEMS = 20; // Maximum applications shown in the dock
+    constexpr int MAX_DOCK_ITEMS = 50; // Maximum applications shown in the dock
     constexpr int TOOLTIP_MARGIN = 8;  // Minimum tooltip margin in pixels
 }

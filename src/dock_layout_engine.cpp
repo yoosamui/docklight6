@@ -277,6 +277,28 @@ DockLayoutEngine::calculate_tooltip_position(
                 minimum_x,
                 maximum_x);
     }
+    else
+    {
+        const int available_edge_space =
+            std::max(
+                0,
+                monitor.height -
+                    tooltip_height);
+        const int edge_margin =
+            std::min(
+                DockLayoutMetrics::TOOLTIP_EDGE_MARGIN,
+                available_edge_space / 2);
+        const int minimum_y =
+            monitor.y + edge_margin;
+        const int maximum_y =
+            monitor.y + monitor.height -
+            tooltip_height - edge_margin;
+
+        position.y = std::clamp(
+            position.y,
+            minimum_y,
+            maximum_y);
+    }
 
     return position;
 }

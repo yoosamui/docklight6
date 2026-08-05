@@ -29,6 +29,7 @@
 #include "dock_intellihide_policy.h"
 #include "dock_item.h"
 #include "dock_layout_metrics.h"
+#include "dock_preview_window.h"
 #include "dock_window.h"
 #include "window_icon_geometry.h"
 #include "window_registry.h"
@@ -48,16 +49,52 @@ DockWindowController::DockWindowController(
           std::make_unique<
               DockAutohideController>(
               window)),
+      m_preview_window(
+          std::make_unique<DockPreviewWindow>()),
       m_monitor(monitor),
       m_settings(configuration.settings),
       m_layout_request(
           configuration.layout_request)
 {
+    m_preview_window->set_monitor(monitor);
+    m_preview_window->set_card_user_height(
+        m_settings.preview_card_height());
+
+    m_preview_window
+        ->signal_pointer_entered()
+        .connect(
+            sigc::mem_fun(
+                *this,
+                &DockWindowController::
+                    preview_pointer_entered));
+    m_preview_window
+        ->signal_pointer_left()
+        .connect(
+            sigc::mem_fun(
+                *this,
+                &DockWindowController::
+                    preview_pointer_left));
+    m_preview_window
+        ->signal_activate_window()
+        .connect(
+            sigc::mem_fun(
+                *this,
+                &DockWindowController::
+                    activate_preview_window));
+    m_preview_window
+        ->signal_close_window()
+        .connect(
+            sigc::mem_fun(
+                *this,
+                &DockWindowController::
+                    close_preview_window));
 }
 
 DockWindowController::~DockWindowController()
 {
+    hide_preview();
     cancel_show_timer();
+    cancel_preview_show_timer();
     cancel_hide_timer();
     m_layout_update.disconnect();
     m_icon_geometry_update.disconnect();
@@ -118,8 +155,31 @@ void DockWindowController::initialize()
                 .connect(
                     [this]()
                     {
+                        cancel_show_timer();
+                        m_pending_item = nullptr;
+                        m_pending_tooltip_text.clear();
+
                         m_window
                             .synchronize_dock_items();
+
+                        if (!m_preview_desktop_id.empty())
+                        {
+                            const auto items =
+                                m_window.dock_items();
+                            const bool preview_item_exists =
+                                std::any_of(
+                                    items.begin(),
+                                    items.end(),
+                                    [this](DockItem *item)
+                                    {
+                                        return item &&
+                                               item->desktop_id() ==
+                                                   m_preview_desktop_id;
+                                    });
+
+                            if (!preview_item_exists)
+                                hide_preview();
+                        }
 
                         for (auto *item :
                              m_window
@@ -204,13 +264,19 @@ void DockWindowController::apply_configuration(
     const DockConfiguration &configuration)
 {
     cancel_show_timer();
+    cancel_preview_show_timer();
     cancel_hide_timer();
     m_pending_item = nullptr;
+    m_pending_preview_desktop_id.clear();
     m_pending_tooltip_text.clear();
     hide_tooltip();
 
     m_settings =
         configuration.settings;
+
+    hide_preview();
+    m_preview_window->set_card_user_height(
+        m_settings.preview_card_height());
 
     if (m_window.m_home_item)
     {
@@ -265,12 +331,16 @@ void DockWindowController::set_monitor(
     if (monitor_changed)
     {
         hide_tooltip();
+        hide_preview();
 
         gtk_layer_set_monitor(
             GTK_WINDOW(m_window.gobj()),
             m_monitor->gobj());
 
         m_window.m_overlay_window.set_monitor(
+            m_monitor);
+
+        m_preview_window->set_monitor(
             m_monitor);
 
         m_autohide_controller->set_monitor(
@@ -876,8 +946,11 @@ void DockWindowController::schedule_show_tooltip(
 
     cancel_hide_timer();
     cancel_show_timer();
+    cancel_preview_show_timer();
+    m_dock_item_pointer_inside = true;
 
     m_pending_item = &item;
+    m_pending_preview_desktop_id.clear();
     m_pending_tooltip_text = text;
 
     // Always use the show timer, including when another item's tooltip is
@@ -901,10 +974,49 @@ void DockWindowController::schedule_show_tooltip(
             DockConstants::TOOLTIP_SHOW_DELAY_MS);
 }
 
+void DockWindowController::schedule_show_preview(
+    DockItem &item)
+{
+    cancel_hide_timer();
+    cancel_show_timer();
+    cancel_preview_show_timer();
+    m_dock_item_pointer_inside = true;
+
+    m_pending_item = nullptr;
+    m_pending_preview_desktop_id =
+        item.desktop_id();
+    m_pending_tooltip_text.clear();
+
+    m_preview_show_timer =
+        Glib::signal_timeout().connect(
+            [this]()
+            {
+                const auto desktop_id =
+                    m_pending_preview_desktop_id;
+                m_pending_preview_desktop_id.clear();
+
+                for (auto *item : m_window.dock_items())
+                {
+                    if (item &&
+                        item->desktop_id() == desktop_id)
+                    {
+                        show_preview(*item);
+                        break;
+                    }
+                }
+
+                return false;
+            },
+            DockConstants::PREVIEW_SHOW_DELAY_MS);
+}
+
 void DockWindowController::schedule_hide_tooltip()
 {
+    m_dock_item_pointer_inside = false;
     cancel_show_timer();
+    cancel_preview_show_timer();
     m_pending_item = nullptr;
+    m_pending_preview_desktop_id.clear();
     m_pending_tooltip_text.clear();
     start_hide_timer();
 }
@@ -912,10 +1024,13 @@ void DockWindowController::schedule_hide_tooltip()
 void DockWindowController::hide_tooltip_immediately()
 {
     cancel_show_timer();
+    cancel_preview_show_timer();
     cancel_hide_timer();
     m_pending_item = nullptr;
+    m_pending_preview_desktop_id.clear();
     m_pending_tooltip_text.clear();
     hide_tooltip();
+    hide_preview();
 }
 
 void DockWindowController::dock_items_reordered()
@@ -960,6 +1075,8 @@ void DockWindowController::show_tooltip(
 {
     if (!m_settings.display_tooltips())
         return;
+
+    hide_preview();
 
     const int tooltip_width =
         m_window.m_overlay_window
@@ -1031,6 +1148,191 @@ void DockWindowController::hide_tooltip()
     m_window.m_overlay_window.hide_tooltip();
 }
 
+void DockWindowController::show_preview(
+    DockItem &item)
+{
+    const auto entries = item.window_entries();
+
+    if (entries.empty())
+    {
+        show_tooltip(item, item.tooltip_text());
+        return;
+    }
+
+    hide_tooltip();
+
+    auto item_geometry =
+        m_layout_geometry.item_geometry(
+            item,
+            m_window);
+    auto dock_geometry =
+        m_layout_geometry.dock_geometry(
+            m_window);
+    const auto dock_position =
+        dock_screen_position(false);
+
+    dock_geometry.x =
+        dock_position.x -
+        m_output_geometry.x;
+    dock_geometry.y =
+        dock_position.y -
+        m_output_geometry.y;
+    dock_geometry.has_position = true;
+
+    auto monitor_geometry =
+        m_usable_monitor_geometry;
+
+    if (monitor_geometry.width <= 0 ||
+        monitor_geometry.height <= 0)
+    {
+        monitor_geometry =
+            m_layout_geometry.output_geometry(
+                m_monitor);
+        monitor_geometry.x = 0;
+        monitor_geometry.y = 0;
+    }
+
+    const bool vertical_dock =
+        m_layout_request.location ==
+            DockLocation::left ||
+        m_layout_request.location ==
+            DockLocation::right;
+    const int preview_distance =
+        m_window.m_overlay_window
+            .tooltip_distance();
+    const bool dock_reserves_space =
+        m_layout_request.autohide ==
+            DockAutohide::none;
+    const int dock_side_offset =
+        vertical_dock
+            ? (dock_reserves_space
+                   ? 0
+                   : dock_geometry.width) +
+                  preview_distance
+            : 0;
+    const int preview_available_width =
+        std::max(
+            1,
+            monitor_geometry.width -
+                dock_side_offset -
+                (vertical_dock
+                     ? DockLayoutMetrics::
+                           TOOLTIP_EDGE_MARGIN
+                     : 2 * DockLayoutMetrics::
+                           TOOLTIP_EDGE_MARGIN));
+
+    const auto preview_size =
+        m_preview_window->preferred_size(
+            entries,
+            preview_available_width,
+            monitor_geometry.height);
+    const int preview_width =
+        preview_size.width;
+    const int preview_height =
+        preview_size.height;
+
+    const auto position =
+        m_layout_engine
+            .calculate_tooltip_position(
+                m_layout_request,
+                monitor_geometry,
+                dock_geometry,
+                item_geometry,
+                preview_width,
+                preview_height,
+                preview_distance);
+
+    m_preview_desktop_id = item.desktop_id();
+
+    if (!m_preview_inhibits_autohide)
+    {
+        m_autohide_controller->inhibit();
+        m_preview_inhibits_autohide = true;
+    }
+
+    m_preview_window->show_preview(
+        entries,
+        m_layout_request.location,
+        position,
+        preview_size);
+}
+
+void DockWindowController::hide_preview()
+{
+    cancel_preview_show_timer();
+    m_pending_preview_desktop_id.clear();
+    m_preview_desktop_id.clear();
+    m_preview_pointer_inside = false;
+
+    if (m_preview_window)
+        m_preview_window->hide_preview();
+
+    if (m_preview_inhibits_autohide)
+    {
+        m_preview_inhibits_autohide = false;
+        m_autohide_controller->uninhibit(
+            m_window.pointer_is_inside());
+    }
+}
+
+void DockWindowController::preview_pointer_entered()
+{
+    m_preview_pointer_inside = true;
+    cancel_hide_timer();
+}
+
+void DockWindowController::preview_pointer_left()
+{
+    m_preview_pointer_inside = false;
+    start_hide_timer();
+}
+
+void DockWindowController::activate_preview_window(
+    const WindowId &window_id)
+{
+    const auto desktop_id =
+        m_preview_desktop_id;
+
+    Glib::signal_idle().connect_once(
+        [this, desktop_id, window_id]()
+        {
+            hide_preview();
+
+            for (auto *item : m_window.dock_items())
+            {
+                if (item &&
+                    item->desktop_id() == desktop_id)
+                {
+                    item->show_window(window_id);
+                    break;
+                }
+            }
+        });
+}
+
+void DockWindowController::close_preview_window(
+    const WindowId &window_id)
+{
+    const auto desktop_id =
+        m_preview_desktop_id;
+
+    Glib::signal_idle().connect_once(
+        [this, desktop_id, window_id]()
+        {
+            hide_preview();
+
+            for (auto *item : m_window.dock_items())
+            {
+                if (item &&
+                    item->desktop_id() == desktop_id)
+                {
+                    item->close_window(window_id);
+                    break;
+                }
+            }
+        });
+}
+
 void DockWindowController::start_hide_timer()
 {
     cancel_hide_timer();
@@ -1039,7 +1341,15 @@ void DockWindowController::start_hide_timer()
         Glib::signal_timeout().connect(
             [this]()
             {
+                if (m_dock_item_pointer_inside ||
+                    m_window.pointer_is_inside() ||
+                    m_preview_pointer_inside)
+                {
+                    return true;
+                }
+
                 hide_tooltip();
+                hide_preview();
                 return false;
             },
             DockConstants::TOOLTIP_HIDE_DELAY_MS);
@@ -1049,6 +1359,12 @@ void DockWindowController::cancel_show_timer()
 {
     if (m_show_timer.connected())
         m_show_timer.disconnect();
+}
+
+void DockWindowController::cancel_preview_show_timer()
+{
+    if (m_preview_show_timer.connected())
+        m_preview_show_timer.disconnect();
 }
 
 void DockWindowController::cancel_hide_timer()

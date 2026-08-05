@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Docklight
+GenericName=Dock
+Comment=Lightweight application dock with window previews
+Exec=docklight6
+Icon=docklight.home
+Type=Application
+Terminal=false
+StartupNotify=false
+Categories=Utility;
+X-KDE-DBUS-Restricted-Interfaces=org.kde.KWin.ScreenShot2

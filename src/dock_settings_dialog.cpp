@@ -144,6 +144,8 @@ void DockSettingsDialog::show(
         _("Manage All Workspaces"));
     Gtk::Label icon_size_label(
         _("Icon Size"));
+    Gtk::Label preview_card_height_label(
+        _("Preview Card Height"));
     Gtk::Label location_label(
         _("Location"));
     Gtk::Label rounded_corners_label(
@@ -166,6 +168,7 @@ void DockSettingsDialog::show(
             &display_tooltips_label,
             &manage_all_workspaces_label,
             &icon_size_label,
+            &preview_card_height_label,
             &location_label,
             &rounded_corners_label,
             &corner_radius_label,
@@ -448,6 +451,23 @@ void DockSettingsDialog::show(
         0);
     icon_size_spin.set_numeric(true);
 
+    auto preview_card_height_adjustment =
+        Gtk::Adjustment::create(
+            current.settings
+                .preview_card_height(),
+            0.0,
+            512.0,
+            1.0,
+            16.0);
+
+    Gtk::SpinButton preview_card_height_spin(
+        preview_card_height_adjustment,
+        1.0,
+        0);
+    preview_card_height_spin.set_numeric(true);
+    preview_card_height_spin.set_tooltip_text(
+        _("0 selects automatic sizing; otherwise use 64 to 512 pixels"));
+
     Gtk::Box location_choices(
         Gtk::ORIENTATION_HORIZONTAL,
         6);
@@ -628,6 +648,7 @@ void DockSettingsDialog::show(
             &display_tooltips,
             &manage_all_workspaces,
             &icon_size_spin,
+            &preview_card_height_spin,
             &location_choices,
             &rounded_corners,
             &corner_radius_spin,
@@ -761,63 +782,75 @@ void DockSettingsDialog::show(
         1,
         1);
     grid.attach(
-        location_label,
+        preview_card_height_label,
         0,
         9,
+        1,
+        1);
+    grid.attach(
+        preview_card_height_spin,
+        1,
+        9,
+        1,
+        1);
+    grid.attach(
+        location_label,
+        0,
+        10,
         1,
         1);
     grid.attach(
         location_choices,
         1,
-        9,
+        10,
         1,
         1);
     grid.attach(
         rounded_corners_label,
         0,
-        10,
+        11,
         1,
         1);
     grid.attach(
         rounded_corners,
         1,
-        10,
+        11,
         1,
         1);
     grid.attach(
         corner_radius_label,
         0,
-        11,
+        12,
         1,
         1);
     grid.attach(
         corner_radius_spin,
         1,
-        11,
+        12,
         1,
         1);
     grid.attach(
         alignment_label,
         0,
-        12,
+        13,
         1,
         1);
     grid.attach(
         alignment_choices,
         1,
-        12,
+        13,
         1,
         1);
     grid.attach(
         autohide_label,
         0,
-        13,
+        14,
         1,
         1);
     grid.attach(
         autohide_choices,
         1,
-        13,
+        14,
         1,
         1);
 
@@ -1268,6 +1301,30 @@ void DockSettingsDialog::show(
                     "icon_size",
                     std::to_string(
                         icon_size));
+            }));
+
+    settings_connections.push_back(
+        preview_card_height_spin
+            .signal_value_changed()
+            .connect(
+            [&configuration,
+             &preview_card_height_spin]()
+            {
+                int height =
+                    preview_card_height_spin
+                        .get_value_as_int();
+
+                if (height > 0 && height < 64)
+                {
+                    height = 64;
+                    preview_card_height_spin
+                        .set_value(height);
+                    return;
+                }
+
+                configuration.save_setting(
+                    "preview_card_height",
+                    std::to_string(height));
             }));
 
     settings_connections.push_back(

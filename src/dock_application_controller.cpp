@@ -779,6 +779,29 @@ bool DockApplicationController::
             true);
 }
 
+bool DockApplicationController::close_window(
+    const WindowId &window_id)
+{
+    const auto running_application =
+        application();
+
+    if (!running_application ||
+        std::find(
+            running_application
+                ->window_ids.begin(),
+            running_application
+                ->window_ids.end(),
+            window_id) ==
+            running_application
+                ->window_ids.end())
+    {
+        return false;
+    }
+
+    return m_registry &&
+           m_registry->close_window(window_id);
+}
+
 std::vector<ApplicationWindowEntry>
 DockApplicationController::
     window_entries() const
@@ -807,6 +830,12 @@ DockApplicationController::
         if (!window)
             continue;
 
+        if (!m_manage_all_workspaces &&
+            !window->on_current_desktop)
+        {
+            continue;
+        }
+
         ApplicationWindowEntry entry;
 
         entry.id = window_id;
@@ -816,6 +845,8 @@ DockApplicationController::
             window->icon_name;
         entry.desktop_numbers =
             window->desktop_numbers;
+        entry.frame_geometry =
+            window->frame_geometry;
         entry.active =
             running_application
                 ->active_window_id ==

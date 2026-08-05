@@ -40,6 +40,8 @@ namespace
 
 constexpr int MIN_ICON_SIZE = 32; // Smallest accepted dock icon size
 constexpr int MAX_ICON_SIZE = 128; // Largest accepted dock icon size
+constexpr int MIN_PREVIEW_CARD_HEIGHT = 64;
+constexpr int MAX_PREVIEW_CARD_HEIGHT = 512;
 constexpr int MIN_CORNER_RADIUS = 2; // Smallest explicit dock corner radius
 constexpr unsigned int RELOAD_DELAY_MS = 200; // Delay before reloading changed settings
 
@@ -105,6 +107,14 @@ manage_all_workspaces = true
 
 )";
 
+// Configuration block added when preview sizing is missing.
+const char *PREVIEW_CARD_HEIGHT_SETTING_TEMPLATE = R"(# Window-preview card height in pixels.
+# 0 selects automatic aspect-based sizing.
+# Otherwise valid range: 64 to 512
+preview_card_height = 0
+
+)";
+
 // Complete configuration written when no user configuration exists.
 const char *CONFIG_TEMPLATE = R"([dock]
 # Monitor used by the dock.
@@ -146,6 +156,11 @@ manage_all_workspaces = true
 # Empty uses default: 46
 # Valid range: 32 to 128
 icon_size =
+
+# Window-preview card height in pixels.
+# 0 selects automatic aspect-based sizing.
+# Otherwise valid range: 64 to 512
+preview_card_height = 0
 
 # Dock screen edge.
 # Empty uses default: bottom
@@ -302,6 +317,8 @@ bool same_configuration(
                right.settings.monitor() &&
            left.settings.icon_size() ==
                right.settings.icon_size() &&
+           left.settings.preview_card_height() ==
+               right.settings.preview_card_height() &&
            left.settings.hover_effect() ==
                right.settings.hover_effect() &&
            left.settings.indicator() ==
@@ -373,6 +390,9 @@ DockConfigurationManager::DockConfigurationManager()
     ensure_setting(
         "manage_all_workspaces",
         MANAGE_ALL_WORKSPACES_SETTING_TEMPLATE);
+    ensure_setting(
+        "preview_card_height",
+        PREVIEW_CARD_HEIGHT_SETTING_TEMPLATE);
     reload();
 }
 
@@ -718,6 +738,11 @@ void DockConfigurationManager::reload()
                 key_file,
                 "icon_size");
 
+        const auto preview_card_height =
+            value_for(
+                key_file,
+                "preview_card_height");
+
         const auto home_icon_enabled =
             value_for(
                 key_file,
@@ -831,6 +856,43 @@ void DockConfigurationManager::reload()
                     "keeping %d",
                     icon_size.c_str(),
                     candidate.settings.icon_size());
+            }
+        }
+
+        if (preview_card_height.empty())
+        {
+            candidate.settings
+                .set_preview_card_height(
+                    defaults.settings
+                        .preview_card_height());
+        }
+        else
+        {
+            const auto parsed =
+                parse_integer(
+                    preview_card_height);
+
+            if (parsed &&
+                (*parsed == 0 ||
+                 (*parsed >=
+                      MIN_PREVIEW_CARD_HEIGHT &&
+                  *parsed <=
+                      MAX_PREVIEW_CARD_HEIGHT)))
+            {
+                candidate.settings
+                    .set_preview_card_height(
+                        *parsed);
+            }
+            else
+            {
+                g_warning(
+                    "Invalid [dock] preview_card_height '%s'; "
+                    "expected 0 or %d..%d; keeping %d",
+                    preview_card_height.c_str(),
+                    MIN_PREVIEW_CARD_HEIGHT,
+                    MAX_PREVIEW_CARD_HEIGHT,
+                    candidate.settings
+                        .preview_card_height());
             }
         }
 

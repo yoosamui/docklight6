@@ -966,6 +966,11 @@ void verifies_grouped_window_entries()
         "Files";
     first_window.icon_name =
         "system-file-manager";
+    first_window.frame_geometry = {
+        10,
+        20,
+        800,
+        600};
     first_window.desktop_numbers =
         {2};
     first_window.on_current_desktop =
@@ -1007,6 +1012,10 @@ void verifies_grouped_window_entries()
            "Files");
     assert(entries[0].icon_name ==
            "system-file-manager");
+    assert(entries[0].frame_geometry.x == 10);
+    assert(entries[0].frame_geometry.y == 20);
+    assert(entries[0].frame_geometry.width == 800);
+    assert(entries[0].frame_geometry.height == 600);
     assert(entries[0].desktop_numbers ==
            std::vector<unsigned int>{2});
     assert(!entries[0]
@@ -1024,6 +1033,19 @@ void verifies_grouped_window_entries()
                .on_current_desktop);
     assert(entries[1].active);
     assert(!entries[1].minimized);
+
+    controller.set_manage_all_workspaces(
+        false);
+
+    const auto current_desktop_entries =
+        controller.window_entries();
+
+    assert(current_desktop_entries.size() == 1);
+    assert(current_desktop_entries[0].id ==
+           "window-2");
+
+    controller.set_manage_all_workspaces(
+        true);
 
     assert(!controller.show_window(
         "window-3"));
@@ -1046,6 +1068,11 @@ void verifies_grouped_window_entries()
                 ->minimized);
     assert(!controller.minimize_window(
         "window-3"));
+    assert(!controller.close_window(
+        "window-3"));
+    assert(controller.close_window(
+        "window-2"));
+    assert(!registry.find_window("window-2"));
 }
 
 }

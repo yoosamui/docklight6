@@ -56,6 +56,10 @@ docklight6_SOURCES = \
     dock_monitor_manager.cpp \
     dock_intellihide_policy.h \
     dock_intellihide_policy.cpp \
+    dock_window_thumbnail_provider.h \
+    dock_window_thumbnail_provider.cpp \
+    dock_preview_window.h \
+    dock_preview_window.cpp \
     dock_reveal_window.h \
     dock_reveal_window.cpp \
     dock_autohide_controller.h \

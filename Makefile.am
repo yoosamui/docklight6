@@ -24,6 +24,11 @@ dist_pkgdata_DATA = \
 
 docklighticonsdir = $(pkgdatadir)/icons
 
+applicationsdir = $(datadir)/applications
+
+dist_applications_DATA = \
+    data/org.docklight6.desktop
+
 dist_docklighticons_DATA = \
     data/icons/128x128/docklight.home.png
 

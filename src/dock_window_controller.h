@@ -33,6 +33,7 @@
 #include "dock_configuration.h"
 #include "dock_layout_engine.h"
 #include "dock_layout_geometry.h"
+#include "managed_window.h"
 
 #include <gdkmm/monitor.h>
 #include <glibmm/ustring.h>
@@ -40,9 +41,12 @@
 #include <sigc++/connection.h>
 
 #include <memory>
+#include <string>
 
 class DockWindow;
 class DockAutohideController;
+class DockPreviewWindow;
+class DockItem;
 
 namespace Gtk
 {
@@ -68,6 +72,7 @@ public:
     void schedule_show_tooltip(
         Gtk::Widget &item,
         const Glib::ustring &text);
+    void schedule_show_preview(DockItem &item);
     void schedule_hide_tooltip();
     void hide_tooltip_immediately();
     void dock_items_reordered();
@@ -116,8 +121,17 @@ private:
         Gtk::Widget &item,
         const Glib::ustring &text);
     void hide_tooltip();
+    void show_preview(DockItem &item);
+    void hide_preview();
+    void preview_pointer_entered();
+    void preview_pointer_left();
+    void activate_preview_window(
+        const WindowId &window_id);
+    void close_preview_window(
+        const WindowId &window_id);
     void start_hide_timer();
     void cancel_show_timer();
+    void cancel_preview_show_timer();
     void cancel_hide_timer();
 
 private:
@@ -125,6 +139,8 @@ private:
 
     std::unique_ptr<DockAutohideController>
         m_autohide_controller;
+    std::unique_ptr<DockPreviewWindow>
+        m_preview_window;
 
     Glib::RefPtr<Gdk::Monitor> m_monitor;
     Glib::RefPtr<Gtk::IconTheme> m_icon_theme;
@@ -153,6 +169,7 @@ private:
     sigc::connection m_edge_layout_update;
     sigc::connection m_icon_theme_changed;
     sigc::connection m_icon_refresh;
+    sigc::connection m_preview_show_timer;
     sigc::connection m_realize;
     sigc::connection m_size_allocate;
     sigc::connection m_window_registry_changed;
@@ -164,7 +181,13 @@ private:
     sigc::connection m_dock_remove;
 
     Gtk::Widget *m_pending_item = nullptr;
+    std::string m_pending_preview_desktop_id;
+    std::string m_preview_desktop_id;
     Glib::ustring m_pending_tooltip_text;
+
+    bool m_preview_inhibits_autohide = false;
+    bool m_dock_item_pointer_inside = false;
+    bool m_preview_pointer_inside = false;
 
     bool m_has_applied_layout = false;
 };

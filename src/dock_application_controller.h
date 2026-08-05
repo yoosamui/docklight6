@@ -52,6 +52,7 @@ struct ApplicationWindowEntry
     std::string caption;
     std::string icon_name;
     std::vector<unsigned int> desktop_numbers;
+    WindowGeometry frame_geometry;
 
     bool active = false;
     bool minimized = false;
@@ -79,6 +80,8 @@ public:
     bool cycle_window(
         WindowCycleDirection direction);
     bool minimize_window(
+        const WindowId &window_id);
+    bool close_window(
         const WindowId &window_id);
     bool show_window(
         const WindowId &window_id);

@@ -190,9 +190,16 @@ void DockWindow::set_monitor(
 void DockWindow::schedule_show_tooltip(
     DockItem &item)
 {
-    m_controller->schedule_show_tooltip(
-        item,
-        item.tooltip_text());
+    if (item.running())
+    {
+        m_controller->schedule_show_preview(item);
+    }
+    else
+    {
+        m_controller->schedule_show_tooltip(
+            item,
+            item.tooltip_text());
+    }
 }
 
 void DockWindow::schedule_show_tooltip(

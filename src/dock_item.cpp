@@ -829,6 +829,27 @@ Glib::ustring DockItem::tooltip_text() const
     return text;
 }
 
+std::vector<ApplicationWindowEntry>
+DockItem::window_entries() const
+{
+    return m_application_controller
+        .window_entries();
+}
+
+bool DockItem::show_window(
+    const WindowId &window_id)
+{
+    return m_application_controller
+        .show_window(window_id);
+}
+
+bool DockItem::close_window(
+    const WindowId &window_id)
+{
+    return m_application_controller
+        .close_window(window_id);
+}
+
 bool DockItem::on_enter_notify_event(
     GdkEventCrossing *event)
 {

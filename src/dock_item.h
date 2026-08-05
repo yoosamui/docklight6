@@ -77,6 +77,10 @@ public:
 
     Glib::ustring app_name() const;
     Glib::ustring tooltip_text() const;
+    std::vector<ApplicationWindowEntry>
+    window_entries() const;
+    bool show_window(const WindowId &window_id);
+    bool close_window(const WindowId &window_id);
     const std::string &desktop_id() const
     {
         return m_desktop_id;
