@@ -169,9 +169,29 @@ LauncherManager::find_application(
 
         if (matches(app->get_id()) ||
             matches(app->get_name()) ||
-            matches(app->get_display_name()))
+            matches(app->get_display_name()) ||
+            matches(app->get_executable()))
         {
             return app;
+        }
+
+        const auto icon = app->get_icon();
+
+        if (icon &&
+            G_IS_THEMED_ICON(icon->gobj()))
+        {
+            const auto icon_names =
+                g_themed_icon_get_names(
+                    G_THEMED_ICON(
+                        icon->gobj()));
+
+            for (int index = 0;
+                 icon_names && icon_names[index];
+                 ++index)
+            {
+                if (matches(icon_names[index]))
+                    return app;
+            }
         }
 
         if (G_IS_DESKTOP_APP_INFO(
