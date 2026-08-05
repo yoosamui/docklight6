@@ -146,6 +146,8 @@ void DockSettingsDialog::show(
         _("Icon Size"));
     Gtk::Label preview_card_height_label(
         _("Preview Card Height"));
+    Gtk::Label preview_show_delay_label(
+        _("Preview Show Delay (ms)"));
     Gtk::Label location_label(
         _("Location"));
     Gtk::Label rounded_corners_label(
@@ -169,6 +171,7 @@ void DockSettingsDialog::show(
             &manage_all_workspaces_label,
             &icon_size_label,
             &preview_card_height_label,
+            &preview_show_delay_label,
             &location_label,
             &rounded_corners_label,
             &corner_radius_label,
@@ -468,6 +471,24 @@ void DockSettingsDialog::show(
     preview_card_height_spin.set_tooltip_text(
         _("0 selects automatic sizing; otherwise use 64 to 512 pixels"));
 
+    auto preview_show_delay_adjustment =
+        Gtk::Adjustment::create(
+            current.settings
+                .preview_show_delay(),
+            0.0,
+            1000.0,
+            10.0,
+            100.0);
+
+    Gtk::SpinButton preview_show_delay_spin(
+        preview_show_delay_adjustment,
+        1.0,
+        0);
+    preview_show_delay_spin.set_numeric(true);
+    preview_show_delay_spin.set_tooltip_text(
+        _("Delay before a window preview appears, "
+          "from 0 to 1000 milliseconds"));
+
     Gtk::Box location_choices(
         Gtk::ORIENTATION_HORIZONTAL,
         6);
@@ -649,6 +670,7 @@ void DockSettingsDialog::show(
             &manage_all_workspaces,
             &icon_size_spin,
             &preview_card_height_spin,
+            &preview_show_delay_spin,
             &location_choices,
             &rounded_corners,
             &corner_radius_spin,
@@ -794,63 +816,75 @@ void DockSettingsDialog::show(
         1,
         1);
     grid.attach(
-        location_label,
+        preview_show_delay_label,
         0,
         10,
+        1,
+        1);
+    grid.attach(
+        preview_show_delay_spin,
+        1,
+        10,
+        1,
+        1);
+    grid.attach(
+        location_label,
+        0,
+        11,
         1,
         1);
     grid.attach(
         location_choices,
         1,
-        10,
+        11,
         1,
         1);
     grid.attach(
         rounded_corners_label,
         0,
-        11,
+        12,
         1,
         1);
     grid.attach(
         rounded_corners,
         1,
-        11,
+        12,
         1,
         1);
     grid.attach(
         corner_radius_label,
         0,
-        12,
+        13,
         1,
         1);
     grid.attach(
         corner_radius_spin,
         1,
-        12,
+        13,
         1,
         1);
     grid.attach(
         alignment_label,
         0,
-        13,
+        14,
         1,
         1);
     grid.attach(
         alignment_choices,
         1,
-        13,
+        14,
         1,
         1);
     grid.attach(
         autohide_label,
         0,
-        14,
+        15,
         1,
         1);
     grid.attach(
         autohide_choices,
         1,
-        14,
+        15,
         1,
         1);
 
@@ -1325,6 +1359,20 @@ void DockSettingsDialog::show(
                 configuration.save_setting(
                     "preview_card_height",
                     std::to_string(height));
+            }));
+
+    settings_connections.push_back(
+        preview_show_delay_spin
+            .signal_value_changed()
+            .connect(
+            [&configuration,
+             &preview_show_delay_spin]()
+            {
+                configuration.save_setting(
+                    "preview_show_delay",
+                    std::to_string(
+                        preview_show_delay_spin
+                            .get_value_as_int()));
             }));
 
     settings_connections.push_back(

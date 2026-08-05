@@ -8,11 +8,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 
 namespace
 {
 
 constexpr int HEADER_HEIGHT = 32;
+constexpr int CLOSE_BUTTON_SIZE = 16;
 
 struct PreviewMetrics
 {
@@ -289,9 +291,12 @@ DockPreviewWindow::DockPreviewWindow()
         " border-radius: 10px;"
         "}"
         ".dock-preview-card {"
-        " background: rgba(255,255,255,0.06);"
+        " background: transparent;"
         " border: 1px solid rgba(255,255,255,0.25);"
         " border-radius: 7px;"
+        "}"
+        ".dock-preview-card.dock-preview-card-selected {"
+        " border-color: rgba(105,170,255,0.85);"
         "}"
         ".dock-preview-header {"
         " border-bottom: 1px solid rgba(255,255,255,0.18);"
@@ -441,8 +446,56 @@ void DockPreviewWindow::rebuild(
         card->set_size_request(
             size.card_width,
             size.header_height + image_height);
+        card->set_visible_window(true);
+        card->add_events(
+            Gdk::ENTER_NOTIFY_MASK |
+            Gdk::LEAVE_NOTIFY_MASK |
+            Gdk::POINTER_MOTION_MASK);
         card->get_style_context()->add_class(
             "dock-preview-card");
+
+        auto selected =
+            std::make_shared<bool>(false);
+        auto background = Gtk::manage(
+            new Gtk::DrawingArea());
+        background->set_size_request(
+            size.card_width,
+            size.header_height + image_height);
+        background->set_hexpand(true);
+        background->set_vexpand(true);
+        background->signal_draw().connect(
+            [background, selected](
+                const Cairo::RefPtr<Cairo::Context>
+                    &context)
+            {
+                const auto allocation =
+                    background->get_allocation();
+
+                if (*selected)
+                {
+                    context->set_source_rgba(
+                        105.0 / 255.0,
+                        170.0 / 255.0,
+                        1.0,
+                        0.32);
+                }
+                else
+                {
+                    context->set_source_rgba(
+                        1.0,
+                        1.0,
+                        1.0,
+                        0.06);
+                }
+
+                context->rectangle(
+                    0.0,
+                    0.0,
+                    allocation.get_width(),
+                    allocation.get_height());
+                context->fill();
+                return true;
+            });
 
         auto body = Gtk::manage(
             new Gtk::Box(
@@ -481,21 +534,71 @@ void DockPreviewWindow::rebuild(
         title->get_style_context()->add_class(
             "dock-preview-title");
 
-        auto close = Gtk::manage(new Gtk::Button("×"));
-        const int close_size = std::max(
-            12,
-            size.header_height - 8);
+        auto close = Gtk::manage(new Gtk::EventBox());
         close->set_size_request(
-            close_size,
-            close_size);
-        close->set_relief(Gtk::RELIEF_NONE);
-        close->set_focus_on_click(false);
+            CLOSE_BUTTON_SIZE,
+            CLOSE_BUTTON_SIZE);
+        close->set_halign(Gtk::ALIGN_CENTER);
+        close->set_valign(Gtk::ALIGN_CENTER);
+        close->set_hexpand(false);
+        close->set_vexpand(false);
+        close->set_visible_window(true);
+        close->add_events(
+            Gdk::BUTTON_RELEASE_MASK);
+        close->set_tooltip_text("Close window");
         close->get_style_context()->add_class(
             "dock-preview-close");
-        close->signal_clicked().connect(
-            [this, window_id = entry.id]()
+
+        auto close_glyph = Gtk::manage(
+            new Gtk::DrawingArea());
+        close_glyph->set_size_request(
+            CLOSE_BUTTON_SIZE,
+            CLOSE_BUTTON_SIZE);
+        close_glyph->signal_draw().connect(
+            [](const Cairo::RefPtr<Cairo::Context>
+                   &context)
             {
-                m_close_window.emit(window_id);
+                constexpr char GLYPH[] = "×";
+
+                context->select_font_face(
+                    "Sans",
+                    Cairo::FONT_SLANT_NORMAL,
+                    Cairo::FONT_WEIGHT_NORMAL);
+                context->set_font_size(
+                    CLOSE_BUTTON_SIZE);
+
+                Cairo::TextExtents extents;
+                context->get_text_extents(
+                    GLYPH,
+                    extents);
+                context->move_to(
+                    (CLOSE_BUTTON_SIZE -
+                         extents.width) /
+                            2.0 -
+                        extents.x_bearing,
+                    (CLOSE_BUTTON_SIZE -
+                         extents.height) /
+                            2.0 -
+                        extents.y_bearing);
+                context->set_source_rgb(
+                    1.0,
+                    1.0,
+                    1.0);
+                context->show_text(GLYPH);
+                return true;
+            });
+        close->add(*close_glyph);
+        close->signal_button_release_event().connect(
+            [this, window_id = entry.id](
+                GdkEventButton *event)
+            {
+                if (event && event->button == 1)
+                {
+                    m_close_window.emit(window_id);
+                    return true;
+                }
+
+                return false;
             });
 
         header->pack_start(*title, true, true);
@@ -530,9 +633,70 @@ void DockPreviewWindow::rebuild(
                 return false;
             });
 
+        card->signal_enter_notify_event().connect(
+            [card,
+             background,
+             selected](GdkEventCrossing *event)
+            {
+                if (!event ||
+                    event->detail !=
+                        GDK_NOTIFY_INFERIOR)
+                {
+                    *selected = true;
+                    card->get_style_context()
+                        ->add_class(
+                            "dock-preview-card-selected");
+                    background->queue_draw();
+                }
+
+                return false;
+            });
+        card->signal_motion_notify_event().connect(
+            [card,
+             background,
+             selected](GdkEventMotion *)
+            {
+                if (!*selected)
+                {
+                    *selected = true;
+                    card->get_style_context()
+                        ->add_class(
+                            "dock-preview-card-selected");
+                    background->queue_draw();
+                }
+
+                return false;
+            });
+        card->signal_leave_notify_event().connect(
+            [card,
+             background,
+             selected](GdkEventCrossing *event)
+            {
+                if (!event ||
+                    event->detail !=
+                        GDK_NOTIFY_INFERIOR)
+                {
+                    *selected = false;
+                    card->get_style_context()
+                        ->remove_class(
+                            "dock-preview-card-selected");
+                    background->queue_draw();
+                }
+
+                return false;
+            });
+
         body->pack_start(*header, false, false);
         body->pack_start(*image_event, true, true);
-        card->add(*body);
+
+        auto card_overlay = Gtk::manage(
+            new Gtk::Overlay());
+        card_overlay->set_size_request(
+            size.card_width,
+            size.header_height + image_height);
+        card_overlay->add(*background);
+        card_overlay->add_overlay(*body);
+        card->add(*card_overlay);
 
         m_row.pack_start(*card, false, false);
         m_cards.push_back(card);

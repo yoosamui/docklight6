@@ -938,6 +938,12 @@ void DockWindowController::schedule_show_tooltip(
     Gtk::Widget &item,
     const Glib::ustring &text)
 {
+    // Item crossing state remains authoritative while a preview layer is
+    // unmapped and replaced by a tooltip. During that surface handoff GDK can
+    // briefly report the physical pointer outside the dock even though it is
+    // already over the newly entered item.
+    m_dock_item_pointer_inside = true;
+
     if (!m_settings.display_tooltips())
     {
         hide_tooltip_immediately();
@@ -947,8 +953,6 @@ void DockWindowController::schedule_show_tooltip(
     cancel_hide_timer();
     cancel_show_timer();
     cancel_preview_show_timer();
-    m_dock_item_pointer_inside = true;
-
     m_pending_item = &item;
     m_pending_preview_desktop_id.clear();
     m_pending_tooltip_text = text;
@@ -1007,7 +1011,7 @@ void DockWindowController::schedule_show_preview(
 
                 return false;
             },
-            DockConstants::PREVIEW_SHOW_DELAY_MS);
+            m_settings.preview_show_delay());
 }
 
 void DockWindowController::schedule_hide_tooltip()
@@ -1149,13 +1153,36 @@ void DockWindowController::hide_tooltip()
 }
 
 void DockWindowController::show_preview(
-    DockItem &item)
+    DockItem &item,
+    const WindowId &excluded_window_id)
 {
-    const auto entries = item.window_entries();
+    auto entries = item.window_entries();
+
+    if (!excluded_window_id.empty())
+    {
+        entries.erase(
+            std::remove_if(
+                entries.begin(),
+                entries.end(),
+                [&excluded_window_id](
+                    const ApplicationWindowEntry
+                        &entry)
+                {
+                    return entry.id ==
+                           excluded_window_id;
+                }),
+            entries.end());
+    }
 
     if (entries.empty())
     {
-        show_tooltip(item, item.tooltip_text());
+        hide_preview();
+
+        if (excluded_window_id.empty())
+            show_tooltip(
+                item,
+                item.tooltip_text());
+
         return;
     }
 
@@ -1271,6 +1298,7 @@ void DockWindowController::hide_preview()
     {
         m_preview_inhibits_autohide = false;
         m_autohide_controller->uninhibit(
+            m_dock_item_pointer_inside ||
             m_window.pointer_is_inside());
     }
 }
@@ -1319,14 +1347,20 @@ void DockWindowController::close_preview_window(
     Glib::signal_idle().connect_once(
         [this, desktop_id, window_id]()
         {
-            hide_preview();
-
             for (auto *item : m_window.dock_items())
             {
                 if (item &&
                     item->desktop_id() == desktop_id)
                 {
-                    item->close_window(window_id);
+                    if (item->close_window(window_id))
+                    {
+                        // Keep the mapped preview and rebuild it without the
+                        // window whose close request was accepted. Hiding is
+                        // reserved for the final window in the group.
+                        show_preview(
+                            *item,
+                            window_id);
+                    }
                     break;
                 }
             }

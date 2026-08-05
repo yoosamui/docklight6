@@ -121,7 +121,9 @@ private:
         Gtk::Widget &item,
         const Glib::ustring &text);
     void hide_tooltip();
-    void show_preview(DockItem &item);
+    void show_preview(
+        DockItem &item,
+        const WindowId &excluded_window_id = {});
     void hide_preview();
     void preview_pointer_entered();
     void preview_pointer_left();

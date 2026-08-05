@@ -42,6 +42,10 @@ constexpr int MIN_ICON_SIZE = 32; // Smallest accepted dock icon size
 constexpr int MAX_ICON_SIZE = 128; // Largest accepted dock icon size
 constexpr int MIN_PREVIEW_CARD_HEIGHT = 64;
 constexpr int MAX_PREVIEW_CARD_HEIGHT = 512;
+constexpr int DEFAULT_PREVIEW_CARD_HEIGHT = 200;
+constexpr int MIN_PREVIEW_SHOW_DELAY = 0;
+constexpr int MAX_PREVIEW_SHOW_DELAY = 1000;
+constexpr int CURRENT_CONFIG_VERSION = 1;
 constexpr int MIN_CORNER_RADIUS = 2; // Smallest explicit dock corner radius
 constexpr unsigned int RELOAD_DELAY_MS = 200; // Delay before reloading changed settings
 
@@ -111,12 +115,22 @@ manage_all_workspaces = true
 const char *PREVIEW_CARD_HEIGHT_SETTING_TEMPLATE = R"(# Window-preview card height in pixels.
 # 0 selects automatic aspect-based sizing.
 # Otherwise valid range: 64 to 512
-preview_card_height = 0
+preview_card_height = 200
+
+)";
+
+// Configuration block added when preview timing is missing.
+const char *PREVIEW_SHOW_DELAY_SETTING_TEMPLATE = R"(# Delay before showing a window preview, in milliseconds.
+# Valid range: 0 to 1000
+preview_show_delay = 512
 
 )";
 
 // Complete configuration written when no user configuration exists.
 const char *CONFIG_TEMPLATE = R"([dock]
+# Internal configuration schema version.
+config_version = 1
+
 # Monitor used by the dock.
 # Empty uses default: primary
 # Run "docklight6 --list-monitors" to show accepted identifiers
@@ -160,7 +174,11 @@ icon_size =
 # Window-preview card height in pixels.
 # 0 selects automatic aspect-based sizing.
 # Otherwise valid range: 64 to 512
-preview_card_height = 0
+preview_card_height = 200
+
+# Delay before showing a window preview, in milliseconds.
+# Valid range: 0 to 1000
+preview_show_delay = 512
 
 # Dock screen edge.
 # Empty uses default: bottom
@@ -319,6 +337,8 @@ bool same_configuration(
                right.settings.icon_size() &&
            left.settings.preview_card_height() ==
                right.settings.preview_card_height() &&
+           left.settings.preview_show_delay() ==
+               right.settings.preview_show_delay() &&
            left.settings.hover_effect() ==
                right.settings.hover_effect() &&
            left.settings.indicator() ==
@@ -366,6 +386,7 @@ DockConfigurationManager::DockConfigurationManager()
             CONFIG_FILENAME);
 
     ensure_config_file();
+    migrate_configuration();
     ensure_setting(
         "monitor",
         MONITOR_SETTING_TEMPLATE);
@@ -393,6 +414,9 @@ DockConfigurationManager::DockConfigurationManager()
     ensure_setting(
         "preview_card_height",
         PREVIEW_CARD_HEIGHT_SETTING_TEMPLATE);
+    ensure_setting(
+        "preview_show_delay",
+        PREVIEW_SHOW_DELAY_SETTING_TEMPLATE);
     reload();
 }
 
@@ -522,6 +546,72 @@ void DockConfigurationManager::ensure_config_file()
     {
         g_warning(
             "Cannot create dock configuration '%s': %s",
+            m_config_path.c_str(),
+            error.what().c_str());
+    }
+}
+
+// Version 1 changes the preview-card default from automatic sizing (0) to
+// 200 pixels. The version marker makes this a one-time migration: after it
+// has run, users can explicitly select 0 again without it being overwritten.
+void DockConfigurationManager::migrate_configuration()
+{
+    Glib::KeyFile key_file;
+
+    try
+    {
+        if (!key_file.load_from_file(
+                m_config_path,
+                Glib::KEY_FILE_KEEP_COMMENTS) ||
+            !key_file.has_group(DOCK_GROUP))
+        {
+            return;
+        }
+
+        const auto stored_version =
+            parse_integer(
+                value_for(
+                    key_file,
+                    "config_version"));
+
+        if (stored_version &&
+            *stored_version >= CURRENT_CONFIG_VERSION)
+        {
+            return;
+        }
+
+        const auto preview_card_height =
+            parse_integer(
+                value_for(
+                    key_file,
+                    "preview_card_height"));
+
+        if (preview_card_height &&
+            *preview_card_height == 0)
+        {
+            key_file.set_integer(
+                DOCK_GROUP,
+                "preview_card_height",
+                DEFAULT_PREVIEW_CARD_HEIGHT);
+        }
+
+        key_file.set_integer(
+            DOCK_GROUP,
+            "config_version",
+            CURRENT_CONFIG_VERSION);
+
+        Glib::file_set_contents(
+            m_config_path,
+            key_file.to_data());
+
+        g_message(
+            "Migrated dock configuration to version %d",
+            CURRENT_CONFIG_VERSION);
+    }
+    catch (const Glib::Error &error)
+    {
+        g_warning(
+            "Cannot migrate dock configuration '%s': %s",
             m_config_path.c_str(),
             error.what().c_str());
     }
@@ -743,6 +833,11 @@ void DockConfigurationManager::reload()
                 key_file,
                 "preview_card_height");
 
+        const auto preview_show_delay =
+            value_for(
+                key_file,
+                "preview_show_delay");
+
         const auto home_icon_enabled =
             value_for(
                 key_file,
@@ -893,6 +988,40 @@ void DockConfigurationManager::reload()
                     MAX_PREVIEW_CARD_HEIGHT,
                     candidate.settings
                         .preview_card_height());
+            }
+        }
+
+        if (preview_show_delay.empty())
+        {
+            candidate.settings
+                .set_preview_show_delay(
+                    defaults.settings
+                        .preview_show_delay());
+        }
+        else
+        {
+            const auto parsed =
+                parse_integer(
+                    preview_show_delay);
+
+            if (parsed &&
+                *parsed >= MIN_PREVIEW_SHOW_DELAY &&
+                *parsed <= MAX_PREVIEW_SHOW_DELAY)
+            {
+                candidate.settings
+                    .set_preview_show_delay(
+                        *parsed);
+            }
+            else
+            {
+                g_warning(
+                    "Invalid [dock] preview_show_delay '%s'; "
+                    "expected %d..%d; keeping %d",
+                    preview_show_delay.c_str(),
+                    MIN_PREVIEW_SHOW_DELAY,
+                    MAX_PREVIEW_SHOW_DELAY,
+                    candidate.settings
+                        .preview_show_delay());
             }
         }
 

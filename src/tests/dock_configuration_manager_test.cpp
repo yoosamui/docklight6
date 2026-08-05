@@ -51,7 +51,67 @@ int main()
         config_home,
         true));
 
+    std::string config_path;
+
+    {
+        DockConfigurationManager initial_configuration;
+
+        assert(initial_configuration.current().settings
+                   .preview_card_height() == 200);
+
+        config_path =
+            initial_configuration.config_path();
+    }
+
+    // Versionless configurations used 0 as the old default. Verify that it
+    // is upgraded once, then verify that an explicit 0 remains selectable.
+    auto legacy_contents =
+        Glib::file_get_contents(
+            config_path);
+
+    const std::string version_block =
+        "# Internal configuration schema version.\n"
+        "config_version = 1\n\n";
+    const auto version_position =
+        legacy_contents.find(version_block);
+
+    assert(version_position != std::string::npos);
+
+    legacy_contents.erase(
+        version_position,
+        version_block.size());
+
+    const std::string new_preview_default =
+        "preview_card_height = 200";
+    const auto preview_position =
+        legacy_contents.find(new_preview_default);
+
+    assert(preview_position != std::string::npos);
+
+    legacy_contents.replace(
+        preview_position,
+        new_preview_default.size(),
+        "preview_card_height = 0");
+
+    Glib::file_set_contents(
+        config_path,
+        legacy_contents);
+
     DockConfigurationManager configuration;
+
+    assert(configuration.current().settings
+               .preview_card_height() == 200);
+
+    assert(configuration.save_setting(
+        "preview_card_height",
+        "0"));
+
+    {
+        DockConfigurationManager explicit_auto_configuration;
+
+        assert(explicit_auto_configuration.current().settings
+                   .preview_card_height() == 0);
+    }
 
     assert(configuration.save_setting(
         "monitor",
@@ -84,6 +144,9 @@ int main()
         "preview_card_height",
         "256"));
     assert(configuration.save_setting(
+        "preview_show_delay",
+        "750"));
+    assert(configuration.save_setting(
         "location",
         "top"));
     assert(configuration.save_setting(
@@ -108,6 +171,9 @@ int main()
            std::string::npos);
     assert(contents.find(
                "preview_card_height=256") !=
+           std::string::npos);
+    assert(contents.find(
+               "preview_show_delay=750") !=
            std::string::npos);
     assert(contents.find(
                "home_icon_enabled=false") !=
@@ -145,6 +211,8 @@ int main()
     assert(current.settings.icon_size() == 64);
     assert(current.settings
                .preview_card_height() == 256);
+    assert(current.settings
+               .preview_show_delay() == 750);
     assert(current.layout_request.location ==
            DockLocation::top);
     assert(!current.layout_request

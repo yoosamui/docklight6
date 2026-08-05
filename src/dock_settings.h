@@ -26,6 +26,7 @@ public:
         const std::string &identifier);
     void set_icon_size(int size);
     void set_preview_card_height(int height);
+    void set_preview_show_delay(int delay_ms);
     void set_hover_effect(
         DockHoverEffect effect);
     void set_indicator(
@@ -48,6 +49,7 @@ public:
 
     int icon_size() const;
     int preview_card_height() const;
+    int preview_show_delay() const;
     int minimum_bottom_workarea_inset() const;
     bool home_icon_enabled() const;
     const std::string &home_icon_path() const;
@@ -59,8 +61,9 @@ private:
 
     // Preserve the current launcher-icon request while making it configurable
     // instead of keeping it as a DockItem literal.
-    int m_icon_size = 46; // 512 test value. default is 46px
-    int m_preview_card_height = 0;
+    int m_icon_size = 46; // default is 46px
+    int m_preview_card_height = 200;
+    int m_preview_show_delay = 512;
 
     // Some Wayland compositors report the full output as the work area even
     // when a panel occludes the bottom edge. This is the minimum hidden

@@ -57,6 +57,7 @@ public:
 
 private:
     void ensure_config_file();
+    void migrate_configuration();
     void ensure_setting(
         const char *key,
         const char *setting_template);

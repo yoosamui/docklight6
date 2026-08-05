@@ -56,6 +56,18 @@ void DockSettings::set_preview_card_height(
             : 0;
 }
 
+int DockSettings::preview_show_delay() const
+{
+    return m_preview_show_delay;
+}
+
+void DockSettings::set_preview_show_delay(
+    int delay_ms)
+{
+    m_preview_show_delay =
+        std::clamp(delay_ms, 0, 5000);
+}
+
 DockHoverEffect DockSettings::hover_effect() const
 {
     return m_hover_effect;
