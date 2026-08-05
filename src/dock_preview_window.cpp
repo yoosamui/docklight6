@@ -7,248 +7,302 @@
 #include <gtk-layer-shell.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <memory>
 
 namespace
 {
 
-constexpr int HEADER_HEIGHT = 32;
-constexpr int CLOSE_BUTTON_SIZE = 16;
-
-struct PreviewMetrics
-{
-    int card_width = DockPreviewWindow::CARD_WIDTH;
-    int gap = DockPreviewWindow::CARD_GAP;
-    int padding = DockPreviewWindow::WINDOW_PADDING;
-    int header_height = HEADER_HEIGHT;
-    int width = 0;
-    int height = 0;
-};
-
-std::string desktop_badge_text(
-    const std::vector<unsigned int>
-        &desktop_numbers)
-{
-    std::string text = "[ ";
-
-    for (std::size_t index = 0;
-         index < desktop_numbers.size();
-         ++index)
+    constexpr int HEADER_HEIGHT = 32;
+    constexpr int CLOSE_BUTTON_SIZE = 16;
+    struct PreviewMetrics
     {
-        if (index > 0)
-            text += ", ";
-
-        text += std::to_string(
-            desktop_numbers[index]);
-    }
-
-    text += " ]";
-    return text;
-}
-
-std::string preview_title(
-    const ApplicationWindowEntry &entry)
-{
-    auto title = entry.caption.empty()
-                     ? entry.id
-                     : entry.caption;
-
-    // Match the dynamic context menu: current-workspace windows need no
-    // badge, while windows from other workspaces identify their location.
-    if (!entry.on_current_desktop &&
-        !entry.desktop_numbers.empty())
-    {
-        title = desktop_badge_text(
-                    entry.desktop_numbers) +
-                " " + title;
-    }
-
-    return title;
-}
-
-int thumbnail_height_for(
-    const ApplicationWindowEntry &entry,
-    int card_width)
-{
-    const auto &geometry = entry.frame_geometry;
-
-    if (geometry.width <= 0 ||
-        geometry.height <= 0)
-    {
-        return std::max(1, card_width);
-    }
-
-    return std::clamp(
-        static_cast<int>(std::lround(
-            static_cast<double>(card_width) *
-            geometry.height /
-            geometry.width)),
-        1,
-        DockPreviewWindow::MAX_HEIGHT);
-}
-
-int automatic_preview_height(
-    const std::vector<ApplicationWindowEntry>
-        &entries)
-{
-    int image_height = 1;
-
-    for (const auto &entry : entries)
-    {
-        image_height = std::max(
-            image_height,
-            thumbnail_height_for(
-                entry,
-                DockPreviewWindow::CARD_WIDTH));
-    }
-
-    return std::clamp(
-        HEADER_HEIGHT + image_height +
-            2 * DockPreviewWindow::WINDOW_PADDING,
-        DockPreviewWindow::MIN_HEIGHT,
-        DockPreviewWindow::MAX_HEIGHT);
-}
-
-PreviewMetrics preview_metrics(
-    const std::vector<ApplicationWindowEntry>
-        &entries,
-    int available_width,
-    int available_height,
-    int card_user_height)
-{
-    PreviewMetrics metrics;
-    const auto window_count = entries.size();
-
-    if (window_count == 0 ||
-        available_width <= 0 ||
-        available_height <= 0)
-    {
-        return metrics;
-    }
-
-    const int automatic_height =
-        automatic_preview_height(entries);
-    const int requested_height =
-        card_user_height ==
-                DockPreviewWindow::CARD_USER_HEIGHT
-            ? automatic_height
-            : std::clamp(
-                  card_user_height,
-                  DockPreviewWindow::MIN_HEIGHT,
-                  DockPreviewWindow::MAX_HEIGHT);
-    // The configured value fixes the vertical preview/card boundary. The
-    // title border stays at HEADER_HEIGHT, while card width follows the new
-    // thumbnail-area height so the image really resizes without distortion.
-    // Horizontal monitor fitting may reduce that derived width afterwards.
-    metrics.height = std::max(
-        1,
-        std::min(
-            available_height,
-            requested_height));
-    const int automatic_image_height =
-        std::max(
-            1,
-            automatic_height -
-                HEADER_HEIGHT -
-                2 * DockPreviewWindow::WINDOW_PADDING);
-    const int requested_image_height =
-        std::max(
-            1,
-            metrics.height -
-                HEADER_HEIGHT -
-                2 * DockPreviewWindow::WINDOW_PADDING);
-    const double thumbnail_scale =
-        static_cast<double>(requested_image_height) /
-        automatic_image_height;
-
-    metrics.card_width = std::max(
-        1,
-        static_cast<int>(std::lround(
-            DockPreviewWindow::CARD_WIDTH *
-            thumbnail_scale)));
-    const int requested_card_width =
-        metrics.card_width;
-
-    const long long natural_width =
-        2LL * metrics.padding +
-        static_cast<long long>(window_count) *
-            metrics.card_width +
-        static_cast<long long>(window_count - 1) *
-            metrics.gap;
-
-    const double fit_scale = std::min(
-        1.0,
-        static_cast<double>(available_width) /
-            natural_width);
-
-    if (fit_scale < 1.0)
-    {
-        metrics.card_width = std::max(
-            1,
-            static_cast<int>(std::floor(
-                metrics.card_width * fit_scale)));
-        metrics.gap = std::max(
-            1,
-            static_cast<int>(std::floor(
-                metrics.gap * fit_scale)));
-    }
-
-    auto allocated_width = [&]()
-    {
-        return 2LL * metrics.padding +
-               static_cast<long long>(window_count) *
-                   metrics.card_width +
-               static_cast<long long>(window_count - 1) *
-                   metrics.gap;
+        int card_width = DockPreviewWindow::CARD_WIDTH;
+        int gap = DockPreviewWindow::CARD_GAP;
+        int padding = DockPreviewWindow::WINDOW_PADDING;
+        int header_height = HEADER_HEIGHT;
+        int width = 0;
+        int height = 0;
     };
 
-    while (allocated_width() > available_width &&
-           metrics.card_width > 1)
+    std::string desktop_badge_text(
+        const std::vector<unsigned int>
+            &desktop_numbers)
     {
-        --metrics.card_width;
+        std::string text = "[ ";
+
+        for (std::size_t index = 0;
+             index < desktop_numbers.size();
+             ++index)
+        {
+            if (index > 0)
+                text += ", ";
+
+            text += std::to_string(
+                desktop_numbers[index]);
+        }
+
+        text += " ]";
+        return text;
     }
 
-    while (allocated_width() > available_width &&
-           metrics.gap > 1)
+    std::string preview_title(
+        const ApplicationWindowEntry &entry)
     {
-        --metrics.gap;
+        auto title = entry.caption.empty()
+                         ? entry.id
+                         : entry.caption;
+
+        // Match the dynamic context menu: current-workspace windows need no
+        // badge, while windows from other workspaces identify their location.
+        if (!entry.on_current_desktop &&
+            !entry.desktop_numbers.empty())
+        {
+            title = desktop_badge_text(
+                        entry.desktop_numbers) +
+                    " " + title;
+        }
+
+        return title;
     }
 
-    while (allocated_width() > available_width &&
-           metrics.padding > 0)
+    std::string lowercase(std::string value)
     {
-        --metrics.padding;
+        std::transform(
+            value.begin(),
+            value.end(),
+            value.begin(),
+            [](unsigned char character)
+            {
+                return static_cast<char>(
+                    std::tolower(character));
+            });
+        return value;
     }
 
-    // Width fitting and thumbnail fitting are the same operation. Keep the
-    // title border fixed, but shrink the thumbnail area and the toplevel
-    // height by the card-width scale actually achieved after rounding.
-    const double achieved_scale =
-        static_cast<double>(metrics.card_width) /
-        requested_card_width;
-    const int fitted_image_height = std::max(
-        1,
-        static_cast<int>(std::floor(
-            requested_image_height *
-            achieved_scale)));
-    const int minimum_height = std::min(
-        available_height,
-        DockPreviewWindow::MIN_HEIGHT);
-    metrics.height = std::clamp(
-        metrics.header_height +
-            2 * DockPreviewWindow::WINDOW_PADDING +
-            fitted_image_height,
-        minimum_height,
-        available_height);
+    bool is_picture_in_picture_caption(
+        const std::string &caption)
+    {
+        auto normalized = lowercase(caption);
 
-    metrics.width = static_cast<int>(
-        std::min<long long>(
-            available_width,
-            allocated_width()));
+        // Firefox uses "Picture-in-Picture" for its detached player. Treat
+        // punctuation as whitespace so the check also accepts variants such
+        // as "Picture in Picture" without broad matching ordinary windows.
+        std::transform(
+            normalized.begin(),
+            normalized.end(),
+            normalized.begin(),
+            [](unsigned char character)
+            {
+                return std::isalnum(character)
+                           ? static_cast<char>(character)
+                           : ' ';
+            });
 
-    return metrics;
-}
+        std::string words;
+        words.reserve(normalized.size());
+        bool previous_space = true;
+
+        for (const auto character : normalized)
+        {
+            const bool space = character == ' ';
+
+            if (!space || !previous_space)
+                words += character;
+
+            previous_space = space;
+        }
+
+        if (!words.empty() && words.back() == ' ')
+            words.pop_back();
+
+        return words == "picture in picture" ||
+               words.find("picture in picture ") == 0;
+    }
+
+    int thumbnail_height_for(
+        const ApplicationWindowEntry &entry,
+        int card_width)
+    {
+        const auto &geometry = entry.frame_geometry;
+
+        if (geometry.width <= 0 ||
+            geometry.height <= 0)
+        {
+            return std::max(1, card_width);
+        }
+
+        return std::clamp(
+            static_cast<int>(std::lround(
+                static_cast<double>(card_width) *
+                geometry.height /
+                geometry.width)),
+            1,
+            DockPreviewWindow::MAX_HEIGHT);
+    }
+
+    int automatic_preview_height(
+        const std::vector<ApplicationWindowEntry>
+            &entries)
+    {
+        int image_height = 1;
+
+        for (const auto &entry : entries)
+        {
+            image_height = std::max(
+                image_height,
+                thumbnail_height_for(
+                    entry,
+                    DockPreviewWindow::CARD_WIDTH));
+        }
+
+        return std::clamp(
+            HEADER_HEIGHT + image_height +
+                2 * DockPreviewWindow::WINDOW_PADDING,
+            DockPreviewWindow::MIN_HEIGHT,
+            DockPreviewWindow::MAX_HEIGHT);
+    }
+
+    PreviewMetrics preview_metrics(
+        const std::vector<ApplicationWindowEntry>
+            &entries,
+        int available_width,
+        int available_height,
+        int card_user_height)
+    {
+        PreviewMetrics metrics;
+        const auto window_count = entries.size();
+
+        if (window_count == 0 ||
+            available_width <= 0 ||
+            available_height <= 0)
+        {
+            return metrics;
+        }
+
+        const int automatic_height =
+            automatic_preview_height(entries);
+        const int requested_height =
+            card_user_height ==
+                    DockPreviewWindow::CARD_USER_HEIGHT
+                ? automatic_height
+                : std::clamp(
+                      card_user_height,
+                      DockPreviewWindow::MIN_HEIGHT,
+                      DockPreviewWindow::MAX_HEIGHT);
+        // The configured value fixes the vertical preview/card boundary. The
+        // title border stays at HEADER_HEIGHT, while card width follows the new
+        // thumbnail-area height so the image really resizes without distortion.
+        // Horizontal monitor fitting may reduce that derived width afterwards.
+        metrics.height = std::max(
+            1,
+            std::min(
+                available_height,
+                requested_height));
+        const int automatic_image_height =
+            std::max(
+                1,
+                automatic_height -
+                    HEADER_HEIGHT -
+                    2 * DockPreviewWindow::WINDOW_PADDING);
+        const int requested_image_height =
+            std::max(
+                1,
+                metrics.height -
+                    HEADER_HEIGHT -
+                    2 * DockPreviewWindow::WINDOW_PADDING);
+        const double thumbnail_scale =
+            static_cast<double>(requested_image_height) /
+            automatic_image_height;
+
+        metrics.card_width = std::max(
+            1,
+            static_cast<int>(std::lround(
+                DockPreviewWindow::CARD_WIDTH *
+                thumbnail_scale)));
+        const int requested_card_width =
+            metrics.card_width;
+
+        const long long natural_width =
+            2LL * metrics.padding +
+            static_cast<long long>(window_count) *
+                metrics.card_width +
+            static_cast<long long>(window_count - 1) *
+                metrics.gap;
+
+        const double fit_scale = std::min(
+            1.0,
+            static_cast<double>(available_width) /
+                natural_width);
+
+        if (fit_scale < 1.0)
+        {
+            metrics.card_width = std::max(
+                1,
+                static_cast<int>(std::floor(
+                    metrics.card_width * fit_scale)));
+            metrics.gap = std::max(
+                1,
+                static_cast<int>(std::floor(
+                    metrics.gap * fit_scale)));
+        }
+
+        auto allocated_width = [&]()
+        {
+            return 2LL * metrics.padding +
+                   static_cast<long long>(window_count) *
+                       metrics.card_width +
+                   static_cast<long long>(window_count - 1) *
+                       metrics.gap;
+        };
+
+        while (allocated_width() > available_width &&
+               metrics.card_width > 1)
+        {
+            --metrics.card_width;
+        }
+
+        while (allocated_width() > available_width &&
+               metrics.gap > 1)
+        {
+            --metrics.gap;
+        }
+
+        while (allocated_width() > available_width &&
+               metrics.padding > 0)
+        {
+            --metrics.padding;
+        }
+
+        // Width fitting and thumbnail fitting are the same operation. Keep the
+        // title border fixed, but shrink the thumbnail area and the toplevel
+        // height by the card-width scale actually achieved after rounding.
+        const double achieved_scale =
+            static_cast<double>(metrics.card_width) /
+            requested_card_width;
+        const int fitted_image_height = std::max(
+            1,
+            static_cast<int>(std::floor(
+                requested_image_height *
+                achieved_scale)));
+        const int minimum_height = std::min(
+            available_height,
+            DockPreviewWindow::MIN_HEIGHT);
+        metrics.height = std::clamp(
+            metrics.header_height +
+                2 * DockPreviewWindow::WINDOW_PADDING +
+                fitted_image_height,
+            minimum_height,
+            available_height);
+
+        metrics.width = static_cast<int>(
+            std::min<long long>(
+                available_width,
+                allocated_width()));
+
+        return metrics;
+    }
 
 }
 
@@ -330,6 +384,7 @@ DockPreviewWindow::DockPreviewWindow()
 
 DockPreviewWindow::~DockPreviewWindow()
 {
+    m_stream_provider.stop_all();
     ++m_generation;
     clear_cards();
 }
@@ -387,6 +442,10 @@ void DockPreviewWindow::show_preview(
         return;
     }
 
+    m_stream_provider.stop_all();
+    m_media_title.clear();
+    m_live_window_id.clear();
+    m_dynamic_refresh = false;
     ++m_generation;
     rebuild(entries, size);
     set_size_request(size.width, size.height);
@@ -405,9 +464,38 @@ void DockPreviewWindow::show_preview(
 
 void DockPreviewWindow::hide_preview()
 {
+    m_stream_provider.stop_all();
+    m_media_title.clear();
+    m_live_window_id.clear();
+    m_dynamic_refresh = false;
     ++m_generation;
     hide();
     clear_cards();
+}
+
+void DockPreviewWindow::set_dynamic_refresh(
+    bool enabled,
+    const std::string &media_title)
+{
+    m_dynamic_refresh = enabled;
+
+    if (!media_title.empty())
+        m_media_title = media_title;
+
+    if (!enabled)
+        m_media_title.clear();
+
+    if (m_dynamic_refresh &&
+        get_visible() &&
+        !m_thumbnail_targets.empty())
+    {
+        start_live_streams();
+    }
+    else
+    {
+        m_stream_provider.stop_all();
+        m_live_window_id.clear();
+    }
 }
 
 bool DockPreviewWindow::visible_for(
@@ -573,11 +661,11 @@ void DockPreviewWindow::rebuild(
                     extents);
                 context->move_to(
                     (CLOSE_BUTTON_SIZE -
-                         extents.width) /
+                     extents.width) /
                             2.0 -
                         extents.x_bearing,
                     (CLOSE_BUTTON_SIZE -
-                         extents.height) /
+                     extents.height) /
                             2.0 -
                         extents.y_bearing);
                 context->set_source_rgb(
@@ -700,7 +788,6 @@ void DockPreviewWindow::rebuild(
 
         m_row.pack_start(*card, false, false);
         m_cards.push_back(card);
-        m_images[entry.id] = image;
         m_window_ids.push_back(entry.id);
 
         const int fallback_size = std::max(
@@ -714,46 +801,188 @@ void DockPreviewWindow::rebuild(
                       "application-x-executable"}
                 : entry.icon_name;
 
-        m_thumbnail_provider.request(
+        m_thumbnail_targets.emplace(
             entry.id,
-            size.card_width,
-            image_height,
-            [this,
-             generation,
-             fallback_icon,
-             fallback_size](
-                const WindowId &window_id,
-                const Glib::RefPtr<Gdk::Pixbuf>
-                    &thumbnail)
+            ThumbnailTarget{
+                image,
+                fallback_icon,
+                fallback_size,
+                size.card_width,
+                image_height,
+                entry.caption,
+                entry.active,
+                false,
+                false});
+
+        request_thumbnail(
+            entry.id,
+            generation);
+    }
+}
+
+void DockPreviewWindow::request_thumbnail(
+    const WindowId &window_id,
+    unsigned int generation)
+{
+    const auto target =
+        m_thumbnail_targets.find(window_id);
+
+    if (target == m_thumbnail_targets.end() ||
+        target->second.capture_in_flight)
+    {
+        return;
+    }
+
+    target->second.capture_in_flight = true;
+
+    m_thumbnail_provider.request(
+        window_id,
+        target->second.target_width,
+        target->second.target_height,
+        [this, generation](
+            const WindowId &completed_window_id,
+            const Glib::RefPtr<Gdk::Pixbuf>
+                &thumbnail)
+        {
+            if (generation != m_generation)
+                return;
+
+            const auto completed =
+                m_thumbnail_targets.find(
+                    completed_window_id);
+
+            if (completed ==
+                m_thumbnail_targets.end())
             {
-                if (generation != m_generation)
-                    return;
+                return;
+            }
 
-                const auto image =
-                    m_images.find(window_id);
+            auto &target = completed->second;
+            target.capture_in_flight = false;
 
-                if (image != m_images.end())
-                {
-                    if (thumbnail)
-                    {
-                        image->second->set(thumbnail);
-                    }
-                    else
-                    {
-                        image->second->set_pixel_size(
-                            fallback_size);
-                        image->second->set_from_icon_name(
-                            fallback_icon,
-                            Gtk::ICON_SIZE_DIALOG);
-                    }
-                }
+            if (thumbnail && !target.has_thumbnail)
+            {
+                target.image->set(thumbnail);
+                target.has_thumbnail = true;
+            }
+            else if (!target.has_thumbnail)
+            {
+                // An icon is shown only when the initial static capture fails.
+                // A live stream keeps this static image until its first frame.
+                target.image->set_pixel_size(
+                    target.fallback_size);
+                target.image->set_from_icon_name(
+                    target.fallback_icon,
+                    Gtk::ICON_SIZE_DIALOG);
+            }
+        });
+}
+
+void DockPreviewWindow::start_live_streams()
+{
+    const auto generation = m_generation;
+    // Prefer a detached Firefox Picture-in-Picture surface. Its caption does
+    // not contain the MPRIS media title, so title matching would otherwise
+    // stream the main browser window and leave the video card static.
+    auto selected = std::find_if(
+        m_thumbnail_targets.begin(),
+        m_thumbnail_targets.end(),
+        [](const auto &entry)
+        {
+            return is_picture_in_picture_caption(
+                entry.second.caption);
+        });
+    const auto normalized_title = lowercase(m_media_title);
+
+    if (selected == m_thumbnail_targets.end() &&
+        !normalized_title.empty())
+    {
+        selected = std::find_if(
+            m_thumbnail_targets.begin(),
+            m_thumbnail_targets.end(),
+            [&normalized_title](const auto &entry)
+            {
+                const auto caption = lowercase(
+                    entry.second.caption);
+                return !caption.empty() &&
+                       (caption.find(normalized_title) !=
+                            std::string::npos ||
+                        normalized_title.find(caption) !=
+                            std::string::npos);
             });
+    }
+
+    if (selected == m_thumbnail_targets.end())
+    {
+        selected = std::find_if(
+            m_thumbnail_targets.begin(),
+            m_thumbnail_targets.end(),
+            [](const auto &entry)
+            {
+                return entry.second.active;
+            });
+    }
+
+    if (selected == m_thumbnail_targets.end() &&
+        !m_thumbnail_targets.empty())
+    {
+        selected = m_thumbnail_targets.begin();
+    }
+
+    if (selected == m_thumbnail_targets.end())
+        return;
+
+    const auto window_id = selected->first;
+    const auto target_width = selected->second.target_width;
+    const auto target_height = selected->second.target_height;
+
+    if (m_live_window_id == window_id)
+        return;
+
+    m_stream_provider.stop_all();
+    m_live_window_id = window_id;
+
+    g_message(
+        "Live media thumbnail: MPRIS title='%s'; window='%s'; id=%s",
+        m_media_title.c_str(),
+        selected->second.caption.c_str(),
+        window_id.c_str());
+
+    if (!m_stream_provider.start(
+        window_id,
+        target_width,
+        target_height,
+        [this, generation](
+            const WindowId &completed_window_id,
+            const Glib::RefPtr<Gdk::Pixbuf> &frame)
+        {
+            if (generation != m_generation || !frame)
+                return;
+
+            const auto completed = m_thumbnail_targets.find(
+                completed_window_id);
+
+            if (completed == m_thumbnail_targets.end())
+                return;
+
+            completed->second.image->set(frame);
+            completed->second.image->queue_draw();
+            completed->second.has_thumbnail = true;
+        }))
+    {
+        g_warning(
+            "Cannot start live media thumbnail for window %s",
+            window_id.c_str());
+        m_live_window_id.clear();
     }
 }
 
 void DockPreviewWindow::clear_cards()
 {
-    m_images.clear();
+    m_stream_provider.stop_all();
+    m_media_title.clear();
+    m_live_window_id.clear();
+    m_thumbnail_targets.clear();
     m_window_ids.clear();
 
     for (auto *card : m_cards)

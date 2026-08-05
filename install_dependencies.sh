@@ -16,6 +16,8 @@ build-essential \
 cmake \
 libgtkmm-3.0-dev \
 libgtk-layer-shell-dev \
+libpipewire-0.3-dev \
+libwayland-dev \
 libwnck-3-dev \
 autotools-dev \
 autoconf \

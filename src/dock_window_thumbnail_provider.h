@@ -5,6 +5,7 @@
 
 #include "managed_window.h"
 
+#include <gio/gio.h>
 #include <gdkmm/pixbuf.h>
 
 #include <atomic>
@@ -16,7 +17,14 @@ class DockWindowThumbnailProvider
 public:
     struct State
     {
+        ~State()
+        {
+            if (connection)
+                g_object_unref(connection);
+        }
+
         std::atomic<bool> alive{true};
+        GDBusConnection *connection = nullptr;
     };
 
     using Callback = std::function<

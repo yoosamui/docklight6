@@ -24,6 +24,20 @@ AM_CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
 AM_CPPFLAGS = \
   -DSOURCE_DIR=\"$(abs_top_srcdir)/src\"
 
+BUILT_SOURCES = \
+    zkde-screencast-unstable-v1-client-protocol.h \
+    zkde-screencast-unstable-v1-protocol.c
+
+CLEANFILES = $(BUILT_SOURCES)
+
+zkde-screencast-unstable-v1-client-protocol.h: $(top_srcdir)/protocols/zkde-screencast-unstable-v1.xml
+	$(WAYLAND_SCANNER) client-header $< $@
+
+zkde-screencast-unstable-v1-protocol.c: $(top_srcdir)/protocols/zkde-screencast-unstable-v1.xml
+	$(WAYLAND_SCANNER) private-code $< $@
+
+docklight6-dock_window_stream_provider.$(OBJEXT): zkde-screencast-unstable-v1-client-protocol.h
+
 docklight6_SOURCES = \
     main.cpp \
     managed_window.h \
@@ -56,8 +70,14 @@ docklight6_SOURCES = \
     dock_monitor_manager.cpp \
     dock_intellihide_policy.h \
     dock_intellihide_policy.cpp \
+    dock_media_playback_monitor.h \
+    dock_media_playback_monitor.cpp \
     dock_window_thumbnail_provider.h \
     dock_window_thumbnail_provider.cpp \
+    dock_window_stream_provider.h \
+    dock_window_stream_provider.cpp \
+    zkde-screencast-unstable-v1-client-protocol.h \
+    zkde-screencast-unstable-v1-protocol.c \
     dock_preview_window.h \
     dock_preview_window.cpp \
     dock_reveal_window.h \
@@ -88,11 +108,15 @@ docklight6_CPPFLAGS = \
     -DDOCKLIGHT_DATA_DIR=\"$(pkgdatadir)\" \
     -DLOCALEDIR=\"$(localedir)\" \
     $(GTKMM_CFLAGS) \
-    $(GTK_LAYER_SHELL_CFLAGS)
+    $(GTK_LAYER_SHELL_CFLAGS) \
+    $(PIPEWIRE_CFLAGS) \
+    $(WAYLAND_CFLAGS)
 
 docklight6_LDADD = \
     $(GTKMM_LIBS) \
-    $(GTK_LAYER_SHELL_LIBS)
+    $(GTK_LAYER_SHELL_LIBS) \
+    $(PIPEWIRE_LIBS) \
+    $(WAYLAND_LIBS)
 
 dock_application_controller_test_SOURCES = \
     tests/dock_application_controller_test.cpp \

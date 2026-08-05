@@ -7,6 +7,7 @@ AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([config.h])
 
 AC_PROG_CXX
+AC_PROG_CC
 AC_PROG_INSTALL
 
 PKG_PROG_PKG_CONFIG
@@ -46,6 +47,25 @@ PKG_CHECK_MODULES([GTK_LAYER_SHELL],
     gtk-layer-shell-0
 ])
 
+PKG_CHECK_MODULES([PIPEWIRE],
+[
+    libpipewire-0.3 >= 0.3
+])
+
+PKG_CHECK_MODULES([WAYLAND],
+[
+    wayland-client
+    gdk-wayland-3.0
+])
+
+AC_PATH_PROG(
+    [WAYLAND_SCANNER],
+    [wayland-scanner],
+    [no])
+AS_IF(
+    [test "x$WAYLAND_SCANNER" = "xno"],
+    [AC_MSG_ERROR([wayland-scanner is required to build KWin live previews])])
+
 ##CXXFLAGS="$CXXFLAGS -std=c++17"
 # current
 ##CXXFLAGS="$CXXFLAGS -std=c++17 -Wall -Wextra -Wpedantic"
@@ -56,6 +76,10 @@ AC_SUBST(GTKMM_LIBS)
 
 AC_SUBST(GTK_LAYER_SHELL_CFLAGS)
 AC_SUBST(GTK_LAYER_SHELL_LIBS)
+AC_SUBST(PIPEWIRE_CFLAGS)
+AC_SUBST(PIPEWIRE_LIBS)
+AC_SUBST(WAYLAND_CFLAGS)
+AC_SUBST(WAYLAND_LIBS)
 
 AC_CONFIG_FILES([
 Makefile

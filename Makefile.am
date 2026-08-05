@@ -17,7 +17,8 @@ EXTRA_DIST = \
     plasma/geometry-bridge/plugin/geometry_bridge_plugin.cpp \
     plasma/geometry-bridge/package/metadata.json \
     plasma/geometry-bridge/package/contents/ui/main.qml \
-    plasma/geometry-bridge/package/contents/ui/bridge/qmldir
+    plasma/geometry-bridge/package/contents/ui/bridge/qmldir \
+    protocols/zkde-screencast-unstable-v1.xml
 
 dist_pkgdata_DATA = \
     plasma/geometry-bridge/ensure-geometry-bridge.js

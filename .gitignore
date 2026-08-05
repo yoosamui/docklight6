@@ -101,6 +101,8 @@ clang-tidy.sh
 /po/stamp-it
 /src/Makefile
 /src/Makefile.in
+/src/zkde-screencast-unstable-v1-client-protocol.h
+/src/zkde-screencast-unstable-v1-protocol.c
 /src/docklight
 /src/dock_application_controller_test
 /src/dock_application_controller_test.log

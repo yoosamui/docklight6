@@ -2,10 +2,11 @@
 Name=Docklight
 GenericName=Dock
 Comment=Lightweight application dock with window previews
-Exec=docklight6
+Exec=/usr/local/bin/docklight6
 Icon=docklight.home
 Type=Application
 Terminal=false
 StartupNotify=false
 Categories=Utility;
 X-KDE-DBUS-Restricted-Interfaces=org.kde.KWin.ScreenShot2
+X-KDE-Wayland-Interfaces=zkde_screencast_unstable_v1

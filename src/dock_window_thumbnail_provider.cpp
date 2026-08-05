@@ -162,6 +162,19 @@ void capture(
     completion->target_height = target_height;
     completion->callback = std::move(callback);
 
+    // Hold the provider state for the entire capture so its shared session
+    // connection cannot be released while this worker is using it.
+    const auto active_state =
+        completion->state.lock();
+
+    if (!active_state ||
+        !active_state->alive ||
+        !active_state->connection)
+    {
+        schedule_delivery(std::move(completion));
+        return;
+    }
+
     int pipe_fds[2] = {-1, -1};
 
     if (pipe(pipe_fds) != 0)
@@ -202,10 +215,7 @@ void capture(
         });
 
     GError *error = nullptr;
-    auto connection = g_bus_get_sync(
-        G_BUS_TYPE_SESSION,
-        nullptr,
-        &error);
+    auto connection = active_state->connection;
 
     GVariant *reply = nullptr;
 
@@ -257,7 +267,6 @@ void capture(
         }
 
         g_object_unref(fd_list);
-        g_object_unref(connection);
     }
 
     close(pipe_fds[1]);
@@ -378,6 +387,20 @@ DockWindowThumbnailProvider::
     DockWindowThumbnailProvider()
     : m_state(std::make_shared<State>())
 {
+    GError *error = nullptr;
+    m_state->connection = g_bus_get_sync(
+        G_BUS_TYPE_SESSION,
+        nullptr,
+        &error);
+
+    if (!m_state->connection)
+    {
+        g_warning(
+            "Cannot connect thumbnail provider to the session bus: %s",
+            error ? error->message : "unknown error");
+    }
+
+    g_clear_error(&error);
 }
 
 DockWindowThumbnailProvider::

@@ -29,6 +29,7 @@
 #include "dock_intellihide_policy.h"
 #include "dock_item.h"
 #include "dock_layout_metrics.h"
+#include "dock_media_playback_monitor.h"
 #include "dock_preview_window.h"
 #include "dock_window.h"
 #include "window_icon_geometry.h"
@@ -51,6 +52,9 @@ DockWindowController::DockWindowController(
               window)),
       m_preview_window(
           std::make_unique<DockPreviewWindow>()),
+      m_media_playback_monitor(
+          std::make_unique<
+              DockMediaPlaybackMonitor>()),
       m_monitor(monitor),
       m_settings(configuration.settings),
       m_layout_request(
@@ -88,6 +92,25 @@ DockWindowController::DockWindowController(
                 *this,
                 &DockWindowController::
                     close_preview_window));
+
+    m_media_playback_changed =
+        m_media_playback_monitor
+            ->signal_changed()
+            .connect(
+                [this]()
+                {
+                    if (m_preview_desktop_id.empty())
+                        return;
+
+                    m_preview_window
+                        ->set_dynamic_refresh(
+                            m_media_playback_monitor
+                                ->is_playing(
+                                    m_preview_desktop_id),
+                            m_media_playback_monitor
+                                ->playing_title(
+                                    m_preview_desktop_id));
+                });
 }
 
 DockWindowController::~DockWindowController()
@@ -102,6 +125,7 @@ DockWindowController::~DockWindowController()
     m_edge_layout_update.disconnect();
     m_icon_theme_changed.disconnect();
     m_icon_refresh.disconnect();
+    m_media_playback_changed.disconnect();
     m_realize.disconnect();
     m_size_allocate.disconnect();
     m_window_registry_changed.disconnect();
@@ -1282,6 +1306,11 @@ void DockWindowController::show_preview(
         m_layout_request.location,
         position,
         preview_size);
+    m_preview_window->set_dynamic_refresh(
+        m_media_playback_monitor->is_playing(
+            m_preview_desktop_id),
+        m_media_playback_monitor->playing_title(
+            m_preview_desktop_id));
 }
 
 void DockWindowController::hide_preview()

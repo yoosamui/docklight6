@@ -4,6 +4,7 @@
 
 #include "dock_application_controller.h"
 #include "dock_layout_types.h"
+#include "dock_window_stream_provider.h"
 #include "dock_window_thumbnail_provider.h"
 
 #include <gdkmm/monitor.h>
@@ -11,6 +12,7 @@
 #include <sigc++/signal.h>
 
 #include <map>
+#include <string>
 #include <vector>
 
 struct DockPreviewSize
@@ -53,6 +55,9 @@ public:
         const ScreenPosition &position,
         const DockPreviewSize &size);
     void hide_preview();
+    void set_dynamic_refresh(
+        bool enabled,
+        const std::string &media_title = {});
 
     bool visible_for(const WindowId &window_id) const;
 
@@ -70,10 +75,27 @@ protected:
         GdkEventCrossing *event) override;
 
 private:
+    struct ThumbnailTarget
+    {
+        Gtk::Image *image = nullptr;
+        std::string fallback_icon;
+        int fallback_size = 0;
+        int target_width = 0;
+        int target_height = 0;
+        std::string caption;
+        bool active = false;
+        bool capture_in_flight = false;
+        bool has_thumbnail = false;
+    };
+
     void rebuild(
         const std::vector<ApplicationWindowEntry>
             &entries,
         const DockPreviewSize &size);
+    void request_thumbnail(
+        const WindowId &window_id,
+        unsigned int generation);
+    void start_live_streams();
     void clear_cards();
     void apply_position(
         DockLocation location,
@@ -82,6 +104,8 @@ private:
 private:
     DockWindowThumbnailProvider
         m_thumbnail_provider;
+    DockWindowStreamProvider
+        m_stream_provider;
     Glib::RefPtr<Gtk::CssProvider> m_css;
 
     Gtk::ScrolledWindow m_scroller;
@@ -90,7 +114,8 @@ private:
         CARD_GAP};
 
     std::vector<Gtk::EventBox *> m_cards;
-    std::map<WindowId, Gtk::Image *> m_images;
+    std::map<WindowId, ThumbnailTarget>
+        m_thumbnail_targets;
     std::vector<WindowId> m_window_ids;
 
     sigc::signal<void> m_pointer_entered;
@@ -102,4 +127,7 @@ private:
 
     unsigned int m_generation = 0;
     int m_card_user_height = CARD_USER_HEIGHT;
+    std::string m_media_title;
+    WindowId m_live_window_id;
+    bool m_dynamic_refresh = false;
 };

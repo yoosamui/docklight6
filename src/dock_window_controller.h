@@ -45,6 +45,7 @@
 
 class DockWindow;
 class DockAutohideController;
+class DockMediaPlaybackMonitor;
 class DockPreviewWindow;
 class DockItem;
 
@@ -143,6 +144,8 @@ private:
         m_autohide_controller;
     std::unique_ptr<DockPreviewWindow>
         m_preview_window;
+    std::unique_ptr<DockMediaPlaybackMonitor>
+        m_media_playback_monitor;
 
     Glib::RefPtr<Gdk::Monitor> m_monitor;
     Glib::RefPtr<Gtk::IconTheme> m_icon_theme;
@@ -172,6 +175,7 @@ private:
     sigc::connection m_icon_theme_changed;
     sigc::connection m_icon_refresh;
     sigc::connection m_preview_show_timer;
+    sigc::connection m_media_playback_changed;
     sigc::connection m_realize;
     sigc::connection m_size_allocate;
     sigc::connection m_window_registry_changed;
