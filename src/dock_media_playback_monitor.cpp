@@ -76,14 +76,58 @@ std::string final_component(
                : identifier.substr(dot + 1);
 }
 
+std::string application_identifier(
+    const std::string &value)
+{
+    auto identifier = normalized_identifier(value);
+
+    // Browser MPRIS service names append a per-process instance component,
+    // for example "chromium.instance20928" or "firefox.instance_1_63".
+    // It is not part of the application identity.
+    const auto instance = identifier.find(".instance");
+
+    if (instance != std::string::npos)
+        identifier.erase(instance);
+
+    return identifier;
+}
+
+std::string browser_family(
+    const std::string &value)
+{
+    const auto identifier =
+        application_identifier(value);
+    const auto component =
+        final_component(identifier);
+
+    if (identifier == "google-chrome" ||
+        identifier == "google-chrome-stable" ||
+        identifier == "chromium" ||
+        identifier == "chromium-browser" ||
+        component == "chrome" ||
+        component == "chromium")
+    {
+        return "chromium";
+    }
+
+    if (identifier == "firefox" ||
+        identifier == "firefox-esr" ||
+        component == "firefox")
+    {
+        return "firefox";
+    }
+
+    return {};
+}
+
 bool identifiers_match(
     const std::string &left,
     const std::string &right)
 {
     const auto normalized_left =
-        normalized_identifier(left);
+        application_identifier(left);
     const auto normalized_right =
-        normalized_identifier(right);
+        application_identifier(right);
 
     if (normalized_left.empty() ||
         normalized_right.empty())
@@ -91,9 +135,18 @@ bool identifiers_match(
         return false;
     }
 
-    return normalized_left == normalized_right ||
-           final_component(normalized_left) ==
-               final_component(normalized_right);
+    if (normalized_left == normalized_right ||
+        final_component(normalized_left) ==
+            final_component(normalized_right))
+    {
+        return true;
+    }
+
+    const auto left_browser = browser_family(left);
+    const auto right_browser = browser_family(right);
+
+    return !left_browser.empty() &&
+           left_browser == right_browser;
 }
 
 struct PropertyRequest
@@ -551,9 +604,6 @@ bool DockMediaPlaybackMonitor::is_playing(
 
     for (const auto &entry : m_state->players)
     {
-        if (!entry.second.playing)
-            continue;
-
         const std::string service_application =
             entry.first.substr(
                 sizeof(MPRIS_PREFIX) - 1);
@@ -564,6 +614,45 @@ bool DockMediaPlaybackMonitor::is_playing(
             identifiers_match(
                 desktop_id,
                 service_application))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool DockMediaPlaybackMonitor::should_stream(
+    const std::string &desktop_id) const
+{
+    if (!m_state)
+        return false;
+
+    for (const auto &entry : m_state->players)
+    {
+        const std::string service_application =
+            entry.first.substr(
+                sizeof(MPRIS_PREFIX) - 1);
+        const bool matches =
+            identifiers_match(
+                desktop_id,
+                entry.second.desktop_entry) ||
+            identifiers_match(
+                desktop_id,
+                service_application);
+
+        if (!matches)
+            continue;
+
+        if (entry.second.playing)
+            return true;
+
+        // Firefox can retain valid media metadata while incorrectly exposing
+        // PlaybackStatus=Paused for an actively playing browser tab. In that
+        // case stream the active visible Firefox window; KWin only produces
+        // new buffers when its contents are damaged.
+        if (!entry.second.title.empty() &&
+            browser_family(desktop_id) == "firefox")
         {
             return true;
         }
@@ -594,7 +683,13 @@ std::string DockMediaPlaybackMonitor::playing_title(
                 desktop_id,
                 service_application))
         {
-            return entry.second.title;
+            if (entry.second.playing ||
+                (!entry.second.title.empty() &&
+                 browser_family(desktop_id) ==
+                     "firefox"))
+            {
+                return entry.second.title;
+            }
         }
     }
 

@@ -105,7 +105,7 @@ DockWindowController::DockWindowController(
                     m_preview_window
                         ->set_dynamic_refresh(
                             m_media_playback_monitor
-                                ->is_playing(
+                                ->should_stream(
                                     m_preview_desktop_id),
                             m_media_playback_monitor
                                 ->playing_title(
@@ -1307,7 +1307,7 @@ void DockWindowController::show_preview(
         position,
         preview_size);
     m_preview_window->set_dynamic_refresh(
-        m_media_playback_monitor->is_playing(
+        m_media_playback_monitor->should_stream(
             m_preview_desktop_id),
         m_media_playback_monitor->playing_title(
             m_preview_desktop_id));

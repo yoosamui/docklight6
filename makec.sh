@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# This happens because KWin authorizes privileged screenshot and screencast access using the executable path registered in:
+# KDE-Plasma WAYLAND
+#  KWin authorizes privileged screenshot and screencast access using the executable path registered in:
 # /usr/local/share/applications/org.docklight6.desktop
 
 

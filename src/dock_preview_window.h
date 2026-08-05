@@ -11,7 +11,9 @@
 #include <gtkmm.h>
 #include <sigc++/signal.h>
 
+#include <cstdint>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -84,8 +86,11 @@ private:
         int target_height = 0;
         std::string caption;
         bool active = false;
+        bool minimized = false;
         bool capture_in_flight = false;
         bool has_thumbnail = false;
+        bool has_live_signature = false;
+        std::uint64_t live_signature = 0;
     };
 
     void rebuild(
@@ -128,6 +133,6 @@ private:
     unsigned int m_generation = 0;
     int m_card_user_height = CARD_USER_HEIGHT;
     std::string m_media_title;
-    WindowId m_live_window_id;
+    std::set<WindowId> m_live_window_ids;
     bool m_dynamic_refresh = false;
 };

@@ -961,6 +961,11 @@ bool DockItem::on_button_press_event(GdkEventButton *event)
     if (!event)
         return false;
 
+    // A dock-icon press starts a new interaction. Close any preview at press
+    // time instead of waiting for the launch, minimize, or menu action that
+    // follows on release.
+    m_dock.hide_tooltip_immediately();
+
     if (event->button == GDK_BUTTON_SECONDARY)
     {
         show_context_menu(

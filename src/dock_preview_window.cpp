@@ -7,8 +7,8 @@
 #include <gtk-layer-shell.h>
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <memory>
 
 namespace
@@ -67,58 +67,43 @@ namespace
         return title;
     }
 
-    std::string lowercase(std::string value)
+    std::uint64_t pixbuf_signature(
+        const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
     {
-        std::transform(
-            value.begin(),
-            value.end(),
-            value.begin(),
-            [](unsigned char character)
-            {
-                return static_cast<char>(
-                    std::tolower(character));
-            });
-        return value;
-    }
+        if (!pixbuf)
+            return 0;
 
-    bool is_picture_in_picture_caption(
-        const std::string &caption)
-    {
-        auto normalized = lowercase(caption);
+        const int width = pixbuf->get_width();
+        const int height = pixbuf->get_height();
+        const int channels = pixbuf->get_n_channels();
 
-        // Firefox uses "Picture-in-Picture" for its detached player. Treat
-        // punctuation as whitespace so the check also accepts variants such
-        // as "Picture in Picture" without broad matching ordinary windows.
-        std::transform(
-            normalized.begin(),
-            normalized.end(),
-            normalized.begin(),
-            [](unsigned char character)
-            {
-                return std::isalnum(character)
-                           ? static_cast<char>(character)
-                           : ' ';
-            });
+        if (width <= 0 || height <= 0 || channels <= 0)
+            return 0;
 
-        std::string words;
-        words.reserve(normalized.size());
-        bool previous_space = true;
+        const int x_step = std::max(1, width / 32);
+        const int y_step = std::max(1, height / 32);
+        const auto *pixels = pixbuf->get_pixels();
+        const int rowstride = pixbuf->get_rowstride();
+        std::uint64_t signature = 1469598103934665603ULL;
 
-        for (const auto character : normalized)
+        for (int y = 0; y < height; y += y_step)
         {
-            const bool space = character == ' ';
+            for (int x = 0; x < width; x += x_step)
+            {
+                const auto *pixel =
+                    pixels + y * rowstride + x * channels;
 
-            if (!space || !previous_space)
-                words += character;
-
-            previous_space = space;
+                for (int channel = 0;
+                     channel < std::min(3, channels);
+                     ++channel)
+                {
+                    signature ^= pixel[channel];
+                    signature *= 1099511628211ULL;
+                }
+            }
         }
 
-        if (!words.empty() && words.back() == ' ')
-            words.pop_back();
-
-        return words == "picture in picture" ||
-               words.find("picture in picture ") == 0;
+        return signature;
     }
 
     int thumbnail_height_for(
@@ -444,7 +429,7 @@ void DockPreviewWindow::show_preview(
 
     m_stream_provider.stop_all();
     m_media_title.clear();
-    m_live_window_id.clear();
+    m_live_window_ids.clear();
     m_dynamic_refresh = false;
     ++m_generation;
     rebuild(entries, size);
@@ -466,7 +451,7 @@ void DockPreviewWindow::hide_preview()
 {
     m_stream_provider.stop_all();
     m_media_title.clear();
-    m_live_window_id.clear();
+    m_live_window_ids.clear();
     m_dynamic_refresh = false;
     ++m_generation;
     hide();
@@ -494,7 +479,7 @@ void DockPreviewWindow::set_dynamic_refresh(
     else
     {
         m_stream_provider.stop_all();
-        m_live_window_id.clear();
+        m_live_window_ids.clear();
     }
 }
 
@@ -811,8 +796,11 @@ void DockPreviewWindow::rebuild(
                 image_height,
                 entry.caption,
                 entry.active,
+                entry.minimized,
                 false,
-                false});
+                false,
+                false,
+                0});
 
         request_thumbnail(
             entry.id,
@@ -881,99 +869,80 @@ void DockPreviewWindow::request_thumbnail(
 void DockPreviewWindow::start_live_streams()
 {
     const auto generation = m_generation;
-    // Prefer a detached Firefox Picture-in-Picture surface. Its caption does
-    // not contain the MPRIS media title, so title matching would otherwise
-    // stream the main browser window and leave the video card static.
-    auto selected = std::find_if(
-        m_thumbnail_targets.begin(),
-        m_thumbnail_targets.end(),
-        [](const auto &entry)
-        {
-            return is_picture_in_picture_caption(
-                entry.second.caption);
-        });
-    const auto normalized_title = lowercase(m_media_title);
+    std::set<WindowId> desired_windows;
 
-    if (selected == m_thumbnail_targets.end() &&
-        !normalized_title.empty())
+    for (const auto &entry : m_thumbnail_targets)
     {
-        selected = std::find_if(
-            m_thumbnail_targets.begin(),
-            m_thumbnail_targets.end(),
-            [&normalized_title](const auto &entry)
-            {
-                const auto caption = lowercase(
-                    entry.second.caption);
-                return !caption.empty() &&
-                       (caption.find(normalized_title) !=
-                            std::string::npos ||
-                        normalized_title.find(caption) !=
-                            std::string::npos);
-            });
+        if (!entry.second.minimized)
+            desired_windows.insert(entry.first);
     }
 
-    if (selected == m_thumbnail_targets.end())
-    {
-        selected = std::find_if(
-            m_thumbnail_targets.begin(),
-            m_thumbnail_targets.end(),
-            [](const auto &entry)
-            {
-                return entry.second.active;
-            });
-    }
-
-    if (selected == m_thumbnail_targets.end() &&
-        !m_thumbnail_targets.empty())
-    {
-        selected = m_thumbnail_targets.begin();
-    }
-
-    if (selected == m_thumbnail_targets.end())
-        return;
-
-    const auto window_id = selected->first;
-    const auto target_width = selected->second.target_width;
-    const auto target_height = selected->second.target_height;
-
-    if (m_live_window_id == window_id)
+    if (desired_windows == m_live_window_ids)
         return;
 
     m_stream_provider.stop_all();
-    m_live_window_id = window_id;
+    m_live_window_ids.clear();
 
-    g_message(
-        "Live media thumbnail: MPRIS title='%s'; window='%s'; id=%s",
-        m_media_title.c_str(),
-        selected->second.caption.c_str(),
-        window_id.c_str());
-
-    if (!m_stream_provider.start(
-        window_id,
-        target_width,
-        target_height,
-        [this, generation](
-            const WindowId &completed_window_id,
-            const Glib::RefPtr<Gdk::Pixbuf> &frame)
-        {
-            if (generation != m_generation || !frame)
-                return;
-
-            const auto completed = m_thumbnail_targets.find(
-                completed_window_id);
-
-            if (completed == m_thumbnail_targets.end())
-                return;
-
-            completed->second.image->set(frame);
-            completed->second.image->queue_draw();
-            completed->second.has_thumbnail = true;
-        }))
+    for (const auto &window_id : desired_windows)
     {
-        g_warning(
-            "Cannot start live media thumbnail for window %s",
+        const auto target =
+            m_thumbnail_targets.find(window_id);
+
+        if (target == m_thumbnail_targets.end())
+            continue;
+
+        g_message(
+            "Live media thumbnail: MPRIS title='%s'; window='%s'; id=%s",
+            m_media_title.c_str(),
+            target->second.caption.c_str(),
             window_id.c_str());
-        m_live_window_id.clear();
+
+        if (m_stream_provider.start(
+                window_id,
+                target->second.target_width,
+                target->second.target_height,
+                [this, generation](
+                    const WindowId &completed_window_id,
+                    const Glib::RefPtr<Gdk::Pixbuf> &frame)
+                {
+                    if (generation != m_generation || !frame)
+                        return;
+
+                    const auto completed =
+                        m_thumbnail_targets.find(
+                            completed_window_id);
+
+                    if (completed == m_thumbnail_targets.end())
+                        return;
+
+                    auto &thumbnail = completed->second;
+                    const auto signature =
+                        pixbuf_signature(frame);
+
+                    if (!thumbnail.has_live_signature)
+                    {
+                        thumbnail.has_live_signature = true;
+                        thumbnail.live_signature = signature;
+                        return;
+                    }
+
+                    if (signature == thumbnail.live_signature)
+                        return;
+
+                    thumbnail.live_signature = signature;
+                    thumbnail.image->set(frame);
+                    thumbnail.image->queue_draw();
+                    thumbnail.has_thumbnail = true;
+                }))
+        {
+            m_live_window_ids.insert(window_id);
+        }
+        else
+        {
+            g_warning(
+                "Cannot start live media thumbnail for window %s",
+                window_id.c_str());
+        }
     }
 }
 
@@ -981,7 +950,7 @@ void DockPreviewWindow::clear_cards()
 {
     m_stream_provider.stop_all();
     m_media_title.clear();
-    m_live_window_id.clear();
+    m_live_window_ids.clear();
     m_thumbnail_targets.clear();
     m_window_ids.clear();
 

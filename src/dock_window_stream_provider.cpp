@@ -52,7 +52,33 @@ struct StreamState
     std::atomic<bool> alive{true};
     std::atomic<bool> delivery_pending{false};
     std::atomic<bool> first_frame_delivered{false};
+    std::atomic<std::uint64_t> displayed_frames{0};
+    std::uint64_t copied_frames = 0;
+    std::uint64_t changing_frames = 0;
+    std::uint64_t last_frame_signature = 0;
+    bool has_frame_signature = false;
 };
+
+std::uint64_t frame_signature(
+    const std::vector<unsigned char> &rgba)
+{
+    // Sample at most about 1,024 bytes. This is sufficient to distinguish
+    // moving video frames without hashing the entire preview on every update.
+    const auto step = std::max<std::size_t>(
+        1,
+        rgba.size() / 1024);
+    std::uint64_t signature = 1469598103934665603ULL;
+
+    for (std::size_t index = 0;
+         index < rgba.size();
+         index += step)
+    {
+        signature ^= rgba[index];
+        signature *= 1099511628211ULL;
+    }
+
+    return signature;
+}
 
 gboolean deliver_frame(gpointer data)
 {
@@ -83,6 +109,7 @@ gboolean deliver_frame(gpointer data)
         }
 
         stream->callback(stream->window_id, pixbuf);
+        ++stream->displayed_frames;
     }
 
     stream->delivery_pending = false;
@@ -292,6 +319,19 @@ void on_process_with_owner(void *data)
                 delivery->height,
                 delivery->rgba))
         {
+            const auto signature =
+                frame_signature(delivery->rgba);
+            ++stream->copied_frames;
+
+            if (!stream->has_frame_signature ||
+                signature != stream->last_frame_signature)
+            {
+                ++stream->changing_frames;
+            }
+
+            stream->last_frame_signature = signature;
+            stream->has_frame_signature = true;
+
             if (!stream->first_frame_delivered.exchange(true))
             {
                 g_message(
@@ -300,6 +340,20 @@ void on_process_with_owner(void *data)
                     stream->video_info.size.height,
                     delivery->width,
                     delivery->height);
+            }
+
+            if (stream->copied_frames == 2 ||
+                stream->copied_frames == 30 ||
+                stream->copied_frames % 120 == 0)
+            {
+                g_message(
+                    "Live media thumbnail frames: copied=%llu; displayed=%llu; changing=%llu",
+                    static_cast<unsigned long long>(
+                        stream->copied_frames),
+                    static_cast<unsigned long long>(
+                        stream->displayed_frames.load()),
+                    static_cast<unsigned long long>(
+                        stream->changing_frames));
             }
 
             // A video preview is continuous UI work, not background idle

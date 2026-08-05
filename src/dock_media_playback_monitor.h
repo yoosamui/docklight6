@@ -18,6 +18,8 @@ public:
 
     bool is_playing(
         const std::string &desktop_id) const;
+    bool should_stream(
+        const std::string &desktop_id) const;
     std::string playing_title(
         const std::string &desktop_id) const;
 
