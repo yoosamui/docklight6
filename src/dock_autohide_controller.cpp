@@ -144,28 +144,37 @@ void DockAutohideController::inhibit()
         reveal();
 }
 
-void DockAutohideController::uninhibit()
+void DockAutohideController::uninhibit(
+    bool pointer_inside)
 {
     if (m_inhibit_count > 0)
         --m_inhibit_count;
 
-    if (m_inhibit_count == 0 &&
-        !m_pointer_inside)
+    // Modal dialogs and popup menus own the pointer while they are open, so
+    // crossing events from the dock are not authoritative when they close.
+    m_pointer_inside = pointer_inside;
+
+    if (m_pointer_inside)
+    {
+        cancel_hide();
+        return;
+    }
+
+    if (m_inhibit_count == 0)
         schedule_hide();
 }
 
 void DockAutohideController::finish_drag(
-    bool accepted)
+    bool pointer_inside)
 {
     if (m_inhibit_count > 0)
         --m_inhibit_count;
 
-    // An accepted internal drop necessarily ends over the dock. GTK's drag
-    // grab may suppress the normal crossing event, so record that explicitly.
-    // Cancellation intentionally behaves as outside and starts the hide delay.
-    m_pointer_inside = accepted;
+    // GTK's drag grab can suppress the normal crossing event, so refresh the
+    // state from the physical pointer position supplied by DockWindow.
+    m_pointer_inside = pointer_inside;
 
-    if (accepted)
+    if (m_pointer_inside)
     {
         cancel_hide();
         return;

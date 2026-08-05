@@ -29,8 +29,8 @@ public:
         const DockPlacement &placement);
 
     void inhibit();
-    void uninhibit();
-    void finish_drag(bool accepted);
+    void uninhibit(bool pointer_inside);
+    void finish_drag(bool pointer_inside);
 
 private:
     void pointer_entered();

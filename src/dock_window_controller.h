@@ -73,8 +73,8 @@ public:
     void dock_items_reordered();
     void dock_items_changed();
     void inhibit_autohide();
-    void uninhibit_autohide();
-    void finish_autohide_drag(bool accepted);
+    void uninhibit_autohide(bool pointer_inside);
+    void finish_autohide_drag(bool pointer_inside);
 
     const DockSettings &settings() const
     {

@@ -102,6 +102,7 @@ private:
         int x,
         int y);
     bool drop_item_first();
+    bool pointer_is_inside();
     bool apply_dragged_item_order(
         const std::vector<
             DockItem *> &items);

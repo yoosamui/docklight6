@@ -221,7 +221,8 @@ void DockWindow::inhibit_autohide()
 
 void DockWindow::uninhibit_autohide()
 {
-    m_controller->uninhibit_autohide();
+    m_controller->uninhibit_autohide(
+        pointer_is_inside());
 }
 
 bool DockWindow::set_item_attached(
@@ -358,11 +359,55 @@ void DockWindow::end_item_drag(
 {
     if (m_dragged_item == &item)
     {
+        const bool pointer_inside =
+            m_item_drop_accepted ||
+            pointer_is_inside();
+
         m_dragged_item = nullptr;
         m_controller->finish_autohide_drag(
-            m_item_drop_accepted);
+            pointer_inside);
         m_item_drop_accepted = false;
     }
+}
+
+bool DockWindow::pointer_is_inside()
+{
+    auto *window = gtk_widget_get_window(
+        GTK_WIDGET(gobj()));
+
+    if (!window)
+        return false;
+
+    auto *display =
+        gdk_window_get_display(window);
+    auto *seat = display
+                     ? gdk_display_get_default_seat(
+                           display)
+                     : nullptr;
+    auto *pointer = seat
+                        ? gdk_seat_get_pointer(seat)
+                        : nullptr;
+
+    if (!pointer)
+        return false;
+
+    int x = 0;
+    int y = 0;
+    GdkModifierType modifiers{};
+
+    const auto *pointer_window =
+        gdk_window_get_device_position(
+            window,
+            pointer,
+            &x,
+            &y,
+            &modifiers);
+
+    return pointer_window &&
+           x >= 0 &&
+           y >= 0 &&
+           x < get_allocated_width() &&
+           y < get_allocated_height();
 }
 
 bool DockWindow::on_drag_motion(

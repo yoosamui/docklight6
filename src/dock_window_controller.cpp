@@ -412,16 +412,18 @@ void DockWindowController::inhibit_autohide()
     m_autohide_controller->inhibit();
 }
 
-void DockWindowController::uninhibit_autohide()
+void DockWindowController::uninhibit_autohide(
+    bool pointer_inside)
 {
-    m_autohide_controller->uninhibit();
+    m_autohide_controller->uninhibit(
+        pointer_inside);
 }
 
 void DockWindowController::finish_autohide_drag(
-    bool accepted)
+    bool pointer_inside)
 {
     m_autohide_controller->finish_drag(
-        accepted);
+        pointer_inside);
 }
 
 void DockWindowController::apply_workarea_insets(
