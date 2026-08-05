@@ -45,6 +45,7 @@
 #include <vector>
 
 class DockWindowController;
+class DockAutohideController;
 class DockHomeItem;
 class WindowRegistry;
 
@@ -124,6 +125,7 @@ private:
 
 private:
     friend class DockWindowController;
+    friend class DockAutohideController;
 
     Glib::RefPtr<Gtk::CssProvider> m_visual_css;
 

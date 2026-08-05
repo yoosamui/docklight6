@@ -671,10 +671,13 @@
                 publishWindow(window);
             };
 
-        // Normal-window geometry is included in snapshots, but DockLight
-        // does not use continuous geometry changes. Effects such as Magic
-        // Lamp and interactive moves can emit this signal every frame and
-        // overwhelm the D-Bus/GTK event loops.
+        // Intellihide needs live frame geometry while windows move and
+        // resize. The registry routes geometry-only updates through a light
+        // signal, and the dock controller coalesces overlap evaluation on the
+        // GTK main loop without rebuilding application items.
+        connectSignal(
+            window.frameGeometryChanged,
+            publish);
         connectSignal(
             window.skipTaskbarChanged,
             publish);

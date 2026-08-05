@@ -652,6 +652,28 @@ assert.strictEqual(
         .map(decodeURIComponent)[2],
     "Downloads");
 
+managedWindow.frameGeometry = {
+    x: 120,
+    y: 240,
+    width: 640,
+    height: 480
+};
+managedWindow.frameGeometryChanged.emit();
+
+const geometryUpdate =
+    calls[calls.length - 1];
+const geometryPayload =
+    geometryUpdate.arguments[1]
+        .split(",")
+        .map(decodeURIComponent);
+
+assert.strictEqual(
+    geometryUpdate.methodName,
+    "PublishWindow");
+assert.deepStrictEqual(
+    geometryPayload.slice(8, 12),
+    ["120", "240", "640", "480"]);
+
 const activePublishCount =
     calls.filter(
         call =>

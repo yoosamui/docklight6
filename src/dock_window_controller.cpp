@@ -26,6 +26,7 @@
 #include "dock_autohide_controller.h"
 #include "dock_constants.h"
 #include "dock_home_item.h"
+#include "dock_intellihide_policy.h"
 #include "dock_item.h"
 #include "dock_layout_metrics.h"
 #include "dock_window.h"
@@ -60,12 +61,14 @@ DockWindowController::~DockWindowController()
     cancel_hide_timer();
     m_layout_update.disconnect();
     m_icon_geometry_update.disconnect();
+    m_intellihide_update.disconnect();
     m_edge_layout_update.disconnect();
     m_icon_theme_changed.disconnect();
     m_icon_refresh.disconnect();
     m_realize.disconnect();
     m_size_allocate.disconnect();
     m_window_registry_changed.disconnect();
+    m_window_geometry_changed.disconnect();
     m_dock_surface_geometry_changed.disconnect();
     m_dock_add.disconnect();
     m_dock_remove.disconnect();
@@ -127,6 +130,17 @@ void DockWindowController::initialize()
                         }
 
                         schedule_icon_geometry_update();
+                        schedule_intellihide_update();
+                    });
+
+        m_window_geometry_changed =
+            m_window
+                .m_window_registry
+                ->signal_window_geometry_changed()
+                .connect(
+                    [this]()
+                    {
+                        schedule_intellihide_update();
                     });
 
         m_dock_surface_geometry_changed =
@@ -227,6 +241,8 @@ void DockWindowController::apply_configuration(
 
     m_autohide_controller->set_mode(
         m_layout_request.autohide);
+
+    schedule_intellihide_update();
 
     // Icon size, orientation, alignment, reservation, and visual settings all
     // converge in update_dock_layout(). Coalesce rapid configuration saves
@@ -385,6 +401,8 @@ void DockWindowController::update_dock_layout()
     m_applied_location =
         m_layout_request.location;
     m_has_applied_layout = true;
+
+    schedule_intellihide_update();
 
     if (edge_changed)
     {
@@ -645,20 +663,87 @@ void DockWindowController::
     }
 }
 
+void DockWindowController::
+    schedule_intellihide_update()
+{
+    if (m_intellihide_update.connected())
+        return;
+
+    m_intellihide_update =
+        Glib::signal_idle().connect(
+            [this]()
+            {
+                update_intellihide();
+                return false;
+            });
+}
+
+void DockWindowController::update_intellihide()
+{
+    bool overlap = false;
+
+    if (m_layout_request.autohide ==
+            DockAutohide::intellihide &&
+        m_has_applied_layout &&
+        m_window.m_window_registry &&
+        m_window.m_window_registry->connected() &&
+        m_window.m_window_registry
+            ->capabilities()
+            .provides_frame_geometry)
+    {
+        // A hidden or newly remapped layer-shell window can temporarily
+        // expose GTK's 1x1 resize request as its allocation. Intellihide must
+        // compare against the stable revealed placement, or hiding the dock
+        // makes the overlap disappear and immediately reveals it again.
+        const int dock_width =
+            std::max(1, m_placement.width);
+        const int dock_height =
+            std::max(1, m_placement.height);
+
+        const auto position =
+            dock_screen_position(
+                false,
+                dock_width,
+                dock_height);
+
+        WindowGeometry dock_geometry;
+        dock_geometry.x = position.x;
+        dock_geometry.y = position.y;
+        dock_geometry.width = dock_width;
+        dock_geometry.height = dock_height;
+
+        overlap =
+            DockIntellihidePolicy::overlaps_dock(
+                dock_geometry,
+                m_window
+                    .m_window_registry
+                    ->windows());
+    }
+
+    m_autohide_controller
+        ->set_intellihide_overlap(overlap);
+}
+
 ScreenPosition
 DockWindowController::dock_screen_position(
-    bool prefer_surface_geometry)
+    bool prefer_surface_geometry,
+    int requested_width,
+    int requested_height)
     const
 {
     const int width =
-        std::max(
-            1,
-            m_window.get_allocated_width());
+        requested_width > 0
+            ? requested_width
+            : std::max(
+                  1,
+                  m_window.get_allocated_width());
 
     const int height =
-        std::max(
-            1,
-            m_window.get_allocated_height());
+        requested_height > 0
+            ? requested_height
+            : std::max(
+                  1,
+                  m_window.get_allocated_height());
 
     if (prefer_surface_geometry &&
         m_window.m_window_registry)

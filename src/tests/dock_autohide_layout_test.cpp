@@ -1,6 +1,7 @@
 // Verifies screen reservation and edge placement for autohiding docks.
 
 #include "dock_layout_engine.h"
+#include "dock_intellihide_policy.h"
 
 #include <cassert>
 
@@ -61,6 +62,44 @@ int main()
     assert(placement.orientation ==
            DockOrientation::vertical);
 
+    const WindowGeometry dock_window{
+        760,
+        1016,
+        400,
+        64};
+
+    ManagedWindow overlapping;
+    overlapping.frame_geometry = {
+        0,
+        0,
+        1920,
+        1080};
+
+    assert(DockIntellihidePolicy::overlaps_dock(
+        dock_window,
+        {overlapping}));
+
+    overlapping.minimized = true;
+    assert(!DockIntellihidePolicy::overlaps_dock(
+        dock_window,
+        {overlapping}));
+
+    overlapping.minimized = false;
+    overlapping.on_current_desktop = false;
+    assert(!DockIntellihidePolicy::overlaps_dock(
+        dock_window,
+        {overlapping}));
+
+    ManagedWindow adjacent;
+    adjacent.frame_geometry = {
+        0,
+        0,
+        760,
+        1016};
+
+    assert(!DockIntellihidePolicy::overlaps_dock(
+        dock_window,
+        {adjacent}));
+
     return 0;
 }
-

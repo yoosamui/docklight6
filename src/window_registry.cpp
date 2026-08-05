@@ -86,6 +86,20 @@ bool has_same_dock_state(
                right.on_current_desktop;
 }
 
+bool has_same_frame_geometry(
+    const ManagedWindow &left,
+    const ManagedWindow &right)
+{
+    return left.frame_geometry.x ==
+               right.frame_geometry.x &&
+           left.frame_geometry.y ==
+               right.frame_geometry.y &&
+           left.frame_geometry.width ==
+               right.frame_geometry.width &&
+           left.frame_geometry.height ==
+               right.frame_geometry.height;
+}
+
 }
 
 WindowRegistry::WindowRegistry(
@@ -502,6 +516,12 @@ WindowRegistry::
     return m_signal_dock_surface_geometry_changed;
 }
 
+sigc::signal<void> &
+WindowRegistry::signal_window_geometry_changed()
+{
+    return m_signal_window_geometry_changed;
+}
+
 void WindowRegistry::load_snapshot()
 {
     m_windows.clear();
@@ -783,12 +803,31 @@ void WindowRegistry::on_window_updated(
                     *current,
                     normalized_window);
 
+            const bool geometry_changed =
+                !has_same_frame_geometry(
+                    *current,
+                    normalized_window);
+
             *current =
                 std::move(
                     normalized_window);
 
             if (!dock_state_changed)
+            {
+                if (geometry_changed)
+                {
+                    m_signal_window_geometry_changed
+                        .emit();
+                }
+
                 return;
+            }
+
+            if (geometry_changed)
+            {
+                m_signal_window_geometry_changed
+                    .emit();
+            }
         }
     }
 

@@ -104,8 +104,12 @@ private:
     void schedule_layout_update();
     void schedule_icon_geometry_update();
     void update_icon_geometries();
+    void schedule_intellihide_update();
+    void update_intellihide();
     ScreenPosition dock_screen_position(
-        bool prefer_surface_geometry) const;
+        bool prefer_surface_geometry,
+        int requested_width = -1,
+        int requested_height = -1) const;
     void schedule_icon_refresh();
     void reload_icons();
     void show_tooltip(
@@ -145,12 +149,15 @@ private:
     sigc::connection m_hide_timer;
     sigc::connection m_layout_update;
     sigc::connection m_icon_geometry_update;
+    sigc::connection m_intellihide_update;
     sigc::connection m_edge_layout_update;
     sigc::connection m_icon_theme_changed;
     sigc::connection m_icon_refresh;
     sigc::connection m_realize;
     sigc::connection m_size_allocate;
     sigc::connection m_window_registry_changed;
+    sigc::connection
+        m_window_geometry_changed;
     sigc::connection
         m_dock_surface_geometry_changed;
     sigc::connection m_dock_add;

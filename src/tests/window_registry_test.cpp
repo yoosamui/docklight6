@@ -275,6 +275,7 @@ void verifies_incremental_updates()
 {
     FakeWindowBackend backend;
     int changes = 0;
+    int geometry_changes = 0;
 
     WindowRegistry registry(backend);
 
@@ -283,6 +284,14 @@ void verifies_incremental_updates()
         {
             ++changes;
         });
+
+    registry
+        .signal_window_geometry_changed()
+        .connect(
+            [&geometry_changes]()
+            {
+                ++geometry_changes;
+            });
 
     registry.start();
 
@@ -312,6 +321,8 @@ void verifies_incremental_updates()
 
     const int changes_before_move =
         changes;
+    const int geometry_changes_before_move =
+        geometry_changes;
 
     updated_window.frame_geometry.x = 320;
     updated_window.frame_geometry.y = 180;
@@ -320,6 +331,8 @@ void verifies_incremental_updates()
 
     assert(changes ==
            changes_before_move);
+    assert(geometry_changes ==
+           geometry_changes_before_move + 1);
     assert(registry
                .find_window("window-1")
                ->frame_geometry.x == 320);

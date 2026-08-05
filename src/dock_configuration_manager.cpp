@@ -172,7 +172,7 @@ alignment =
 # Empty uses default: none
 # Valid values: none, autohide, intellihide
 # autohide hides after the pointer leaves and reveals at the screen edge.
-# intellihide currently disables space reservation but remains visible.
+# intellihide hides only while a current-desktop window overlaps the dock.
 autohide =
 )";
 

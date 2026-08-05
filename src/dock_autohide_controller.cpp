@@ -10,6 +10,29 @@
 
 #include <glibmm/main.h>
 
+namespace
+{
+
+bool same_placement(
+    const DockPlacement &left,
+    const DockPlacement &right)
+{
+    return left.anchor_left == right.anchor_left &&
+           left.anchor_right == right.anchor_right &&
+           left.anchor_top == right.anchor_top &&
+           left.anchor_bottom == right.anchor_bottom &&
+           left.width == right.width &&
+           left.height == right.height &&
+           left.margin_left == right.margin_left &&
+           left.margin_right == right.margin_right &&
+           left.margin_top == right.margin_top &&
+           left.margin_bottom == right.margin_bottom &&
+           left.exclusive_zone == right.exclusive_zone &&
+           left.orientation == right.orientation;
+}
+
+}
+
 DockAutohideController::DockAutohideController(
     DockWindow &window)
     : m_window(window)
@@ -75,7 +98,7 @@ void DockAutohideController::initialize()
                     return false;
                 }
 
-                if (active())
+                if (can_hide())
                     schedule_hide();
 
                 return false;
@@ -87,7 +110,14 @@ void DockAutohideController::initialize()
             .connect(
                 [this]()
                 {
-                    reveal();
+                    // Entering the edge trigger means the pointer will be
+                    // inside the revealed dock. Mapping the dock while the
+                    // trigger disappears does not reliably produce a GTK
+                    // enter event, so retain that physical pointer state.
+                    // Otherwise intellihide maps, immediately schedules a
+                    // hide, recreates the trigger under the pointer, and
+                    // repeats indefinitely while a window overlaps it.
+                    pointer_entered();
                 });
 }
 
@@ -96,7 +126,8 @@ void DockAutohideController::set_mode(
 {
     m_mode = mode;
 
-    if (!active())
+    if (m_mode == DockAutohide::none ||
+        !can_hide())
     {
         cancel_hide();
         reveal();
@@ -105,6 +136,27 @@ void DockAutohideController::set_mode(
 
     if (!m_hidden && m_window.get_mapped())
         schedule_hide();
+}
+
+void DockAutohideController::set_intellihide_overlap(
+    bool overlap)
+{
+    if (m_intellihide_overlap == overlap)
+        return;
+
+    m_intellihide_overlap = overlap;
+
+    if (m_mode != DockAutohide::intellihide)
+        return;
+
+    if (!m_intellihide_overlap)
+    {
+        cancel_hide();
+        reveal();
+        return;
+    }
+
+    schedule_hide();
 }
 
 void DockAutohideController::set_monitor(
@@ -124,6 +176,15 @@ void DockAutohideController::set_monitor(
 void DockAutohideController::set_placement(
     const DockPlacement &placement)
 {
+    if (m_has_placement &&
+        same_placement(m_placement, placement))
+    {
+        return;
+    }
+
+    m_placement = placement;
+    m_has_placement = true;
+
     const bool was_hidden = m_hidden;
 
     if (was_hidden)
@@ -201,7 +262,17 @@ void DockAutohideController::pointer_left()
 
 void DockAutohideController::schedule_hide()
 {
-    if (!active() ||
+    // Crossing events can be lost while the transparent reveal surface is
+    // replaced by the dock or while a GTK grab owns the pointer. Always
+    // refresh from the real device position before pointer state can veto an
+    // intellihide transition.
+    if (m_window.get_mapped())
+    {
+        m_pointer_inside =
+            m_window.pointer_is_inside();
+    }
+
+    if (!can_hide() ||
         m_hidden ||
         m_inhibit_count > 0 ||
         m_pointer_inside ||
@@ -229,7 +300,13 @@ void DockAutohideController::cancel_hide()
 
 void DockAutohideController::hide_now()
 {
-    if (!active() ||
+    if (m_window.get_mapped())
+    {
+        m_pointer_inside =
+            m_window.pointer_is_inside();
+    }
+
+    if (!can_hide() ||
         m_hidden ||
         m_inhibit_count > 0 ||
         m_pointer_inside)
@@ -258,7 +335,9 @@ void DockAutohideController::reveal()
     m_reveal_window.hide();
 }
 
-bool DockAutohideController::active() const
+bool DockAutohideController::can_hide() const
 {
-    return m_mode == DockAutohide::autohide;
+    return m_mode == DockAutohide::autohide ||
+           (m_mode == DockAutohide::intellihide &&
+            m_intellihide_overlap);
 }

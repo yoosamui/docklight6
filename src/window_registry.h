@@ -105,6 +105,8 @@ public:
     signal_connection_changed();
     sigc::signal<void> &
     signal_dock_surface_geometry_changed();
+    sigc::signal<void> &
+    signal_window_geometry_changed();
 
 private:
     void load_snapshot();
@@ -169,6 +171,8 @@ private:
         m_signal_connection_changed;
     sigc::signal<void>
         m_signal_dock_surface_geometry_changed;
+    sigc::signal<void>
+        m_signal_window_geometry_changed;
 
     bool m_started = false;
     bool m_connected = false;

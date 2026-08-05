@@ -27,6 +27,7 @@ public:
         const Glib::RefPtr<Gdk::Monitor> &monitor);
     void set_placement(
         const DockPlacement &placement);
+    void set_intellihide_overlap(bool overlap);
 
     void inhibit();
     void uninhibit(bool pointer_inside);
@@ -39,7 +40,7 @@ private:
     void cancel_hide();
     void hide_now();
     void reveal();
-    bool active() const;
+    bool can_hide() const;
 
 private:
     DockWindow &m_window;
@@ -53,6 +54,9 @@ private:
 
     DockAutohide m_mode = DockAutohide::none;
     int m_inhibit_count = 0;
+    bool m_intellihide_overlap = false;
+    bool m_has_placement = false;
+    DockPlacement m_placement;
     bool m_initialized = false;
     bool m_hidden = false;
     bool m_pointer_inside = false;

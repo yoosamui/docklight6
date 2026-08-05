@@ -54,6 +54,8 @@ docklight6_SOURCES = \
     dock_configuration_manager.cpp \
     dock_monitor_manager.h \
     dock_monitor_manager.cpp \
+    dock_intellihide_policy.h \
+    dock_intellihide_policy.cpp \
     dock_reveal_window.h \
     dock_reveal_window.cpp \
     dock_autohide_controller.h \
@@ -112,6 +114,9 @@ dock_autohide_layout_test_SOURCES = \
     tests/dock_autohide_layout_test.cpp \
     dock_layout_types.h \
     dock_window_geometry.h \
+    managed_window.h \
+    dock_intellihide_policy.h \
+    dock_intellihide_policy.cpp \
     dock_layout_engine.h \
     dock_layout_engine.cpp
 
