@@ -97,7 +97,8 @@ docklight6_SOURCES = \
     dock_icon_renderer.cpp \
     config/dock_settings.h \
     config/dock_settings.cpp \
-    launcher_manager.cpp \
+    launchers/launcher_manager.h \
+    launchers/launcher_manager.cpp \
     layout/dock_layout_types.h \
     layout/dock_window_geometry.h \
     layout/dock_layout_geometry.h \
@@ -191,8 +192,8 @@ dock_icon_renderer_test_LDADD = \
 
 launcher_manager_test_SOURCES = \
     tests/launcher_manager_test.cpp \
-    launcher_manager.h \
-    launcher_manager.cpp
+    launchers/launcher_manager.h \
+    launchers/launcher_manager.cpp
 
 launcher_manager_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)

@@ -35,7 +35,7 @@
 #include "layout/dock_layout_types.h"
 #include "dock_tooltip_window.h"
 #include "layout/dock_window_geometry.h"
-#include "launcher_manager.h"
+#include "launchers/launcher_manager.h"
 
 #include <gdkmm/monitor.h>
 #include <gtkmm/box.h>

@@ -16,7 +16,7 @@
 //
 // ------------------------------------------------------------
 
-#include "launcher_manager.h"
+#include "launchers/launcher_manager.h"
 
 #include <glib.h>
 #include <glib/gstdio.h>
