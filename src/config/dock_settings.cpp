@@ -180,3 +180,14 @@ void DockSettings::set_manage_all_workspaces(
 {
     m_manage_all_workspaces = enabled;
 }
+
+bool DockSettings::gradient_background() const
+{
+    return m_gradient_background;
+}
+
+void DockSettings::set_gradient_background(
+    bool enabled)
+{
+    m_gradient_background = enabled;
+}

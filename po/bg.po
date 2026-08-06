@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.27\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-06 22:33+0700\n"
+"POT-Creation-Date: 2026-08-06 23:54+0700\n"
 "PO-Revision-Date: 2026-08-06 14:07+0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -94,8 +94,8 @@ msgid "Indicator"
 msgstr "Индикатор"
 
 #: src/dialogs/dock_settings_dialog.cpp:136
-#: src/dialogs/dock_settings_dialog.cpp:1297
-#: src/dialogs/dock_settings_dialog.cpp:1325
+#: src/dialogs/dock_settings_dialog.cpp:1322
+#: src/dialogs/dock_settings_dialog.cpp:1350
 msgid "Indicator Color"
 msgstr "Цвят на индикатора"
 
@@ -140,162 +140,172 @@ msgid "Location"
 msgstr "Местоположение"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
+msgid "Gradient Background"
+msgstr ""
+
+#: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
 msgstr "Заоблени ъгли"
 
-#: src/dialogs/dock_settings_dialog.cpp:160
+#: src/dialogs/dock_settings_dialog.cpp:162
 msgid "Corner Radius"
 msgstr "Радиус на ъгъла"
 
-#: src/dialogs/dock_settings_dialog.cpp:162
+#: src/dialogs/dock_settings_dialog.cpp:164
 msgid "Alignment"
 msgstr "Подравняване"
 
-#: src/dialogs/dock_settings_dialog.cpp:164
+#: src/dialogs/dock_settings_dialog.cpp:166
 msgid "Autohide"
 msgstr "Автоматично скриване"
 
-#: src/dialogs/dock_settings_dialog.cpp:251
+#: src/dialogs/dock_settings_dialog.cpp:254
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Основен монитор"
 
-#: src/dialogs/dock_settings_dialog.cpp:290
+#: src/dialogs/dock_settings_dialog.cpp:293
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Стандартен ефект"
 
-#: src/dialogs/dock_settings_dialog.cpp:292
+#: src/dialogs/dock_settings_dialog.cpp:295
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Ефект на увеличение"
 
-#: src/dialogs/dock_settings_dialog.cpp:294
+#: src/dialogs/dock_settings_dialog.cpp:297
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Ефект на размазване"
 
-#: src/dialogs/dock_settings_dialog.cpp:331
+#: src/dialogs/dock_settings_dialog.cpp:334
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Линейни индикатори"
 
-#: src/dialogs/dock_settings_dialog.cpp:333
+#: src/dialogs/dock_settings_dialog.cpp:336
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Точкови индикатори"
 
-#: src/dialogs/dock_settings_dialog.cpp:396
+#: src/dialogs/dock_settings_dialog.cpp:399
 msgid "Choose the indicator color"
 msgstr "Изберете цвета на индикатора"
 
-#: src/dialogs/dock_settings_dialog.cpp:408
+#: src/dialogs/dock_settings_dialog.cpp:411
 msgid "Select…"
 msgstr "Изберете..."
 
-#: src/dialogs/dock_settings_dialog.cpp:410
+#: src/dialogs/dock_settings_dialog.cpp:413
 msgid "Use Default"
 msgstr "Използвайте по подразбиране"
 
-#: src/dialogs/dock_settings_dialog.cpp:418
+#: src/dialogs/dock_settings_dialog.cpp:421
 msgid "Built-in DockLight icon"
 msgstr "Вградена икона DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:452
+#: src/dialogs/dock_settings_dialog.cpp:455
 msgid "Otherwise keep the preview open until the pointer leaves it"
-msgstr "В противен случай оставете предварителния преглед отворен, докато показалецът го напусне"
+msgstr ""
+"В противен случай оставете предварителния преглед отворен, докато "
+"показалецът го напусне"
 
-#: src/dialogs/dock_settings_dialog.cpp:459
+#: src/dialogs/dock_settings_dialog.cpp:462
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr ""
 "Приложете действия с икони и колелце на мишката във всички работни "
 "пространства"
 
-#: src/dialogs/dock_settings_dialog.cpp:490
+#: src/dialogs/dock_settings_dialog.cpp:493
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr ""
 "0 избира автоматично оразмеряване; в противен случай използвайте 64 до 512 "
 "пиксела"
 
-#: src/dialogs/dock_settings_dialog.cpp:507
+#: src/dialogs/dock_settings_dialog.cpp:510
 msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
 msgstr ""
 "Забавяне, преди да се появи визуализация на прозорец, от 0 до 1000 "
 "милисекунди"
 
-#: src/dialogs/dock_settings_dialog.cpp:514
+#: src/dialogs/dock_settings_dialog.cpp:517
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Долен ръб"
 
-#: src/dialogs/dock_settings_dialog.cpp:516
+#: src/dialogs/dock_settings_dialog.cpp:519
 msgctxt "dock location"
 msgid "Left"
 msgstr "Ляв ръб"
 
-#: src/dialogs/dock_settings_dialog.cpp:518
+#: src/dialogs/dock_settings_dialog.cpp:521
 msgctxt "dock location"
 msgid "Top"
 msgstr "Горен ръб"
 
-#: src/dialogs/dock_settings_dialog.cpp:520
+#: src/dialogs/dock_settings_dialog.cpp:523
 msgctxt "dock location"
 msgid "Right"
 msgstr "Десен ръб"
 
-#: src/dialogs/dock_settings_dialog.cpp:583
+#: src/dialogs/dock_settings_dialog.cpp:570
+msgid "Use the black-to-gray dock background gradient"
+msgstr ""
+
+#: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"
 msgstr "-1 избира автоматичния радиус"
 
-#: src/dialogs/dock_settings_dialog.cpp:589
+#: src/dialogs/dock_settings_dialog.cpp:599
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Старт-подравнен"
 
-#: src/dialogs/dock_settings_dialog.cpp:591
+#: src/dialogs/dock_settings_dialog.cpp:601
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Центрирано"
 
-#: src/dialogs/dock_settings_dialog.cpp:593
+#: src/dialogs/dock_settings_dialog.cpp:603
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Подравнено в края"
 
-#: src/dialogs/dock_settings_dialog.cpp:595
+#: src/dialogs/dock_settings_dialog.cpp:605
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Попълнете наличното пространство"
 
-#: src/dialogs/dock_settings_dialog.cpp:641
+#: src/dialogs/dock_settings_dialog.cpp:651
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Забранено"
 
-#: src/dialogs/dock_settings_dialog.cpp:643
+#: src/dialogs/dock_settings_dialog.cpp:653
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Автоматично"
 
-#: src/dialogs/dock_settings_dialog.cpp:645
+#: src/dialogs/dock_settings_dialog.cpp:655
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Интелигентен"
 
-#: src/dialogs/dock_settings_dialog.cpp:1149
-#: src/dialogs/dock_settings_dialog.cpp:1184
+#: src/dialogs/dock_settings_dialog.cpp:1174
+#: src/dialogs/dock_settings_dialog.cpp:1209
 msgid "Select Home Icon"
 msgstr "Изберете Икона за дома"
 
-#: src/dialogs/dock_settings_dialog.cpp:1154
+#: src/dialogs/dock_settings_dialog.cpp:1179
 msgid "_Cancel"
 msgstr "_Отказ"
 
-#: src/dialogs/dock_settings_dialog.cpp:1157
+#: src/dialogs/dock_settings_dialog.cpp:1182
 msgid "_Open"
 msgstr "_Отворете"
 
-#: src/dialogs/dock_settings_dialog.cpp:1221
+#: src/dialogs/dock_settings_dialog.cpp:1246
 msgid "Image Files"
 msgstr "Файлове с изображения"
 

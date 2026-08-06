@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.27\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-06 22:33+0700\n"
+"POT-Creation-Date: 2026-08-06 23:54+0700\n"
 "PO-Revision-Date: 2026-08-06 14:07+0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -94,8 +94,8 @@ msgid "Indicator"
 msgstr "Indicator"
 
 #: src/dialogs/dock_settings_dialog.cpp:136
-#: src/dialogs/dock_settings_dialog.cpp:1297
-#: src/dialogs/dock_settings_dialog.cpp:1325
+#: src/dialogs/dock_settings_dialog.cpp:1322
+#: src/dialogs/dock_settings_dialog.cpp:1350
 msgid "Indicator Color"
 msgstr "Color de l'indicator"
 
@@ -140,161 +140,169 @@ msgid "Location"
 msgstr "Emplaçament"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
+msgid "Gradient Background"
+msgstr ""
+
+#: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
 msgstr "Cantons arrodonits"
 
-#: src/dialogs/dock_settings_dialog.cpp:160
+#: src/dialogs/dock_settings_dialog.cpp:162
 msgid "Corner Radius"
 msgstr "Rai de canton"
 
-#: src/dialogs/dock_settings_dialog.cpp:162
+#: src/dialogs/dock_settings_dialog.cpp:164
 msgid "Alignment"
 msgstr "Alinhament"
 
-#: src/dialogs/dock_settings_dialog.cpp:164
+#: src/dialogs/dock_settings_dialog.cpp:166
 msgid "Autohide"
 msgstr "Autoamagar"
 
-#: src/dialogs/dock_settings_dialog.cpp:251
+#: src/dialogs/dock_settings_dialog.cpp:254
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Ecran principal"
 
-#: src/dialogs/dock_settings_dialog.cpp:290
+#: src/dialogs/dock_settings_dialog.cpp:293
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Efièch estandard"
 
-#: src/dialogs/dock_settings_dialog.cpp:292
+#: src/dialogs/dock_settings_dialog.cpp:295
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Efièch de zoom"
 
-#: src/dialogs/dock_settings_dialog.cpp:294
+#: src/dialogs/dock_settings_dialog.cpp:297
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Efièch de flou"
 
-#: src/dialogs/dock_settings_dialog.cpp:331
+#: src/dialogs/dock_settings_dialog.cpp:334
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Indicadors de linha"
 
-#: src/dialogs/dock_settings_dialog.cpp:333
+#: src/dialogs/dock_settings_dialog.cpp:336
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Indicadors de punts"
 
-#: src/dialogs/dock_settings_dialog.cpp:396
+#: src/dialogs/dock_settings_dialog.cpp:399
 msgid "Choose the indicator color"
 msgstr "Causissètz la color de l'indicator"
 
-#: src/dialogs/dock_settings_dialog.cpp:408
+#: src/dialogs/dock_settings_dialog.cpp:411
 msgid "Select…"
 msgstr "Seleccionatz..."
 
-#: src/dialogs/dock_settings_dialog.cpp:410
+#: src/dialogs/dock_settings_dialog.cpp:413
 msgid "Use Default"
 msgstr "Utilizar per defaut"
 
-#: src/dialogs/dock_settings_dialog.cpp:418
+#: src/dialogs/dock_settings_dialog.cpp:421
 msgid "Built-in DockLight icon"
 msgstr "Icòna DockLight incorporada"
 
-#: src/dialogs/dock_settings_dialog.cpp:452
+#: src/dialogs/dock_settings_dialog.cpp:455
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "Autrament gardatz l'apercebut dobèrt fins que lo puntador lo quite"
 
-#: src/dialogs/dock_settings_dialog.cpp:459
+#: src/dialogs/dock_settings_dialog.cpp:462
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr ""
 "Aplicar d'accions d'icònas e de ciclatge de ròda de mirga dins totes los "
 "espacis de trabalh"
 
-#: src/dialogs/dock_settings_dialog.cpp:490
+#: src/dialogs/dock_settings_dialog.cpp:493
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr ""
 "0 selecciona la dimensionacion automatica; autrament utilizatz 64 a 512 "
 "pixèls"
 
-#: src/dialogs/dock_settings_dialog.cpp:507
+#: src/dialogs/dock_settings_dialog.cpp:510
 msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
 msgstr ""
 "Retard abans qu'una apercebut de fenèstra aparesca, de 0 a 1000 millisegondas"
 
-#: src/dialogs/dock_settings_dialog.cpp:514
+#: src/dialogs/dock_settings_dialog.cpp:517
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Bòrd inferior"
 
-#: src/dialogs/dock_settings_dialog.cpp:516
+#: src/dialogs/dock_settings_dialog.cpp:519
 msgctxt "dock location"
 msgid "Left"
 msgstr "Bòrd esquèrre"
 
-#: src/dialogs/dock_settings_dialog.cpp:518
+#: src/dialogs/dock_settings_dialog.cpp:521
 msgctxt "dock location"
 msgid "Top"
 msgstr "Bòrd superior"
 
-#: src/dialogs/dock_settings_dialog.cpp:520
+#: src/dialogs/dock_settings_dialog.cpp:523
 msgctxt "dock location"
 msgid "Right"
 msgstr "Bòrd drech"
 
-#: src/dialogs/dock_settings_dialog.cpp:583
+#: src/dialogs/dock_settings_dialog.cpp:570
+msgid "Use the black-to-gray dock background gradient"
+msgstr ""
+
+#: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"
 msgstr "-1 selecciona lo rai automatic"
 
-#: src/dialogs/dock_settings_dialog.cpp:589
+#: src/dialogs/dock_settings_dialog.cpp:599
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Alinhat a la debuta"
 
-#: src/dialogs/dock_settings_dialog.cpp:591
+#: src/dialogs/dock_settings_dialog.cpp:601
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Centrat"
 
-#: src/dialogs/dock_settings_dialog.cpp:593
+#: src/dialogs/dock_settings_dialog.cpp:603
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Alinhat a l'extrèm"
 
-#: src/dialogs/dock_settings_dialog.cpp:595
+#: src/dialogs/dock_settings_dialog.cpp:605
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Emplenar l'espaci disponible"
 
-#: src/dialogs/dock_settings_dialog.cpp:641
+#: src/dialogs/dock_settings_dialog.cpp:651
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Desactivat"
 
-#: src/dialogs/dock_settings_dialog.cpp:643
+#: src/dialogs/dock_settings_dialog.cpp:653
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Automatic"
 
-#: src/dialogs/dock_settings_dialog.cpp:645
+#: src/dialogs/dock_settings_dialog.cpp:655
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Intelligent"
 
-#: src/dialogs/dock_settings_dialog.cpp:1149
-#: src/dialogs/dock_settings_dialog.cpp:1184
+#: src/dialogs/dock_settings_dialog.cpp:1174
+#: src/dialogs/dock_settings_dialog.cpp:1209
 msgid "Select Home Icon"
 msgstr "Seleccionar l'icòna d'acuèlh"
 
-#: src/dialogs/dock_settings_dialog.cpp:1154
+#: src/dialogs/dock_settings_dialog.cpp:1179
 msgid "_Cancel"
 msgstr "_Anullar"
 
-#: src/dialogs/dock_settings_dialog.cpp:1157
+#: src/dialogs/dock_settings_dialog.cpp:1182
 msgid "_Open"
 msgstr "_Dobrir"
 
-#: src/dialogs/dock_settings_dialog.cpp:1221
+#: src/dialogs/dock_settings_dialog.cpp:1246
 msgid "Image Files"
 msgstr "Fichièrs d'imatge"
 

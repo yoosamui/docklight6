@@ -126,6 +126,14 @@ manage_all_workspaces = true
 
 )";
 
+// Configuration block added when the dock-gradient setting is missing.
+const char *GRADIENT_BACKGROUND_SETTING_TEMPLATE = R"(# Display the default black-to-gray dock background gradient.
+# When false, use the current GTK theme background.
+# Valid values: true, false
+gradient_background = true
+
+)";
+
 // Configuration block added when preview sizing is missing.
 const char *PREVIEW_CARD_HEIGHT_SETTING_TEMPLATE = R"(# Window-preview card height in pixels.
 # 0 selects automatic aspect-based sizing.
@@ -208,6 +216,11 @@ preview_show_delay = 512
 # Empty uses default: bottom
 # Valid values: bottom, left, top, right
 location =
+
+# Display the default black-to-gray dock background gradient.
+# When false, use the current GTK theme background.
+# Valid values: true, false
+gradient_background = true
 
 # Enable rounded dock corners.
 # Empty uses default: true
@@ -381,6 +394,8 @@ bool same_configuration(
                right.settings.close_preview_after_activation() &&
            left.settings.manage_all_workspaces() ==
                right.settings.manage_all_workspaces() &&
+           left.settings.gradient_background() ==
+               right.settings.gradient_background() &&
            left.settings.minimum_bottom_workarea_inset() ==
                right.settings.minimum_bottom_workarea_inset() &&
            left.layout_request.location ==
@@ -445,6 +460,9 @@ DockConfigurationManager::DockConfigurationManager()
     ensure_setting(
         "manage_all_workspaces",
         MANAGE_ALL_WORKSPACES_SETTING_TEMPLATE);
+    ensure_setting(
+        "gradient_background",
+        GRADIENT_BACKGROUND_SETTING_TEMPLATE);
     ensure_setting(
         "preview_card_height",
         PREVIEW_CARD_HEIGHT_SETTING_TEMPLATE);
@@ -1015,6 +1033,34 @@ void DockConfigurationManager::reload()
                 "Invalid [dock] manage_all_workspaces '%s'; "
                 "keeping the previous value",
                 manage_all_workspaces.c_str());
+        }
+
+        const auto gradient_background =
+            value_for(
+                key_file,
+                "gradient_background");
+
+        if (gradient_background.empty())
+        {
+            candidate.settings
+                .set_gradient_background(
+                    defaults.settings
+                        .gradient_background());
+        }
+        else if (const auto enabled =
+                     parse_boolean(
+                         gradient_background))
+        {
+            candidate.settings
+                .set_gradient_background(
+                    *enabled);
+        }
+        else
+        {
+            g_warning(
+                "Invalid [dock] gradient_background '%s'; "
+                "keeping the previous value",
+                gradient_background.c_str());
         }
 
         if (icon_size.empty())

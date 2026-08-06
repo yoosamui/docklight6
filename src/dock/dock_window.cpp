@@ -319,12 +319,12 @@ bool DockWindow::drop_item(
 
     const bool horizontal =
         m_controller
-            ->layout_request()
-            .location ==
+                ->layout_request()
+                .location ==
             DockLocation::bottom ||
         m_controller
-            ->layout_request()
-            .location ==
+                ->layout_request()
+                .location ==
             DockLocation::top;
 
     const auto allocation =
@@ -492,24 +492,24 @@ bool DockWindow::is_first_item_drop_zone(
 
     const bool horizontal =
         m_controller
-            ->layout_request()
-            .location ==
+                ->layout_request()
+                .location ==
             DockLocation::bottom ||
         m_controller
-            ->layout_request()
-            .location ==
+                ->layout_request()
+                .location ==
             DockLocation::top;
 
     return horizontal
                ? x <=
                      first_x +
                          allocation
-                             .get_width() /
+                                 .get_width() /
                              2
                : y <=
                      first_y +
                          allocation
-                             .get_height() /
+                                 .get_height() /
                              2;
 }
 
@@ -784,6 +784,16 @@ void DockWindow::apply_visual_style()
                       : configured_radius)
             : 0;
 
+    const std::string background_css =
+        m_controller->settings()
+                .gradient_background()
+            ? " background-color: black;"
+              " background-image: linear-gradient("
+              "to top, #000000 0, #000000 2px, "
+              "#bbbbbb 90%);"
+            : " background-color: @theme_bg_color;"
+              " background-image: none;";
+
     m_visual_css->load_from_data(
         "window.dock-window {"
         " background-color: transparent;"
@@ -791,7 +801,8 @@ void DockWindow::apply_visual_style()
         std::to_string(effective_radius) +
         "px;"
         "}"
-        ".dock-surface {"
+        ".dock-surface {" +
+        background_css +
         " border-radius: " +
         std::to_string(effective_radius) +
         "px;"

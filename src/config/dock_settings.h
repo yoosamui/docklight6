@@ -42,6 +42,7 @@ public:
     void set_close_preview_after_activation(
         bool enabled);
     void set_manage_all_workspaces(bool enabled);
+    void set_gradient_background(bool enabled);
 
     const std::string &monitor() const;
 
@@ -60,6 +61,7 @@ public:
     bool display_preview() const;
     bool close_preview_after_activation() const;
     bool manage_all_workspaces() const;
+    bool gradient_background() const;
 
 private:
     std::string m_monitor = "primary";
@@ -90,4 +92,5 @@ private:
     bool m_display_preview = true;
     bool m_close_preview_after_activation = false;
     bool m_manage_all_workspaces = true;
+    bool m_gradient_background = false;
 };

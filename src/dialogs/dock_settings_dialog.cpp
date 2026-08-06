@@ -154,6 +154,8 @@ void DockSettingsDialog::show(
         _("Preview Show Delay (ms)"));
     Gtk::Label location_label(
         _("Location"));
+    Gtk::Label gradient_background_label(
+        _("Gradient Background"));
     Gtk::Label rounded_corners_label(
         _("Rounded Corners"));
     Gtk::Label corner_radius_label(
@@ -179,6 +181,7 @@ void DockSettingsDialog::show(
             &preview_card_height_label,
             &preview_show_delay_label,
             &location_label,
+            &gradient_background_label,
             &rounded_corners_label,
             &corner_radius_label,
             &alignment_label,
@@ -559,6 +562,13 @@ void DockSettingsDialog::show(
         break;
     }
 
+    Gtk::CheckButton gradient_background;
+    gradient_background.set_active(
+        current.settings
+            .gradient_background());
+    gradient_background.set_tooltip_text(
+        _("Use the black-to-gray dock background gradient"));
+
     Gtk::CheckButton rounded_corners;
     rounded_corners.set_active(
         current.layout_request
@@ -692,6 +702,7 @@ void DockSettingsDialog::show(
             &preview_card_height_spin,
             &preview_show_delay_spin,
             &location_choices,
+            &gradient_background,
             &rounded_corners,
             &corner_radius_spin,
             &alignment_choices,
@@ -707,6 +718,8 @@ void DockSettingsDialog::show(
     }
 
     rounded_corners.set_halign(
+        Gtk::ALIGN_START);
+    gradient_background.set_halign(
         Gtk::ALIGN_START);
     home_icon_enabled.set_halign(
         Gtk::ALIGN_START);
@@ -888,51 +901,63 @@ void DockSettingsDialog::show(
         1,
         1);
     grid.attach(
-        rounded_corners_label,
+        gradient_background_label,
         0,
         14,
+        1,
+        1);
+    grid.attach(
+        gradient_background,
+        1,
+        14,
+        1,
+        1);
+    grid.attach(
+        rounded_corners_label,
+        0,
+        15,
         1,
         1);
     grid.attach(
         rounded_corners,
         1,
-        14,
+        15,
         1,
         1);
     grid.attach(
         corner_radius_label,
         0,
-        15,
+        16,
         1,
         1);
     grid.attach(
         corner_radius_spin,
         1,
-        15,
+        16,
         1,
         1);
     grid.attach(
         alignment_label,
         0,
-        16,
+        17,
         1,
         1);
     grid.attach(
         alignment_choices,
         1,
-        16,
+        17,
         1,
         1);
     grid.attach(
         autohide_label,
         0,
-        17,
+        18,
         1,
         1);
     grid.attach(
         autohide_choices,
         1,
-        17,
+        18,
         1,
         1);
 
@@ -1451,6 +1476,21 @@ void DockSettingsDialog::show(
                     std::to_string(
                         preview_show_delay_spin
                             .get_value_as_int()));
+            }));
+
+    settings_connections.push_back(
+        gradient_background
+            .signal_toggled()
+            .connect(
+            [&configuration,
+             &gradient_background]()
+            {
+                configuration.save_setting(
+                    "gradient_background",
+                    gradient_background
+                            .get_active()
+                        ? "true"
+                        : "false");
             }));
 
     settings_connections.push_back(

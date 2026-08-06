@@ -62,6 +62,8 @@ int main()
                    .display_preview());
         assert(!initial_configuration.current().settings
                     .close_preview_after_activation());
+        assert(initial_configuration.current().settings
+                   .gradient_background());
 
         config_path =
             initial_configuration.config_path();
@@ -148,6 +150,9 @@ int main()
         "manage_all_workspaces",
         "false"));
     assert(configuration.save_setting(
+        "gradient_background",
+        "false"));
+    assert(configuration.save_setting(
         "icon_size",
         "64"));
     assert(configuration.save_setting(
@@ -203,6 +208,9 @@ int main()
     assert(contents.find(
                "manage_all_workspaces=false") !=
            std::string::npos);
+    assert(contents.find(
+               "gradient_background=false") !=
+           std::string::npos);
 
     DockConfigurationManager reloaded;
     const auto &current =
@@ -228,6 +236,8 @@ int main()
                .close_preview_after_activation());
     assert(!current.settings
                 .manage_all_workspaces());
+    assert(!current.settings
+                .gradient_background());
     assert(current.settings.icon_size() == 64);
     assert(current.settings
                .preview_card_height() == 256);
