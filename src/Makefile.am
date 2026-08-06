@@ -49,18 +49,18 @@ docklight6_SOURCES = \
     windowing/window_registry.cpp \
     window_system_controller.h \
     window_system_controller.cpp \
-    kwin_integration_protocol.h \
-    kwin_protocol_codec.h \
-    kwin_protocol_codec.cpp \
-    kwin_integration_service.h \
-    kwin_integration_service.cpp \
-    kwin_script_manager.h \
-    kwin_script_manager.cpp \
+    integrations/kwin/kwin_integration_protocol.h \
+    integrations/kwin/kwin_protocol_codec.h \
+    integrations/kwin/kwin_protocol_codec.cpp \
+    integrations/kwin/kwin_integration_service.h \
+    integrations/kwin/kwin_integration_service.cpp \
+    integrations/kwin/kwin_script_manager.h \
+    integrations/kwin/kwin_script_manager.cpp \
     plasma_geometry_bridge_manager.h \
     plasma_geometry_bridge_manager.cpp \
-    kwin_window_command.h \
-    kwin_window_backend.h \
-    kwin_window_backend.cpp \
+    integrations/kwin/kwin_window_command.h \
+    integrations/kwin/kwin_window_backend.h \
+    integrations/kwin/kwin_window_backend.cpp \
     dock_application_controller.h \
     dock_application_controller.cpp \
     config/dock_configuration.h \
@@ -227,10 +227,10 @@ kwin_window_backend_test_SOURCES = \
     windowing/window_backend.cpp \
     windowing/window_registry.h \
     windowing/window_registry.cpp \
-    kwin_integration_protocol.h \
-    kwin_window_command.h \
-    kwin_window_backend.h \
-    kwin_window_backend.cpp
+    integrations/kwin/kwin_integration_protocol.h \
+    integrations/kwin/kwin_window_command.h \
+    integrations/kwin/kwin_window_backend.h \
+    integrations/kwin/kwin_window_backend.cpp
 
 kwin_window_backend_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)
@@ -241,8 +241,8 @@ kwin_window_backend_test_LDADD = \
 kwin_protocol_codec_test_SOURCES = \
     tests/kwin_protocol_codec_test.cpp \
     windowing/managed_window.h \
-    kwin_protocol_codec.h \
-    kwin_protocol_codec.cpp
+    integrations/kwin/kwin_protocol_codec.h \
+    integrations/kwin/kwin_protocol_codec.cpp
 
 kwin_protocol_codec_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)
@@ -256,14 +256,14 @@ kwin_integration_service_test_SOURCES = \
     windowing/window_icon_geometry.h \
     windowing/window_backend.h \
     windowing/window_backend.cpp \
-    kwin_integration_protocol.h \
-    kwin_protocol_codec.h \
-    kwin_protocol_codec.cpp \
-    kwin_integration_service.h \
-    kwin_integration_service.cpp \
-    kwin_window_command.h \
-    kwin_window_backend.h \
-    kwin_window_backend.cpp
+    integrations/kwin/kwin_integration_protocol.h \
+    integrations/kwin/kwin_protocol_codec.h \
+    integrations/kwin/kwin_protocol_codec.cpp \
+    integrations/kwin/kwin_integration_service.h \
+    integrations/kwin/kwin_integration_service.cpp \
+    integrations/kwin/kwin_window_command.h \
+    integrations/kwin/kwin_window_backend.h \
+    integrations/kwin/kwin_window_backend.cpp
 
 kwin_integration_service_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)

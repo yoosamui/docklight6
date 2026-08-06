@@ -17,8 +17,8 @@
 //
 // ------------------------------------------------------------
 
-#include "kwin_integration_protocol.h"
-#include "kwin_window_backend.h"
+#include "integrations/kwin/kwin_integration_protocol.h"
+#include "integrations/kwin/kwin_window_backend.h"
 #include "windowing/window_registry.h"
 
 #include <cassert>

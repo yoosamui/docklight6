@@ -1,6 +1,6 @@
 // Verifies KWin protocol encoding, decoding, and validation in isolation.
 
-#include "kwin_protocol_codec.h"
+#include "integrations/kwin/kwin_protocol_codec.h"
 
 #include <cassert>
 #include <cstdint>

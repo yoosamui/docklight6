@@ -22,9 +22,9 @@
 
 #include "window_system_controller.h"
 
-#include "kwin_integration_service.h"
-#include "kwin_script_manager.h"
-#include "kwin_window_backend.h"
+#include "integrations/kwin/kwin_integration_service.h"
+#include "integrations/kwin/kwin_script_manager.h"
+#include "integrations/kwin/kwin_window_backend.h"
 #include "plasma_geometry_bridge_manager.h"
 #include "windowing/window_registry.h"
 
