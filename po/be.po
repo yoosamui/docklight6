@@ -1,0 +1,327 @@
+# Belarusian translations for docklight6 package.
+# Copyright (C) 2026 THE docklight6'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the docklight6 package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: docklight6 6.0.26\n"
+"Report-Msgid-Bugs-To: yoosamui@example.com\n"
+"POT-Creation-Date: 2026-08-06 14:07+0700\n"
+"PO-Revision-Date: 2026-08-06 14:07+0700\n"
+"Last-Translator: Automatically generated\n"
+"Language: be\n"
+"Language-Team: none\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: src/dock/dock_item.cpp:269
+msgid "_Attach"
+msgstr "_Замацаваць на док-станцыі"
+
+#: src/dock/dock_item.cpp:272
+msgid "_Open New Window"
+msgstr "_Адкрыць новае акно"
+
+#: src/dock/dock_home_item.cpp:55 src/dock/dock_item.cpp:275
+msgid "_Close All"
+msgstr "_Зачыніць усе"
+
+#: src/dock/dock_item.cpp:278
+msgid "_Minimize"
+msgstr "_Згарнуць"
+
+#: src/dock/dock_item.cpp:281
+msgid "_Unminimize"
+msgstr "_Аднавіць"
+
+#: src/dock/dock_item.cpp:284
+msgid "_Maximize"
+msgstr "_Максімізаваць"
+
+#: src/dock/dock_home_item.cpp:43
+msgid "_Settings"
+msgstr "_Настройкі"
+
+#: src/dock/dock_home_item.cpp:46
+msgid "_Minimize All"
+msgstr "_Згарнуць усё"
+
+#: src/dock/dock_home_item.cpp:49
+msgid "_Unminimize All"
+msgstr "_Аднавіць усё"
+
+#: src/dock/dock_home_item.cpp:52
+msgid "_Maximize All"
+msgstr "_Maximize All"
+
+#: src/dock/dock_home_item.cpp:58
+msgid "_About"
+msgstr "_Пра"
+
+#: src/dock/dock_home_item.cpp:61
+msgid "_Exit"
+msgstr "_Выхад"
+
+#: src/dock/dock_home_item.cpp:167
+msgctxt "dock tooltip"
+msgid "Home"
+msgstr "дадому"
+
+#: src/dialogs/dock_settings_dialog.cpp:65 src/dialogs/dock_settings_dialog.cpp:90
+msgid "DockLight Settings"
+msgstr "Налады DockLight"
+
+#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_settings_dialog.cpp:118
+msgid "_Close"
+msgstr "_Зачыніць"
+
+#: src/dialogs/dock_settings_dialog.cpp:130
+msgid "Monitor"
+msgstr "Манітор"
+
+#: src/dialogs/dock_settings_dialog.cpp:132
+msgid "Hover Effect"
+msgstr "Эфект навядзення"
+
+#: src/dialogs/dock_settings_dialog.cpp:134
+msgid "Indicator"
+msgstr "Індыкатар"
+
+#: src/dialogs/dock_settings_dialog.cpp:136
+#: src/dialogs/dock_settings_dialog.cpp:1257
+#: src/dialogs/dock_settings_dialog.cpp:1285
+msgid "Indicator Color"
+msgstr "Колер індыкатара"
+
+#: src/dialogs/dock_settings_dialog.cpp:138
+msgid "Display Home Icon"
+msgstr "Дысплей Галоўны значок"
+
+#: src/dialogs/dock_settings_dialog.cpp:140
+msgid "Home Icon"
+msgstr "Хатні значок"
+
+#: src/dialogs/dock_settings_dialog.cpp:142
+msgid "Display Tooltips"
+msgstr "Адлюстраваць падказкі"
+
+#: src/dialogs/dock_settings_dialog.cpp:144
+msgid "Display Preview"
+msgstr "Папярэдні прагляд"
+
+#: src/dialogs/dock_settings_dialog.cpp:146
+msgid "Manage All Workspaces"
+msgstr "Кіраванне ўсімі працоўнымі прасторамі"
+
+#: src/dialogs/dock_settings_dialog.cpp:148
+msgid "Icon Size"
+msgstr "Памер значка"
+
+#: src/dialogs/dock_settings_dialog.cpp:150
+msgid "Preview Card Height"
+msgstr "Папярэдні прагляд вышыні карты"
+
+#: src/dialogs/dock_settings_dialog.cpp:152
+msgid "Preview Show Delay (ms)"
+msgstr "Затрымка папярэдняга прагляду (мс)"
+
+#: src/dialogs/dock_settings_dialog.cpp:154
+msgid "Location"
+msgstr "Размяшчэнне"
+
+#: src/dialogs/dock_settings_dialog.cpp:156
+msgid "Rounded Corners"
+msgstr "Закругленыя куты"
+
+#: src/dialogs/dock_settings_dialog.cpp:158
+msgid "Corner Radius"
+msgstr "Радыус кута"
+
+#: src/dialogs/dock_settings_dialog.cpp:160
+msgid "Alignment"
+msgstr "Выраўноўванне"
+
+#: src/dialogs/dock_settings_dialog.cpp:162
+msgid "Autohide"
+msgstr "Аўтасхаваць"
+
+#: src/dialogs/dock_settings_dialog.cpp:248
+msgctxt "monitor identifier"
+msgid "Primary"
+msgstr "Асноўны манітор"
+
+#: src/dialogs/dock_settings_dialog.cpp:287
+msgctxt "hover effect"
+msgid "Standard"
+msgstr "Стандартны эфект"
+
+#: src/dialogs/dock_settings_dialog.cpp:289
+msgctxt "hover effect"
+msgid "Zoom"
+msgstr "Эфект маштабавання"
+
+#: src/dialogs/dock_settings_dialog.cpp:291
+msgctxt "hover effect"
+msgid "Blur"
+msgstr "Эфект размыцця"
+
+#: src/dialogs/dock_settings_dialog.cpp:328
+msgctxt "running indicator style"
+msgid "Lines"
+msgstr "Лінейныя індыкатары"
+
+#: src/dialogs/dock_settings_dialog.cpp:330
+msgctxt "running indicator style"
+msgid "Dots"
+msgstr "Кропкавыя індыкатары"
+
+#: src/dialogs/dock_settings_dialog.cpp:393
+msgid "Choose the indicator color"
+msgstr "Выберыце колер індыкатара"
+
+#: src/dialogs/dock_settings_dialog.cpp:405
+msgid "Select…"
+msgstr "Выберыце…"
+
+#: src/dialogs/dock_settings_dialog.cpp:407
+msgid "Use Default"
+msgstr "Выкарыстоўваць па змаўчанні"
+
+#: src/dialogs/dock_settings_dialog.cpp:415
+msgid "Built-in DockLight icon"
+msgstr "Убудаваны значок DockLight"
+
+#: src/dialogs/dock_settings_dialog.cpp:449
+msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
+msgstr ""
+"Ужывайце дзеянні са значкамі і перамяшчэнне колца мышы ва ўсіх працоўных "
+"прасторах"
+
+#: src/dialogs/dock_settings_dialog.cpp:480
+msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
+msgstr ""
+"0 выбірае аўтаматычны памер; у адваротным выпадку выкарыстоўвайце ад 64 да "
+"512 пікселяў"
+
+#: src/dialogs/dock_settings_dialog.cpp:497
+msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
+msgstr "Затрымка перад з'яўленнем папярэдняга прагляду акна ад 0 да 1000 мілісекунд"
+
+#: src/dialogs/dock_settings_dialog.cpp:504
+msgctxt "dock location"
+msgid "Bottom"
+msgstr "Ніжні край"
+
+#: src/dialogs/dock_settings_dialog.cpp:506
+msgctxt "dock location"
+msgid "Left"
+msgstr "Левы край"
+
+#: src/dialogs/dock_settings_dialog.cpp:508
+msgctxt "dock location"
+msgid "Top"
+msgstr "Верхні край"
+
+#: src/dialogs/dock_settings_dialog.cpp:510
+msgctxt "dock location"
+msgid "Right"
+msgstr "Правы край"
+
+#: src/dialogs/dock_settings_dialog.cpp:573
+msgid "-1 selects the automatic radius"
+msgstr "-1 выбірае аўтаматычны радыус"
+
+#: src/dialogs/dock_settings_dialog.cpp:579
+msgctxt "dock alignment"
+msgid "Start"
+msgstr "Пачатак выраўнаваны"
+
+#: src/dialogs/dock_settings_dialog.cpp:581
+msgctxt "dock alignment"
+msgid "Center"
+msgstr "Па цэнтры"
+
+#: src/dialogs/dock_settings_dialog.cpp:583
+msgctxt "dock alignment"
+msgid "End"
+msgstr "Выраўнавана па канцах"
+
+#: src/dialogs/dock_settings_dialog.cpp:585
+msgctxt "dock alignment"
+msgid "Fill"
+msgstr "Запоўніце даступную прастору"
+
+#: src/dialogs/dock_settings_dialog.cpp:631
+msgctxt "autohide mode"
+msgid "None"
+msgstr "Інваліды"
+
+#: src/dialogs/dock_settings_dialog.cpp:633
+msgctxt "autohide mode"
+msgid "Autohide"
+msgstr "Аўтаматычны"
+
+#: src/dialogs/dock_settings_dialog.cpp:635
+msgctxt "autohide mode"
+msgid "Intellihide"
+msgstr "Інтэлігентны"
+
+#: src/dialogs/dock_settings_dialog.cpp:1109
+#: src/dialogs/dock_settings_dialog.cpp:1144
+msgid "Select Home Icon"
+msgstr "Абярыце Значок дома"
+
+#: src/dialogs/dock_settings_dialog.cpp:1114
+msgid "_Cancel"
+msgstr "_Адмяніць"
+
+#: src/dialogs/dock_settings_dialog.cpp:1117
+msgid "_Open"
+msgstr "_Адчыніць"
+
+#: src/dialogs/dock_settings_dialog.cpp:1181
+msgid "Image Files"
+msgstr "Файлы малюнкаў"
+
+#: src/dialogs/dock_about_dialog.cpp:56 src/dialogs/dock_about_dialog.cpp:85
+msgid "About DockLight"
+msgstr "Пра DockLight"
+
+#: src/dialogs/dock_about_dialog.cpp:122
+msgid "Version %1"
+msgstr "Версія праграмнага забеспячэння %1"
+
+#: src/dialogs/dock_about_dialog.cpp:125
+msgid ""
+"A lightweight application dock.\n"
+"Author and Maintainer: yoosamui"
+msgstr ""
+"Лёгкая док-станцыя для прыкладанняў.\n"
+"Аўтар і суправаджальнік: yoosamui"
+
+#: src/monitors/dock_monitor_manager.cpp:471
+msgid "No monitors are available."
+msgstr "Манітораў няма."
+
+#: src/monitors/dock_monitor_manager.cpp:477
+msgid "Available monitors:"
+msgstr "Даступныя маніторы:"
+
+#: src/monitors/dock_monitor_manager.cpp:493
+msgid "Scale"
+msgstr "Адлюстраванне маштабу"
+
+#: src/monitors/dock_monitor_manager.cpp:500
+msgctxt "monitor status"
+msgid "Primary"
+msgstr "Асноўны манітор"
+
+#: src/monitors/dock_monitor_manager.cpp:510
+msgctxt "monitor status"
+msgid "default"
+msgstr "Манітор па змаўчанні"

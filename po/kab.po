@@ -1,0 +1,322 @@
+# Kabyle translations for docklight6 package.
+# Copyright (C) 2026 THE docklight6'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the docklight6 package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: docklight6 6.0.26\n"
+"Report-Msgid-Bugs-To: yoosamui@example.com\n"
+"POT-Creation-Date: 2026-08-06 14:07+0700\n"
+"PO-Revision-Date: 2026-08-06 14:07+0700\n"
+"Last-Translator: Automatically generated\n"
+"Language: kab\n"
+"Language-Team: none\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: src/dock/dock_item.cpp:269
+msgid "_Attach"
+msgstr "_Pin à Dock"
+
+#: src/dock/dock_item.cpp:272
+msgid "_Open New Window"
+msgstr "_Ldi tazewwut tamaynut"
+
+#: src/dock/dock_home_item.cpp:55 src/dock/dock_item.cpp:275
+msgid "_Close All"
+msgstr "_Rnu kullec"
+
+#: src/dock/dock_item.cpp:278
+msgid "_Minimize"
+msgstr "_Snifel"
+
+#: src/dock/dock_item.cpp:281
+msgid "_Unminimize"
+msgstr "_Rnu"
+
+#: src/dock/dock_item.cpp:284
+msgid "_Maximize"
+msgstr "_Snifel"
+
+#: src/dock/dock_home_item.cpp:43
+msgid "_Settings"
+msgstr "_Iɣewwaṛen"
+
+#: src/dock/dock_home_item.cpp:46
+msgid "_Minimize All"
+msgstr "_Snifel kullec"
+
+#: src/dock/dock_home_item.cpp:49
+msgid "_Unminimize All"
+msgstr "_Rnu kullec"
+
+#: src/dock/dock_home_item.cpp:52
+msgid "_Maximize All"
+msgstr "_Snifel kullec"
+
+#: src/dock/dock_home_item.cpp:58
+msgid "_About"
+msgstr "_ɣef"
+
+#: src/dock/dock_home_item.cpp:61
+msgid "_Exit"
+msgstr "_Ffeɣ"
+
+#: src/dock/dock_home_item.cpp:167
+msgctxt "dock tooltip"
+msgid "Home"
+msgstr "Axxam"
+
+#: src/dialogs/dock_settings_dialog.cpp:65 src/dialogs/dock_settings_dialog.cpp:90
+msgid "DockLight Settings"
+msgstr "Iɣewwaren n DockLight"
+
+#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_settings_dialog.cpp:118
+msgid "_Close"
+msgstr "_Ldi"
+
+#: src/dialogs/dock_settings_dialog.cpp:130
+msgid "Monitor"
+msgstr "Aneqqis"
+
+#: src/dialogs/dock_settings_dialog.cpp:132
+msgid "Hover Effect"
+msgstr "Taɣawsa n tnefsit"
+
+#: src/dialogs/dock_settings_dialog.cpp:134
+msgid "Indicator"
+msgstr "Asebded"
+
+#: src/dialogs/dock_settings_dialog.cpp:136
+#: src/dialogs/dock_settings_dialog.cpp:1257
+#: src/dialogs/dock_settings_dialog.cpp:1285
+msgid "Indicator Color"
+msgstr "Aɣmis n uɣmis"
+
+#: src/dialogs/dock_settings_dialog.cpp:138
+msgid "Display Home Icon"
+msgstr "Sken iγewwaṛen n uxxam"
+
+#: src/dialogs/dock_settings_dialog.cpp:140
+msgid "Home Icon"
+msgstr "Accueil Icon"
+
+#: src/dialogs/dock_settings_dialog.cpp:142
+msgid "Display Tooltips"
+msgstr "Sken iferdisen"
+
+#: src/dialogs/dock_settings_dialog.cpp:144
+msgid "Display Preview"
+msgstr "Sken tazwara"
+
+#: src/dialogs/dock_settings_dialog.cpp:146
+msgid "Manage All Workspaces"
+msgstr "Ẓreg akk iferdisen n uxeddim"
+
+#: src/dialogs/dock_settings_dialog.cpp:148
+msgid "Icon Size"
+msgstr "Icon Size"
+
+#: src/dialogs/dock_settings_dialog.cpp:150
+msgid "Preview Card Height"
+msgstr "Azeggaɣ n tkarḍit"
+
+#: src/dialogs/dock_settings_dialog.cpp:152
+msgid "Preview Show Delay (ms)"
+msgstr "Asebtar amaynut (ms)"
+
+#: src/dialogs/dock_settings_dialog.cpp:154
+msgid "Location"
+msgstr "Amkan"
+
+#: src/dialogs/dock_settings_dialog.cpp:156
+msgid "Rounded Corners"
+msgstr "Isebtaren i sɛan azday ɣer \"Corners\""
+
+#: src/dialogs/dock_settings_dialog.cpp:158
+msgid "Corner Radius"
+msgstr "Corner Radius"
+
+#: src/dialogs/dock_settings_dialog.cpp:160
+msgid "Alignment"
+msgstr "Aɣewwaṛ"
+
+#: src/dialogs/dock_settings_dialog.cpp:162
+msgid "Autohide"
+msgstr "Autohide"
+
+#: src/dialogs/dock_settings_dialog.cpp:248
+msgctxt "monitor identifier"
+msgid "Primary"
+msgstr "Aselkim amezwaru"
+
+#: src/dialogs/dock_settings_dialog.cpp:287
+msgctxt "hover effect"
+msgid "Standard"
+msgstr "Aḥric amezwaru"
+
+#: src/dialogs/dock_settings_dialog.cpp:289
+msgctxt "hover effect"
+msgid "Zoom"
+msgstr "Taggayt n zoom"
+
+#: src/dialogs/dock_settings_dialog.cpp:291
+msgctxt "hover effect"
+msgid "Blur"
+msgstr "Isebtar i yellan ddaw-a sɛan aseɣ"
+
+#: src/dialogs/dock_settings_dialog.cpp:328
+msgctxt "running indicator style"
+msgid "Lines"
+msgstr "Iɣewwaṛen n uzegrir"
+
+#: src/dialogs/dock_settings_dialog.cpp:330
+msgctxt "running indicator style"
+msgid "Dots"
+msgstr "Iɣewwaṛen n usenqed"
+
+#: src/dialogs/dock_settings_dialog.cpp:393
+msgid "Choose the indicator color"
+msgstr "Fren azeggaɣ n usebter"
+
+#: src/dialogs/dock_settings_dialog.cpp:405
+msgid "Select…"
+msgstr "Fren…"
+
+#: src/dialogs/dock_settings_dialog.cpp:407
+msgid "Use Default"
+msgstr "Seqdec asebter"
+
+#: src/dialogs/dock_settings_dialog.cpp:415
+msgid "Built-in DockLight icon"
+msgstr "Isebtar i yellan ddaw-a sɛan aseɣwen ɣer DockLight"
+
+#: src/dialogs/dock_settings_dialog.cpp:449
+msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
+msgstr "Aseqdec n yiɣewwaren n uẓeṭṭa akked uẓeṭṭa n uẓeṭṭa deg yal tɣiwant n uxeddim"
+
+#: src/dialogs/dock_settings_dialog.cpp:480
+msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
+msgstr "0 Select Automatic Size; If yes, use 64-512 pixels"
+
+#: src/dialogs/dock_settings_dialog.cpp:497
+msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
+msgstr "Démarrer ma recherche à 1 000 milliseconds"
+
+#: src/dialogs/dock_settings_dialog.cpp:504
+msgctxt "dock location"
+msgid "Bottom"
+msgstr "Aɣewwaṛ n tɣiwant"
+
+#: src/dialogs/dock_settings_dialog.cpp:506
+msgctxt "dock location"
+msgid "Left"
+msgstr "Aẓelmaḍ n uzelmaḍ"
+
+#: src/dialogs/dock_settings_dialog.cpp:508
+msgctxt "dock location"
+msgid "Top"
+msgstr "Aɣewwaṛ amezwaru"
+
+#: src/dialogs/dock_settings_dialog.cpp:510
+msgctxt "dock location"
+msgid "Right"
+msgstr "Aɣewwaṛ ayeffus"
+
+#: src/dialogs/dock_settings_dialog.cpp:573
+msgid "-1 selects the automatic radius"
+msgstr "-1 Isebtar i yellan ddaw-a sɛan aseɣwen ɣer Radius"
+
+#: src/dialogs/dock_settings_dialog.cpp:579
+msgctxt "dock alignment"
+msgid "Start"
+msgstr "Yebda-d s tdukli"
+
+#: src/dialogs/dock_settings_dialog.cpp:581
+msgctxt "dock alignment"
+msgid "Center"
+msgstr "Yettusmimeḍ"
+
+#: src/dialogs/dock_settings_dialog.cpp:583
+msgctxt "dock alignment"
+msgid "End"
+msgstr "Aneggaru n taggara"
+
+#: src/dialogs/dock_settings_dialog.cpp:585
+msgctxt "dock alignment"
+msgid "Fill"
+msgstr "Ffeḍ amkan i d-yellan"
+
+#: src/dialogs/dock_settings_dialog.cpp:631
+msgctxt "autohide mode"
+msgid "None"
+msgstr "Iɣewwaren"
+
+#: src/dialogs/dock_settings_dialog.cpp:633
+msgctxt "autohide mode"
+msgid "Autohide"
+msgstr "Taɣellist"
+
+#: src/dialogs/dock_settings_dialog.cpp:635
+msgctxt "autohide mode"
+msgid "Intellihide"
+msgstr "Imusnawen"
+
+#: src/dialogs/dock_settings_dialog.cpp:1109
+#: src/dialogs/dock_settings_dialog.cpp:1144
+msgid "Select Home Icon"
+msgstr "Fren iγewwaṛen n uxxam"
+
+#: src/dialogs/dock_settings_dialog.cpp:1114
+msgid "_Cancel"
+msgstr "_Kkes"
+
+#: src/dialogs/dock_settings_dialog.cpp:1117
+msgid "_Open"
+msgstr "_Ldi"
+
+#: src/dialogs/dock_settings_dialog.cpp:1181
+msgid "Image Files"
+msgstr "Ifuyla n tugna"
+
+#: src/dialogs/dock_about_dialog.cpp:56 src/dialogs/dock_about_dialog.cpp:85
+msgid "About DockLight"
+msgstr "About DockLight"
+
+#: src/dialogs/dock_about_dialog.cpp:122
+msgid "Version %1"
+msgstr "Amagrad n uselkim %1"
+
+#: src/dialogs/dock_about_dialog.cpp:125
+msgid ""
+"A lightweight application dock.\n"
+"Author and Maintainer: yoosamui"
+msgstr ""
+"Asdfasdfasdfasdf\n"
+"Amedyaz & Amedyaz: yoosamui"
+
+#: src/monitors/dock_monitor_manager.cpp:471
+msgid "No monitors are available."
+msgstr "Ulac imuḍan yettwafen."
+
+#: src/monitors/dock_monitor_manager.cpp:477
+msgid "Available monitors:"
+msgstr "Iɣewwaren yettwafen:"
+
+#: src/monitors/dock_monitor_manager.cpp:493
+msgid "Scale"
+msgstr "Sken aḥric"
+
+#: src/monitors/dock_monitor_manager.cpp:500
+msgctxt "monitor status"
+msgid "Primary"
+msgstr "Aselkim amezwaru"
+
+#: src/monitors/dock_monitor_manager.cpp:510
+msgctxt "monitor status"
+msgid "default"
+msgstr "Aselkim n uγewwaṛ"
