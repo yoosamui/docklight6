@@ -21,7 +21,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 1.1.12\n"
+"Project-Id-Version: Docklight 6.0.26\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
 "POT-Creation-Date: 2026-07-31 14:36+0700\n"
 "PO-Revision-Date: 2024-12-25 16:28+0700\n"
