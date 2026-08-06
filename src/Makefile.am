@@ -36,7 +36,7 @@ zkde-screencast-unstable-v1-client-protocol.h: $(top_srcdir)/protocols/zkde-scre
 zkde-screencast-unstable-v1-protocol.c: $(top_srcdir)/protocols/zkde-screencast-unstable-v1.xml
 	$(WAYLAND_SCANNER) private-code $< $@
 
-docklight6-dock_window_stream_provider.$(OBJEXT): zkde-screencast-unstable-v1-client-protocol.h
+preview/docklight6-dock_window_stream_provider.$(OBJEXT): zkde-screencast-unstable-v1-client-protocol.h
 
 docklight6_SOURCES = \
     main.cpp \
@@ -72,14 +72,14 @@ docklight6_SOURCES = \
     dock_intellihide_policy.cpp \
     media/dock_media_playback_monitor.h \
     media/dock_media_playback_monitor.cpp \
-    dock_window_thumbnail_provider.h \
-    dock_window_thumbnail_provider.cpp \
-    dock_window_stream_provider.h \
-    dock_window_stream_provider.cpp \
+    preview/dock_window_thumbnail_provider.h \
+    preview/dock_window_thumbnail_provider.cpp \
+    preview/dock_window_stream_provider.h \
+    preview/dock_window_stream_provider.cpp \
     zkde-screencast-unstable-v1-client-protocol.h \
     zkde-screencast-unstable-v1-protocol.c \
-    dock_preview_window.h \
-    dock_preview_window.cpp \
+    preview/dock_preview_window.h \
+    preview/dock_preview_window.cpp \
     dock_reveal_window.h \
     dock_reveal_window.cpp \
     dock_autohide_controller.h \
