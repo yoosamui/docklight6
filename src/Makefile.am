@@ -84,11 +84,17 @@ docklight6_SOURCES = \
     autohide/dock_reveal_window.cpp \
     autohide/dock_autohide_controller.h \
     autohide/dock_autohide_controller.cpp \
-    dock_window_controller.h \
-    dock_window_controller.cpp \
-    dock_window.cpp \
-    dock_home_item.h \
-    dock_home_item.cpp \
+    dock/dock_constants.h \
+    dock/dock_window.h \
+    dock/dock_window.cpp \
+    dock/dock_window_controller.h \
+    dock/dock_window_controller.cpp \
+    dock/dock_home_item.h \
+    dock/dock_home_item.cpp \
+    dock/dock_item.h \
+    dock/dock_item.cpp \
+    dock/dock_tooltip_window.h \
+    dock/dock_tooltip_window.cpp \
     dialogs/dock_settings_dialog.h \
     dialogs/dock_settings_dialog.cpp \
     dialogs/dock_about_dialog.h \
@@ -106,9 +112,7 @@ docklight6_SOURCES = \
     layout/dock_layout_metrics.h \
     layout/dock_layout_metrics.cpp \
     layout/dock_layout_engine.h \
-    layout/dock_layout_engine.cpp \
-    dock_tooltip_window.cpp \
-    dock_item.cpp
+    layout/dock_layout_engine.cpp
 
 docklight6_CPPFLAGS = \
     $(AM_CPPFLAGS) \

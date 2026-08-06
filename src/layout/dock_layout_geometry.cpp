@@ -22,8 +22,8 @@
 
 #include "dock_layout_geometry.h"
 
-#include "dock_item.h"
-#include "dock_window.h"
+#include "dock/dock_item.h"
+#include "dock/dock_window.h"
 
 #include <gdkmm/monitor.h>
 #include <gdkmm/rectangle.h>

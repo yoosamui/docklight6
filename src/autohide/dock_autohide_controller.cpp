@@ -5,8 +5,8 @@
 // ------------------------------------------------------------
 
 #include "dock_autohide_controller.h"
-#include "dock_constants.h"
-#include "dock_window.h"
+#include "dock/dock_constants.h"
+#include "dock/dock_window.h"
 
 #include <glibmm/main.h>
 

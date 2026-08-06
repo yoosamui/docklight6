@@ -2,7 +2,7 @@
 
 #include "dock_preview_window.h"
 
-#include "dock_constants.h"
+#include "dock/dock_constants.h"
 
 #include <gtk-layer-shell.h>
 
