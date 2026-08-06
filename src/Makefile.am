@@ -70,8 +70,8 @@ docklight6_SOURCES = \
     dock_monitor_manager.cpp \
     dock_intellihide_policy.h \
     dock_intellihide_policy.cpp \
-    dock_media_playback_monitor.h \
-    dock_media_playback_monitor.cpp \
+    media/dock_media_playback_monitor.h \
+    media/dock_media_playback_monitor.cpp \
     dock_window_thumbnail_provider.h \
     dock_window_thumbnail_provider.cpp \
     dock_window_stream_provider.h \

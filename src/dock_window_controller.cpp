@@ -29,7 +29,7 @@
 #include "dock_intellihide_policy.h"
 #include "dock_item.h"
 #include "layout/dock_layout_metrics.h"
-#include "dock_media_playback_monitor.h"
+#include "media/dock_media_playback_monitor.h"
 #include "dock_preview_window.h"
 #include "dock_window.h"
 #include "windowing/window_icon_geometry.h"
