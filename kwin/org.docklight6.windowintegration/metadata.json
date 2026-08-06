@@ -1,0 +1,18 @@
+{
+    "KPlugin": {
+        "Name": "Docklight 6 Window Integration",
+        "Description": "Provides KWin window state to Docklight 6",
+        "Icon": "preferences-system-windows",
+        "Authors": [
+            {
+                "Name": "Docklight Project"
+            }
+        ],
+        "Id": "org.docklight6.windowintegration",
+        "Version": "5.0",
+        "License": "GPL-3.0-or-later"
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js",
+    "KPackageStructure": "KWin/Script"
+}

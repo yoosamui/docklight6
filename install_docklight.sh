@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 
+set -e
+
+SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+DOCKLIGHT_BUILD_DIR=${DOCKLIGHT_BUILD_DIR:-"$SOURCE_DIR/build"}
+
+if [[ $DOCKLIGHT_BUILD_DIR != /* ]]; then
+	DOCKLIGHT_BUILD_DIR="$SOURCE_DIR/$DOCKLIGHT_BUILD_DIR"
+fi
+
+DOCKLIGHT_BUILD_DIR=$(realpath -m -- "$DOCKLIGHT_BUILD_DIR")
+
+cd "$SOURCE_DIR"
+
 if [ $EUID != 0 ]; then
 	echo "this script must be run as root"
 	echo ""
@@ -10,8 +23,8 @@ if [ $EUID != 0 ]; then
 fi
 
 ./autogen.sh
-./configure
-sudo make install
+make -C "$DOCKLIGHT_BUILD_DIR" -j"$(nproc)"
+make -C "$DOCKLIGHT_BUILD_DIR" install
 
 # Older development installs may have left a user-level desktop entry with a
 # relative or build-tree Exec path. Because user entries override /usr/local,

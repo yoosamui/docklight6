@@ -1,4 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+DOCKLIGHT_BUILD_DIR=${DOCKLIGHT_BUILD_DIR:-"$SOURCE_DIR/build"}
+
+if [[ $DOCKLIGHT_BUILD_DIR != /* ]]; then
+    DOCKLIGHT_BUILD_DIR="$SOURCE_DIR/$DOCKLIGHT_BUILD_DIR"
+fi
+
+DOCKLIGHT_BUILD_DIR=$(realpath -m -- "$DOCKLIGHT_BUILD_DIR")
 
 # KDE-Plasma WAYLAND
 #  KWin authorizes privileged screenshot and screencast access using the executable path registered in:
@@ -10,15 +21,24 @@
 # X-KDE-DBUS-Restricted-Interfaces=org.kde.KWin.ScreenShot2
 # X-KDE-Wayland-Interfaces=zkde_screencast_unstable_v1
 
-# Therefore /usr/local/bin/docklight6 has permission, while ./src/docklight6 is considered a different, unregistered executable. Running the build-tree binary directly will lose KWin authorization, usually resulting in icons instead of thumbnails.
+# Therefore /usr/local/bin/docklight6 has permission, while
+# ./build/src/docklight6 is considered a different, unregistered executable.
+# Running the build-tree binary directly will lose KWin authorization,
+# usually resulting in icons instead of thumbnails.
 # For development, keep using:
-# sudo install -m 0755 src/docklight6 /usr/local/bin/docklight6
+# sudo install -m 0755 build/src/docklight6 /usr/local/bin/docklight6
 # /usr/local/bin/docklight6
 # This copies the latest build to the authorized path. It is a KDE Wayland security requirement, not a DockLight loading problem.
 
 
 
-make -C src -j"$(nproc)" docklight6 &&
-sudo install -m 0755 src/docklight6 /usr/local/bin/docklight6 &&
-pkill docklight6
-/usr/local/bin/docklight6
+if [[ ! -f "$DOCKLIGHT_BUILD_DIR/Makefile" ]]; then
+    "$SOURCE_DIR/autogen.sh"
+fi
+
+make -C "$DOCKLIGHT_BUILD_DIR" -j"$(nproc)"
+sudo install -m 0755 \
+    "$DOCKLIGHT_BUILD_DIR/src/docklight6" \
+    /usr/local/bin/docklight6
+pkill docklight6 || true
+exec /usr/local/bin/docklight6

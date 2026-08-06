@@ -1,41 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-shopt -s extglob
-rm -rf debian/docklight
-rm -rf debian/.debhelper
-rm -f src/docklight
-rm -rf src/*.o
-rm -f src/utils/*.o
-rm -rf src/*.swp
-rm -rf src/.*-
-rm -rf src/.*-
-rm -rf src/.*.swo
-find . -name '.*~' -delete
-find . -name '.dirstamp' -delete
-rm -f src/components/*.o
-rm -f src/Makefile src/Makefile.in
-rm -f src/docklight.data/attachments/*
-find 'src/' -type d -name '.deps' -print0 | xargs -0 rm -rf
-rm -f data/Makefile
-rm -f data/Makefile.in
-rm -f data/icons/Makefile
-rm -f data/icons/Makefile.in
-rm -f src/docklight.data/attachments/*
-rm -rf !(install_docklight.sh|uninstall_docklight.sh|reset.sh|install_dependencies.sh|createpo.sh|clean.sh|autogen.sh|configure.ac|LICENSE|Makefile.am|README.md|data|debian|m4|nbproject|package|po|src)
+set -euo pipefail
 
-if [ -d "m4" ]; then
- cd m4
- rm -rf !(NOTES)
- cd ..
+SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+DOCKLIGHT_BUILD_DIR=${DOCKLIGHT_BUILD_DIR:-"$SOURCE_DIR/build"}
+
+if [[ $DOCKLIGHT_BUILD_DIR != /* ]]; then
+    DOCKLIGHT_BUILD_DIR="$SOURCE_DIR/$DOCKLIGHT_BUILD_DIR"
 fi
 
+DOCKLIGHT_BUILD_DIR=$(realpath -m -- "$DOCKLIGHT_BUILD_DIR")
 
-if [ -d "po" ]; then
- cd po
- rm -rf !(*.po|LINGUAS|POTFILES.in|compile_all.sh|deploymo.sh|merge.sh)
- cd ..
+case $DOCKLIGHT_BUILD_DIR in
+    "$SOURCE_DIR"|/)
+        echo "Refusing to remove unsafe build directory: $DOCKLIGHT_BUILD_DIR" >&2
+        exit 1
+        ;;
+esac
+
+if [[ ! -d $DOCKLIGHT_BUILD_DIR ]]; then
+    echo "Build directory does not exist: $DOCKLIGHT_BUILD_DIR"
+    exit 0
 fi
 
-shopt -u extglob
-
-exit 0
+rm -rf -- "$DOCKLIGHT_BUILD_DIR"
+echo "Removed build directory: $DOCKLIGHT_BUILD_DIR"

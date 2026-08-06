@@ -5,6 +5,7 @@
 
 src/docklight/
 src/docklight6
+/build/
 nbproject/
 bin/
 debian/.debhelper
