@@ -61,8 +61,8 @@ docklight6_SOURCES = \
     integrations/kwin/kwin_window_command.h \
     integrations/kwin/kwin_window_backend.h \
     integrations/kwin/kwin_window_backend.cpp \
-    dock_application_controller.h \
-    dock_application_controller.cpp \
+    application/dock_application_controller.h \
+    application/dock_application_controller.cpp \
     config/dock_configuration.h \
     config/dock_configuration_manager.h \
     config/dock_configuration_manager.cpp \
@@ -136,8 +136,8 @@ dock_application_controller_test_SOURCES = \
     windowing/window_backend.cpp \
     windowing/window_registry.h \
     windowing/window_registry.cpp \
-    dock_application_controller.h \
-    dock_application_controller.cpp
+    application/dock_application_controller.h \
+    application/dock_application_controller.cpp
 
 dock_application_controller_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)

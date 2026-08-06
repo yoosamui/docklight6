@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include "dock_application_controller.h"
+#include "application/dock_application_controller.h"
 #include "layout/dock_layout_types.h"
 
 #include <gtkmm.h>
