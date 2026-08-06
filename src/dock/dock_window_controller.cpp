@@ -1409,7 +1409,29 @@ void DockWindowController::activate_preview_window(
                 if (item &&
                     item->desktop_id() == desktop_id)
                 {
-                    item->show_window(window_id);
+                    const auto entries =
+                        item->window_entries();
+                    const auto selected =
+                        std::find_if(
+                            entries.begin(),
+                            entries.end(),
+                            [&window_id](
+                                const ApplicationWindowEntry
+                                    &entry)
+                            {
+                                return entry.id == window_id;
+                            });
+
+                    if (selected != entries.end() &&
+                        !selected->minimized)
+                    {
+                        item->minimize_window(window_id);
+                    }
+                    else
+                    {
+                        item->show_window(window_id);
+                    }
+
                     break;
                 }
             }

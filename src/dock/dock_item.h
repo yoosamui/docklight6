@@ -80,6 +80,7 @@ public:
     std::vector<ApplicationWindowEntry>
     window_entries() const;
     bool show_window(const WindowId &window_id);
+    bool minimize_window(const WindowId &window_id);
     bool close_window(const WindowId &window_id);
     const std::string &desktop_id() const
     {

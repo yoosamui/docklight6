@@ -847,6 +847,13 @@ bool DockItem::show_window(
         .show_window(window_id);
 }
 
+bool DockItem::minimize_window(
+    const WindowId &window_id)
+{
+    return m_application_controller
+        .minimize_window(window_id);
+}
+
 bool DockItem::close_window(
     const WindowId &window_id)
 {
