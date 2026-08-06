@@ -1010,6 +1010,21 @@ void DockWindowController::schedule_show_preview(
     cancel_preview_show_timer();
     m_dock_item_pointer_inside = true;
 
+    // Moving from the preview back onto the icon that owns it crosses two
+    // separate layer-shell surfaces. The preview leave event starts the hide
+    // grace period and the icon enter event arrives immediately afterwards.
+    // Keep the already mapped preview in place instead of rebuilding and
+    // showing it again after the normal preview delay; remapping the same
+    // surface produces a visible double draw.
+    if (!m_preview_desktop_id.empty() &&
+        m_preview_desktop_id == item.desktop_id())
+    {
+        m_pending_item = nullptr;
+        m_pending_preview_desktop_id.clear();
+        m_pending_tooltip_text.clear();
+        return;
+    }
+
     m_pending_item = nullptr;
     m_pending_preview_desktop_id =
         item.desktop_id();
