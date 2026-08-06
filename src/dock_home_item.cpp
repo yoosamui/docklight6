@@ -5,10 +5,10 @@
 // ------------------------------------------------------------
 
 #include "dock_home_item.h"
-#include "dock_about_dialog.h"
+#include "dialogs/dock_about_dialog.h"
 #include "dock_constants.h"
 #include "layout/dock_layout_metrics.h"
-#include "dock_settings_dialog.h"
+#include "dialogs/dock_settings_dialog.h"
 #include "dock_window.h"
 #include "windowing/window_registry.h"
 #include "config.h"

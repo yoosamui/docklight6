@@ -1,5 +1,5 @@
 src/dock_item.cpp
 src/dock_home_item.cpp
-src/dock_settings_dialog.cpp
-src/dock_about_dialog.cpp
-src/dock_monitor_manager.cpp
+src/dialogs/dock_settings_dialog.cpp
+src/dialogs/dock_about_dialog.cpp
+src/monitors/dock_monitor_manager.cpp

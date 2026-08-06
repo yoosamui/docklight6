@@ -89,10 +89,10 @@ docklight6_SOURCES = \
     dock_window.cpp \
     dock_home_item.h \
     dock_home_item.cpp \
-    dock_settings_dialog.h \
-    dock_settings_dialog.cpp \
-    dock_about_dialog.h \
-    dock_about_dialog.cpp \
+    dialogs/dock_settings_dialog.h \
+    dialogs/dock_settings_dialog.cpp \
+    dialogs/dock_about_dialog.h \
+    dialogs/dock_about_dialog.cpp \
     rendering/dock_icon_renderer.h \
     rendering/dock_icon_renderer.cpp \
     config/dock_settings.h \
