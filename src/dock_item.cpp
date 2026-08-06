@@ -1795,36 +1795,80 @@ DockItem::context_menu_window_icon(
 Glib::RefPtr<Gdk::Pixbuf>
 DockItem::context_menu_minimized_icon() const
 {
-    const auto icon_theme =
-        Gtk::IconTheme::get_default();
+    // Do not depend on an icon-theme name here. Several valid GTK themes do
+    // not provide view-hidden or object-hidden-symbolic, which used to leave
+    // a blank space in the dynamic window menu. Drawing the small symbolic
+    // eye locally also lets it follow the menu foreground on light and dark
+    // themes.
+    auto surface =
+        Cairo::ImageSurface::create(
+            Cairo::FORMAT_ARGB32,
+            CONTEXT_MENU_ICON_SIZE,
+            CONTEXT_MENU_ICON_SIZE);
+    auto context =
+        Cairo::Context::create(surface);
 
-    if (!icon_theme)
-        return {};
+    context->set_operator(
+        Cairo::OPERATOR_SOURCE);
+    context->set_source_rgba(
+        0.0,
+        0.0,
+        0.0,
+        0.0);
+    context->paint();
+    context->set_operator(
+        Cairo::OPERATOR_OVER);
 
-    constexpr const char *icon_names[] = {
-        "view-hidden",
-        "object-hidden-symbolic"};
+    const auto color =
+        m_context_menu
+            .get_style_context()
+            ->get_color(
+                Gtk::STATE_FLAG_NORMAL);
 
-    for (const auto *icon_name :
-         icon_names)
-    {
-        try
-        {
-            const auto icon =
-                icon_theme->load_icon(
-                    icon_name,
-                    CONTEXT_MENU_ICON_SIZE,
-                    Gtk::ICON_LOOKUP_USE_BUILTIN);
+    context->set_source_rgba(
+        color.get_red(),
+        color.get_green(),
+        color.get_blue(),
+        color.get_alpha());
+    context->set_line_width(1.7);
+    context->set_line_cap(
+        Cairo::LINE_CAP_ROUND);
+    context->set_line_join(
+        Cairo::LINE_JOIN_ROUND);
 
-            if (icon)
-                return icon;
-        }
-        catch (const Glib::Error &)
-        {
-        }
-    }
+    context->move_to(2.5, 10.0);
+    context->curve_to(
+        5.8, 5.5,
+        14.2, 5.5,
+        17.5, 10.0);
+    context->curve_to(
+        14.2, 14.5,
+        5.8, 14.5,
+        2.5, 10.0);
+    context->stroke();
 
-    return {};
+    context->arc(
+        10.0,
+        10.0,
+        2.2,
+        0.0,
+        2.0 * INDICATOR_PI);
+    context->fill();
+
+    // A diagonal stroke distinguishes the minimized state from a generic
+    // visibility icon without relying on a theme-specific symbolic asset.
+    context->move_to(3.5, 3.5);
+    context->line_to(16.5, 16.5);
+    context->stroke();
+
+    surface->flush();
+
+    return Gdk::Pixbuf::create(
+        surface,
+        0,
+        0,
+        CONTEXT_MENU_ICON_SIZE,
+        CONTEXT_MENU_ICON_SIZE);
 }
 
 void DockItem::launch_application()
