@@ -68,8 +68,8 @@ docklight6_SOURCES = \
     config/dock_configuration_manager.cpp \
     dock_monitor_manager.h \
     dock_monitor_manager.cpp \
-    dock_intellihide_policy.h \
-    dock_intellihide_policy.cpp \
+    autohide/dock_intellihide_policy.h \
+    autohide/dock_intellihide_policy.cpp \
     media/dock_media_playback_monitor.h \
     media/dock_media_playback_monitor.cpp \
     preview/dock_window_thumbnail_provider.h \
@@ -80,10 +80,10 @@ docklight6_SOURCES = \
     zkde-screencast-unstable-v1-protocol.c \
     preview/dock_preview_window.h \
     preview/dock_preview_window.cpp \
-    dock_reveal_window.h \
-    dock_reveal_window.cpp \
-    dock_autohide_controller.h \
-    dock_autohide_controller.cpp \
+    autohide/dock_reveal_window.h \
+    autohide/dock_reveal_window.cpp \
+    autohide/dock_autohide_controller.h \
+    autohide/dock_autohide_controller.cpp \
     dock_window_controller.h \
     dock_window_controller.cpp \
     dock_window.cpp \
@@ -150,8 +150,8 @@ dock_autohide_layout_test_SOURCES = \
     layout/dock_layout_types.h \
     layout/dock_window_geometry.h \
     windowing/managed_window.h \
-    dock_intellihide_policy.h \
-    dock_intellihide_policy.cpp \
+    autohide/dock_intellihide_policy.h \
+    autohide/dock_intellihide_policy.cpp \
     layout/dock_layout_engine.h \
     layout/dock_layout_engine.cpp
 

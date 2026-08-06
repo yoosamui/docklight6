@@ -23,10 +23,10 @@
 
 #include "dock_window_controller.h"
 
-#include "dock_autohide_controller.h"
+#include "autohide/dock_autohide_controller.h"
 #include "dock_constants.h"
 #include "dock_home_item.h"
-#include "dock_intellihide_policy.h"
+#include "autohide/dock_intellihide_policy.h"
 #include "dock_item.h"
 #include "layout/dock_layout_metrics.h"
 #include "media/dock_media_playback_monitor.h"
