@@ -39,6 +39,9 @@ namespace
 
     constexpr unsigned int ZOOM_FRAME_INTERVAL_MS = 16; // Delay between zoom frames
     constexpr unsigned int BLUR_FRAME_INTERVAL_MS = 16; // Delay between blur frames
+    constexpr unsigned int PRIMARY_ACTION_EFFECT_INTERVAL_MS = 35;
+    constexpr int PRIMARY_ACTION_EFFECT_FRAME_COUNT = 4;
+    constexpr double PRIMARY_ACTION_EFFECT_MIN_OPACITY = 0.55;
     constexpr int CONTEXT_MENU_ICON_SIZE = 20; // Window icon size in menu rows
     constexpr int CONTEXT_MENU_TITLE_WIDTH = 48; // Maximum menu title width in characters
     constexpr double INDICATOR_THICKNESS = 2.0;  // Line height
@@ -343,6 +346,7 @@ DockItem::~DockItem()
 {
     m_zoom_animation.disconnect();
     m_blur_animation.disconnect();
+    m_primary_action_effect.disconnect();
     m_window_action_idle.disconnect();
     m_context_menu_map.disconnect();
     m_context_menu_unmap.disconnect();
@@ -1066,18 +1070,67 @@ bool DockItem::on_button_release_event(
 
     m_last_primary_action_time = now;
 
+    start_primary_action_effect();
+
+    return true;
+}
+
+void DockItem::start_primary_action_effect()
+{
+    m_primary_action_effect.disconnect();
+    m_primary_action_effect_frame = 0;
+
+    image.set_opacity(
+        PRIMARY_ACTION_EFFECT_MIN_OPACITY);
+
+    m_primary_action_effect =
+        Glib::signal_timeout().connect(
+            sigc::mem_fun(
+                *this,
+                &DockItem::
+                    advance_primary_action_effect),
+            PRIMARY_ACTION_EFFECT_INTERVAL_MS);
+}
+
+bool DockItem::advance_primary_action_effect()
+{
+    ++m_primary_action_effect_frame;
+
+    const double progress =
+        static_cast<double>(
+            m_primary_action_effect_frame) /
+        static_cast<double>(
+            PRIMARY_ACTION_EFFECT_FRAME_COUNT - 1);
+
+    image.set_opacity(
+        PRIMARY_ACTION_EFFECT_MIN_OPACITY +
+        (1.0 -
+         PRIMARY_ACTION_EFFECT_MIN_OPACITY) *
+            std::min(1.0, progress));
+
+    if (m_primary_action_effect_frame <
+        PRIMARY_ACTION_EFFECT_FRAME_COUNT - 1)
+    {
+        return true;
+    }
+
+    image.set_opacity(1.0);
+    perform_primary_action();
+
+    return false;
+}
+
+void DockItem::perform_primary_action()
+{
     if (!m_application_controller
              .running())
     {
         launch_application();
-    }
-    else
-    {
-        m_application_controller
-            .toggle_minimized();
+        return;
     }
 
-    return true;
+    m_application_controller
+        .toggle_minimized();
 }
 
 void DockItem::on_drag_begin(

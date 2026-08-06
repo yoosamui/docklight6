@@ -141,6 +141,7 @@ private:
         int y,
         guint time) override;
     bool on_popup_menu();
+    bool advance_primary_action_effect();
     bool advance_zoom_animation();
     bool advance_blur_animation();
     bool draw_indicator(
@@ -155,6 +156,8 @@ private:
     void show_context_menu(
         const GdkEvent *event);
     void refresh_context_menu();
+    void start_primary_action_effect();
+    void perform_primary_action();
     void launch_application();
     void launch_new_window();
     void log_context_action(
@@ -209,6 +212,7 @@ private:
 
     sigc::connection m_zoom_animation;
     sigc::connection m_blur_animation;
+    sigc::connection m_primary_action_effect;
     sigc::connection m_window_action_idle;
     sigc::connection m_context_menu_map;
     sigc::connection m_context_menu_unmap;
@@ -228,6 +232,7 @@ private:
     int m_zoom_target_frame = 0;
     int m_blur_frame = 0;
     int m_blur_target_frame = 0;
+    int m_primary_action_effect_frame = 0;
     int m_drag_hot_x = 0;
     int m_drag_hot_y = 0;
 
