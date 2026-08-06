@@ -376,6 +376,15 @@ void DockWindowController::set_monitor(
     schedule_layout_update();
 }
 
+void DockWindowController::set_preview_rounded_corners(
+    bool enabled,
+    int radius)
+{
+    m_preview_window->set_rounded_corners(
+        enabled,
+        radius);
+}
+
 // Reads current monitor and dock geometry, calculates placement, and then
 // asks DockWindow to apply it. This is the orchestration boundary between
 // live GTK state and the side-effect-free layout engine.

@@ -43,6 +43,9 @@ public:
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor> &monitor);
     void set_card_user_height(int height);
+    void set_rounded_corners(
+        bool enabled,
+        int radius);
 
     DockPreviewSize preferred_size(
         const std::vector<ApplicationWindowEntry>
@@ -112,7 +115,10 @@ private:
     DockWindowStreamProvider
         m_stream_provider;
     Glib::RefPtr<Gtk::CssProvider> m_css;
+    Glib::RefPtr<Gtk::CssProvider>
+        m_corner_css;
 
+    Gtk::EventBox m_surface;
     Gtk::ScrolledWindow m_scroller;
     Gtk::Box m_row{
         Gtk::ORIENTATION_HORIZONTAL,

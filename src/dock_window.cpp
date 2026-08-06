@@ -814,6 +814,10 @@ void DockWindow::apply_visual_style()
         layout_request.rounded_corners,
         effective_radius,
         m_effective_icon_size);
+
+    m_controller->set_preview_rounded_corners(
+        layout_request.rounded_corners,
+        effective_radius);
 }
 
 void DockWindow::apply_main_axis_end_margins(

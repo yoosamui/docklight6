@@ -81,6 +81,9 @@ public:
     void inhibit_autohide();
     void uninhibit_autohide(bool pointer_inside);
     void finish_autohide_drag(bool pointer_inside);
+    void set_preview_rounded_corners(
+        bool enabled,
+        int radius);
 
     const DockSettings &settings() const
     {

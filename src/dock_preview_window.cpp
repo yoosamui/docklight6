@@ -16,6 +16,53 @@ namespace
 
     constexpr int HEADER_HEIGHT = 32;
     constexpr int CLOSE_BUTTON_SIZE = 16;
+    constexpr double CARD_CORNER_RADIUS = 7.0;
+    constexpr double PREVIEW_PI =
+        3.14159265358979323846;
+
+    void append_rounded_rectangle(
+        const Cairo::RefPtr<Cairo::Context>
+            &context,
+        double width,
+        double height,
+        double radius)
+    {
+        const double effective_radius =
+            std::max(
+                0.0,
+                std::min(
+                    radius,
+                    std::min(width, height) /
+                        2.0));
+
+        context->begin_new_sub_path();
+        context->arc(
+            width - effective_radius,
+            effective_radius,
+            effective_radius,
+            -PREVIEW_PI / 2.0,
+            0.0);
+        context->arc(
+            width - effective_radius,
+            height - effective_radius,
+            effective_radius,
+            0.0,
+            PREVIEW_PI / 2.0);
+        context->arc(
+            effective_radius,
+            height - effective_radius,
+            effective_radius,
+            PREVIEW_PI / 2.0,
+            PREVIEW_PI);
+        context->arc(
+            effective_radius,
+            effective_radius,
+            effective_radius,
+            PREVIEW_PI,
+            3.0 * PREVIEW_PI / 2.0);
+        context->close_path();
+    }
+
     struct PreviewMetrics
     {
         int card_width = DockPreviewWindow::CARD_WIDTH;
@@ -313,21 +360,34 @@ DockPreviewWindow::DockPreviewWindow()
         Gtk::POLICY_NEVER,
         Gtk::POLICY_NEVER);
     m_scroller.add(m_row);
-    add(m_scroller);
+    m_surface.add(m_scroller);
+    add(m_surface);
 
     get_style_context()->add_class(
         "dock-preview-window");
+    m_surface.get_style_context()->add_class(
+        "dock-preview");
 
     m_css = Gtk::CssProvider::create();
     get_style_context()->add_provider(
         m_css,
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
+    m_surface.get_style_context()->add_provider(
+        m_css,
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
+
+    m_corner_css = Gtk::CssProvider::create();
+    m_surface.get_style_context()->add_provider(
+        m_corner_css,
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
 
     m_css->load_from_data(
         "window.dock-preview-window {"
-        " background: rgba(28, 28, 32, 0.96);"
+        " background-color: transparent;"
+        "}"
+        ".dock-preview {"
+        " background-color: rgba(28, 28, 32, 0.96);"
         " border: 1px solid rgba(255,255,255,0.28);"
-        " border-radius: 10px;"
         "}"
         ".dock-preview-card {"
         " background: transparent;"
@@ -352,6 +412,8 @@ DockPreviewWindow::DockPreviewWindow()
         " background: rgba(220,60,60,0.9);"
         " border-radius: 11px;"
         "}");
+
+    set_rounded_corners(true, 10);
 
     auto *window = GTK_WINDOW(gobj());
     gtk_layer_init_for_window(window);
@@ -391,6 +453,31 @@ void DockPreviewWindow::set_card_user_height(
                  height <= MAX_HEIGHT)
             ? height
             : CARD_USER_HEIGHT;
+}
+
+void DockPreviewWindow::set_rounded_corners(
+    bool enabled,
+    int radius)
+{
+    auto context =
+        m_surface.get_style_context();
+
+    if (enabled)
+        context->add_class("dock-rounded");
+    else
+        context->remove_class("dock-rounded");
+
+    const int effective_radius =
+        enabled
+            ? std::min(
+                  std::max(0, radius),
+                  MIN_HEIGHT / 2)
+            : 0;
+
+    m_corner_css->load_from_data(
+        ".dock-preview { border-radius: " +
+        std::to_string(effective_radius) +
+        "px; }");
 }
 
 DockPreviewSize DockPreviewWindow::preferred_size(
@@ -561,11 +648,11 @@ void DockPreviewWindow::rebuild(
                         0.06);
                 }
 
-                context->rectangle(
-                    0.0,
-                    0.0,
+                append_rounded_rectangle(
+                    context,
                     allocation.get_width(),
-                    allocation.get_height());
+                    allocation.get_height(),
+                    CARD_CORNER_RADIUS);
                 context->fill();
                 return true;
             });
