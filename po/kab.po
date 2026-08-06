@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.27\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-06 14:07+0700\n"
+"POT-Creation-Date: 2026-08-06 22:33+0700\n"
 "PO-Revision-Date: 2026-08-06 14:07+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language: kab\n"
 "Language-Team: none\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: kab\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.17.0\n"
 
 #: src/dock/dock_item.cpp:269
@@ -26,7 +26,7 @@ msgstr "_Pin à Dock"
 msgid "_Open New Window"
 msgstr "_Ldi tazewwut tamaynut"
 
-#: src/dock/dock_home_item.cpp:55 src/dock/dock_item.cpp:275
+#: src/dock/dock_item.cpp:275 src/dock/dock_home_item.cpp:55
 msgid "_Close All"
 msgstr "_Rnu kullec"
 
@@ -71,11 +71,13 @@ msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Axxam"
 
-#: src/dialogs/dock_settings_dialog.cpp:65 src/dialogs/dock_settings_dialog.cpp:90
+#: src/dialogs/dock_settings_dialog.cpp:65
+#: src/dialogs/dock_settings_dialog.cpp:90
 msgid "DockLight Settings"
 msgstr "Iɣewwaren n DockLight"
 
-#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_settings_dialog.cpp:118
+#: src/dialogs/dock_settings_dialog.cpp:118
+#: src/dialogs/dock_about_dialog.cpp:112
 msgid "_Close"
 msgstr "_Ldi"
 
@@ -92,8 +94,8 @@ msgid "Indicator"
 msgstr "Asebded"
 
 #: src/dialogs/dock_settings_dialog.cpp:136
-#: src/dialogs/dock_settings_dialog.cpp:1257
-#: src/dialogs/dock_settings_dialog.cpp:1285
+#: src/dialogs/dock_settings_dialog.cpp:1297
+#: src/dialogs/dock_settings_dialog.cpp:1325
 msgid "Indicator Color"
 msgstr "Aɣmis n uɣmis"
 
@@ -114,172 +116,181 @@ msgid "Display Preview"
 msgstr "Sken tazwara"
 
 #: src/dialogs/dock_settings_dialog.cpp:146
+msgid "Close Preview After Activation"
+msgstr "Mdel taskant deffir tnekra"
+
+#: src/dialogs/dock_settings_dialog.cpp:148
 msgid "Manage All Workspaces"
 msgstr "Ẓreg akk iferdisen n uxeddim"
 
-#: src/dialogs/dock_settings_dialog.cpp:148
+#: src/dialogs/dock_settings_dialog.cpp:150
 msgid "Icon Size"
 msgstr "Icon Size"
 
-#: src/dialogs/dock_settings_dialog.cpp:150
+#: src/dialogs/dock_settings_dialog.cpp:152
 msgid "Preview Card Height"
 msgstr "Azeggaɣ n tkarḍit"
 
-#: src/dialogs/dock_settings_dialog.cpp:152
+#: src/dialogs/dock_settings_dialog.cpp:154
 msgid "Preview Show Delay (ms)"
 msgstr "Asebtar amaynut (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:154
+#: src/dialogs/dock_settings_dialog.cpp:156
 msgid "Location"
 msgstr "Amkan"
 
-#: src/dialogs/dock_settings_dialog.cpp:156
+#: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Rounded Corners"
 msgstr "Isebtaren i sɛan azday ɣer \"Corners\""
 
-#: src/dialogs/dock_settings_dialog.cpp:158
+#: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Corner Radius"
 msgstr "Corner Radius"
 
-#: src/dialogs/dock_settings_dialog.cpp:160
+#: src/dialogs/dock_settings_dialog.cpp:162
 msgid "Alignment"
 msgstr "Aɣewwaṛ"
 
-#: src/dialogs/dock_settings_dialog.cpp:162
+#: src/dialogs/dock_settings_dialog.cpp:164
 msgid "Autohide"
 msgstr "Autohide"
 
-#: src/dialogs/dock_settings_dialog.cpp:248
+#: src/dialogs/dock_settings_dialog.cpp:251
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Aselkim amezwaru"
 
-#: src/dialogs/dock_settings_dialog.cpp:287
+#: src/dialogs/dock_settings_dialog.cpp:290
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Aḥric amezwaru"
 
-#: src/dialogs/dock_settings_dialog.cpp:289
+#: src/dialogs/dock_settings_dialog.cpp:292
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Taggayt n zoom"
 
-#: src/dialogs/dock_settings_dialog.cpp:291
+#: src/dialogs/dock_settings_dialog.cpp:294
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Isebtar i yellan ddaw-a sɛan aseɣ"
 
-#: src/dialogs/dock_settings_dialog.cpp:328
+#: src/dialogs/dock_settings_dialog.cpp:331
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Iɣewwaṛen n uzegrir"
 
-#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:333
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Iɣewwaṛen n usenqed"
 
-#: src/dialogs/dock_settings_dialog.cpp:393
+#: src/dialogs/dock_settings_dialog.cpp:396
 msgid "Choose the indicator color"
 msgstr "Fren azeggaɣ n usebter"
 
-#: src/dialogs/dock_settings_dialog.cpp:405
+#: src/dialogs/dock_settings_dialog.cpp:408
 msgid "Select…"
 msgstr "Fren…"
 
-#: src/dialogs/dock_settings_dialog.cpp:407
+#: src/dialogs/dock_settings_dialog.cpp:410
 msgid "Use Default"
 msgstr "Seqdec asebter"
 
-#: src/dialogs/dock_settings_dialog.cpp:415
+#: src/dialogs/dock_settings_dialog.cpp:418
 msgid "Built-in DockLight icon"
 msgstr "Isebtar i yellan ddaw-a sɛan aseɣwen ɣer DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:449
-msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
-msgstr "Aseqdec n yiɣewwaren n uẓeṭṭa akked uẓeṭṭa n uẓeṭṭa deg yal tɣiwant n uxeddim"
+#: src/dialogs/dock_settings_dialog.cpp:452
+msgid "Otherwise keep the preview open until the pointer leaves it"
+msgstr "Ḥrez asenfaṛ-nni alamma yeǧǧa-t umedyaz"
 
-#: src/dialogs/dock_settings_dialog.cpp:480
+#: src/dialogs/dock_settings_dialog.cpp:459
+msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
+msgstr ""
+"Aseqdec n yiɣewwaren n uẓeṭṭa akked uẓeṭṭa n uẓeṭṭa deg yal tɣiwant n uxeddim"
+
+#: src/dialogs/dock_settings_dialog.cpp:490
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0 Select Automatic Size; If yes, use 64-512 pixels"
 
-#: src/dialogs/dock_settings_dialog.cpp:497
+#: src/dialogs/dock_settings_dialog.cpp:507
 msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
 msgstr "Démarrer ma recherche à 1 000 milliseconds"
 
-#: src/dialogs/dock_settings_dialog.cpp:504
+#: src/dialogs/dock_settings_dialog.cpp:514
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Aɣewwaṛ n tɣiwant"
 
-#: src/dialogs/dock_settings_dialog.cpp:506
+#: src/dialogs/dock_settings_dialog.cpp:516
 msgctxt "dock location"
 msgid "Left"
 msgstr "Aẓelmaḍ n uzelmaḍ"
 
-#: src/dialogs/dock_settings_dialog.cpp:508
+#: src/dialogs/dock_settings_dialog.cpp:518
 msgctxt "dock location"
 msgid "Top"
 msgstr "Aɣewwaṛ amezwaru"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
+#: src/dialogs/dock_settings_dialog.cpp:520
 msgctxt "dock location"
 msgid "Right"
 msgstr "Aɣewwaṛ ayeffus"
 
-#: src/dialogs/dock_settings_dialog.cpp:573
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgid "-1 selects the automatic radius"
 msgstr "-1 Isebtar i yellan ddaw-a sɛan aseɣwen ɣer Radius"
 
-#: src/dialogs/dock_settings_dialog.cpp:579
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Yebda-d s tdukli"
 
-#: src/dialogs/dock_settings_dialog.cpp:581
+#: src/dialogs/dock_settings_dialog.cpp:591
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Yettusmimeḍ"
 
-#: src/dialogs/dock_settings_dialog.cpp:583
+#: src/dialogs/dock_settings_dialog.cpp:593
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Aneggaru n taggara"
 
-#: src/dialogs/dock_settings_dialog.cpp:585
+#: src/dialogs/dock_settings_dialog.cpp:595
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Ffeḍ amkan i d-yellan"
 
-#: src/dialogs/dock_settings_dialog.cpp:631
+#: src/dialogs/dock_settings_dialog.cpp:641
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Iɣewwaren"
 
-#: src/dialogs/dock_settings_dialog.cpp:633
+#: src/dialogs/dock_settings_dialog.cpp:643
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Taɣellist"
 
-#: src/dialogs/dock_settings_dialog.cpp:635
+#: src/dialogs/dock_settings_dialog.cpp:645
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Imusnawen"
 
-#: src/dialogs/dock_settings_dialog.cpp:1109
-#: src/dialogs/dock_settings_dialog.cpp:1144
+#: src/dialogs/dock_settings_dialog.cpp:1149
+#: src/dialogs/dock_settings_dialog.cpp:1184
 msgid "Select Home Icon"
 msgstr "Fren iγewwaṛen n uxxam"
 
-#: src/dialogs/dock_settings_dialog.cpp:1114
+#: src/dialogs/dock_settings_dialog.cpp:1154
 msgid "_Cancel"
 msgstr "_Kkes"
 
-#: src/dialogs/dock_settings_dialog.cpp:1117
+#: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "_Open"
 msgstr "_Ldi"
 
-#: src/dialogs/dock_settings_dialog.cpp:1181
+#: src/dialogs/dock_settings_dialog.cpp:1221
 msgid "Image Files"
 msgstr "Ifuyla n tugna"
 

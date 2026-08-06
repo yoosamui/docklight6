@@ -17,16 +17,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.27\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-06 14:07+0700\n"
+"POT-Creation-Date: 2026-08-06 22:33+0700\n"
 "PO-Revision-Date: 2026-08-06 14:30+0700\n"
 "Last-Translator: Juan Gonzalez <j-gonzalez@email.de>\n"
-"Language: ru\n"
 "Language-Team: Russian <ru@li.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
 #: src/dock/dock_item.cpp:269
@@ -37,7 +37,7 @@ msgstr "_Закрепить в доке"
 msgid "_Open New Window"
 msgstr "_Открыть новое окно"
 
-#: src/dock/dock_home_item.cpp:55 src/dock/dock_item.cpp:275
+#: src/dock/dock_item.cpp:275 src/dock/dock_home_item.cpp:55
 msgid "_Close All"
 msgstr "_Закрыть все"
 
@@ -82,11 +82,13 @@ msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Главная"
 
-#: src/dialogs/dock_settings_dialog.cpp:65 src/dialogs/dock_settings_dialog.cpp:90
+#: src/dialogs/dock_settings_dialog.cpp:65
+#: src/dialogs/dock_settings_dialog.cpp:90
 msgid "DockLight Settings"
 msgstr "Настройки док-станции"
 
-#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_settings_dialog.cpp:118
+#: src/dialogs/dock_settings_dialog.cpp:118
+#: src/dialogs/dock_about_dialog.cpp:112
 msgid "_Close"
 msgstr "_Закрыть"
 
@@ -103,8 +105,8 @@ msgid "Indicator"
 msgstr "Индикатор"
 
 #: src/dialogs/dock_settings_dialog.cpp:136
-#: src/dialogs/dock_settings_dialog.cpp:1257
-#: src/dialogs/dock_settings_dialog.cpp:1285
+#: src/dialogs/dock_settings_dialog.cpp:1297
+#: src/dialogs/dock_settings_dialog.cpp:1325
 msgid "Indicator Color"
 msgstr "Цвет индикатора"
 
@@ -125,178 +127,186 @@ msgid "Display Preview"
 msgstr "Предварительный просмотр дисплея"
 
 #: src/dialogs/dock_settings_dialog.cpp:146
+msgid "Close Preview After Activation"
+msgstr "Закрыть предварительный просмотр после активации"
+
+#: src/dialogs/dock_settings_dialog.cpp:148
 msgid "Manage All Workspaces"
 msgstr "Управление всеми рабочими пространствами"
 
-#: src/dialogs/dock_settings_dialog.cpp:148
+#: src/dialogs/dock_settings_dialog.cpp:150
 msgid "Icon Size"
 msgstr "Размер значка"
 
-#: src/dialogs/dock_settings_dialog.cpp:150
+#: src/dialogs/dock_settings_dialog.cpp:152
 msgid "Preview Card Height"
 msgstr "Предварительный просмотр высоты карты"
 
-#: src/dialogs/dock_settings_dialog.cpp:152
+#: src/dialogs/dock_settings_dialog.cpp:154
 msgid "Preview Show Delay (ms)"
 msgstr "Задержка предварительного просмотра (мс)"
 
-#: src/dialogs/dock_settings_dialog.cpp:154
+#: src/dialogs/dock_settings_dialog.cpp:156
 msgid "Location"
 msgstr "Расположение"
 
-#: src/dialogs/dock_settings_dialog.cpp:156
+#: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Rounded Corners"
 msgstr "Закругленные углы"
 
-#: src/dialogs/dock_settings_dialog.cpp:158
+#: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Corner Radius"
 msgstr "Угловой радиус"
 
-#: src/dialogs/dock_settings_dialog.cpp:160
+#: src/dialogs/dock_settings_dialog.cpp:162
 msgid "Alignment"
 msgstr "Выравнивание"
 
-#: src/dialogs/dock_settings_dialog.cpp:162
+#: src/dialogs/dock_settings_dialog.cpp:164
 msgid "Autohide"
 msgstr "Автоскрытие"
 
-#: src/dialogs/dock_settings_dialog.cpp:248
+#: src/dialogs/dock_settings_dialog.cpp:251
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Основной монитор"
 
-#: src/dialogs/dock_settings_dialog.cpp:287
+#: src/dialogs/dock_settings_dialog.cpp:290
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Стандартный эффект"
 
-#: src/dialogs/dock_settings_dialog.cpp:289
+#: src/dialogs/dock_settings_dialog.cpp:292
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Эффект масштабирования"
 
-#: src/dialogs/dock_settings_dialog.cpp:291
+#: src/dialogs/dock_settings_dialog.cpp:294
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Эффект размытия"
 
-#: src/dialogs/dock_settings_dialog.cpp:328
+#: src/dialogs/dock_settings_dialog.cpp:331
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Линейные индикаторы"
 
-#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:333
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Точечные индикаторы"
 
-#: src/dialogs/dock_settings_dialog.cpp:393
+#: src/dialogs/dock_settings_dialog.cpp:396
 msgid "Choose the indicator color"
 msgstr "Выберите цвет индикатора"
 
-#: src/dialogs/dock_settings_dialog.cpp:405
+#: src/dialogs/dock_settings_dialog.cpp:408
 msgid "Select…"
 msgstr "Выберите…"
 
-#: src/dialogs/dock_settings_dialog.cpp:407
+#: src/dialogs/dock_settings_dialog.cpp:410
 msgid "Use Default"
 msgstr "Использовать по умолчанию"
 
-#: src/dialogs/dock_settings_dialog.cpp:415
+#: src/dialogs/dock_settings_dialog.cpp:418
 msgid "Built-in DockLight icon"
 msgstr "Встроенный значок DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:449
+#: src/dialogs/dock_settings_dialog.cpp:452
+msgid "Otherwise keep the preview open until the pointer leaves it"
+msgstr "В противном случае оставьте предварительный просмотр открытым, пока указатель не покинет его."
+
+#: src/dialogs/dock_settings_dialog.cpp:459
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr ""
 "Применяйте действия со значками и прокрутку колесика мыши во всех рабочих "
 "пространствах."
 
-#: src/dialogs/dock_settings_dialog.cpp:480
+#: src/dialogs/dock_settings_dialog.cpp:490
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr ""
 "0 выбирает автоматический размер; в противном случае используйте от 64 до "
 "512 пикселей."
 
-#: src/dialogs/dock_settings_dialog.cpp:497
+#: src/dialogs/dock_settings_dialog.cpp:507
 msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
 msgstr ""
 "Задержка перед появлением предварительного просмотра окна, от 0 до 1000 "
 "миллисекунд."
 
-#: src/dialogs/dock_settings_dialog.cpp:504
+#: src/dialogs/dock_settings_dialog.cpp:514
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Нижний край"
 
-#: src/dialogs/dock_settings_dialog.cpp:506
+#: src/dialogs/dock_settings_dialog.cpp:516
 msgctxt "dock location"
 msgid "Left"
 msgstr "Левый край"
 
-#: src/dialogs/dock_settings_dialog.cpp:508
+#: src/dialogs/dock_settings_dialog.cpp:518
 msgctxt "dock location"
 msgid "Top"
 msgstr "Верхний край"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
+#: src/dialogs/dock_settings_dialog.cpp:520
 msgctxt "dock location"
 msgid "Right"
 msgstr "Правый край"
 
-#: src/dialogs/dock_settings_dialog.cpp:573
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgid "-1 selects the automatic radius"
 msgstr "-1 выбирает автоматический радиус"
 
-#: src/dialogs/dock_settings_dialog.cpp:579
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "По началу"
 
-#: src/dialogs/dock_settings_dialog.cpp:581
+#: src/dialogs/dock_settings_dialog.cpp:591
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Центрировано"
 
-#: src/dialogs/dock_settings_dialog.cpp:583
+#: src/dialogs/dock_settings_dialog.cpp:593
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Конец выровнен"
 
-#: src/dialogs/dock_settings_dialog.cpp:585
+#: src/dialogs/dock_settings_dialog.cpp:595
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Заполните доступное пространство"
 
-#: src/dialogs/dock_settings_dialog.cpp:631
+#: src/dialogs/dock_settings_dialog.cpp:641
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Отключено"
 
-#: src/dialogs/dock_settings_dialog.cpp:633
+#: src/dialogs/dock_settings_dialog.cpp:643
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Автоматический"
 
-#: src/dialogs/dock_settings_dialog.cpp:635
+#: src/dialogs/dock_settings_dialog.cpp:645
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Интеллектуальный"
 
-#: src/dialogs/dock_settings_dialog.cpp:1109
-#: src/dialogs/dock_settings_dialog.cpp:1144
+#: src/dialogs/dock_settings_dialog.cpp:1149
+#: src/dialogs/dock_settings_dialog.cpp:1184
 msgid "Select Home Icon"
 msgstr "Выберите значок «Домой»"
 
-#: src/dialogs/dock_settings_dialog.cpp:1114
+#: src/dialogs/dock_settings_dialog.cpp:1154
 msgid "_Cancel"
 msgstr "_Отмена"
 
-#: src/dialogs/dock_settings_dialog.cpp:1117
+#: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "_Open"
 msgstr "_Открыть"
 
-#: src/dialogs/dock_settings_dialog.cpp:1181
+#: src/dialogs/dock_settings_dialog.cpp:1221
 msgid "Image Files"
 msgstr "Файлы изображений"
 
@@ -348,30 +358,29 @@ msgstr "Монитор по умолчанию"
 #~ msgstr "Инициализация панели."
 
 #~ msgid ""
-#~ "Sets the primary Monitor.Settings are "
-#~ "primary oder the monitor name e.g "
+#~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
 #~ "DP-3"
 #~ msgstr ""
-#~ "Устанавливает основной монитор. Настройки: "
-#~ "основной или имя монитора, например DP-3"
+#~ "Устанавливает основной монитор. Настройки: основной или имя монитора, "
+#~ "например DP-3"
 
 #~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
 #~ msgstr ""
-#~ "Устанавливает положение панели: верх, право, "
-#~ "низ или лево. По умолчанию - низ"
+#~ "Устанавливает положение панели: верх, право, низ или лево. По умолчанию - "
+#~ "низ"
 
 #~ msgid ""
-#~ "The dock alignment settings are start, "
-#~ "end, center or fill. Default center."
+#~ "The dock alignment settings are start, end, center or fill. Default "
+#~ "center."
 #~ msgstr ""
-#~ "Настройки выравнивания дока: начало, конец, "
-#~ "центр или заполнить. По умолчанию - "
-#~ "центр."
+#~ "Настройки выравнивания дока: начало, конец, центр или заполнить. По "
+#~ "умолчанию - центр."
 
-#~ msgid "The icon alignment settings are start, end or center. Default center."
+#~ msgid ""
+#~ "The icon alignment settings are start, end or center. Default center."
 #~ msgstr ""
-#~ "Настройки выравнивания значков: начало, конец "
-#~ "или центр. По умолчанию - центр."
+#~ "Настройки выравнивания значков: начало, конец или центр. По умолчанию - "
+#~ "центр."
 
 #~ msgid "parsed values"
 #~ msgstr "Разобранные значения"
@@ -413,13 +422,11 @@ msgstr "Монитор по умолчанию"
 #~ msgstr "Развернуть все"
 
 #~ msgid ""
-#~ "This program is a lightweight Dock "
-#~ "Launcher for opening common applications "
-#~ "for the GNOME Desktop"
+#~ "This program is a lightweight Dock Launcher for opening common "
+#~ "applications for the GNOME Desktop"
 #~ msgstr ""
-#~ "Это программа является легким Dock Лаунчеом"
-#~ " для запуска обычных приложений для "
-#~ "GNOME Desktop"
+#~ "Это программа является легким Dock Лаунчеом для запуска обычных "
+#~ "приложений для GNOME Desktop"
 
 #~ msgid "Create Launcher"
 #~ msgstr "Создать Лаунчер"
@@ -461,8 +468,8 @@ msgstr "Монитор по умолчанию"
 #~ msgid ""
 #~ "The command you enter is invalid.\n"
 #~ "\n"
-#~ "Some Applications are scripts files and "
-#~ "others requires Administrator privileges:\n"
+#~ "Some Applications are scripts files and others requires Administrator "
+#~ "privileges:\n"
 #~ "for scrips files you need to add the bash on the beginning:\n"
 #~ "\n"
 #~ "/bin/sh \"/usr/local/scriptfile.sh\"\n"
@@ -472,8 +479,7 @@ msgstr "Монитор по умолчанию"
 #~ "pkexec Application\n"
 #~ "\n"
 #~ "Please make sure that the Application starts from the command line.\n"
-#~ "Open a terminal and navigate to the"
-#~ " directory where the application is "
+#~ "Open a terminal and navigate to the directory where the application is "
 #~ "locate\n"
 #~ "and trying the command from there..."
 #~ msgstr ""

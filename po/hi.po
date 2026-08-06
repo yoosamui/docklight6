@@ -7,15 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.27\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-06 14:07+0700\n"
+"POT-Creation-Date: 2026-08-06 22:33+0700\n"
 "PO-Revision-Date: 2026-08-06 14:07+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language: hi\n"
 "Language-Team: none\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: hi\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.17.0\n"
 
 #: src/dock/dock_item.cpp:269
@@ -26,7 +26,7 @@ msgstr "_पिन टू डॉक"
 msgid "_Open New Window"
 msgstr "_नई विंडो खोलें"
 
-#: src/dock/dock_home_item.cpp:55 src/dock/dock_item.cpp:275
+#: src/dock/dock_item.cpp:275 src/dock/dock_home_item.cpp:55
 msgid "_Close All"
 msgstr "_सभी बंद करें"
 
@@ -71,11 +71,13 @@ msgctxt "dock tooltip"
 msgid "Home"
 msgstr "घर"
 
-#: src/dialogs/dock_settings_dialog.cpp:65 src/dialogs/dock_settings_dialog.cpp:90
+#: src/dialogs/dock_settings_dialog.cpp:65
+#: src/dialogs/dock_settings_dialog.cpp:90
 msgid "DockLight Settings"
 msgstr "डॉकलाइट सेटिंग्स"
 
-#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_settings_dialog.cpp:118
+#: src/dialogs/dock_settings_dialog.cpp:118
+#: src/dialogs/dock_about_dialog.cpp:112
 msgid "_Close"
 msgstr "_बंद करें"
 
@@ -92,8 +94,8 @@ msgid "Indicator"
 msgstr "सूचक"
 
 #: src/dialogs/dock_settings_dialog.cpp:136
-#: src/dialogs/dock_settings_dialog.cpp:1257
-#: src/dialogs/dock_settings_dialog.cpp:1285
+#: src/dialogs/dock_settings_dialog.cpp:1297
+#: src/dialogs/dock_settings_dialog.cpp:1325
 msgid "Indicator Color"
 msgstr "सूचक रंग"
 
@@ -114,172 +116,180 @@ msgid "Display Preview"
 msgstr "पूर्वावलोकन प्रदर्शित करें"
 
 #: src/dialogs/dock_settings_dialog.cpp:146
+msgid "Close Preview After Activation"
+msgstr "सक्रियण के बाद पूर्वावलोकन बंद करें"
+
+#: src/dialogs/dock_settings_dialog.cpp:148
 msgid "Manage All Workspaces"
 msgstr "सभी कार्यस्थान प्रबंधित करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:148
+#: src/dialogs/dock_settings_dialog.cpp:150
 msgid "Icon Size"
 msgstr "चिह्न का आकार"
 
-#: src/dialogs/dock_settings_dialog.cpp:150
+#: src/dialogs/dock_settings_dialog.cpp:152
 msgid "Preview Card Height"
 msgstr "पूर्वावलोकन कार्ड की ऊंचाई"
 
-#: src/dialogs/dock_settings_dialog.cpp:152
+#: src/dialogs/dock_settings_dialog.cpp:154
 msgid "Preview Show Delay (ms)"
 msgstr "पूर्वावलोकन दिखाएँ विलंब (एमएस)"
 
-#: src/dialogs/dock_settings_dialog.cpp:154
+#: src/dialogs/dock_settings_dialog.cpp:156
 msgid "Location"
 msgstr "स्थान"
 
-#: src/dialogs/dock_settings_dialog.cpp:156
+#: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Rounded Corners"
 msgstr "गोल कोने"
 
-#: src/dialogs/dock_settings_dialog.cpp:158
+#: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Corner Radius"
 msgstr "कोने की त्रिज्या"
 
-#: src/dialogs/dock_settings_dialog.cpp:160
+#: src/dialogs/dock_settings_dialog.cpp:162
 msgid "Alignment"
 msgstr "संरेखण"
 
-#: src/dialogs/dock_settings_dialog.cpp:162
+#: src/dialogs/dock_settings_dialog.cpp:164
 msgid "Autohide"
 msgstr "स्वतः छिपाएँ"
 
-#: src/dialogs/dock_settings_dialog.cpp:248
+#: src/dialogs/dock_settings_dialog.cpp:251
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "प्राथमिक मॉनिटर"
 
-#: src/dialogs/dock_settings_dialog.cpp:287
+#: src/dialogs/dock_settings_dialog.cpp:290
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "मानक प्रभाव"
 
-#: src/dialogs/dock_settings_dialog.cpp:289
+#: src/dialogs/dock_settings_dialog.cpp:292
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "ज़ूम प्रभाव"
 
-#: src/dialogs/dock_settings_dialog.cpp:291
+#: src/dialogs/dock_settings_dialog.cpp:294
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "धुंधला प्रभाव"
 
-#: src/dialogs/dock_settings_dialog.cpp:328
+#: src/dialogs/dock_settings_dialog.cpp:331
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "रेखा सूचक"
 
-#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:333
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "बिंदु संकेतक"
 
-#: src/dialogs/dock_settings_dialog.cpp:393
+#: src/dialogs/dock_settings_dialog.cpp:396
 msgid "Choose the indicator color"
 msgstr "सूचक रंग चुनें"
 
-#: src/dialogs/dock_settings_dialog.cpp:405
+#: src/dialogs/dock_settings_dialog.cpp:408
 msgid "Select…"
 msgstr "चुनें..."
 
-#: src/dialogs/dock_settings_dialog.cpp:407
+#: src/dialogs/dock_settings_dialog.cpp:410
 msgid "Use Default"
 msgstr "डिफ़ॉल्ट का उपयोग करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:415
+#: src/dialogs/dock_settings_dialog.cpp:418
 msgid "Built-in DockLight icon"
 msgstr "अंतर्निहित डॉकलाइट आइकन"
 
-#: src/dialogs/dock_settings_dialog.cpp:449
+#: src/dialogs/dock_settings_dialog.cpp:452
+msgid "Otherwise keep the preview open until the pointer leaves it"
+msgstr "अन्यथा पूर्वावलोकन को तब तक खुला रखें जब तक पॉइंटर उसे छोड़ न दे"
+
+#: src/dialogs/dock_settings_dialog.cpp:459
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr "सभी कार्यस्थानों पर आइकन क्रियाएँ और माउस-व्हील साइकलिंग लागू करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:480
+#: src/dialogs/dock_settings_dialog.cpp:490
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0 स्वचालित आकार का चयन करता है; अन्यथा 64 से 512 पिक्सेल का उपयोग करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:497
+#: src/dialogs/dock_settings_dialog.cpp:507
 msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
 msgstr "विंडो पूर्वावलोकन प्रकट होने से पहले विलंब, 0 से 1000 मिलीसेकंड तक"
 
-#: src/dialogs/dock_settings_dialog.cpp:504
+#: src/dialogs/dock_settings_dialog.cpp:514
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "निचला किनारा"
 
-#: src/dialogs/dock_settings_dialog.cpp:506
+#: src/dialogs/dock_settings_dialog.cpp:516
 msgctxt "dock location"
 msgid "Left"
 msgstr "बायां किनारा"
 
-#: src/dialogs/dock_settings_dialog.cpp:508
+#: src/dialogs/dock_settings_dialog.cpp:518
 msgctxt "dock location"
 msgid "Top"
 msgstr "शीर्ष किनारा"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
+#: src/dialogs/dock_settings_dialog.cpp:520
 msgctxt "dock location"
 msgid "Right"
 msgstr "दाहिना किनारा"
 
-#: src/dialogs/dock_settings_dialog.cpp:573
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgid "-1 selects the automatic radius"
 msgstr "-1 स्वचालित त्रिज्या का चयन करता है"
 
-#: src/dialogs/dock_settings_dialog.cpp:579
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "प्रारंभ-संरेखित"
 
-#: src/dialogs/dock_settings_dialog.cpp:581
+#: src/dialogs/dock_settings_dialog.cpp:591
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "केन्द्रित"
 
-#: src/dialogs/dock_settings_dialog.cpp:583
+#: src/dialogs/dock_settings_dialog.cpp:593
 msgctxt "dock alignment"
 msgid "End"
 msgstr "अंत-संरेखित"
 
-#: src/dialogs/dock_settings_dialog.cpp:585
+#: src/dialogs/dock_settings_dialog.cpp:595
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "उपलब्ध स्थान भरें"
 
-#: src/dialogs/dock_settings_dialog.cpp:631
+#: src/dialogs/dock_settings_dialog.cpp:641
 msgctxt "autohide mode"
 msgid "None"
 msgstr "विकलांग"
 
-#: src/dialogs/dock_settings_dialog.cpp:633
+#: src/dialogs/dock_settings_dialog.cpp:643
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "स्वचालित"
 
-#: src/dialogs/dock_settings_dialog.cpp:635
+#: src/dialogs/dock_settings_dialog.cpp:645
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "बुद्धिमान"
 
-#: src/dialogs/dock_settings_dialog.cpp:1109
-#: src/dialogs/dock_settings_dialog.cpp:1144
+#: src/dialogs/dock_settings_dialog.cpp:1149
+#: src/dialogs/dock_settings_dialog.cpp:1184
 msgid "Select Home Icon"
 msgstr "होम आइकन चुनें"
 
-#: src/dialogs/dock_settings_dialog.cpp:1114
+#: src/dialogs/dock_settings_dialog.cpp:1154
 msgid "_Cancel"
 msgstr "_रद्द करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:1117
+#: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "_Open"
 msgstr "_खोलें"
 
-#: src/dialogs/dock_settings_dialog.cpp:1181
+#: src/dialogs/dock_settings_dialog.cpp:1221
 msgid "Image Files"
 msgstr "छवि फ़ाइलें"
 

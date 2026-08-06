@@ -18,15 +18,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.27\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-06 14:07+0700\n"
+"POT-Creation-Date: 2026-08-06 22:33+0700\n"
 "PO-Revision-Date: 2026-08-06 14:30+0700\n"
 "Last-Translator: yoo <j-gonzalez@email.de>\n"
-"Language: de\n"
 "Language-Team: German <de@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.17.0\n"
 
 #: src/dock/dock_item.cpp:269
@@ -37,7 +37,7 @@ msgstr "_An Dock anheften"
 msgid "_Open New Window"
 msgstr "_Neues Fenster öffnen"
 
-#: src/dock/dock_home_item.cpp:55 src/dock/dock_item.cpp:275
+#: src/dock/dock_item.cpp:275 src/dock/dock_home_item.cpp:55
 msgid "_Close All"
 msgstr "_Alle schließen"
 
@@ -82,11 +82,13 @@ msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Zuhause"
 
-#: src/dialogs/dock_settings_dialog.cpp:65 src/dialogs/dock_settings_dialog.cpp:90
+#: src/dialogs/dock_settings_dialog.cpp:65
+#: src/dialogs/dock_settings_dialog.cpp:90
 msgid "DockLight Settings"
 msgstr "DockLight-Einstellungen"
 
-#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_settings_dialog.cpp:118
+#: src/dialogs/dock_settings_dialog.cpp:118
+#: src/dialogs/dock_about_dialog.cpp:112
 msgid "_Close"
 msgstr "_Schließen"
 
@@ -103,8 +105,8 @@ msgid "Indicator"
 msgstr "Indikator"
 
 #: src/dialogs/dock_settings_dialog.cpp:136
-#: src/dialogs/dock_settings_dialog.cpp:1257
-#: src/dialogs/dock_settings_dialog.cpp:1285
+#: src/dialogs/dock_settings_dialog.cpp:1297
+#: src/dialogs/dock_settings_dialog.cpp:1325
 msgid "Indicator Color"
 msgstr "Indikatorfarbe"
 
@@ -125,176 +127,185 @@ msgid "Display Preview"
 msgstr "Vorschau anzeigen"
 
 #: src/dialogs/dock_settings_dialog.cpp:146
+msgid "Close Preview After Activation"
+msgstr "Vorschau nach Aktivierung schließen"
+
+#: src/dialogs/dock_settings_dialog.cpp:148
 msgid "Manage All Workspaces"
 msgstr "Alle Arbeitsbereiche verwalten"
 
-#: src/dialogs/dock_settings_dialog.cpp:148
+#: src/dialogs/dock_settings_dialog.cpp:150
 msgid "Icon Size"
 msgstr "Symbolgröße"
 
-#: src/dialogs/dock_settings_dialog.cpp:150
+#: src/dialogs/dock_settings_dialog.cpp:152
 msgid "Preview Card Height"
 msgstr "Vorschau der Kartenhöhe"
 
-#: src/dialogs/dock_settings_dialog.cpp:152
+#: src/dialogs/dock_settings_dialog.cpp:154
 msgid "Preview Show Delay (ms)"
 msgstr "Vorschau-Show-Verzögerung (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:154
+#: src/dialogs/dock_settings_dialog.cpp:156
 msgid "Location"
 msgstr "Standort"
 
-#: src/dialogs/dock_settings_dialog.cpp:156
+#: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Rounded Corners"
 msgstr "Abgerundete Ecken"
 
-#: src/dialogs/dock_settings_dialog.cpp:158
+#: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Corner Radius"
 msgstr "Eckenradius"
 
-#: src/dialogs/dock_settings_dialog.cpp:160
+#: src/dialogs/dock_settings_dialog.cpp:162
 msgid "Alignment"
 msgstr "Ausrichtung"
 
-#: src/dialogs/dock_settings_dialog.cpp:162
+#: src/dialogs/dock_settings_dialog.cpp:164
 msgid "Autohide"
 msgstr "Automatisch ausblenden"
 
-#: src/dialogs/dock_settings_dialog.cpp:248
+#: src/dialogs/dock_settings_dialog.cpp:251
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Primärer Monitor"
 
-#: src/dialogs/dock_settings_dialog.cpp:287
+#: src/dialogs/dock_settings_dialog.cpp:290
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Standardeffekt"
 
-#: src/dialogs/dock_settings_dialog.cpp:289
+#: src/dialogs/dock_settings_dialog.cpp:292
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Zoomeffekt"
 
-#: src/dialogs/dock_settings_dialog.cpp:291
+#: src/dialogs/dock_settings_dialog.cpp:294
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Unschärfeeffekt"
 
-#: src/dialogs/dock_settings_dialog.cpp:328
+#: src/dialogs/dock_settings_dialog.cpp:331
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Linienindikatoren"
 
-#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:333
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Punktindikatoren"
 
-#: src/dialogs/dock_settings_dialog.cpp:393
+#: src/dialogs/dock_settings_dialog.cpp:396
 msgid "Choose the indicator color"
 msgstr "Wählen Sie die Farbe des Indikators"
 
-#: src/dialogs/dock_settings_dialog.cpp:405
+#: src/dialogs/dock_settings_dialog.cpp:408
 msgid "Select…"
 msgstr "Wählen Sie…"
 
-#: src/dialogs/dock_settings_dialog.cpp:407
+#: src/dialogs/dock_settings_dialog.cpp:410
 msgid "Use Default"
 msgstr "Standard verwenden"
 
-#: src/dialogs/dock_settings_dialog.cpp:415
+#: src/dialogs/dock_settings_dialog.cpp:418
 msgid "Built-in DockLight icon"
 msgstr "Integriertes DockLight-Symbol"
 
-#: src/dialogs/dock_settings_dialog.cpp:449
-msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
-msgstr "Wenden Sie Symbolaktionen und Mausradwechsel auf alle Arbeitsbereiche an"
+#: src/dialogs/dock_settings_dialog.cpp:452
+msgid "Otherwise keep the preview open until the pointer leaves it"
+msgstr "Andernfalls lassen Sie die Vorschau geöffnet, bis der Zeiger sie verlässt"
 
-#: src/dialogs/dock_settings_dialog.cpp:480
+#: src/dialogs/dock_settings_dialog.cpp:459
+msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
+msgstr ""
+"Wenden Sie Symbolaktionen und Mausradwechsel auf alle Arbeitsbereiche an"
+
+#: src/dialogs/dock_settings_dialog.cpp:490
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr ""
 "0 wählt die automatische Größenanpassung; Andernfalls verwenden Sie 64 bis "
 "512 Pixel"
 
-#: src/dialogs/dock_settings_dialog.cpp:497
+#: src/dialogs/dock_settings_dialog.cpp:507
 msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
 msgstr ""
 "Verzögerung, bevor eine Fenstervorschau angezeigt wird, von 0 bis 1000 "
 "Millisekunden"
 
-#: src/dialogs/dock_settings_dialog.cpp:504
+#: src/dialogs/dock_settings_dialog.cpp:514
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Unterkante"
 
-#: src/dialogs/dock_settings_dialog.cpp:506
+#: src/dialogs/dock_settings_dialog.cpp:516
 msgctxt "dock location"
 msgid "Left"
 msgstr "Linker Rand"
 
-#: src/dialogs/dock_settings_dialog.cpp:508
+#: src/dialogs/dock_settings_dialog.cpp:518
 msgctxt "dock location"
 msgid "Top"
 msgstr "Oberkante"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
+#: src/dialogs/dock_settings_dialog.cpp:520
 msgctxt "dock location"
 msgid "Right"
 msgstr "Rechter Rand"
 
-#: src/dialogs/dock_settings_dialog.cpp:573
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgid "-1 selects the automatic radius"
 msgstr "-1 wählt den automatischen Radius"
 
-#: src/dialogs/dock_settings_dialog.cpp:579
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Start-ausgerichtet"
 
-#: src/dialogs/dock_settings_dialog.cpp:581
+#: src/dialogs/dock_settings_dialog.cpp:591
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Zentriert"
 
-#: src/dialogs/dock_settings_dialog.cpp:583
+#: src/dialogs/dock_settings_dialog.cpp:593
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Endbündig"
 
-#: src/dialogs/dock_settings_dialog.cpp:585
+#: src/dialogs/dock_settings_dialog.cpp:595
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Füllen Sie den verfügbaren Platz aus"
 
-#: src/dialogs/dock_settings_dialog.cpp:631
+#: src/dialogs/dock_settings_dialog.cpp:641
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Deaktiviert"
 
-#: src/dialogs/dock_settings_dialog.cpp:633
+#: src/dialogs/dock_settings_dialog.cpp:643
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Automatisch"
 
-#: src/dialogs/dock_settings_dialog.cpp:635
+#: src/dialogs/dock_settings_dialog.cpp:645
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Intelligent"
 
-#: src/dialogs/dock_settings_dialog.cpp:1109
-#: src/dialogs/dock_settings_dialog.cpp:1144
+#: src/dialogs/dock_settings_dialog.cpp:1149
+#: src/dialogs/dock_settings_dialog.cpp:1184
 msgid "Select Home Icon"
 msgstr "Wählen Sie das Home-Symbol"
 
-#: src/dialogs/dock_settings_dialog.cpp:1114
+#: src/dialogs/dock_settings_dialog.cpp:1154
 msgid "_Cancel"
 msgstr "_Abbrechen"
 
-#: src/dialogs/dock_settings_dialog.cpp:1117
+#: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "_Open"
 msgstr "_Offen"
 
-#: src/dialogs/dock_settings_dialog.cpp:1181
+#: src/dialogs/dock_settings_dialog.cpp:1221
 msgid "Image Files"
 msgstr "Bilddateien"
 
@@ -350,17 +361,15 @@ msgstr "Standardmonitor"
 
 #~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
 #~ msgstr ""
-#~ "Legt die Position des Panels fest: "
-#~ "oben, rechts, unten oder links. "
+#~ "Legt die Position des Panels fest: oben, rechts, unten oder links. "
 #~ "Standardmäßig unten"
 
 #~ msgid ""
-#~ "The dock alignment settings are start, "
-#~ "end, center or fill. Default center."
+#~ "The dock alignment settings are start, end, center or fill. Default "
+#~ "center."
 #~ msgstr ""
-#~ "Die Dockausrichtungseinstellungen sind Start, "
-#~ "Ende, Mitte oder Füllen. Standardmäßig "
-#~ "Mitte."
+#~ "Die Dockausrichtungseinstellungen sind Start, Ende, Mitte oder Füllen. "
+#~ "Standardmäßig Mitte."
 
 #~ msgid "parsed values"
 #~ msgstr "Analysierte Werte"
@@ -387,13 +396,11 @@ msgstr "Standardmonitor"
 #~ msgstr "Modell"
 
 #~ msgid ""
-#~ "This program is a lightweight Dock "
-#~ "Launcher for opening common applications "
-#~ "for the GNOME Desktop"
+#~ "This program is a lightweight Dock Launcher for opening common "
+#~ "applications for the GNOME Desktop"
 #~ msgstr ""
-#~ "Docklight ist ein leichtes Dock Panel "
-#~ "zum Öffnen gemeinsamer Anwendungen für den"
-#~ " GNOME Desktop"
+#~ "Docklight ist ein leichtes Dock Panel zum Öffnen gemeinsamer Anwendungen "
+#~ "für den GNOME Desktop"
 
 #~ msgid "Create Launcher"
 #~ msgstr "Launcher erstellen"
@@ -435,8 +442,8 @@ msgstr "Standardmonitor"
 #~ msgid ""
 #~ "The command you enter is invalid.\n"
 #~ "\n"
-#~ "Some Applications are scripts files and "
-#~ "others requires Administrator privileges:\n"
+#~ "Some Applications are scripts files and others requires Administrator "
+#~ "privileges:\n"
 #~ "for scrips files you need to add the bash on the beginning:\n"
 #~ "\n"
 #~ "/bin/sh \"/usr/local/scriptfile.sh\"\n"
@@ -446,15 +453,14 @@ msgstr "Standardmonitor"
 #~ "pkexec Application\n"
 #~ "\n"
 #~ "Please make sure that the Application starts from the command line.\n"
-#~ "Open a terminal and navigate to the"
-#~ " directory where the application is "
+#~ "Open a terminal and navigate to the directory where the application is "
 #~ "locate\n"
 #~ "and trying the command from there..."
 #~ msgstr ""
 #~ "Der Befehl, den Sie eingeben haben, ist ungültig.\n"
 #~ "\n"
-#~ "Einige Anwendungen sind Skriptdateien und "
-#~ "andere benötigen Administrator Privilegien:\n"
+#~ "Einige Anwendungen sind Skriptdateien und andere benötigen Administrator "
+#~ "Privilegien:\n"
 #~ "Für scrips-Dateien müssen Sie den bash am Anfang hinzufügen:\n"
 #~ "\n"
 #~ "/bin/sh \"/usr/local/scriptfile.sh\"\n"
@@ -463,12 +469,10 @@ msgstr "Standardmonitor"
 #~ "Für Anwendungen, die Administratorrechte erfordern:\n"
 #~ "pkexec Aplikation\n"
 #~ "\n"
-#~ "Bitte stellen Sie sicher, dass die "
-#~ "Anwendung über die Befehlszeile gestartet "
-#~ "wird.\n"
-#~ "Öffnen Sie ein Terminal und navigieren "
-#~ "Sie zu dem Verzeichnis, in dem sich"
-#~ " die Anwendung befindet\n"
+#~ "Bitte stellen Sie sicher, dass die Anwendung über die Befehlszeile "
+#~ "gestartet wird.\n"
+#~ "Öffnen Sie ein Terminal und navigieren Sie zu dem Verzeichnis, in dem "
+#~ "sich die Anwendung befindet\n"
 #~ "und versucht den Befehl von dort aus..."
 
 #~ msgid ""
