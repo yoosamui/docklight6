@@ -1,6 +1,6 @@
 // Verifies stateless icon transformations without constructing GTK widgets.
 
-#include "dock_icon_renderer.h"
+#include "rendering/dock_icon_renderer.h"
 #include "layout/dock_layout_metrics.h"
 
 #include <gdkmm/wrap_init.h>

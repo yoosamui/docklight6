@@ -93,8 +93,8 @@ docklight6_SOURCES = \
     dock_settings_dialog.cpp \
     dock_about_dialog.h \
     dock_about_dialog.cpp \
-    dock_icon_renderer.h \
-    dock_icon_renderer.cpp \
+    rendering/dock_icon_renderer.h \
+    rendering/dock_icon_renderer.cpp \
     config/dock_settings.h \
     config/dock_settings.cpp \
     launchers/launcher_manager.h \
@@ -178,8 +178,8 @@ dock_configuration_manager_test_LDADD = \
 
 dock_icon_renderer_test_SOURCES = \
     tests/dock_icon_renderer_test.cpp \
-    dock_icon_renderer.h \
-    dock_icon_renderer.cpp \
+    rendering/dock_icon_renderer.h \
+    rendering/dock_icon_renderer.cpp \
     layout/dock_layout_metrics.h \
     layout/dock_layout_metrics.cpp \
     layout/dock_layout_types.h
