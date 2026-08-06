@@ -148,6 +148,17 @@ void DockSettings::set_display_tooltips(
     m_display_tooltips = enabled;
 }
 
+bool DockSettings::display_preview() const
+{
+    return m_display_preview;
+}
+
+void DockSettings::set_display_preview(
+    bool enabled)
+{
+    m_display_preview = enabled;
+}
+
 bool DockSettings::manage_all_workspaces() const
 {
     return m_manage_all_workspaces;

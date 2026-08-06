@@ -38,6 +38,7 @@ public:
     void set_home_icon_path(
         const std::string &path);
     void set_display_tooltips(bool enabled);
+    void set_display_preview(bool enabled);
     void set_manage_all_workspaces(bool enabled);
 
     const std::string &monitor() const;
@@ -54,6 +55,7 @@ public:
     bool home_icon_enabled() const;
     const std::string &home_icon_path() const;
     bool display_tooltips() const;
+    bool display_preview() const;
     bool manage_all_workspaces() const;
 
 private:
@@ -82,5 +84,6 @@ private:
     bool m_home_icon_enabled = true;
     std::string m_home_icon_path;
     bool m_display_tooltips = true;
+    bool m_display_preview = true;
     bool m_manage_all_workspaces = true;
 };

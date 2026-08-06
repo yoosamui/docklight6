@@ -29,6 +29,58 @@
 namespace
 {
 
+void verifies_executable_alias_resolution()
+{
+    // Exercise the executable-to-desktop-ID alias that originally exposed
+    // duplicate Disks launchers. Keep the test portable to systems where
+    // GNOME Disks is not installed.
+    const auto disks =
+        Gio::DesktopAppInfo::create(
+            "org.gnome.DiskUtility.desktop");
+
+    if (!disks)
+        return;
+
+    GError *error = nullptr;
+
+    auto *temporary_directory =
+        g_dir_make_tmp(
+            "docklight-launcher-alias-XXXXXX",
+            &error);
+
+    assert(temporary_directory);
+    assert(!error);
+
+    const std::string directory =
+        temporary_directory;
+
+    g_free(temporary_directory);
+
+    const auto data_path =
+        directory + "/docklight.data";
+
+    {
+        std::ofstream data_file(data_path);
+        data_file
+            << "gnome-disks.desktop\n";
+        assert(data_file);
+    }
+
+    {
+        LauncherManager manager(data_path);
+
+        assert(
+            manager.normalize_resolved_id(
+                "gnome-disks.desktop") ==
+            "org.gnome.diskutility.desktop");
+        assert(manager.is_attached(
+            "org.gnome.DiskUtility.desktop"));
+    }
+
+    g_remove(data_path.c_str());
+    g_rmdir(directory.c_str());
+}
+
 void verifies_order_and_persistence()
 {
     GError *error = nullptr;
@@ -144,6 +196,7 @@ int main()
 {
     Gio::init();
 
+    verifies_executable_alias_resolution();
     verifies_order_and_persistence();
 
     return 0;

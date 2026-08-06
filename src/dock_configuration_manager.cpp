@@ -103,6 +103,13 @@ display_tooltips = true
 
 )";
 
+// Configuration block added when preview visibility is missing.
+const char *DISPLAY_PREVIEW_SETTING_TEMPLATE = R"(# Display window previews while hovering over running applications.
+# Valid values: true, false
+display_preview = true
+
+)";
+
 // Configuration block added when the workspace-management setting is missing.
 const char *MANAGE_ALL_WORKSPACES_SETTING_TEMPLATE = R"(# Manage application windows across all virtual workspaces.
 # When false, icon actions and mouse-wheel cycling use only the current workspace.
@@ -160,6 +167,10 @@ home_icon_path =
 # Display application tooltips while hovering over dock icons.
 # Valid values: true, false
 display_tooltips = true
+
+# Display window previews while hovering over running applications.
+# Valid values: true, false
+display_preview = true
 
 # Manage application windows across all virtual workspaces.
 # When false, icon actions and mouse-wheel cycling use only the current workspace.
@@ -351,6 +362,8 @@ bool same_configuration(
                right.settings.home_icon_path() &&
            left.settings.display_tooltips() ==
                right.settings.display_tooltips() &&
+           left.settings.display_preview() ==
+               right.settings.display_preview() &&
            left.settings.manage_all_workspaces() ==
                right.settings.manage_all_workspaces() &&
            left.settings.minimum_bottom_workarea_inset() ==
@@ -408,6 +421,9 @@ DockConfigurationManager::DockConfigurationManager()
     ensure_setting(
         "display_tooltips",
         DISPLAY_TOOLTIPS_SETTING_TEMPLATE);
+    ensure_setting(
+        "display_preview",
+        DISPLAY_PREVIEW_SETTING_TEMPLATE);
     ensure_setting(
         "manage_all_workspaces",
         MANAGE_ALL_WORKSPACES_SETTING_TEMPLATE);
@@ -897,6 +913,34 @@ void DockConfigurationManager::reload()
                 "Invalid [dock] display_tooltips '%s'; "
                 "keeping the previous value",
                 display_tooltips.c_str());
+        }
+
+        const auto display_preview =
+            value_for(
+                key_file,
+                "display_preview");
+
+        if (display_preview.empty())
+        {
+            candidate.settings
+                .set_display_preview(
+                    defaults.settings
+                        .display_preview());
+        }
+        else if (const auto enabled =
+                     parse_boolean(
+                         display_preview))
+        {
+            candidate.settings
+                .set_display_preview(
+                    *enabled);
+        }
+        else
+        {
+            g_warning(
+                "Invalid [dock] display_preview '%s'; "
+                "keeping the previous value",
+                display_preview.c_str());
         }
 
         const auto manage_all_workspaces =

@@ -61,6 +61,8 @@ public:
     static std::string
     normalize_desktop_id(
         const std::string &desktop_id);
+    std::string normalize_resolved_id(
+        const std::string &desktop_id) const;
 
 private:
     static void on_applications_changed(
@@ -71,8 +73,6 @@ private:
         Glib::RefPtr<Gio::AppInfo>> &
     applications() const;
 
-    std::string normalize_resolved_id(
-        const std::string &desktop_id) const;
     std::vector<std::string>
     read_config() const;
     bool write_config(

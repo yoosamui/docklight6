@@ -190,7 +190,10 @@ void DockWindow::set_monitor(
 void DockWindow::schedule_show_tooltip(
     DockItem &item)
 {
-    if (item.running())
+    if (item.running() &&
+        m_controller
+            ->settings()
+            .display_preview())
     {
         m_controller->schedule_show_preview(item);
     }
@@ -995,8 +998,8 @@ void DockWindow::synchronize_dock_items()
     {
         normalized_attached_ids
             .push_back(
-                LauncherManager::
-                    normalize_desktop_id(
+                m_launcher_manager
+                    .normalize_resolved_id(
                         desktop_id));
     }
 
@@ -1114,32 +1117,14 @@ void DockWindow::synchronize_dock_items()
             break;
         }
 
-        const auto normalized_id =
-            LauncherManager::
-                normalize_desktop_id(
-                    desktop_id);
-
-        const bool already_present =
-            std::any_of(
-                desired_items.begin(),
-                desired_items.end(),
-                [&normalized_id](
-                    const DesiredItem
-                        &candidate)
-                {
-                    return LauncherManager::
-                               normalize_desktop_id(
-                                   candidate
-                                       .desktop_id) ==
-                           normalized_id;
-                });
-
-        if (already_present)
-            continue;
-
         auto app =
             m_launcher_manager
                 .find_application(
+                    desktop_id);
+
+        auto normalized_id =
+            m_launcher_manager
+                .normalize_resolved_id(
                     desktop_id);
 
         if (!app &&
@@ -1167,6 +1152,29 @@ void DockWindow::synchronize_dock_items()
             !app->get_id().empty()
                 ? app->get_id()
                 : desktop_id;
+
+        normalized_id =
+            LauncherManager::
+                normalize_desktop_id(
+                    canonical_id);
+
+        const bool already_present =
+            std::any_of(
+                desired_items.begin(),
+                desired_items.end(),
+                [&normalized_id](
+                    const DesiredItem
+                        &candidate)
+                {
+                    return LauncherManager::
+                               normalize_desktop_id(
+                                   candidate
+                                       .desktop_id) ==
+                           normalized_id;
+                });
+
+        if (already_present)
+            continue;
 
         desired_items.push_back(
             {canonical_id,
