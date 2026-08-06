@@ -141,7 +141,7 @@ msgstr "Asukoht"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Gradient Background"
-msgstr ""
+msgstr "Gradiendi taust"
 
 #: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
@@ -245,7 +245,7 @@ msgstr "Parem serv"
 
 #: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Use the black-to-gray dock background gradient"
-msgstr ""
+msgstr "Kasutage doki tausta gradienti mustast halliks"
 
 #: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"

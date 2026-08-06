@@ -141,7 +141,7 @@ msgstr "Kokapena"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Gradient Background"
-msgstr ""
+msgstr "Atzeko planoa gradientea"
 
 #: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
@@ -247,7 +247,7 @@ msgstr "Eskuineko ertza"
 
 #: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Use the black-to-gray dock background gradient"
-msgstr ""
+msgstr "Erabili kaia beltzetik griserako atzeko planoaren gradientea"
 
 #: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"

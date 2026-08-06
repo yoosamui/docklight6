@@ -141,7 +141,7 @@ msgstr "מיקום"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Gradient Background"
-msgstr ""
+msgstr "רקע שיפוע"
 
 #: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
@@ -243,7 +243,7 @@ msgstr "קצה ימין"
 
 #: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Use the black-to-gray dock background gradient"
-msgstr ""
+msgstr "השתמש בשיפוע הרקע של העגינה משחור לאפור"
 
 #: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"

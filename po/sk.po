@@ -141,7 +141,7 @@ msgstr "Poloha"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Gradient Background"
-msgstr ""
+msgstr "Pozadie prechodu"
 
 #: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
@@ -246,7 +246,7 @@ msgstr "Pravý okraj"
 
 #: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Use the black-to-gray dock background gradient"
-msgstr ""
+msgstr "Použite prechod pozadia od čiernej k sivej"
 
 #: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"

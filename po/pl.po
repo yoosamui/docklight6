@@ -142,7 +142,7 @@ msgstr "Lokalizacja"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Gradient Background"
-msgstr ""
+msgstr "Tło Gradientowe"
 
 #: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
@@ -249,7 +249,7 @@ msgstr "Prawa krawędź"
 
 #: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Use the black-to-gray dock background gradient"
-msgstr ""
+msgstr "Użyj gradientu tła stacji dokującej od czarnego do szarego"
 
 #: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"

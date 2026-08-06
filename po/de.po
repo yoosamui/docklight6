@@ -152,7 +152,7 @@ msgstr "Standort"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Gradient Background"
-msgstr ""
+msgstr "Hintergrund mit Farbverlauf"
 
 #: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
@@ -260,7 +260,7 @@ msgstr "Rechter Rand"
 
 #: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Use the black-to-gray dock background gradient"
-msgstr ""
+msgstr "Verwenden Sie den Dock-Hintergrundverlauf von Schwarz zu Grau"
 
 #: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"

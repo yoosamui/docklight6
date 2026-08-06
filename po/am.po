@@ -141,7 +141,7 @@ msgstr "አካባቢ"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Gradient Background"
-msgstr ""
+msgstr "የግራዲየንት ዳራ"
 
 #: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
@@ -243,7 +243,7 @@ msgstr "የቀኝ ጠርዝ"
 
 #: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Use the black-to-gray dock background gradient"
-msgstr ""
+msgstr "ከጥቁር ወደ ግራጫ መትከያ ዳራ ቅልመት ይጠቀሙ"
 
 #: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"

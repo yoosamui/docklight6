@@ -141,7 +141,7 @@ msgstr "Feitu'u"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Gradient Background"
-msgstr ""
+msgstr "Fakamuimuitaha 'o e Gradient"
 
 #: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
@@ -250,7 +250,7 @@ msgstr "Tafaʻaki toʻomataʻu"
 
 #: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Use the black-to-gray dock background gradient"
-msgstr ""
+msgstr "Faka'aonga'i 'a e 'uli'uli-ki-hina 'o e taulanga 'o e muimui'i 'o e gradient ."
 
 #: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"

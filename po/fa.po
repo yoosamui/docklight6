@@ -141,7 +141,7 @@ msgstr "مکان"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Gradient Background"
-msgstr ""
+msgstr "پس زمینه گرادیان"
 
 #: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Rounded Corners"
@@ -247,7 +247,7 @@ msgstr "لبه سمت راست"
 
 #: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Use the black-to-gray dock background gradient"
-msgstr ""
+msgstr "از گرادیان پس‌زمینه داک سیاه به خاکستری استفاده کنید"
 
 #: src/dialogs/dock_settings_dialog.cpp:593
 msgid "-1 selects the automatic radius"
