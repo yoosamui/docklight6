@@ -23,7 +23,7 @@
 #include "config/dock_configuration_manager.h"
 #include "dock_monitor_manager.h"
 #include "dock_window.h"
-#include "window_system_controller.h"
+#include "integrations/window_system_controller.h"
 #include "config.h"
 
 #include <gtkmm.h>

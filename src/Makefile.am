@@ -47,8 +47,8 @@ docklight6_SOURCES = \
     windowing/window_backend.cpp \
     windowing/window_registry.h \
     windowing/window_registry.cpp \
-    window_system_controller.h \
-    window_system_controller.cpp \
+    integrations/window_system_controller.h \
+    integrations/window_system_controller.cpp \
     integrations/kwin/kwin_integration_protocol.h \
     integrations/kwin/kwin_protocol_codec.h \
     integrations/kwin/kwin_protocol_codec.cpp \
