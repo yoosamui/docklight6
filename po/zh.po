@@ -1,311 +1,325 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.26\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-07-31 14:36+0700\n"
-"PO-Revision-Date: 2024-12-25 15:37+0700\n"
+"POT-Creation-Date: 2026-08-06 14:07+0700\n"
+"PO-Revision-Date: 2026-08-06 14:30+0700\n"
 "Last-Translator: \n"
-"Language-Team: \n"
 "Language: zh\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.2.2\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
 
-#: src/dock_item.cpp:531
-#, fuzzy
+#: src/dock/dock_item.cpp:269
 msgid "_Attach"
-msgstr "附加"
+msgstr "_固定到底座"
 
-#: src/dock_item.cpp:534
+#: src/dock/dock_item.cpp:272
 msgid "_Open New Window"
-msgstr ""
+msgstr "_打开新窗口"
 
-#: src/dock_item.cpp:537 src/dock_item.cpp:2643
-#, fuzzy
+#: src/dock/dock_home_item.cpp:55 src/dock/dock_item.cpp:275
 msgid "_Close All"
-msgstr "全部關閉"
+msgstr "_关闭全部"
 
-#: src/dock_item.cpp:540
-#, fuzzy
+#: src/dock/dock_item.cpp:278
 msgid "_Minimize"
-msgstr "全部最小化"
+msgstr "_最小化"
 
-#: src/dock_item.cpp:543
-#, fuzzy
+#: src/dock/dock_item.cpp:281
 msgid "_Unminimize"
-msgstr "全部最小化"
+msgstr "_恢复"
 
-#: src/dock_item.cpp:546
-#, fuzzy
+#: src/dock/dock_item.cpp:284
 msgid "_Maximize"
-msgstr "全部最大化"
+msgstr "_最大化"
 
-#: src/dock_item.cpp:2631
+#: src/dock/dock_home_item.cpp:43
 msgid "_Settings"
-msgstr ""
+msgstr "_设置"
 
-#: src/dock_item.cpp:2634
-#, fuzzy
+#: src/dock/dock_home_item.cpp:46
 msgid "_Minimize All"
-msgstr "全部最小化"
+msgstr "_最小化全部"
 
-#: src/dock_item.cpp:2637
-#, fuzzy
+#: src/dock/dock_home_item.cpp:49
 msgid "_Unminimize All"
-msgstr "全部最小化"
+msgstr "_恢复全部"
 
-#: src/dock_item.cpp:2640
-#, fuzzy
+#: src/dock/dock_home_item.cpp:52
 msgid "_Maximize All"
-msgstr "全部最大化"
+msgstr "_最大化所有"
 
-#: src/dock_item.cpp:2646
+#: src/dock/dock_home_item.cpp:58
 msgid "_About"
-msgstr ""
+msgstr "_关于"
 
-#: src/dock_item.cpp:2649
+#: src/dock/dock_home_item.cpp:61
 msgid "_Exit"
-msgstr ""
+msgstr "_退出"
 
-#: src/dock_item.cpp:2753
+#: src/dock/dock_home_item.cpp:167
 msgctxt "dock tooltip"
 msgid "Home"
-msgstr ""
+msgstr "首页"
 
-#: src/dock_item.cpp:3220 src/dock_item.cpp:3245
+#: src/dialogs/dock_settings_dialog.cpp:65 src/dialogs/dock_settings_dialog.cpp:90
 msgid "DockLight Settings"
-msgstr ""
+msgstr "码头灯设置"
 
-#: src/dock_item.cpp:3273 src/dock_item.cpp:4540
-#, fuzzy
+#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_settings_dialog.cpp:118
 msgid "_Close"
-msgstr "全部關閉"
+msgstr "_关闭"
 
-#: src/dock_item.cpp:3285
-#, fuzzy
+#: src/dialogs/dock_settings_dialog.cpp:130
 msgid "Monitor"
-msgstr "監視器"
+msgstr "监视器"
 
-#: src/dock_item.cpp:3287
+#: src/dialogs/dock_settings_dialog.cpp:132
 msgid "Hover Effect"
-msgstr ""
+msgstr "悬停效果"
 
-#: src/dock_item.cpp:3289
+#: src/dialogs/dock_settings_dialog.cpp:134
 msgid "Indicator"
-msgstr ""
+msgstr "指标"
 
-#: src/dock_item.cpp:3291 src/dock_item.cpp:4307 src/dock_item.cpp:4335
+#: src/dialogs/dock_settings_dialog.cpp:136
+#: src/dialogs/dock_settings_dialog.cpp:1257
+#: src/dialogs/dock_settings_dialog.cpp:1285
 msgid "Indicator Color"
-msgstr ""
+msgstr "指示灯颜色"
 
-#: src/dock_item.cpp:3293
+#: src/dialogs/dock_settings_dialog.cpp:138
 msgid "Display Home Icon"
-msgstr ""
+msgstr "显示主页图标"
 
-#: src/dock_item.cpp:3295
+#: src/dialogs/dock_settings_dialog.cpp:140
 msgid "Home Icon"
-msgstr ""
+msgstr "主页图标"
 
-#: src/dock_item.cpp:3297
+#: src/dialogs/dock_settings_dialog.cpp:142
 msgid "Display Tooltips"
-msgstr ""
+msgstr "显示工具提示"
 
-#: src/dock_item.cpp:3299
+#: src/dialogs/dock_settings_dialog.cpp:144
+msgid "Display Preview"
+msgstr "显示预览"
+
+#: src/dialogs/dock_settings_dialog.cpp:146
 msgid "Manage All Workspaces"
-msgstr ""
+msgstr "管理所有工作区"
 
-#: src/dock_item.cpp:3301
+#: src/dialogs/dock_settings_dialog.cpp:148
 msgid "Icon Size"
-msgstr ""
+msgstr "图标大小"
 
-#: src/dock_item.cpp:3303
+#: src/dialogs/dock_settings_dialog.cpp:150
+msgid "Preview Card Height"
+msgstr "预览卡高度"
+
+#: src/dialogs/dock_settings_dialog.cpp:152
+msgid "Preview Show Delay (ms)"
+msgstr "预览显示延迟（毫秒）"
+
+#: src/dialogs/dock_settings_dialog.cpp:154
 msgid "Location"
-msgstr ""
+msgstr "地点"
 
-#: src/dock_item.cpp:3305
+#: src/dialogs/dock_settings_dialog.cpp:156
 msgid "Rounded Corners"
-msgstr ""
+msgstr "圆角"
 
-#: src/dock_item.cpp:3307
+#: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Corner Radius"
-msgstr ""
+msgstr "拐角半径"
 
-#: src/dock_item.cpp:3309
+#: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Alignment"
-msgstr ""
+msgstr "对准"
 
-#: src/dock_item.cpp:3311
+#: src/dialogs/dock_settings_dialog.cpp:162
 msgid "Autohide"
-msgstr ""
+msgstr "自动隐藏"
 
-#: src/dock_item.cpp:3394
+#: src/dialogs/dock_settings_dialog.cpp:248
 msgctxt "monitor identifier"
 msgid "Primary"
-msgstr ""
+msgstr "主显示器"
 
-#: src/dock_item.cpp:3433
+#: src/dialogs/dock_settings_dialog.cpp:287
 msgctxt "hover effect"
 msgid "Standard"
-msgstr ""
+msgstr "标准效果"
 
-#: src/dock_item.cpp:3435
+#: src/dialogs/dock_settings_dialog.cpp:289
 msgctxt "hover effect"
 msgid "Zoom"
-msgstr ""
+msgstr "变焦效果"
 
-#: src/dock_item.cpp:3437
+#: src/dialogs/dock_settings_dialog.cpp:291
 msgctxt "hover effect"
 msgid "Blur"
-msgstr ""
+msgstr "模糊效果"
 
-#: src/dock_item.cpp:3474
+#: src/dialogs/dock_settings_dialog.cpp:328
 msgctxt "running indicator style"
 msgid "Lines"
-msgstr ""
+msgstr "线路指示器"
 
-#: src/dock_item.cpp:3476
+#: src/dialogs/dock_settings_dialog.cpp:330
 msgctxt "running indicator style"
 msgid "Dots"
-msgstr ""
+msgstr "点指示器"
 
-#: src/dock_item.cpp:3539
+#: src/dialogs/dock_settings_dialog.cpp:393
 msgid "Choose the indicator color"
-msgstr ""
+msgstr "选择指示器颜色"
 
-#: src/dock_item.cpp:3551
+#: src/dialogs/dock_settings_dialog.cpp:405
 msgid "Select…"
-msgstr ""
+msgstr "选择…"
 
-#: src/dock_item.cpp:3553
+#: src/dialogs/dock_settings_dialog.cpp:407
 msgid "Use Default"
-msgstr ""
+msgstr "使用默认值"
 
-#: src/dock_item.cpp:3561
+#: src/dialogs/dock_settings_dialog.cpp:415
 msgid "Built-in DockLight icon"
-msgstr ""
+msgstr "内置 DockLight 图标"
 
-#: src/dock_item.cpp:3590
+#: src/dialogs/dock_settings_dialog.cpp:449
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
-msgstr ""
+msgstr "在所有工作区应用图标操作和鼠标滚轮循环"
 
-#: src/dock_item.cpp:3610
+#: src/dialogs/dock_settings_dialog.cpp:480
+msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
+msgstr "0 选择自动调整大小；否则使用 64 到 512 像素"
+
+#: src/dialogs/dock_settings_dialog.cpp:497
+msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
+msgstr "窗口预览出现之前的延迟，从 0 到 1000 毫秒"
+
+#: src/dialogs/dock_settings_dialog.cpp:504
 msgctxt "dock location"
 msgid "Bottom"
-msgstr ""
+msgstr "底边"
 
-#: src/dock_item.cpp:3612
+#: src/dialogs/dock_settings_dialog.cpp:506
 msgctxt "dock location"
 msgid "Left"
-msgstr ""
+msgstr "左边缘"
 
-#: src/dock_item.cpp:3614
+#: src/dialogs/dock_settings_dialog.cpp:508
 msgctxt "dock location"
 msgid "Top"
-msgstr ""
+msgstr "顶边"
 
-#: src/dock_item.cpp:3616
-#, fuzzy
+#: src/dialogs/dock_settings_dialog.cpp:510
 msgctxt "dock location"
 msgid "Right"
-msgstr "高度"
+msgstr "右边缘"
 
-#: src/dock_item.cpp:3679
+#: src/dialogs/dock_settings_dialog.cpp:573
 msgid "-1 selects the automatic radius"
-msgstr ""
+msgstr "-1 选择自动半径"
 
-#: src/dock_item.cpp:3685
+#: src/dialogs/dock_settings_dialog.cpp:579
 msgctxt "dock alignment"
 msgid "Start"
-msgstr ""
+msgstr "起始对齐"
 
-#: src/dock_item.cpp:3687
+#: src/dialogs/dock_settings_dialog.cpp:581
 msgctxt "dock alignment"
 msgid "Center"
-msgstr ""
+msgstr "居中"
 
-#: src/dock_item.cpp:3689
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgctxt "dock alignment"
 msgid "End"
-msgstr ""
+msgstr "末端对齐"
 
-#: src/dock_item.cpp:3691
+#: src/dialogs/dock_settings_dialog.cpp:585
 msgctxt "dock alignment"
 msgid "Fill"
-msgstr ""
+msgstr "填充可用空间"
 
-#: src/dock_item.cpp:3737
+#: src/dialogs/dock_settings_dialog.cpp:631
 msgctxt "autohide mode"
 msgid "None"
-msgstr ""
+msgstr "残疾人"
 
-#: src/dock_item.cpp:3739
+#: src/dialogs/dock_settings_dialog.cpp:633
 msgctxt "autohide mode"
 msgid "Autohide"
-msgstr ""
+msgstr "自动"
 
-#: src/dock_item.cpp:3741
+#: src/dialogs/dock_settings_dialog.cpp:635
 msgctxt "autohide mode"
 msgid "Intellihide"
-msgstr ""
+msgstr "智能化"
 
-#: src/dock_item.cpp:4159 src/dock_item.cpp:4194
+#: src/dialogs/dock_settings_dialog.cpp:1109
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Select Home Icon"
-msgstr ""
+msgstr "选择主页图标"
 
-#: src/dock_item.cpp:4164
+#: src/dialogs/dock_settings_dialog.cpp:1114
 msgid "_Cancel"
-msgstr ""
+msgstr "_取消"
 
-#: src/dock_item.cpp:4167
+#: src/dialogs/dock_settings_dialog.cpp:1117
 msgid "_Open"
-msgstr ""
+msgstr "_打开"
 
-#: src/dock_item.cpp:4231
+#: src/dialogs/dock_settings_dialog.cpp:1181
 msgid "Image Files"
-msgstr ""
+msgstr "图像文件"
 
-#: src/dock_item.cpp:4484 src/dock_item.cpp:4513
+#: src/dialogs/dock_about_dialog.cpp:56 src/dialogs/dock_about_dialog.cpp:85
 msgid "About DockLight"
-msgstr ""
+msgstr "关于 DockLight"
 
-#: src/dock_item.cpp:4550
+#: src/dialogs/dock_about_dialog.cpp:122
 msgid "Version %1"
-msgstr ""
+msgstr "软件版本%1"
 
-#: src/dock_item.cpp:4553
+#: src/dialogs/dock_about_dialog.cpp:125
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui"
 msgstr ""
+"轻量级应用程序坞。\n"
+"作者和维护者：yoosamui"
 
-#: src/dock_monitor_manager.cpp:471
+#: src/monitors/dock_monitor_manager.cpp:471
 msgid "No monitors are available."
-msgstr ""
+msgstr "没有可用的监视器。"
 
-#: src/dock_monitor_manager.cpp:477
+#: src/monitors/dock_monitor_manager.cpp:477
 msgid "Available monitors:"
-msgstr ""
+msgstr "可用显示器："
 
-#: src/dock_monitor_manager.cpp:493
+#: src/monitors/dock_monitor_manager.cpp:493
 msgid "Scale"
-msgstr ""
+msgstr "显示比例"
 
-#: src/dock_monitor_manager.cpp:500
+#: src/monitors/dock_monitor_manager.cpp:500
 msgctxt "monitor status"
 msgid "Primary"
-msgstr ""
+msgstr "主显示器"
 
-#: src/dock_monitor_manager.cpp:510
+#: src/monitors/dock_monitor_manager.cpp:510
 msgctxt "monitor status"
 msgid "default"
-msgstr ""
+msgstr "默认监视器"
 
 #~ msgid "Application start."
 #~ msgstr "應用程式啟動."
@@ -317,7 +331,8 @@ msgstr ""
 #~ msgstr "初始化面板."
 
 #~ msgid ""
-#~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
+#~ "Sets the primary Monitor.Settings are "
+#~ "primary oder the monitor name e.g "
 #~ "DP-3"
 #~ msgstr "設定主要監視器。設定為主要或監視器名稱，例如 DP-3"
 
@@ -325,18 +340,16 @@ msgstr ""
 #~ msgstr "設定面板位置：頂端、右邊、底端或左邊。預設為底端"
 
 #~ msgid ""
-#~ "The dock alignment settings are start, end, center or fill. Default "
-#~ "center."
+#~ "The dock alignment settings are start, "
+#~ "end, center or fill. Default center."
 #~ msgstr "碼頭對齊設定為開始、結束、居中或填滿。預設為居中。"
 
-#~ msgid ""
-#~ "The icon alignment settings are start, end or center. Default center."
+#~ msgid "The icon alignment settings are start, end or center. Default center."
 #~ msgstr "圖示對齊設定為開始、結束或居中。預設為居中。"
 
 #~ msgid "parsed values"
 #~ msgstr "已解析的值"
 
-#, c-format
 #~ msgid "Free the %s object."
 #~ msgstr "釋放 %s 物件。"
 

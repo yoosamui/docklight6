@@ -1,15 +1,18 @@
-
+# Dutch translations for docklight6 package.
+# Copyright (C) 2026 THE docklight6'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the docklight6 package.
+# Automatically generated, 2026.
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: Docklight 6.0.26\n"
+"Project-Id-Version: docklight6 6.0.26\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
 "POT-Creation-Date: 2026-08-06 14:07+0700\n"
 "PO-Revision-Date: 2026-08-06 14:30+0700\n"
-"Last-Translator: \n"
-"Language: ar\n"
-"Language-Team: \n"
-"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
-"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+"Last-Translator: Automatically generated\n"
+"Language: nl\n"
+"Language-Team: none\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -17,368 +20,305 @@ msgstr ""
 
 #: src/dock/dock_item.cpp:269
 msgid "_Attach"
-msgstr "_تثبيت في قفص الاتهام"
+msgstr "_Vastmaken aan dock"
 
 #: src/dock/dock_item.cpp:272
 msgid "_Open New Window"
-msgstr "_فتح نافذة جديدة"
+msgstr "_Nieuw venster openen"
 
 #: src/dock/dock_home_item.cpp:55 src/dock/dock_item.cpp:275
 msgid "_Close All"
-msgstr "_أغلق الكل"
+msgstr "_Sluit alles"
 
 #: src/dock/dock_item.cpp:278
 msgid "_Minimize"
-msgstr "_تصغير"
+msgstr "_Minimaliseren"
 
 #: src/dock/dock_item.cpp:281
 msgid "_Unminimize"
-msgstr "_استعادة"
+msgstr "_Herstellen"
 
 #: src/dock/dock_item.cpp:284
 msgid "_Maximize"
-msgstr "_تعظيم"
+msgstr "_Maximaliseren"
 
 #: src/dock/dock_home_item.cpp:43
 msgid "_Settings"
-msgstr "_الإعدادات"
+msgstr "_Instellingen"
 
 #: src/dock/dock_home_item.cpp:46
 msgid "_Minimize All"
-msgstr "_تصغير الكل"
+msgstr "_Alles minimaliseren"
 
 #: src/dock/dock_home_item.cpp:49
 msgid "_Unminimize All"
-msgstr "_استعادة الكل"
+msgstr "_Alles herstellen"
 
 #: src/dock/dock_home_item.cpp:52
 msgid "_Maximize All"
-msgstr "_تكبير الكل"
+msgstr "_Maximaliseer alles"
 
 #: src/dock/dock_home_item.cpp:58
 msgid "_About"
-msgstr "_حول"
+msgstr "_Over"
 
 #: src/dock/dock_home_item.cpp:61
 msgid "_Exit"
-msgstr "_خروج"
+msgstr "_Afsluiten"
 
 #: src/dock/dock_home_item.cpp:167
 msgctxt "dock tooltip"
 msgid "Home"
-msgstr "الصفحة الرئيسية"
+msgstr "Thuis"
 
 #: src/dialogs/dock_settings_dialog.cpp:65 src/dialogs/dock_settings_dialog.cpp:90
 msgid "DockLight Settings"
-msgstr "إعدادات دوك لايت"
+msgstr "DockLight-instellingen"
 
 #: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_settings_dialog.cpp:118
 msgid "_Close"
-msgstr "_إغلاق"
+msgstr "_Sluiten"
 
 #: src/dialogs/dock_settings_dialog.cpp:130
 msgid "Monitor"
-msgstr "مراقب"
+msgstr "Monitor"
 
 #: src/dialogs/dock_settings_dialog.cpp:132
 msgid "Hover Effect"
-msgstr "تأثير التحويم"
+msgstr "Zweefeffect"
 
 #: src/dialogs/dock_settings_dialog.cpp:134
 msgid "Indicator"
-msgstr "المؤشر"
+msgstr "Indicator"
 
 #: src/dialogs/dock_settings_dialog.cpp:136
 #: src/dialogs/dock_settings_dialog.cpp:1257
 #: src/dialogs/dock_settings_dialog.cpp:1285
 msgid "Indicator Color"
-msgstr "لون المؤشر"
+msgstr "Indicatorkleur"
 
 #: src/dialogs/dock_settings_dialog.cpp:138
 msgid "Display Home Icon"
-msgstr "عرض أيقونة الصفحة الرئيسية"
+msgstr "Geef het Home-pictogram weer"
 
 #: src/dialogs/dock_settings_dialog.cpp:140
 msgid "Home Icon"
-msgstr "أيقونة الصفحة الرئيسية"
+msgstr "Thuispictogram"
 
 #: src/dialogs/dock_settings_dialog.cpp:142
 msgid "Display Tooltips"
-msgstr "عرض تلميحات الأدوات"
+msgstr "Tooltips weergeven"
 
 #: src/dialogs/dock_settings_dialog.cpp:144
 msgid "Display Preview"
-msgstr "معاينة العرض"
+msgstr "Voorbeeld weergeven"
 
 #: src/dialogs/dock_settings_dialog.cpp:146
 msgid "Manage All Workspaces"
-msgstr "إدارة كافة مساحات العمل"
+msgstr "Beheer alle werkruimten"
 
 #: src/dialogs/dock_settings_dialog.cpp:148
 msgid "Icon Size"
-msgstr "حجم الرمز"
+msgstr "Pictogramgrootte"
 
 #: src/dialogs/dock_settings_dialog.cpp:150
 msgid "Preview Card Height"
-msgstr "معاينة ارتفاع البطاقة"
+msgstr "Voorbeeld kaarthoogte"
 
 #: src/dialogs/dock_settings_dialog.cpp:152
 msgid "Preview Show Delay (ms)"
-msgstr "تأخير عرض المعاينة (بالمللي ثانية)"
+msgstr "Vertraging voorbeeldshow (ms)"
 
 #: src/dialogs/dock_settings_dialog.cpp:154
 msgid "Location"
-msgstr "الموقع"
+msgstr "Locatie"
 
 #: src/dialogs/dock_settings_dialog.cpp:156
 msgid "Rounded Corners"
-msgstr "زوايا مدورة"
+msgstr "Afgeronde hoeken"
 
 #: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Corner Radius"
-msgstr "شعاع الزاوية"
+msgstr "Hoekradius"
 
 #: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Alignment"
-msgstr "محاذاة"
+msgstr "Uitlijning"
 
 #: src/dialogs/dock_settings_dialog.cpp:162
 msgid "Autohide"
-msgstr "إخفاء تلقائي"
+msgstr "Automatisch verbergen"
 
 #: src/dialogs/dock_settings_dialog.cpp:248
 msgctxt "monitor identifier"
 msgid "Primary"
-msgstr "جهاز المراقبة الأساسي"
+msgstr "Primaire monitor"
 
 #: src/dialogs/dock_settings_dialog.cpp:287
 msgctxt "hover effect"
 msgid "Standard"
-msgstr "تأثير قياسي"
+msgstr "Standaardeffect"
 
 #: src/dialogs/dock_settings_dialog.cpp:289
 msgctxt "hover effect"
 msgid "Zoom"
-msgstr "تأثير التكبير"
+msgstr "Zoomeffect"
 
 #: src/dialogs/dock_settings_dialog.cpp:291
 msgctxt "hover effect"
 msgid "Blur"
-msgstr "تأثير طمس"
+msgstr "Vervagingseffect"
 
 #: src/dialogs/dock_settings_dialog.cpp:328
 msgctxt "running indicator style"
 msgid "Lines"
-msgstr "مؤشرات الخط"
+msgstr "Lijnindicatoren"
 
 #: src/dialogs/dock_settings_dialog.cpp:330
 msgctxt "running indicator style"
 msgid "Dots"
-msgstr "مؤشرات النقطة"
+msgstr "Puntindicatoren"
 
 #: src/dialogs/dock_settings_dialog.cpp:393
 msgid "Choose the indicator color"
-msgstr "اختر لون المؤشر"
+msgstr "Kies de indicatorkleur"
 
 #: src/dialogs/dock_settings_dialog.cpp:405
 msgid "Select…"
-msgstr "اختر…"
+msgstr "Selecteer…"
 
 #: src/dialogs/dock_settings_dialog.cpp:407
 msgid "Use Default"
-msgstr "استخدم الافتراضي"
+msgstr "Gebruik Standaard"
 
 #: src/dialogs/dock_settings_dialog.cpp:415
 msgid "Built-in DockLight icon"
-msgstr "أيقونة DockLight مدمجة"
+msgstr "Ingebouwd DockLight-pictogram"
 
 #: src/dialogs/dock_settings_dialog.cpp:449
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
-msgstr "قم بتطبيق إجراءات الأيقونات ودورة عجلة الماوس عبر جميع مساحات العمل"
+msgstr "Pas pictogramacties en muiswielbewegingen toe op alle werkruimten"
 
 #: src/dialogs/dock_settings_dialog.cpp:480
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
-msgstr "0 يختار التحجيم التلقائي؛ وإلا استخدم 64 إلى 512 بكسل"
+msgstr "0 selecteert automatisch formaat; gebruik anders 64 tot 512 pixels"
 
 #: src/dialogs/dock_settings_dialog.cpp:497
 msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
-msgstr "التأخير قبل ظهور معاينة النافذة، من 0 إلى 1000 مللي ثانية"
+msgstr ""
+"Vertraging voordat een venstervoorbeeld verschijnt, van 0 tot 1000 "
+"milliseconden"
 
 #: src/dialogs/dock_settings_dialog.cpp:504
 msgctxt "dock location"
 msgid "Bottom"
-msgstr "الحافة السفلية"
+msgstr "Onderrand"
 
 #: src/dialogs/dock_settings_dialog.cpp:506
 msgctxt "dock location"
 msgid "Left"
-msgstr "الحافة اليسرى"
+msgstr "Linkerrand"
 
 #: src/dialogs/dock_settings_dialog.cpp:508
 msgctxt "dock location"
 msgid "Top"
-msgstr "الحافة العلوية"
+msgstr "Bovenrand"
 
 #: src/dialogs/dock_settings_dialog.cpp:510
 msgctxt "dock location"
 msgid "Right"
-msgstr "الحافة اليمنى"
+msgstr "Rechterrand"
 
 #: src/dialogs/dock_settings_dialog.cpp:573
 msgid "-1 selects the automatic radius"
-msgstr "-1 يختار نصف القطر التلقائي"
+msgstr "-1 selecteert de automatische straal"
 
 #: src/dialogs/dock_settings_dialog.cpp:579
 msgctxt "dock alignment"
 msgid "Start"
-msgstr "محاذاة البداية"
+msgstr "Start-uitgelijnd"
 
 #: src/dialogs/dock_settings_dialog.cpp:581
 msgctxt "dock alignment"
 msgid "Center"
-msgstr "توسيط"
+msgstr "Gecentreerd"
 
 #: src/dialogs/dock_settings_dialog.cpp:583
 msgctxt "dock alignment"
 msgid "End"
-msgstr "محاذاة النهاية"
+msgstr "Einduitgelijnd"
 
 #: src/dialogs/dock_settings_dialog.cpp:585
 msgctxt "dock alignment"
 msgid "Fill"
-msgstr "ملء المساحة المتاحة"
+msgstr "Vul de beschikbare ruimte"
 
 #: src/dialogs/dock_settings_dialog.cpp:631
 msgctxt "autohide mode"
 msgid "None"
-msgstr "معطل"
+msgstr "Uitgeschakeld"
 
 #: src/dialogs/dock_settings_dialog.cpp:633
 msgctxt "autohide mode"
 msgid "Autohide"
-msgstr "تلقائي"
+msgstr "Automatisch"
 
 #: src/dialogs/dock_settings_dialog.cpp:635
 msgctxt "autohide mode"
 msgid "Intellihide"
-msgstr "ذكي"
+msgstr "Intelligent"
 
 #: src/dialogs/dock_settings_dialog.cpp:1109
 #: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Select Home Icon"
-msgstr "حدد أيقونة الصفحة الرئيسية"
+msgstr "Selecteer Home-pictogram"
 
 #: src/dialogs/dock_settings_dialog.cpp:1114
 msgid "_Cancel"
-msgstr "_إلغاء"
+msgstr "_Annuleren"
 
 #: src/dialogs/dock_settings_dialog.cpp:1117
 msgid "_Open"
-msgstr "_فتح"
+msgstr "_Openen"
 
 #: src/dialogs/dock_settings_dialog.cpp:1181
 msgid "Image Files"
-msgstr "ملفات الصور"
+msgstr "Afbeeldingsbestanden"
 
 #: src/dialogs/dock_about_dialog.cpp:56 src/dialogs/dock_about_dialog.cpp:85
 msgid "About DockLight"
-msgstr "حول دوك لايت"
+msgstr "Over DockLight"
 
 #: src/dialogs/dock_about_dialog.cpp:122
 msgid "Version %1"
-msgstr "إصدار البرنامج %1"
+msgstr "Softwareversie %1"
 
 #: src/dialogs/dock_about_dialog.cpp:125
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui"
 msgstr ""
-"رصيف تطبيق خفيف الوزن.\n"
-"المؤلف والمشرف: yoosamui"
+"Een lichtgewicht applicatiedock.\n"
+"Auteur en beheerder: yoosamui"
 
 #: src/monitors/dock_monitor_manager.cpp:471
 msgid "No monitors are available."
-msgstr "لا توجد شاشات متوفرة."
+msgstr "Er zijn geen monitoren beschikbaar."
 
 #: src/monitors/dock_monitor_manager.cpp:477
 msgid "Available monitors:"
-msgstr "الشاشات المتاحة:"
+msgstr "Beschikbare monitoren:"
 
 #: src/monitors/dock_monitor_manager.cpp:493
 msgid "Scale"
-msgstr "مقياس العرض"
+msgstr "Schaal weergeven"
 
 #: src/monitors/dock_monitor_manager.cpp:500
 msgctxt "monitor status"
 msgid "Primary"
-msgstr "جهاز المراقبة الأساسي"
+msgstr "Primaire monitor"
 
 #: src/monitors/dock_monitor_manager.cpp:510
 msgctxt "monitor status"
 msgid "default"
-msgstr "جهاز العرض الافتراضي"
-
-#~ msgid "Application start."
-#~ msgstr "بدء التطبيق."
-
-#~ msgid "Application activated."
-#~ msgstr "تم تنشيط التطبيق."
-
-#~ msgid "Initialize panel."
-#~ msgstr "تهيئة اللوحة."
-
-#~ msgid ""
-#~ "Sets the primary Monitor.Settings are "
-#~ "primary oder the monitor name e.g "
-#~ "DP-3"
-#~ msgstr "يضبط الشاشة الرئيسية. الإعدادات هي أساسية أو اسم الشاشة مثل DP-3"
-
-#~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
-#~ msgstr "يضبط موقع اللوحة: أعلى أو يمين أو أسفل أو يسار. الافتراضي أسفل"
-
-#~ msgid ""
-#~ "The dock alignment settings are start, "
-#~ "end, center or fill. Default center."
-#~ msgstr "إعدادات محاذاة الرصيف هي بداية أو نهاية أو مركز أو ملء. الافتراضي مركز."
-
-#~ msgid "The icon alignment settings are start, end or center. Default center."
-#~ msgstr "إعدادات محاذاة الأيقونة هي بداية أو نهاية أو مركز. الافتراضي مركز."
-
-#~ msgid "parsed values"
-#~ msgstr "قيم تم تحليلها تحرير كائن %s"
-
-#~ msgid "Free the %s object."
-#~ msgstr "تحرير كائن %s."
-
-#~ msgid "Display detected monitors"
-#~ msgstr "عرض الشاشات المكتشفة"
-
-#~ msgid "Default monitor"
-#~ msgstr "الشاشة الافتراضية"
-
-#~ msgid "Geometry"
-#~ msgstr "هندسة"
-
-#~ msgid "Workarea"
-#~ msgstr "منطقة العمل"
-
-#~ msgid "Width"
-#~ msgstr "عرض"
-
-#~ msgid "Model"
-#~ msgstr "نموذج"
-
-#~ msgid "Quit"
-#~ msgstr "الخروج"
-
-#~ msgid "Close all windows"
-#~ msgstr "إغلاق جميع النوافذ"
-
-#~ msgid "New"
-#~ msgstr "جديد"
-
-#~ msgid "Minimize all windows"
-#~ msgstr "تكبيرتصغير"
-
-#~ msgid "Maximinize all windows"
-#~ msgstr "تكبير"
+msgstr "Standaardmonitor"

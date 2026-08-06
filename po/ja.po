@@ -1,308 +1,321 @@
+
 msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.26\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-07-31 14:36+0700\n"
-"PO-Revision-Date: 2024-12-27 22:50+0700\n"
+"POT-Creation-Date: 2026-08-06 14:07+0700\n"
+"PO-Revision-Date: 2026-08-06 14:30+0700\n"
 "Last-Translator: \n"
+"Language: ja\n"
 "Language-Team: \n"
-"Language: ja_JP\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.2.2\n"
-"X-Poedit-Basepath: .\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
 
-#: src/dock_item.cpp:531
-#, fuzzy
+#: src/dock/dock_item.cpp:269
 msgid "_Attach"
-msgstr "添付"
+msgstr "_ドックにピン留め"
 
-#: src/dock_item.cpp:534
+#: src/dock/dock_item.cpp:272
 msgid "_Open New Window"
-msgstr ""
+msgstr "_新しいウィンドウを開く"
 
-#: src/dock_item.cpp:537 src/dock_item.cpp:2643
-#, fuzzy
+#: src/dock/dock_home_item.cpp:55 src/dock/dock_item.cpp:275
 msgid "_Close All"
-msgstr "すべて閉じる"
+msgstr "_すべて閉じる"
 
-#: src/dock_item.cpp:540
-#, fuzzy
+#: src/dock/dock_item.cpp:278
 msgid "_Minimize"
-msgstr "すべてを最小化"
+msgstr "_最小化"
 
-#: src/dock_item.cpp:543
-#, fuzzy
+#: src/dock/dock_item.cpp:281
 msgid "_Unminimize"
-msgstr "すべてを最小化"
+msgstr "_復元"
 
-#: src/dock_item.cpp:546
-#, fuzzy
+#: src/dock/dock_item.cpp:284
 msgid "_Maximize"
-msgstr "すべてを最小化"
+msgstr "_最大化"
 
-#: src/dock_item.cpp:2631
+#: src/dock/dock_home_item.cpp:43
 msgid "_Settings"
-msgstr ""
+msgstr "_設定"
 
-#: src/dock_item.cpp:2634
-#, fuzzy
+#: src/dock/dock_home_item.cpp:46
 msgid "_Minimize All"
-msgstr "すべてを最小化"
+msgstr "_すべてを最小化"
 
-#: src/dock_item.cpp:2637
-#, fuzzy
+#: src/dock/dock_home_item.cpp:49
 msgid "_Unminimize All"
-msgstr "すべてを最小化"
+msgstr "_すべて復元"
 
-#: src/dock_item.cpp:2640
-#, fuzzy
+#: src/dock/dock_home_item.cpp:52
 msgid "_Maximize All"
-msgstr "すべてを最小化"
+msgstr "_すべてを最大化"
 
-#: src/dock_item.cpp:2646
+#: src/dock/dock_home_item.cpp:58
 msgid "_About"
-msgstr ""
+msgstr "_概要"
 
-#: src/dock_item.cpp:2649
+#: src/dock/dock_home_item.cpp:61
 msgid "_Exit"
-msgstr ""
+msgstr "_終了"
 
-#: src/dock_item.cpp:2753
+#: src/dock/dock_home_item.cpp:167
 msgctxt "dock tooltip"
 msgid "Home"
-msgstr ""
+msgstr "ホーム"
 
-#: src/dock_item.cpp:3220 src/dock_item.cpp:3245
+#: src/dialogs/dock_settings_dialog.cpp:65 src/dialogs/dock_settings_dialog.cpp:90
 msgid "DockLight Settings"
-msgstr ""
+msgstr "ドックライト設定"
 
-#: src/dock_item.cpp:3273 src/dock_item.cpp:4540
-#, fuzzy
+#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_settings_dialog.cpp:118
 msgid "_Close"
-msgstr "すべて閉じる"
+msgstr "_閉じる"
 
-#: src/dock_item.cpp:3285
-#, fuzzy
+#: src/dialogs/dock_settings_dialog.cpp:130
 msgid "Monitor"
 msgstr "モニター"
 
-#: src/dock_item.cpp:3287
+#: src/dialogs/dock_settings_dialog.cpp:132
 msgid "Hover Effect"
-msgstr ""
+msgstr "ホバー効果"
 
-#: src/dock_item.cpp:3289
+#: src/dialogs/dock_settings_dialog.cpp:134
 msgid "Indicator"
-msgstr ""
+msgstr "インジケーター"
 
-#: src/dock_item.cpp:3291 src/dock_item.cpp:4307 src/dock_item.cpp:4335
+#: src/dialogs/dock_settings_dialog.cpp:136
+#: src/dialogs/dock_settings_dialog.cpp:1257
+#: src/dialogs/dock_settings_dialog.cpp:1285
 msgid "Indicator Color"
-msgstr ""
+msgstr "インジケーターの色"
 
-#: src/dock_item.cpp:3293
+#: src/dialogs/dock_settings_dialog.cpp:138
 msgid "Display Home Icon"
-msgstr ""
+msgstr "ホームアイコンを表示"
 
-#: src/dock_item.cpp:3295
+#: src/dialogs/dock_settings_dialog.cpp:140
 msgid "Home Icon"
-msgstr ""
+msgstr "ホームアイコン"
 
-#: src/dock_item.cpp:3297
+#: src/dialogs/dock_settings_dialog.cpp:142
 msgid "Display Tooltips"
-msgstr ""
+msgstr "ツールチップの表示"
 
-#: src/dock_item.cpp:3299
+#: src/dialogs/dock_settings_dialog.cpp:144
+msgid "Display Preview"
+msgstr "プレビューを表示する"
+
+#: src/dialogs/dock_settings_dialog.cpp:146
 msgid "Manage All Workspaces"
-msgstr ""
+msgstr "すべてのワークスペースを管理する"
 
-#: src/dock_item.cpp:3301
+#: src/dialogs/dock_settings_dialog.cpp:148
 msgid "Icon Size"
-msgstr ""
+msgstr "アイコンのサイズ"
 
-#: src/dock_item.cpp:3303
+#: src/dialogs/dock_settings_dialog.cpp:150
+msgid "Preview Card Height"
+msgstr "プレビューカードの高さ"
+
+#: src/dialogs/dock_settings_dialog.cpp:152
+msgid "Preview Show Delay (ms)"
+msgstr "プレビュー表示の遅延 (ミリ秒)"
+
+#: src/dialogs/dock_settings_dialog.cpp:154
 msgid "Location"
-msgstr ""
+msgstr "場所"
 
-#: src/dock_item.cpp:3305
+#: src/dialogs/dock_settings_dialog.cpp:156
 msgid "Rounded Corners"
-msgstr ""
+msgstr "丸い角"
 
-#: src/dock_item.cpp:3307
+#: src/dialogs/dock_settings_dialog.cpp:158
 msgid "Corner Radius"
-msgstr ""
+msgstr "コーナー半径"
 
-#: src/dock_item.cpp:3309
+#: src/dialogs/dock_settings_dialog.cpp:160
 msgid "Alignment"
-msgstr ""
+msgstr "位置合わせ"
 
-#: src/dock_item.cpp:3311
+#: src/dialogs/dock_settings_dialog.cpp:162
 msgid "Autohide"
-msgstr ""
+msgstr "自動非表示"
 
-#: src/dock_item.cpp:3394
+#: src/dialogs/dock_settings_dialog.cpp:248
 msgctxt "monitor identifier"
 msgid "Primary"
-msgstr ""
+msgstr "プライマリモニター"
 
-#: src/dock_item.cpp:3433
+#: src/dialogs/dock_settings_dialog.cpp:287
 msgctxt "hover effect"
 msgid "Standard"
-msgstr ""
+msgstr "標準エフェクト"
 
-#: src/dock_item.cpp:3435
+#: src/dialogs/dock_settings_dialog.cpp:289
 msgctxt "hover effect"
 msgid "Zoom"
-msgstr ""
+msgstr "ズーム効果"
 
-#: src/dock_item.cpp:3437
+#: src/dialogs/dock_settings_dialog.cpp:291
 msgctxt "hover effect"
 msgid "Blur"
-msgstr ""
+msgstr "ぼかし効果"
 
-#: src/dock_item.cpp:3474
+#: src/dialogs/dock_settings_dialog.cpp:328
 msgctxt "running indicator style"
 msgid "Lines"
-msgstr ""
+msgstr "ラインインジケーター"
 
-#: src/dock_item.cpp:3476
+#: src/dialogs/dock_settings_dialog.cpp:330
 msgctxt "running indicator style"
 msgid "Dots"
-msgstr ""
+msgstr "ドットインジケーター"
 
-#: src/dock_item.cpp:3539
+#: src/dialogs/dock_settings_dialog.cpp:393
 msgid "Choose the indicator color"
-msgstr ""
+msgstr "インジケーターの色を選択してください"
 
-#: src/dock_item.cpp:3551
+#: src/dialogs/dock_settings_dialog.cpp:405
 msgid "Select…"
-msgstr ""
+msgstr "選択してください…"
 
-#: src/dock_item.cpp:3553
+#: src/dialogs/dock_settings_dialog.cpp:407
 msgid "Use Default"
-msgstr ""
+msgstr "デフォルトを使用"
 
-#: src/dock_item.cpp:3561
+#: src/dialogs/dock_settings_dialog.cpp:415
 msgid "Built-in DockLight icon"
-msgstr ""
+msgstr "内蔵DockLightアイコン"
 
-#: src/dock_item.cpp:3590
+#: src/dialogs/dock_settings_dialog.cpp:449
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
-msgstr ""
+msgstr "すべてのワークスペースにアイコン アクションとマウス ホイールの循環を適用します"
 
-#: src/dock_item.cpp:3610
+#: src/dialogs/dock_settings_dialog.cpp:480
+msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
+msgstr "0 は自動サイズ変更を選択します。それ以外の場合は 64 ～ 512 ピクセルを使用します"
+
+#: src/dialogs/dock_settings_dialog.cpp:497
+msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
+msgstr "ウィンドウのプレビューが表示されるまでの遅延 (0 ～ 1000 ミリ秒)"
+
+#: src/dialogs/dock_settings_dialog.cpp:504
 msgctxt "dock location"
 msgid "Bottom"
-msgstr ""
+msgstr "下端"
 
-#: src/dock_item.cpp:3612
+#: src/dialogs/dock_settings_dialog.cpp:506
 msgctxt "dock location"
 msgid "Left"
-msgstr ""
+msgstr "左端"
 
-#: src/dock_item.cpp:3614
+#: src/dialogs/dock_settings_dialog.cpp:508
 msgctxt "dock location"
 msgid "Top"
-msgstr ""
+msgstr "上端"
 
-#: src/dock_item.cpp:3616
-#, fuzzy
+#: src/dialogs/dock_settings_dialog.cpp:510
 msgctxt "dock location"
 msgid "Right"
-msgstr "高さ"
+msgstr "右端"
 
-#: src/dock_item.cpp:3679
+#: src/dialogs/dock_settings_dialog.cpp:573
 msgid "-1 selects the automatic radius"
-msgstr ""
+msgstr "-1 は自動半径を選択します"
 
-#: src/dock_item.cpp:3685
+#: src/dialogs/dock_settings_dialog.cpp:579
 msgctxt "dock alignment"
 msgid "Start"
-msgstr ""
+msgstr "開始位置揃え"
 
-#: src/dock_item.cpp:3687
+#: src/dialogs/dock_settings_dialog.cpp:581
 msgctxt "dock alignment"
 msgid "Center"
-msgstr ""
+msgstr "中央揃え"
 
-#: src/dock_item.cpp:3689
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgctxt "dock alignment"
 msgid "End"
-msgstr ""
+msgstr "端揃え"
 
-#: src/dock_item.cpp:3691
+#: src/dialogs/dock_settings_dialog.cpp:585
 msgctxt "dock alignment"
 msgid "Fill"
-msgstr ""
+msgstr "利用可能なスペースを埋める"
 
-#: src/dock_item.cpp:3737
+#: src/dialogs/dock_settings_dialog.cpp:631
 msgctxt "autohide mode"
 msgid "None"
-msgstr ""
+msgstr "障害者"
 
-#: src/dock_item.cpp:3739
+#: src/dialogs/dock_settings_dialog.cpp:633
 msgctxt "autohide mode"
 msgid "Autohide"
-msgstr ""
+msgstr "自動"
 
-#: src/dock_item.cpp:3741
+#: src/dialogs/dock_settings_dialog.cpp:635
 msgctxt "autohide mode"
 msgid "Intellihide"
-msgstr ""
+msgstr "インテリジェント"
 
-#: src/dock_item.cpp:4159 src/dock_item.cpp:4194
+#: src/dialogs/dock_settings_dialog.cpp:1109
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Select Home Icon"
-msgstr ""
+msgstr "ホームアイコンを選択"
 
-#: src/dock_item.cpp:4164
+#: src/dialogs/dock_settings_dialog.cpp:1114
 msgid "_Cancel"
-msgstr ""
+msgstr "_キャンセル"
 
-#: src/dock_item.cpp:4167
-#, fuzzy
+#: src/dialogs/dock_settings_dialog.cpp:1117
 msgid "_Open"
-msgstr "新規"
+msgstr "_開く"
 
-#: src/dock_item.cpp:4231
+#: src/dialogs/dock_settings_dialog.cpp:1181
 msgid "Image Files"
-msgstr ""
+msgstr "画像ファイル"
 
-#: src/dock_item.cpp:4484 src/dock_item.cpp:4513
+#: src/dialogs/dock_about_dialog.cpp:56 src/dialogs/dock_about_dialog.cpp:85
 msgid "About DockLight"
-msgstr ""
+msgstr "ドックライトについて"
 
-#: src/dock_item.cpp:4550
+#: src/dialogs/dock_about_dialog.cpp:122
 msgid "Version %1"
-msgstr ""
+msgstr "ソフトウェアバージョン %1"
 
-#: src/dock_item.cpp:4553
+#: src/dialogs/dock_about_dialog.cpp:125
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui"
 msgstr ""
+"軽量のアプリケーション ドック。\n"
+"作成者および管理者: yoosamui"
 
-#: src/dock_monitor_manager.cpp:471
+#: src/monitors/dock_monitor_manager.cpp:471
 msgid "No monitors are available."
-msgstr ""
+msgstr "モニターはご利用いただけません。"
 
-#: src/dock_monitor_manager.cpp:477
+#: src/monitors/dock_monitor_manager.cpp:477
 msgid "Available monitors:"
-msgstr ""
+msgstr "利用可能なモニター:"
 
-#: src/dock_monitor_manager.cpp:493
+#: src/monitors/dock_monitor_manager.cpp:493
 msgid "Scale"
-msgstr ""
+msgstr "表示スケール"
 
-#: src/dock_monitor_manager.cpp:500
+#: src/monitors/dock_monitor_manager.cpp:500
 msgctxt "monitor status"
 msgid "Primary"
-msgstr ""
+msgstr "プライマリモニター"
 
-#: src/dock_monitor_manager.cpp:510
+#: src/monitors/dock_monitor_manager.cpp:510
 msgctxt "monitor status"
 msgid "default"
-msgstr ""
+msgstr "デフォルトのモニター"
 
 #~ msgid "Application start."
 #~ msgstr "アプリケーションの起動."
@@ -314,30 +327,25 @@ msgstr ""
 #~ msgstr "パネルの初期化."
 
 #~ msgid ""
-#~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
+#~ "Sets the primary Monitor.Settings are "
+#~ "primary oder the monitor name e.g "
 #~ "DP-3"
-#~ msgstr ""
-#~ "プライマリモニターを設定します。設定はプライマリまたはモニター名 (例: "
-#~ "DP-3)"
+#~ msgstr "プライマリモニターを設定します。設定はプライマリまたはモニター名 (例: DP-3)"
 
 #~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
 #~ msgstr "パネルの位置を設定します: 上、右、下、または左。デフォルトは下"
 
 #~ msgid ""
-#~ "The dock alignment settings are start, end, center or fill. Default "
-#~ "center."
-#~ msgstr ""
-#~ "ドックの配置設定は、開始、終了、中央、または塗りつぶしです。デフォルトは中"
-#~ "央."
+#~ "The dock alignment settings are start, "
+#~ "end, center or fill. Default center."
+#~ msgstr "ドックの配置設定は、開始、終了、中央、または塗りつぶしです。デフォルトは中央."
 
-#~ msgid ""
-#~ "The icon alignment settings are start, end or center. Default center."
+#~ msgid "The icon alignment settings are start, end or center. Default center."
 #~ msgstr "アイコンの配置設定は、開始、終了、または中央です。デフォルトは中央."
 
 #~ msgid "parsed values"
 #~ msgstr "解析された値"
 
-#, c-format
 #~ msgid "Free the %s object."
 #~ msgstr "Free the %s object."
 

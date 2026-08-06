@@ -30,15 +30,29 @@ make -C "$DOCKLIGHT_BUILD_DIR" install
 # relative or build-tree Exec path. Because user entries override /usr/local,
 # update that entry when it exists so KWin resolves the same executable and
 # permissions as the system installation.
-if [ -n "$SUDO_USER" ]; then
-	DOCKLIGHT_USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-	DOCKLIGHT_USER_DESKTOP="$DOCKLIGHT_USER_HOME/.local/share/applications/org.docklight6.desktop"
+if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+    DOCKLIGHT_USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+    DOCKLIGHT_USER_ID=$(id -u "$SUDO_USER")
+    DOCKLIGHT_USER_APPLICATIONS="$DOCKLIGHT_USER_HOME/.local/share/applications"
+    DOCKLIGHT_USER_DESKTOP="$DOCKLIGHT_USER_APPLICATIONS/org.docklight6.desktop"
 
-	if [ -f "$DOCKLIGHT_USER_DESKTOP" ]; then
-		sudo -u "$SUDO_USER" install -m 0644 \
-			data/org.docklight6.desktop \
-			"$DOCKLIGHT_USER_DESKTOP"
-	fi
+    sudo -H -u "$SUDO_USER" \
+        mkdir -p "$DOCKLIGHT_USER_APPLICATIONS"
+
+    sudo -H -u "$SUDO_USER" \
+        install -m 0644 \
+        data/org.docklight6.desktop \
+        "$DOCKLIGHT_USER_DESKTOP"
+
+    sudo -H -u "$SUDO_USER" env \
+        HOME="$DOCKLIGHT_USER_HOME" \
+        XDG_DATA_DIRS="/usr/local/share:/usr/share" \
+        XDG_RUNTIME_DIR="/run/user/$DOCKLIGHT_USER_ID" \
+        DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$DOCKLIGHT_USER_ID/bus" \
+        kbuildsycoca6 --noincremental
+else
+    echo "Warning: cannot register DockLight for the desktop user."
+    echo "Run this installer through sudo from the Plasma user account."
 fi
 
 # KWin authorizes restricted Wayland interfaces through the installed desktop
