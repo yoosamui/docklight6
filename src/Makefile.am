@@ -98,9 +98,14 @@ docklight6_SOURCES = \
     config/dock_settings.h \
     config/dock_settings.cpp \
     launcher_manager.cpp \
-    dock_layout_geometry.cpp \
-    dock_layout_metrics.cpp \
-    dock_layout_engine.cpp \
+    layout/dock_layout_types.h \
+    layout/dock_window_geometry.h \
+    layout/dock_layout_geometry.h \
+    layout/dock_layout_geometry.cpp \
+    layout/dock_layout_metrics.h \
+    layout/dock_layout_metrics.cpp \
+    layout/dock_layout_engine.h \
+    layout/dock_layout_engine.cpp \
     dock_tooltip_window.cpp \
     dock_item.cpp
 
@@ -141,13 +146,13 @@ dock_application_controller_test_LDADD = \
 
 dock_autohide_layout_test_SOURCES = \
     tests/dock_autohide_layout_test.cpp \
-    dock_layout_types.h \
-    dock_window_geometry.h \
+    layout/dock_layout_types.h \
+    layout/dock_window_geometry.h \
     managed_window.h \
     dock_intellihide_policy.h \
     dock_intellihide_policy.cpp \
-    dock_layout_engine.h \
-    dock_layout_engine.cpp
+    layout/dock_layout_engine.h \
+    layout/dock_layout_engine.cpp
 
 dock_autohide_layout_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)
@@ -160,7 +165,7 @@ dock_configuration_manager_test_SOURCES = \
     config/dock_configuration.h \
     config/dock_configuration_manager.h \
     config/dock_configuration_manager.cpp \
-    dock_layout_types.h \
+    layout/dock_layout_types.h \
     config/dock_settings.h \
     config/dock_settings.cpp
 
@@ -174,9 +179,9 @@ dock_icon_renderer_test_SOURCES = \
     tests/dock_icon_renderer_test.cpp \
     dock_icon_renderer.h \
     dock_icon_renderer.cpp \
-    dock_layout_metrics.h \
-    dock_layout_metrics.cpp \
-    dock_layout_types.h
+    layout/dock_layout_metrics.h \
+    layout/dock_layout_metrics.cpp \
+    layout/dock_layout_types.h
 
 dock_icon_renderer_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)

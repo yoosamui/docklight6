@@ -28,7 +28,7 @@
 #include "dock_home_item.h"
 #include "dock_intellihide_policy.h"
 #include "dock_item.h"
-#include "dock_layout_metrics.h"
+#include "layout/dock_layout_metrics.h"
 #include "dock_media_playback_monitor.h"
 #include "dock_preview_window.h"
 #include "dock_window.h"

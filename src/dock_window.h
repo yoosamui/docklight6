@@ -31,10 +31,10 @@
 
 #include "config/dock_configuration.h"
 #include "dock_item.h"
-#include "dock_layout_metrics.h"
-#include "dock_layout_types.h"
+#include "layout/dock_layout_metrics.h"
+#include "layout/dock_layout_types.h"
 #include "dock_tooltip_window.h"
-#include "dock_window_geometry.h"
+#include "layout/dock_window_geometry.h"
 #include "launcher_manager.h"
 
 #include <gdkmm/monitor.h>

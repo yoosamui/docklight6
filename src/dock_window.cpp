@@ -25,7 +25,7 @@
 #include "dock_home_item.h"
 
 #include "dock_constants.h"
-#include "dock_layout_metrics.h"
+#include "layout/dock_layout_metrics.h"
 #include "dock_window_controller.h"
 #include "launcher_manager.h"
 #include "running_application.h"

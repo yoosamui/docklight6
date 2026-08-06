@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "dock_layout_types.h"
+#include "layout/dock_layout_types.h"
 #include "dock_reveal_window.h"
 
 #include <gdkmm/monitor.h>

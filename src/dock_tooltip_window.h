@@ -28,8 +28,8 @@
 
 #pragma once
 
-#include "dock_layout_metrics.h"
-#include "dock_layout_types.h"
+#include "layout/dock_layout_metrics.h"
+#include "layout/dock_layout_types.h"
 
 #include <gdkmm/monitor.h>
 #include <glibmm/ustring.h>

@@ -5,7 +5,7 @@
 // ------------------------------------------------------------
 
 #include "dock_icon_renderer.h"
-#include "dock_layout_metrics.h"
+#include "layout/dock_layout_metrics.h"
 
 #include <algorithm>
 
@@ -314,4 +314,3 @@ DockIconRenderer::create_blur_frames(
 
     return frames;
 }
-

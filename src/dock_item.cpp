@@ -23,7 +23,7 @@
 #include "dock_item.h"
 #include "dock_constants.h"
 #include "dock_icon_renderer.h"
-#include "dock_layout_metrics.h"
+#include "layout/dock_layout_metrics.h"
 #include "dock_window.h"
 #include "window_registry.h"
 

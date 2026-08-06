@@ -7,7 +7,7 @@
 #include "dock_home_item.h"
 #include "dock_about_dialog.h"
 #include "dock_constants.h"
-#include "dock_layout_metrics.h"
+#include "layout/dock_layout_metrics.h"
 #include "dock_settings_dialog.h"
 #include "dock_window.h"
 #include "window_registry.h"

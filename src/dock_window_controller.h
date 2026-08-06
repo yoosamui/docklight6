@@ -31,8 +31,8 @@
 #pragma once
 
 #include "config/dock_configuration.h"
-#include "dock_layout_engine.h"
-#include "dock_layout_geometry.h"
+#include "layout/dock_layout_engine.h"
+#include "layout/dock_layout_geometry.h"
 #include "managed_window.h"
 
 #include <gdkmm/monitor.h>

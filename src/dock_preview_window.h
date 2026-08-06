@@ -3,7 +3,7 @@
 #pragma once
 
 #include "dock_application_controller.h"
-#include "dock_layout_types.h"
+#include "layout/dock_layout_types.h"
 #include "dock_window_stream_provider.h"
 #include "dock_window_thumbnail_provider.h"
 

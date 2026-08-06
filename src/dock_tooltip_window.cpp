@@ -23,7 +23,7 @@
 #include "dock_tooltip_window.h"
 
 #include "dock_constants.h"
-#include "dock_layout_metrics.h"
+#include "layout/dock_layout_metrics.h"
 
 #include <gtk-layer-shell.h>
 

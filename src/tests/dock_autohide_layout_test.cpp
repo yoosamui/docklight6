@@ -1,6 +1,6 @@
 // Verifies screen reservation and edge placement for autohiding docks.
 
-#include "dock_layout_engine.h"
+#include "layout/dock_layout_engine.h"
 #include "dock_intellihide_policy.h"
 
 #include <cassert>

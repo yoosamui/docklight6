@@ -30,7 +30,7 @@
 #pragma once
 
 #include "dock_application_controller.h"
-#include "dock_layout_types.h"
+#include "layout/dock_layout_types.h"
 
 #include <gtkmm.h>
 #include <sigc++/connection.h>
