@@ -22,6 +22,7 @@
 
 #include "window_system_controller.h"
 
+#include "docklight_log.h"
 #include "integrations/kwin/kwin_integration_service.h"
 #include "integrations/kwin/kwin_script_manager.h"
 #include "integrations/kwin/kwin_window_backend.h"
@@ -77,6 +78,114 @@ bool identifies_kde(
                std::string::npos;
 }
 
+std::string detected_desktop()
+{
+    auto desktop = environment_value(
+        "XDG_CURRENT_DESKTOP");
+
+    if (desktop.empty())
+    {
+        desktop = environment_value(
+            "XDG_SESSION_DESKTOP");
+    }
+
+    if (desktop.empty())
+    {
+        desktop = environment_value(
+            "DESKTOP_SESSION");
+    }
+
+    return desktop.empty()
+               ? "unknown"
+               : desktop;
+}
+
+std::string detected_window_manager(
+    const std::string &desktop)
+{
+    if (identifies_kde(desktop) ||
+        lowercase(
+            environment_value(
+                "KDE_FULL_SESSION")) ==
+            "true")
+    {
+        return "KWin";
+    }
+
+    const auto normalized =
+        lowercase(desktop);
+
+    if (normalized.find("gnome") !=
+        std::string::npos)
+    {
+        return "Mutter";
+    }
+
+    if (normalized.find("cinnamon") !=
+        std::string::npos)
+    {
+        return "Muffin";
+    }
+
+    if (normalized.find("xfce") !=
+        std::string::npos)
+    {
+        return "Xfwm4";
+    }
+
+    if (normalized.find("mate") !=
+        std::string::npos)
+    {
+        return "Marco";
+    }
+
+    return "unknown";
+}
+
+std::string detected_compositor()
+{
+    const auto session_type =
+        lowercase(
+            environment_value(
+                "XDG_SESSION_TYPE"));
+
+    if (session_type == "wayland" ||
+        !environment_value(
+             "WAYLAND_DISPLAY")
+             .empty())
+    {
+        return "Wayland";
+    }
+
+    if (session_type == "x11" ||
+        !environment_value(
+             "DISPLAY")
+             .empty())
+    {
+        return "X11";
+    }
+
+    return "unknown";
+}
+
+void log_detected_environment()
+{
+    const auto desktop =
+        detected_desktop();
+
+    DocklightLog::startup(
+        "detected Desktop: %s",
+        desktop.c_str());
+    DocklightLog::startup(
+        "detected WM: %s",
+        detected_window_manager(
+            desktop)
+            .c_str());
+    DocklightLog::startup(
+        "detected compositor: %s",
+        detected_compositor().c_str());
+}
+
 }
 
 WindowSystemController::
@@ -94,6 +203,8 @@ void WindowSystemController::start()
         return;
 
     m_started = true;
+
+    log_detected_environment();
 
     if (!is_kde_wayland_session())
     {

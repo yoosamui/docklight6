@@ -23,6 +23,7 @@
 #include "config/dock_configuration_manager.h"
 #include "monitors/dock_monitor_manager.h"
 #include "dock/dock_window.h"
+#include "docklight_log.h"
 #include "integrations/window_system_controller.h"
 #include "config.h"
 
@@ -69,6 +70,8 @@ bool take_list_monitors_option(
 // configuration and monitor changes for the GTK application lifetime.
 int main(int argc, char *argv[])
 {
+    DocklightLog::initialize();
+
     // Initialize the process locale and translation domain before GTK creates
     // widgets whose labels may be translated.
     std::setlocale(LC_ALL, "");
@@ -118,11 +121,11 @@ int main(int argc, char *argv[])
         return app->run();
     }
 
-    g_message(
+    DocklightLog::startup(
         "%s starting",
         PACKAGE_STRING);
 
-    g_message(
+    DocklightLog::startup(
         "Dock configuration loaded: %s",
         configuration.config_path().c_str());
 
@@ -143,13 +146,13 @@ int main(int argc, char *argv[])
             css,
             GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-        g_message(
+        DocklightLog::startup(
             "Dock style loaded: %s",
             style_path.c_str());
     }
     catch (const Glib::Error &error)
     {
-        g_warning(
+        DocklightLog::startup(
             "Cannot load DockLight style: %s",
             error.what().c_str());
     }
@@ -195,7 +198,8 @@ int main(int argc, char *argv[])
     app->hold();
     window.show();
 
-    g_message("DockLight is ready");
+    DocklightLog::startup(
+        "DockLight is ready");
 
     return app->run();
 }

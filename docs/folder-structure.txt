@@ -1,0 +1,123 @@
+src/
+├── Makefile.am                               # Defines application sources, generated protocols, and test targets for Automake.
+├── docklight_log.cpp                         # Filters release diagnostics and writes always-visible startup messages.
+├── docklight_log.h                           # Declares logging initialization and the startup log API.
+├── main.cpp                                  # Initializes GTK, localization, configuration, window integration, and the dock.
+├── style.css                                 # Defines shared GTK colors, spacing, corners, and widget appearance.
+│
+├── application/                              # Application grouping and group-level window actions.
+│   ├── dock_application_controller.cpp       # Applies activate, minimize, maximize, close, and cycling policy to window groups.
+│   └── dock_application_controller.h         # Declares application-level actions independent of the dock widget.
+│
+├── autohide/                                 # Autohide, intellihide, and hidden-dock reveal behavior.
+│   ├── dock_autohide_controller.cpp          # Implements pointer-driven hide/reveal timing and inhibition.
+│   ├── dock_autohide_controller.h            # Declares the dock visibility lifecycle controller.
+│   ├── dock_intellihide_policy.cpp           # Evaluates whether managed windows overlap the dock.
+│   ├── dock_intellihide_policy.h             # Declares the side-effect-free intellihide overlap policy.
+│   ├── dock_reveal_window.cpp                # Implements the transparent edge surface that reveals a hidden dock.
+│   └── dock_reveal_window.h                  # Declares the reveal surface and reveal-request signal.
+│
+├── config/                                   # Typed settings, persistence, validation, and change monitoring.
+│   ├── dock_configuration.h                  # Defines the complete configuration snapshot consumed by the dock.
+│   ├── dock_configuration_manager.cpp        # Loads, migrates, validates, saves, and monitors the configuration file.
+│   ├── dock_configuration_manager.h          # Declares the configuration manager and its change-notification API.
+│   ├── dock_settings.cpp                     # Implements validation and mutation of individual runtime settings.
+│   └── dock_settings.h                       # Declares the validated settings model and typed accessors.
+│
+├── dialogs/                                  # User-facing settings and application-information dialogs.
+│   ├── dock_about_dialog.cpp                 # Constructs and presents the Docklight About window.
+│   ├── dock_about_dialog.h                   # Declares the About-window presentation entry point.
+│   ├── dock_settings_dialog.cpp              # Builds the settings UI and persists configuration updates.
+│   └── dock_settings_dialog.h                # Declares the settings-dialog presentation entry point.
+│
+├── dock/                                     # Main dock surface, items, tooltips, interaction, and orchestration.
+│   ├── dock_constants.h                      # Defines shared interaction limits, delays, and drag-and-drop identifiers.
+│   ├── dock_home_item.cpp                    # Implements the home icon, context menu, settings access, and global window actions.
+│   ├── dock_home_item.h                      # Declares the home widget and its dock-wide actions.
+│   ├── dock_item.cpp                         # Implements an application icon, its events, menu, indicators, and window actions.
+│   ├── dock_item.h                           # Declares the interactive application launcher widget.
+│   ├── dock_tooltip_window.cpp               # Implements delayed tooltip display, placement, remapping, and rounded styling.
+│   ├── dock_tooltip_window.h                 # Declares the non-interactive layer-shell tooltip window.
+│   ├── dock_window.cpp                       # Implements the layer-shell dock surface and synchronizes its child items.
+│   ├── dock_window.h                         # Declares the main dock window, item container, and presentation API.
+│   ├── dock_window_controller.cpp            # Coordinates configuration, monitor changes, layout, previews, and geometry updates.
+│   └── dock_window_controller.h              # Declares the controller between pure policy and GTK side effects.
+│
+├── integrations/                             # Window-system and desktop-specific integration implementations.
+│   ├── window_system_controller.cpp          # Owns backend startup, registry wiring, and window-system lifecycle.
+│   ├── window_system_controller.h            # Declares the high-level window-system integration controller.
+│   │
+│   ├── kwin/                                 # KWin D-Bus protocol, deployment, commands, and backend implementation.
+│   │   ├── kwin_integration_protocol.h       # Defines protocol versions and stable D-Bus names.
+│   │   ├── kwin_integration_service.cpp      # Receives, validates, stores, and publishes KWin script state.
+│   │   ├── kwin_integration_service.h        # Declares the Docklight-side KWin D-Bus service.
+│   │   ├── kwin_protocol_codec.cpp           # Parses, validates, and encodes KWin D-Bus values.
+│   │   ├── kwin_protocol_codec.h             # Declares transport-to-model conversion helpers.
+│   │   ├── kwin_script_manager.cpp           # Installs, enables, reloads, and verifies the matching KWin script.
+│   │   ├── kwin_script_manager.h             # Declares KWin script deployment and compatibility management.
+│   │   ├── kwin_window_backend.cpp           # Adapts KWin integration state and commands to WindowBackend.
+│   │   ├── kwin_window_backend.h             # Declares the KWin-specific window backend.
+│   │   └── kwin_window_command.h             # Defines normalized KWin window-command names and arguments.
+│   │
+│   └── plasma/                               # Plasma-specific dock geometry integration.
+│       ├── plasma_geometry_bridge_manager.cpp # Installs, checks, and coordinates the Plasma geometry bridge.
+│       └── plasma_geometry_bridge_manager.h  # Declares geometry-bridge lifecycle and availability management.
+│
+├── launchers/                                # Desktop-application discovery, launching, attachment, and ordering.
+│   ├── launcher_manager.cpp                  # Discovers, launches, pins, orders, and persists desktop applications.
+│   └── launcher_manager.h                    # Declares launcher lookup, attachment, ordering, and launch operations.
+│
+├── layout/                                   # Pure layout rules, measurements, and geometry value types.
+│   ├── dock_layout_engine.cpp                # Calculates dock placement and tooltip positions without GTK side effects.
+│   ├── dock_layout_engine.h                  # Declares the deterministic layout calculation API.
+│   ├── dock_layout_geometry.cpp              # Reads GTK allocations and monitor geometry into plain values.
+│   ├── dock_layout_geometry.h                # Declares the adapter between GTK geometry and the layout engine.
+│   ├── dock_layout_metrics.cpp               # Implements reusable visual scaling and sizing calculations.
+│   ├── dock_layout_metrics.h                 # Defines visual baselines and pure metric helpers.
+│   ├── dock_layout_types.h                   # Defines orientation, location, alignment, effects, requests, and placements.
+│   └── dock_window_geometry.h                # Defines the realized dock surface position and dimensions.
+│
+├── media/                                    # Media-player state used to select live preview behavior.
+│   ├── dock_media_playback_monitor.cpp       # Watches MPRIS players and maps playback state to dock applications.
+│   └── dock_media_playback_monitor.h         # Declares playback queries and change notifications.
+│
+├── monitors/                                 # Display discovery, selection, and stable topology tracking.
+│   ├── dock_monitor_manager.cpp              # Resolves monitors and stabilizes geometry, work-area, scale, and topology changes.
+│   └── dock_monitor_manager.h                # Declares monitor information, selection, observation, and change signals.
+│
+├── preview/                                  # Window-group previews, static thumbnails, and live streams.
+│   ├── dock_preview_window.cpp               # Builds preview cards, lays them out, renders rounded styling, and handles actions.
+│   ├── dock_preview_window.h                 # Declares the interactive grouped-window preview surface.
+│   ├── dock_window_stream_provider.cpp       # Manages persistent KWin/PipeWire streams for live preview frames.
+│   ├── dock_window_stream_provider.h         # Declares asynchronous live-stream startup, delivery, and shutdown.
+│   ├── dock_window_thumbnail_provider.cpp    # Captures static KWin thumbnails without blocking the GTK main loop.
+│   └── dock_window_thumbnail_provider.h      # Declares the asynchronous static-thumbnail provider.
+│
+├── rendering/                                # Stateless visual rendering helpers.
+│   ├── dock_icon_renderer.cpp                # Produces scaled standard, zoom, and blur hover frames from source icons.
+│   └── dock_icon_renderer.h                  # Declares the pure icon-rendering functions.
+│
+├── tests/                                    # Unit and integration tests kept in one source directory.
+│   ├── dock_application_controller_test.cpp  # Verifies grouped-window actions and cycling policy.
+│   ├── dock_autohide_layout_test.cpp         # Verifies layout placement, overlap policy, and autohide-related geometry.
+│   ├── dock_configuration_manager_test.cpp   # Verifies configuration creation, migration, validation, saving, and reloads.
+│   ├── dock_icon_renderer_test.cpp           # Verifies icon scaling and generated hover-effect frames.
+│   ├── fake_window_backend.cpp               # Implements controllable backend behavior for deterministic tests.
+│   ├── fake_window_backend.h                 # Declares the in-memory WindowBackend test double.
+│   ├── kwin_integration_service_test.cpp     # Verifies KWin service state, protocol validation, and D-Bus behavior.
+│   ├── kwin_minimize_effect_test.js          # Verifies the packaged KWin minimize-effect script contract.
+│   ├── kwin_protocol_codec_test.cpp          # Verifies D-Bus parsing, validation, and encoding.
+│   ├── kwin_script_test.js                   # Verifies the KWin window-integration script contract.
+│   ├── kwin_window_backend_test.cpp          # Verifies KWin state adaptation and window-command forwarding.
+│   ├── launcher_manager_test.cpp             # Verifies launcher discovery, ordering, attachment, and persistence.
+│   ├── plasma_geometry_bridge_test.js        # Verifies the Plasma geometry-bridge package and protocol contract.
+│   └── window_registry_test.cpp              # Verifies normalization, application grouping, stacking, and action forwarding.
+│
+└── windowing/                                # Desktop-neutral window model and backend boundary.
+    ├── managed_window.h                      # Defines normalized window identity, metadata, geometry, and state.
+    ├── running_application.h                 # Defines an application identity and its ordered managed-window group.
+    ├── window_backend.cpp                    # Implements common backend signal and default behavior.
+    ├── window_backend.h                      # Declares capabilities, snapshots, actions, and state-change notifications.
+    ├── window_icon_geometry.h                # Defines the screen-space icon rectangle published to the compositor.
+    ├── window_registry.cpp                   # Normalizes backend state and groups windows into running applications.
+    └── window_registry.h                     # Declares the queryable application-oriented window registry.

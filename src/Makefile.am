@@ -40,6 +40,8 @@ preview/docklight6-dock_window_stream_provider.$(OBJEXT): zkde-screencast-unstab
 
 docklight6_SOURCES = \
     main.cpp \
+    docklight_log.h \
+    docklight_log.cpp \
     windowing/managed_window.h \
     windowing/running_application.h \
     windowing/window_icon_geometry.h \
