@@ -56,8 +56,8 @@ docklight6_SOURCES = \
     integrations/kwin/kwin_integration_service.cpp \
     integrations/kwin/kwin_script_manager.h \
     integrations/kwin/kwin_script_manager.cpp \
-    plasma_geometry_bridge_manager.h \
-    plasma_geometry_bridge_manager.cpp \
+    integrations/plasma/plasma_geometry_bridge_manager.h \
+    integrations/plasma/plasma_geometry_bridge_manager.cpp \
     integrations/kwin/kwin_window_command.h \
     integrations/kwin/kwin_window_backend.h \
     integrations/kwin/kwin_window_backend.cpp \
