@@ -10,7 +10,7 @@
 #include "layout/dock_layout_metrics.h"
 #include "dock_settings_dialog.h"
 #include "dock_window.h"
-#include "window_registry.h"
+#include "windowing/window_registry.h"
 #include "config.h"
 
 #include <giomm/application.h>

@@ -26,7 +26,7 @@
 #include "kwin_script_manager.h"
 #include "kwin_window_backend.h"
 #include "plasma_geometry_bridge_manager.h"
-#include "window_registry.h"
+#include "windowing/window_registry.h"
 
 #include <glib.h>
 

@@ -28,8 +28,8 @@
 #include "layout/dock_layout_metrics.h"
 #include "dock_window_controller.h"
 #include "launcher_manager.h"
-#include "running_application.h"
-#include "window_registry.h"
+#include "windowing/running_application.h"
+#include "windowing/window_registry.h"
 
 #include <gtk-layer-shell.h>
 

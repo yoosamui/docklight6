@@ -28,8 +28,8 @@
 
 #pragma once
 
-#include "managed_window.h"
-#include "window_icon_geometry.h"
+#include "windowing/managed_window.h"
+#include "windowing/window_icon_geometry.h"
 
 #include <cstddef>
 #include <optional>

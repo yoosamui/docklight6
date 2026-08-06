@@ -40,13 +40,13 @@ docklight6-dock_window_stream_provider.$(OBJEXT): zkde-screencast-unstable-v1-cl
 
 docklight6_SOURCES = \
     main.cpp \
-    managed_window.h \
-    running_application.h \
-    window_icon_geometry.h \
-    window_backend.h \
-    window_backend.cpp \
-    window_registry.h \
-    window_registry.cpp \
+    windowing/managed_window.h \
+    windowing/running_application.h \
+    windowing/window_icon_geometry.h \
+    windowing/window_backend.h \
+    windowing/window_backend.cpp \
+    windowing/window_registry.h \
+    windowing/window_registry.cpp \
     window_system_controller.h \
     window_system_controller.cpp \
     kwin_integration_protocol.h \
@@ -128,13 +128,13 @@ dock_application_controller_test_SOURCES = \
     tests/dock_application_controller_test.cpp \
     tests/fake_window_backend.h \
     tests/fake_window_backend.cpp \
-    managed_window.h \
-    running_application.h \
-    window_icon_geometry.h \
-    window_backend.h \
-    window_backend.cpp \
-    window_registry.h \
-    window_registry.cpp \
+    windowing/managed_window.h \
+    windowing/running_application.h \
+    windowing/window_icon_geometry.h \
+    windowing/window_backend.h \
+    windowing/window_backend.cpp \
+    windowing/window_registry.h \
+    windowing/window_registry.cpp \
     dock_application_controller.h \
     dock_application_controller.cpp
 
@@ -148,7 +148,7 @@ dock_autohide_layout_test_SOURCES = \
     tests/dock_autohide_layout_test.cpp \
     layout/dock_layout_types.h \
     layout/dock_window_geometry.h \
-    managed_window.h \
+    windowing/managed_window.h \
     dock_intellihide_policy.h \
     dock_intellihide_policy.cpp \
     layout/dock_layout_engine.h \
@@ -204,13 +204,13 @@ window_registry_test_SOURCES = \
     tests/window_registry_test.cpp \
     tests/fake_window_backend.h \
     tests/fake_window_backend.cpp \
-    managed_window.h \
-    running_application.h \
-    window_icon_geometry.h \
-    window_backend.h \
-    window_backend.cpp \
-    window_registry.h \
-    window_registry.cpp
+    windowing/managed_window.h \
+    windowing/running_application.h \
+    windowing/window_icon_geometry.h \
+    windowing/window_backend.h \
+    windowing/window_backend.cpp \
+    windowing/window_registry.h \
+    windowing/window_registry.cpp
 
 window_registry_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)
@@ -220,13 +220,13 @@ window_registry_test_LDADD = \
 
 kwin_window_backend_test_SOURCES = \
     tests/kwin_window_backend_test.cpp \
-    managed_window.h \
-    running_application.h \
-    window_icon_geometry.h \
-    window_backend.h \
-    window_backend.cpp \
-    window_registry.h \
-    window_registry.cpp \
+    windowing/managed_window.h \
+    windowing/running_application.h \
+    windowing/window_icon_geometry.h \
+    windowing/window_backend.h \
+    windowing/window_backend.cpp \
+    windowing/window_registry.h \
+    windowing/window_registry.cpp \
     kwin_integration_protocol.h \
     kwin_window_command.h \
     kwin_window_backend.h \
@@ -240,7 +240,7 @@ kwin_window_backend_test_LDADD = \
 
 kwin_protocol_codec_test_SOURCES = \
     tests/kwin_protocol_codec_test.cpp \
-    managed_window.h \
+    windowing/managed_window.h \
     kwin_protocol_codec.h \
     kwin_protocol_codec.cpp
 
@@ -252,10 +252,10 @@ kwin_protocol_codec_test_LDADD = \
 
 kwin_integration_service_test_SOURCES = \
     tests/kwin_integration_service_test.cpp \
-    managed_window.h \
-    window_icon_geometry.h \
-    window_backend.h \
-    window_backend.cpp \
+    windowing/managed_window.h \
+    windowing/window_icon_geometry.h \
+    windowing/window_backend.h \
+    windowing/window_backend.cpp \
     kwin_integration_protocol.h \
     kwin_protocol_codec.h \
     kwin_protocol_codec.cpp \

@@ -22,8 +22,8 @@
 
 #include "dock_application_controller.h"
 
-#include "running_application.h"
-#include "window_registry.h"
+#include "windowing/running_application.h"
+#include "windowing/window_registry.h"
 
 #include <algorithm>
 #include <iterator>

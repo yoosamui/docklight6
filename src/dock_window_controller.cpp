@@ -32,8 +32,8 @@
 #include "dock_media_playback_monitor.h"
 #include "dock_preview_window.h"
 #include "dock_window.h"
-#include "window_icon_geometry.h"
-#include "window_registry.h"
+#include "windowing/window_icon_geometry.h"
+#include "windowing/window_registry.h"
 
 #include <gtk-layer-shell.h>
 #include <gtkmm/settings.h>

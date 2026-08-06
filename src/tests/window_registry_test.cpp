@@ -18,7 +18,7 @@
 // ------------------------------------------------------------
 
 #include "fake_window_backend.h"
-#include "window_registry.h"
+#include "windowing/window_registry.h"
 
 #include <giomm/init.h>
 #include <glib.h>

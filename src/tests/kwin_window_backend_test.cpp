@@ -19,7 +19,7 @@
 
 #include "kwin_integration_protocol.h"
 #include "kwin_window_backend.h"
-#include "window_registry.h"
+#include "windowing/window_registry.h"
 
 #include <cassert>
 #include <cstdint>

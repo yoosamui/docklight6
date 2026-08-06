@@ -19,7 +19,7 @@
 
 #include "dock_application_controller.h"
 #include "fake_window_backend.h"
-#include "window_registry.h"
+#include "windowing/window_registry.h"
 
 #include <cassert>
 #include <optional>

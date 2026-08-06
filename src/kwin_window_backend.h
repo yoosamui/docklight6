@@ -31,7 +31,7 @@
 #pragma once
 
 #include "kwin_window_command.h"
-#include "window_backend.h"
+#include "windowing/window_backend.h"
 
 #include <cstdint>
 #include <functional>

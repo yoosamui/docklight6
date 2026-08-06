@@ -33,7 +33,7 @@
 #include "config/dock_configuration.h"
 #include "layout/dock_layout_engine.h"
 #include "layout/dock_layout_geometry.h"
-#include "managed_window.h"
+#include "windowing/managed_window.h"
 
 #include <gdkmm/monitor.h>
 #include <glibmm/ustring.h>

@@ -31,7 +31,7 @@
 #pragma once
 
 #include "kwin_window_command.h"
-#include "window_icon_geometry.h"
+#include "windowing/window_icon_geometry.h"
 
 #include <gio/gio.h>
 #include <sigc++/connection.h>

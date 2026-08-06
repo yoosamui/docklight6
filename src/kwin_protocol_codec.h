@@ -1,7 +1,7 @@
 // Typed encoding and validation for the KWin D-Bus protocol.
 #pragma once
 
-#include "managed_window.h"
+#include "windowing/managed_window.h"
 #include <gio/gio.h>
 #include <cstdint>
 #include <optional>

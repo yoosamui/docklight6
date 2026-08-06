@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "managed_window.h"
+#include "windowing/managed_window.h"
 
 #include <gdkmm/pixbuf.h>
 
