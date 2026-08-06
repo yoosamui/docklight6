@@ -6,7 +6,7 @@
 
 #include "dock_settings_dialog.h"
 #include "config/dock_configuration_manager.h"
-#include "dock_monitor_manager.h"
+#include "monitors/dock_monitor_manager.h"
 
 #include <glibmm/i18n.h>
 #include <gtk-layer-shell.h>

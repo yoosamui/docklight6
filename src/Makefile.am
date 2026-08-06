@@ -66,8 +66,8 @@ docklight6_SOURCES = \
     config/dock_configuration.h \
     config/dock_configuration_manager.h \
     config/dock_configuration_manager.cpp \
-    dock_monitor_manager.h \
-    dock_monitor_manager.cpp \
+    monitors/dock_monitor_manager.h \
+    monitors/dock_monitor_manager.cpp \
     autohide/dock_intellihide_policy.h \
     autohide/dock_intellihide_policy.cpp \
     media/dock_media_playback_monitor.h \
