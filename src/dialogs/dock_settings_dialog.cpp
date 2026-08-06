@@ -142,6 +142,8 @@ void DockSettingsDialog::show(
         _("Display Tooltips"));
     Gtk::Label display_preview_label(
         _("Display Preview"));
+    Gtk::Label close_preview_after_activation_label(
+        _("Close Preview After Activation"));
     Gtk::Label manage_all_workspaces_label(
         _("Manage All Workspaces"));
     Gtk::Label icon_size_label(
@@ -171,6 +173,7 @@ void DockSettingsDialog::show(
             &home_icon_path_label,
             &display_tooltips_label,
             &display_preview_label,
+            &close_preview_after_activation_label,
             &manage_all_workspaces_label,
             &icon_size_label,
             &preview_card_height_label,
@@ -441,6 +444,13 @@ void DockSettingsDialog::show(
         current.settings
             .display_preview());
 
+    Gtk::CheckButton close_preview_after_activation;
+    close_preview_after_activation.set_active(
+        current.settings
+            .close_preview_after_activation());
+    close_preview_after_activation.set_tooltip_text(
+        _("Otherwise keep the preview open until the pointer leaves it"));
+
     Gtk::CheckButton manage_all_workspaces;
     manage_all_workspaces.set_active(
         current.settings
@@ -676,6 +686,7 @@ void DockSettingsDialog::show(
             &home_icon_controls,
             &display_tooltips,
             &display_preview,
+            &close_preview_after_activation,
             &manage_all_workspaces,
             &icon_size_spin,
             &preview_card_height_spin,
@@ -702,6 +713,8 @@ void DockSettingsDialog::show(
     display_tooltips.set_halign(
         Gtk::ALIGN_START);
     display_preview.set_halign(
+        Gtk::ALIGN_START);
+    close_preview_after_activation.set_halign(
         Gtk::ALIGN_START);
     manage_all_workspaces.set_halign(
         Gtk::ALIGN_START);
@@ -803,111 +816,123 @@ void DockSettingsDialog::show(
         1,
         1);
     grid.attach(
-        manage_all_workspaces_label,
+        close_preview_after_activation_label,
         0,
         8,
+        1,
+        1);
+    grid.attach(
+        close_preview_after_activation,
+        1,
+        8,
+        1,
+        1);
+    grid.attach(
+        manage_all_workspaces_label,
+        0,
+        9,
         1,
         1);
     grid.attach(
         manage_all_workspaces,
         1,
-        8,
+        9,
         1,
         1);
     grid.attach(
         icon_size_label,
         0,
-        9,
+        10,
         1,
         1);
     grid.attach(
         icon_size_spin,
         1,
-        9,
+        10,
         1,
         1);
     grid.attach(
         preview_card_height_label,
         0,
-        10,
+        11,
         1,
         1);
     grid.attach(
         preview_card_height_spin,
         1,
-        10,
+        11,
         1,
         1);
     grid.attach(
         preview_show_delay_label,
         0,
-        11,
+        12,
         1,
         1);
     grid.attach(
         preview_show_delay_spin,
         1,
-        11,
+        12,
         1,
         1);
     grid.attach(
         location_label,
         0,
-        12,
+        13,
         1,
         1);
     grid.attach(
         location_choices,
         1,
-        12,
+        13,
         1,
         1);
     grid.attach(
         rounded_corners_label,
         0,
-        13,
+        14,
         1,
         1);
     grid.attach(
         rounded_corners,
         1,
-        13,
+        14,
         1,
         1);
     grid.attach(
         corner_radius_label,
         0,
-        14,
+        15,
         1,
         1);
     grid.attach(
         corner_radius_spin,
         1,
-        14,
+        15,
         1,
         1);
     grid.attach(
         alignment_label,
         0,
-        15,
+        16,
         1,
         1);
     grid.attach(
         alignment_choices,
         1,
-        15,
+        16,
         1,
         1);
     grid.attach(
         autohide_label,
         0,
-        16,
+        17,
         1,
         1);
     grid.attach(
         autohide_choices,
         1,
-        16,
+        17,
         1,
         1);
 
@@ -1075,6 +1100,21 @@ void DockSettingsDialog::show(
                 configuration.save_setting(
                     "display_preview",
                     display_preview
+                            .get_active()
+                        ? "true"
+                        : "false");
+            }));
+
+    settings_connections.push_back(
+        close_preview_after_activation
+            .signal_toggled()
+            .connect(
+            [&configuration,
+             &close_preview_after_activation]()
+            {
+                configuration.save_setting(
+                    "close_preview_after_activation",
+                    close_preview_after_activation
                             .get_active()
                         ? "true"
                         : "false");

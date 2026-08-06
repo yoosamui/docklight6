@@ -60,6 +60,8 @@ int main()
                    .preview_card_height() == 200);
         assert(initial_configuration.current().settings
                    .display_preview());
+        assert(!initial_configuration.current().settings
+                    .close_preview_after_activation());
 
         config_path =
             initial_configuration.config_path();
@@ -140,6 +142,9 @@ int main()
         "display_preview",
         "false"));
     assert(configuration.save_setting(
+        "close_preview_after_activation",
+        "true"));
+    assert(configuration.save_setting(
         "manage_all_workspaces",
         "false"));
     assert(configuration.save_setting(
@@ -193,6 +198,9 @@ int main()
                "display_preview=false") !=
            std::string::npos);
     assert(contents.find(
+               "close_preview_after_activation=true") !=
+           std::string::npos);
+    assert(contents.find(
                "manage_all_workspaces=false") !=
            std::string::npos);
 
@@ -216,6 +224,8 @@ int main()
                 .display_tooltips());
     assert(!current.settings
                 .display_preview());
+    assert(current.settings
+               .close_preview_after_activation());
     assert(!current.settings
                 .manage_all_workspaces());
     assert(current.settings.icon_size() == 64);

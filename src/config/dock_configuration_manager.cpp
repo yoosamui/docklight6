@@ -110,6 +110,14 @@ display_preview = true
 
 )";
 
+// Configuration block added when preview activation behavior is missing.
+const char *CLOSE_PREVIEW_AFTER_ACTIVATION_SETTING_TEMPLATE = R"(# Close the window preview after activating a window from it.
+# When false, the preview remains open until the pointer leaves it.
+# Valid values: true, false
+close_preview_after_activation = false
+
+)";
+
 // Configuration block added when the workspace-management setting is missing.
 const char *MANAGE_ALL_WORKSPACES_SETTING_TEMPLATE = R"(# Manage application windows across all virtual workspaces.
 # When false, icon actions and mouse-wheel cycling use only the current workspace.
@@ -171,6 +179,11 @@ display_tooltips = true
 # Display window previews while hovering over running applications.
 # Valid values: true, false
 display_preview = true
+
+# Close the window preview after activating a window from it.
+# When false, the preview remains open until the pointer leaves it.
+# Valid values: true, false
+close_preview_after_activation = false
 
 # Manage application windows across all virtual workspaces.
 # When false, icon actions and mouse-wheel cycling use only the current workspace.
@@ -364,6 +377,8 @@ bool same_configuration(
                right.settings.display_tooltips() &&
            left.settings.display_preview() ==
                right.settings.display_preview() &&
+           left.settings.close_preview_after_activation() ==
+               right.settings.close_preview_after_activation() &&
            left.settings.manage_all_workspaces() ==
                right.settings.manage_all_workspaces() &&
            left.settings.minimum_bottom_workarea_inset() ==
@@ -424,6 +439,9 @@ DockConfigurationManager::DockConfigurationManager()
     ensure_setting(
         "display_preview",
         DISPLAY_PREVIEW_SETTING_TEMPLATE);
+    ensure_setting(
+        "close_preview_after_activation",
+        CLOSE_PREVIEW_AFTER_ACTIVATION_SETTING_TEMPLATE);
     ensure_setting(
         "manage_all_workspaces",
         MANAGE_ALL_WORKSPACES_SETTING_TEMPLATE);
@@ -941,6 +959,34 @@ void DockConfigurationManager::reload()
                 "Invalid [dock] display_preview '%s'; "
                 "keeping the previous value",
                 display_preview.c_str());
+        }
+
+        const auto close_preview_after_activation =
+            value_for(
+                key_file,
+                "close_preview_after_activation");
+
+        if (close_preview_after_activation.empty())
+        {
+            candidate.settings
+                .set_close_preview_after_activation(
+                    defaults.settings
+                        .close_preview_after_activation());
+        }
+        else if (const auto enabled =
+                     parse_boolean(
+                         close_preview_after_activation))
+        {
+            candidate.settings
+                .set_close_preview_after_activation(
+                    *enabled);
+        }
+        else
+        {
+            g_warning(
+                "Invalid [dock] close_preview_after_activation '%s'; "
+                "keeping the previous value",
+                close_preview_after_activation.c_str());
         }
 
         const auto manage_all_workspaces =

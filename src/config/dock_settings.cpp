@@ -159,6 +159,17 @@ void DockSettings::set_display_preview(
     m_display_preview = enabled;
 }
 
+bool DockSettings::close_preview_after_activation() const
+{
+    return m_close_preview_after_activation;
+}
+
+void DockSettings::set_close_preview_after_activation(
+    bool enabled)
+{
+    m_close_preview_after_activation = enabled;
+}
+
 bool DockSettings::manage_all_workspaces() const
 {
     return m_manage_all_workspaces;

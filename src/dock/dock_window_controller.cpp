@@ -1377,7 +1377,11 @@ void DockWindowController::activate_preview_window(
     Glib::signal_idle().connect_once(
         [this, desktop_id, window_id]()
         {
-            hide_preview();
+            if (m_settings
+                    .close_preview_after_activation())
+            {
+                hide_preview();
+            }
 
             for (auto *item : m_window.dock_items())
             {
