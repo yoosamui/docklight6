@@ -1,31 +1,24 @@
 #!/usr/bin/env bash
 
-if [ $EUID != 0 ]; then
-	echo "this script must be run as root"
-	echo ""
-	echo "usage:"
-	echo "sudo "$0
-	exit $exit_code
-   exit 1
+set -euo pipefail
+
+if (( EUID != 0 )); then
+    echo "This script must be run as root." >&2
+    echo "Usage: sudo $0" >&2
+    exit 1
 fi
 
-for i in *.po
-do
-    d=${i%.*}
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+locale_dir=/usr/local/share/locale
 
-    #path="/usr/lib/docklight/share/locale/$d/LC_MESSAGES"
-    path="/usr/local/bin/docklight-5/locale/$d/LC_MESSAGES"
-    
-    echo $path
-    mkdir -p $path
+for po_file in "$script_dir"/*.po; do
+    language=$(basename -- "${po_file%.po}")
+    message_dir="$locale_dir/$language/LC_MESSAGES"
+    mo_file="$message_dir/docklight6.mo"
 
-    modir=$path
-    mofile=$path"/docklight.mo"
-    echo $mofile
-
-	if [ ! -d "$modir" ]; then
-		mkdir $modir
-	fi
-	msgfmt -c $i -o $mofile
+    echo "$mo_file"
+    mkdir -p -- "$message_dir"
+    msgfmt --check --output-file="$mo_file" "$po_file"
 done
-echo "done!"
+
+echo "Done!"
