@@ -17,7 +17,7 @@
 //
 // ------------------------------------------------------------
 
-#include "dock_configuration_manager.h"
+#include "config/dock_configuration_manager.h"
 
 #include <glib.h>
 #include <giomm/init.h>

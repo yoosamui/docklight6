@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "dock_configuration.h"
+#include "config/dock_configuration.h"
 #include "dock_layout_engine.h"
 #include "dock_layout_geometry.h"
 #include "managed_window.h"

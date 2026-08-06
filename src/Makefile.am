@@ -63,9 +63,9 @@ docklight6_SOURCES = \
     kwin_window_backend.cpp \
     dock_application_controller.h \
     dock_application_controller.cpp \
-    dock_configuration.h \
-    dock_configuration_manager.h \
-    dock_configuration_manager.cpp \
+    config/dock_configuration.h \
+    config/dock_configuration_manager.h \
+    config/dock_configuration_manager.cpp \
     dock_monitor_manager.h \
     dock_monitor_manager.cpp \
     dock_intellihide_policy.h \
@@ -95,7 +95,8 @@ docklight6_SOURCES = \
     dock_about_dialog.cpp \
     dock_icon_renderer.h \
     dock_icon_renderer.cpp \
-    dock_settings.cpp \
+    config/dock_settings.h \
+    config/dock_settings.cpp \
     launcher_manager.cpp \
     dock_layout_geometry.cpp \
     dock_layout_metrics.cpp \
@@ -156,12 +157,12 @@ dock_autohide_layout_test_LDADD = \
 
 dock_configuration_manager_test_SOURCES = \
     tests/dock_configuration_manager_test.cpp \
-    dock_configuration.h \
-    dock_configuration_manager.h \
-    dock_configuration_manager.cpp \
+    config/dock_configuration.h \
+    config/dock_configuration_manager.h \
+    config/dock_configuration_manager.cpp \
     dock_layout_types.h \
-    dock_settings.h \
-    dock_settings.cpp
+    config/dock_settings.h \
+    config/dock_settings.cpp
 
 dock_configuration_manager_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)

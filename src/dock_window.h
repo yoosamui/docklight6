@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include "dock_configuration.h"
+#include "config/dock_configuration.h"
 #include "dock_item.h"
 #include "dock_layout_metrics.h"
 #include "dock_layout_types.h"
