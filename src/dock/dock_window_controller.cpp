@@ -1206,6 +1206,27 @@ void DockWindowController::show_preview(
 {
     auto entries = item.window_entries();
 
+    std::stable_sort(
+        entries.begin(),
+        entries.end(),
+        [](const ApplicationWindowEntry &left,
+           const ApplicationWindowEntry &right)
+        {
+            const auto &left_label =
+                left.caption.empty()
+                    ? left.id
+                    : left.caption;
+            const auto &right_label =
+                right.caption.empty()
+                    ? right.id
+                    : right.caption;
+
+            return Glib::ustring(left_label)
+                       .casefold_collate_key() <
+                   Glib::ustring(right_label)
+                       .casefold_collate_key();
+        });
+
     if (!excluded_window_id.empty())
     {
         entries.erase(
