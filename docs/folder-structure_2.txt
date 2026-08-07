@@ -1,0 +1,99 @@
+A suitable structure would be:
+
+
+docklight6/
+├── src/
+│   ├── main.cpp
+│   │
+│   ├── application/
+│   │   └── dock_application_controller.*
+│   │
+│   ├── config/
+│   │   ├── dock_configuration.*
+│   │   ├── dock_configuration_manager.*
+│   │   └── dock_settings.*
+│   │
+│   ├── dock/
+│   │   ├── dock_window.*
+│   │   ├── dock_window_controller.*
+│   │   ├── dock_item.*
+│   │   └── dock_tooltip_window.*
+│   │
+│   ├── layout/
+│   │   ├── dock_layout_engine.*
+│   │   ├── dock_layout_geometry.*
+│   │   ├── dock_layout_metrics.*
+│   │   └── dock_layout_types.h
+│   │
+│   ├── launchers/
+│   │   └── launcher_manager.*
+│   │
+│   ├── preview/
+│   │   ├── dock_preview_window.*
+│   │   ├── dock_window_thumbnail_provider.*
+│   │   └── dock_window_stream_provider.*
+│   │
+│   ├── windowing/
+│   │   ├── window_backend.*
+│   │   ├── window_backend_factory.*
+│   │   ├── window_registry.*
+│   │   ├── managed_window.h
+│   │   ├── running_application.h
+│   │   ├── window_icon_geometry.h
+│   │   └── window_system_info.*
+│   │
+│   ├── integrations/
+│   │   ├── window_system_controller.*
+│   │   │
+│   │   ├── kwin/
+│   │   │   ├── kwin_window_backend.*
+│   │   │   ├── kwin_integration_service.*
+│   │   │   ├── kwin_protocol_codec.*
+│   │   │   ├── kwin_script_manager.*
+│   │   │   └── kwin_window_command.h
+│   │   │
+│   │   ├── x11/
+│   │   │   ├── x11_window_backend.*
+│   │   │   ├── x11_connection.*
+│   │   │   ├── x11_window_tracker.*
+│   │   │   ├── x11_workspace_manager.*
+│   │   │   ├── x11_window_actions.*
+│   │   │   ├── x11_property_reader.*
+│   │   │   ├── x11_icon_geometry_publisher.*
+│   │   │   └── x11_types.h
+│   │   │
+│   │   └── plasma/
+│   │       └── plasma_geometry_bridge_manager.*
+│   │
+│   └── tests/
+│       ├── fake_window_backend.*
+│       ├── window_backend_factory_test.cpp
+│       ├── window_registry_test.cpp
+│       └── x11/
+│           ├── x11_window_backend_test.cpp
+│           ├── x11_window_tracker_test.cpp
+│           ├── x11_workspace_manager_test.cpp
+│           └── x11_property_reader_test.cpp
+
+The main relationships would be:
+
+                      ┌─────────────────────┐
+                      │ WindowBackendFactory│
+                      └──────────┬──────────┘
+                                 │ detects session
+                    ┌────────────┴────────────┐
+                    │                         │
+          ┌─────────▼──────────┐    ┌────────▼────────┐
+          │ KWinWindowBackend  │    │ X11WindowBackend │
+          └─────────┬──────────┘    └────────┬─────────┘
+                    │                        │
+                    └────────────┬───────────┘
+                                 ▼
+                         WindowBackend
+                                 │
+                                 ▼
+                         WindowRegistry
+                                 │
+                    ┌────────────┴────────────┐
+                    ▼                         ▼
+        DockApplicationController     DockWindowController
