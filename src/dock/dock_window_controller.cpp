@@ -1462,7 +1462,11 @@ void DockWindowController::activate_preview_window(
                                 return entry.id == window_id;
                             });
 
+                    // A preview card toggles only the window that is
+                    // already at the front. Clicking another visible
+                    // window must raise and activate it, not minimize it.
                     if (selected != entries.end() &&
+                        selected->active &&
                         !selected->minimized)
                     {
                         item->minimize_window(window_id);
