@@ -790,7 +790,7 @@ void DockWindow::apply_visual_style()
             ? " background-color: black;"
               " background-image: linear-gradient("
               "to top, #000000 0, #000000 2px, "
-              "#bbbbbb 90%);"
+              "#413f3f 90%);"
             : " background-color: @theme_bg_color;"
               " background-image: none;";
 
