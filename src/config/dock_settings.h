@@ -70,7 +70,7 @@ private:
     // instead of keeping it as a DockItem literal.
     int m_icon_size = 46; // default is 46px
     int m_preview_card_height = 200;
-    int m_preview_show_delay = 512;
+    int m_preview_show_delay = 500;
 
     // Some Wayland compositors report the full output as the work area even
     // when a panel occludes the bottom edge. This is the minimum hidden

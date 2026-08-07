@@ -138,14 +138,14 @@ gradient_background = true
 const char *PREVIEW_CARD_HEIGHT_SETTING_TEMPLATE = R"(# Window-preview card height in pixels.
 # 0 selects automatic aspect-based sizing.
 # Otherwise valid range: 64 to 512
-preview_card_height = 200
+preview_card_height = 512
 
 )";
 
 // Configuration block added when preview timing is missing.
 const char *PREVIEW_SHOW_DELAY_SETTING_TEMPLATE = R"(# Delay before showing a window preview, in milliseconds.
 # Valid range: 0 to 1000
-preview_show_delay = 512
+preview_show_delay = 500
 
 )";
 
@@ -206,11 +206,11 @@ icon_size =
 # Window-preview card height in pixels.
 # 0 selects automatic aspect-based sizing.
 # Otherwise valid range: 64 to 512
-preview_card_height = 200
+preview_card_height = 512
 
 # Delay before showing a window preview, in milliseconds.
 # Valid range: 0 to 1000
-preview_show_delay = 512
+preview_show_delay = 500
 
 # Dock screen edge.
 # Empty uses default: bottom
