@@ -123,12 +123,14 @@ private:
     void reload_icons();
     void show_tooltip(
         Gtk::Widget &item,
-        const Glib::ustring &text);
+        const Glib::ustring &text,
+        bool preserve_pending_preview = false);
     void hide_tooltip();
     void show_preview(
         DockItem &item,
         const WindowId &excluded_window_id = {});
-    void hide_preview();
+    void hide_preview(
+        bool cancel_pending_show = true);
     void preview_pointer_entered();
     void preview_pointer_left();
     void activate_preview_window(

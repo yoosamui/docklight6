@@ -1034,15 +1034,48 @@ void DockWindowController::schedule_show_preview(
         return;
     }
 
-    m_pending_item = nullptr;
+    m_pending_item = &item;
     m_pending_preview_desktop_id =
         item.desktop_id();
-    m_pending_tooltip_text.clear();
+    m_pending_tooltip_text =
+        item.tooltip_text();
+
+    // A running item uses both delays: first show its label tooltip, then
+    // replace that tooltip with the window preview. Keeping these timers
+    // independent makes a longer preview delay useful instead of leaving the
+    // hover with no feedback until the preview appears.
+    if (m_settings.display_tooltips())
+    {
+        m_show_timer =
+            Glib::signal_timeout().connect(
+                [this]()
+                {
+                    if (m_pending_item)
+                    {
+                        show_tooltip(
+                            *m_pending_item,
+                            m_pending_tooltip_text,
+                            true);
+                    }
+
+                    m_pending_item = nullptr;
+                    m_pending_tooltip_text.clear();
+                    return false;
+                },
+                DockConstants::TOOLTIP_SHOW_DELAY_MS);
+    }
 
     m_preview_show_timer =
         Glib::signal_timeout().connect(
             [this]()
             {
+                // If the configured preview delay is shorter than the
+                // tooltip delay, suppress the late tooltip rather than
+                // allowing it to replace an already-open preview.
+                cancel_show_timer();
+                m_pending_item = nullptr;
+                m_pending_tooltip_text.clear();
+
                 const auto desktop_id =
                     m_pending_preview_desktop_id;
                 m_pending_preview_desktop_id.clear();
@@ -1123,12 +1156,14 @@ void DockWindowController::dock_items_changed()
 
 void DockWindowController::show_tooltip(
     Gtk::Widget &item,
-    const Glib::ustring &text)
+    const Glib::ustring &text,
+    bool preserve_pending_preview)
 {
     if (!m_settings.display_tooltips())
         return;
 
-    hide_preview();
+    hide_preview(
+        !preserve_pending_preview);
 
     const int tooltip_width =
         m_window.m_overlay_window
@@ -1358,10 +1393,15 @@ void DockWindowController::show_preview(
             m_preview_desktop_id));
 }
 
-void DockWindowController::hide_preview()
+void DockWindowController::hide_preview(
+    bool cancel_pending_show)
 {
-    cancel_preview_show_timer();
-    m_pending_preview_desktop_id.clear();
+    if (cancel_pending_show)
+    {
+        cancel_preview_show_timer();
+        m_pending_preview_desktop_id.clear();
+    }
+
     m_preview_desktop_id.clear();
     m_preview_pointer_inside = false;
 
