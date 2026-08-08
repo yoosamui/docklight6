@@ -1,8 +1,25 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Copyright (c) 2018-2026 yoosamui
-// Author and Maintainer: yoosamui
+// Copyright (c) 2018-2026 Juan González  <https://github.com/yoosamui>
+//
+// Author & Maintainer: Juan González
+// Development Pair: OpenAI ChatGPT
+//
+// This file is part of Docklight.
+//
+// Docklight is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Docklight is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // ------------------------------------------------------------
 //
 // File:
@@ -36,33 +53,33 @@
 namespace
 {
 
-bool take_list_monitors_option(
-    int &argc,
-    char *argv[])
-{
-    bool list_monitors = false;
-    int write_index = 1;
-
-    for (int read_index = 1;
-         read_index < argc;
-         ++read_index)
+    bool take_list_monitors_option(
+        int &argc,
+        char *argv[])
     {
-        if (std::string(argv[read_index]) ==
-            "--list-monitors")
+        bool list_monitors = false;
+        int write_index = 1;
+
+        for (int read_index = 1;
+             read_index < argc;
+             ++read_index)
         {
-            list_monitors = true;
-            continue;
+            if (std::string(argv[read_index]) ==
+                "--list-monitors")
+            {
+                list_monitors = true;
+                continue;
+            }
+
+            argv[write_index++] =
+                argv[read_index];
         }
 
-        argv[write_index++] =
-            argv[read_index];
+        argc = write_index;
+        argv[argc] = nullptr;
+
+        return list_monitors;
     }
-
-    argc = write_index;
-    argv[argc] = nullptr;
-
-    return list_monitors;
-}
 
 }
 
