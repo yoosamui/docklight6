@@ -497,7 +497,7 @@ void DockSettingsDialog::show(
             current.settings
                 .preview_show_delay(),
             0.0,
-            1000.0,
+            5000.0,
             10.0,
             100.0);
 
@@ -508,7 +508,7 @@ void DockSettingsDialog::show(
     preview_show_delay_spin.set_numeric(true);
     preview_show_delay_spin.set_tooltip_text(
         _("Delay before a window preview appears, "
-          "from 0 to 1000 milliseconds"));
+          "from 0 to 5000 milliseconds"));
 
     Gtk::Box location_choices(
         Gtk::ORIENTATION_HORIZONTAL,

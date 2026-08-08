@@ -44,7 +44,7 @@ constexpr int MIN_PREVIEW_CARD_HEIGHT = 64;
 constexpr int MAX_PREVIEW_CARD_HEIGHT = 512;
 constexpr int DEFAULT_PREVIEW_CARD_HEIGHT = 200;
 constexpr int MIN_PREVIEW_SHOW_DELAY = 0;
-constexpr int MAX_PREVIEW_SHOW_DELAY = 1000;
+constexpr int MAX_PREVIEW_SHOW_DELAY = 5000;
 constexpr int CURRENT_CONFIG_VERSION = 1;
 constexpr int MIN_CORNER_RADIUS = 2; // Smallest explicit dock corner radius
 constexpr unsigned int RELOAD_DELAY_MS = 200; // Delay before reloading changed settings
@@ -209,7 +209,7 @@ icon_size =
 preview_card_height = 512
 
 # Delay before showing a window preview, in milliseconds.
-# Valid range: 0 to 1000
+# Valid range: 0 to 5000
 preview_show_delay = 500
 
 # Dock screen edge.

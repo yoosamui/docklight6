@@ -4,7 +4,7 @@ DockLight is a lightweight application dock for Linux with X11 and Wayland
 support. It provides application launchers, window management, live window
 previews, multi-monitor placement, and configurable auto-hide behavior.
 
-**Current version:** `6.0.28` Only KDE-Plasma Wayland
+**Current version:** `6.0.29` Only KDE-Plasma Wayland
 
 **Project status:** Feature complete. Development now focuses on maintenance,
 bug fixes, compatibility, and translations.

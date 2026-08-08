@@ -160,7 +160,7 @@ int main()
         "256"));
     assert(configuration.save_setting(
         "preview_show_delay",
-        "750"));
+        "5000"));
     assert(configuration.save_setting(
         "location",
         "top"));
@@ -188,7 +188,7 @@ int main()
                "preview_card_height=256") !=
            std::string::npos);
     assert(contents.find(
-               "preview_show_delay=750") !=
+               "preview_show_delay=5000") !=
            std::string::npos);
     assert(contents.find(
                "home_icon_enabled=false") !=
@@ -242,7 +242,7 @@ int main()
     assert(current.settings
                .preview_card_height() == 256);
     assert(current.settings
-               .preview_show_delay() == 750);
+               .preview_show_delay() == 5000);
     assert(current.layout_request.location ==
            DockLocation::top);
     assert(!current.layout_request
