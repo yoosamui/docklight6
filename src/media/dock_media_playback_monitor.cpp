@@ -645,6 +645,15 @@ bool DockMediaPlaybackMonitor::should_stream(
     if (!m_state)
         return false;
 
+    // A browser page can contain continuously changing visual content (CSS,
+    // canvas, WebGL, animated images, and similar) without exposing an MPRIS
+    // player at all.  Keep browser previews on the live capture path while
+    // they are visible.  KWin's screencast only supplies new buffers when the
+    // window is damaged, so an otherwise static page does not require
+    // continuous thumbnail updates.
+    if (!browser_family(desktop_id).empty())
+        return true;
+
     for (const auto &entry : m_state->players)
     {
         const std::string service_application =
@@ -663,16 +672,6 @@ bool DockMediaPlaybackMonitor::should_stream(
 
         if (entry.second.playing)
             return true;
-
-        // Firefox can retain valid media metadata while incorrectly exposing
-        // PlaybackStatus=Paused for an actively playing browser tab. In that
-        // case stream the active visible Firefox window; KWin only produces
-        // new buffers when its contents are damaged.
-        if (!entry.second.title.empty() &&
-            browser_family(desktop_id) == "firefox")
-        {
-            return true;
-        }
     }
 
     return false;

@@ -4,7 +4,7 @@
 // Copyright (c) 2018-2026 Juan González  <https://github.com/yoosamui>
 //
 // Author & Maintainer: Juan González
-// Development Pair: OpenAI ChatGPT
+// Development Pair: OpenAI ChatGPT 5.6 Sol
 //
 // This file is part of Docklight.
 //
