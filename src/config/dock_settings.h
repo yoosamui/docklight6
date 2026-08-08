@@ -69,6 +69,7 @@ private:
     // Preserve the current launcher-icon request while making it configurable
     // instead of keeping it as a DockItem literal.
     int m_icon_size = 46; // default is 46px
+    // are only internal fallbacks.
     int m_preview_card_height = 200;
     int m_preview_show_delay = 500;
 
