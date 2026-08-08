@@ -4,6 +4,8 @@ set -euo pipefail
 
 SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 DOCKLIGHT_BUILD_DIR=${DOCKLIGHT_BUILD_DIR:-"$SOURCE_DIR/build"}
+RELEASE_CFLAGS="-O2 -DNDEBUG"
+RELEASE_CXXFLAGS="-O2 -DNDEBUG"
 
 if [[ $DOCKLIGHT_BUILD_DIR != /* ]]; then
     DOCKLIGHT_BUILD_DIR="$SOURCE_DIR/$DOCKLIGHT_BUILD_DIR"
@@ -32,8 +34,15 @@ DOCKLIGHT_BUILD_DIR=$(realpath -m -- "$DOCKLIGHT_BUILD_DIR")
 
 
 
-if [[ ! -f "$DOCKLIGHT_BUILD_DIR/Makefile" ]]; then
-    "$SOURCE_DIR/autogen.sh"
+if [[ ! -f "$DOCKLIGHT_BUILD_DIR/Makefile" ]] ||
+   ! grep -Fqx "CFLAGS = $RELEASE_CFLAGS" "$DOCKLIGHT_BUILD_DIR/Makefile" ||
+   ! grep -Fqx "CXXFLAGS = $RELEASE_CXXFLAGS" "$DOCKLIGHT_BUILD_DIR/Makefile"; then
+    DOCKLIGHT_BUILD_DIR="$DOCKLIGHT_BUILD_DIR" \
+        "$SOURCE_DIR/clean.sh"
+    CFLAGS="$RELEASE_CFLAGS" \
+        CXXFLAGS="$RELEASE_CXXFLAGS" \
+        DOCKLIGHT_BUILD_DIR="$DOCKLIGHT_BUILD_DIR" \
+        "$SOURCE_DIR/autogen.sh"
 fi
 
 make -C "$DOCKLIGHT_BUILD_DIR" -j"$(nproc)"
