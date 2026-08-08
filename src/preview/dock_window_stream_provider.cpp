@@ -1,4 +1,24 @@
-// KWin private screencast protocol and PipeWire window-stream consumer.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_window_stream_provider.cpp
+//
+// Implementation overview:
+// Implements persistent KWin screencast sessions and PipeWire frame
+// consumption for live previews.
+//
+// Important implementation decisions:
+// - Wayland screencast objects are negotiated asynchronously.
+// - PipeWire processing occurs away from GTK presentation state.
+// - Frames are converted to pixbufs before callbacks cross the provider
+//   boundary.
+//
+// ------------------------------------------------------------
 
 #include "dock_window_stream_provider.h"
 

@@ -1,5 +1,30 @@
-// Captures static window thumbnails through KWin's Wayland-safe screenshot
-// interface without blocking the GTK main loop.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_window_thumbnail_provider.h
+//
+// Purpose:
+// Declares asynchronous static window capture through KWin's Wayland-safe
+// screenshot interface.
+//
+// Responsibilities:
+// - Request a thumbnail for a managed window.
+// - Convert completed captures to pixbufs.
+// - Cancel callback delivery safely during teardown.
+//
+// Dependencies and ownership:
+// The provider owns shared request state and its D-Bus connection;
+// callbacks receive shared pixbuf references.
+//
+// Design notes:
+// Static capture remains a fallback independent of live streaming.
+//
+// ------------------------------------------------------------
 
 #pragma once
 

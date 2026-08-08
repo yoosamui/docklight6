@@ -5,11 +5,15 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Provides the translation unit for DockLayoutMetrics. Its current
-// metrics and scaling helpers are defined inline in the header so they
-// can be used as compile-time values.
+// File:
+// dock_layout_metrics.cpp
 //
-// This file owns no state and performs no runtime initialization.
+// Implementation overview:
+// Provides the translation unit for DockLayoutMetrics.
+//
+// Important implementation decisions:
+// - Current metrics and scaling helpers remain inline for compile-time use.
+// - No runtime initialization or mutable state is introduced.
 //
 // ------------------------------------------------------------
 

@@ -1,4 +1,24 @@
-// Verifies screen reservation and edge placement for autohiding docks.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_autohide_layout_test.cpp
+//
+// Implementation overview:
+// Verifies screen reservation, edge placement, and intellihide overlap
+// behavior.
+//
+// Important implementation decisions:
+// - Tests use plain geometry values without a compositor session.
+// - Assertions cover visible and autohidden placement variants.
+// - Policy and layout calculations are exercised together at their value
+//   boundary.
+//
+// ------------------------------------------------------------
 
 #include "layout/dock_layout_engine.h"
 #include "autohide/dock_intellihide_policy.h"

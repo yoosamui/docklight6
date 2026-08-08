@@ -5,11 +5,23 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines shared interaction limits, timing defaults, and protocol
-// identifiers used by dock items, tooltips, and the dock surface.
+// File:
+// dock_constants.h
 //
-// These compile-time values own no resources. Runtime layout choices
-// belong to DockConfiguration and DockLayoutRequest.
+// Purpose:
+// Declares shared interaction limits, timing defaults, and protocol
+// identifiers used by dock components.
+//
+// Responsibilities:
+// - Centralize tooltip and autohide timing.
+// - Provide stable constants for dock interaction behavior.
+// - Keep runtime layout choices outside compile-time defaults.
+//
+// Dependencies and ownership:
+// All values are compile-time constants and own no resources.
+//
+// Design notes:
+// Runtime preferences belong to DockConfiguration and DockLayoutRequest.
 //
 // ------------------------------------------------------------
 

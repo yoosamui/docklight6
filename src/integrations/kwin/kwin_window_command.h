@@ -5,11 +5,24 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines the plain command values passed from the generic window API
-// to the KWin integration transport.
+// File:
+// kwin_window_command.h
 //
-// Commands own their identifiers and group members by value. The
-// handler type does not prescribe transport or object ownership.
+// Purpose:
+// Declares plain command values passed from the generic window API to KWin
+// transport.
+//
+// Responsibilities:
+// - Identify the requested action and target window.
+// - Carry optional application-group members.
+// - Define the transport-neutral command callback type.
+//
+// Dependencies and ownership:
+// Commands own copied identifiers and group values; handlers define their
+// own capture ownership.
+//
+// Design notes:
+// The value type does not prescribe D-Bus transport behavior.
 //
 // ------------------------------------------------------------
 

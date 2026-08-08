@@ -5,11 +5,24 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines the normalized window identity, metadata, geometry, desktop
-// membership, and state shared across window backends and the registry.
+// File:
+// managed_window.h
 //
-// These plain value types own their copied data and contain no backend,
-// D-Bus, KWin, or GTK behavior.
+// Purpose:
+// Declares normalized window identity, metadata, geometry, desktop
+// membership, and state.
+//
+// Responsibilities:
+// - Represent backend-independent managed windows.
+// - Carry copied identity and geometry data across integration boundaries.
+// - Provide comparable state for registry synchronization.
+//
+// Dependencies and ownership:
+// Value types own their copied data and no backend, D-Bus, KWin, or GTK
+// resources.
+//
+// Design notes:
+// All concrete backends normalize native state into these declarations.
 //
 // ------------------------------------------------------------
 

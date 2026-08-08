@@ -1,4 +1,24 @@
-// KWin ScreenShot2 thumbnail transport.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_window_thumbnail_provider.cpp
+//
+// Implementation overview:
+// Implements asynchronous static thumbnail capture through KWin's
+// ScreenShot2 interface.
+//
+// Important implementation decisions:
+// - D-Bus requests do not block the GTK main loop.
+// - Returned file descriptors and pixel buffers are validated before
+//   conversion.
+// - Completion checks shared lifetime state before invoking callbacks.
+//
+// ------------------------------------------------------------
 
 #include "dock_window_thumbnail_provider.h"
 

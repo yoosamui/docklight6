@@ -5,10 +5,22 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines the plain width and height of the realized dock surface for
-// use by geometry readers and placement calculations.
+// File:
+// dock_window_geometry.h
 //
-// This value type contains no GTK behavior and owns no resources.
+// Purpose:
+// Declares the realized dock surface dimensions used by geometry readers
+// and placement calculations.
+//
+// Responsibilities:
+// - Represent dock width and height.
+// - Carry realization state alongside dimensions.
+//
+// Dependencies and ownership:
+// The value owns its scalar data and no GTK resources.
+//
+// Design notes:
+// Separating this value avoids exposing DockWindow to layout algorithms.
 //
 // ------------------------------------------------------------
 

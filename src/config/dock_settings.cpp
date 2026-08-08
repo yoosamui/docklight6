@@ -5,11 +5,16 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Implements the typed DockSettings accessors and local value
-// normalization used after configuration parsing.
+// File:
+// dock_settings.cpp
 //
-// This file does not read configuration files or update GTK widgets;
-// it only maintains settings owned by a DockSettings instance.
+// Implementation overview:
+// Implements typed DockSettings accessors and normalization after
+// configuration parsing.
+//
+// Important implementation decisions:
+// - Empty or invalid local values are normalized at assignment boundaries.
+// - Accessors expose settings without performing file or UI operations.
 //
 // ------------------------------------------------------------
 

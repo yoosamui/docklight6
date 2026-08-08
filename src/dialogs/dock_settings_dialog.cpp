@@ -1,7 +1,22 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Implements the settings dialog and configuration persistence.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_settings_dialog.cpp
+//
+// Implementation overview:
+// Implements the settings dialog, validation, and configuration
+// persistence.
+//
+// Important implementation decisions:
+// - Controls are initialized from the current configuration snapshot.
+// - User changes are written through DockConfigurationManager.
+// - Layer-shell integration keeps the dialog usable above the dock.
+//
 // ------------------------------------------------------------
 
 #include "dock_settings_dialog.h"

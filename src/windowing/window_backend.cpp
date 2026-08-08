@@ -5,11 +5,17 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
+// File:
+// window_backend.cpp
+//
+// Implementation overview:
 // Implements WindowBackend's transport-neutral signal accessors and
 // protected notification helpers.
 //
-// Concrete backends decide when state changes; this file only delivers
-// those changes to WindowRegistry and other subscribers.
+// Important implementation decisions:
+// - Concrete backends decide when state changes.
+// - This layer delivers normalized notifications without adding policy.
+// - WindowRegistry and other subscribers share the same signal surface.
 //
 // ------------------------------------------------------------
 

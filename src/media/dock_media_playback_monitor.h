@@ -1,4 +1,30 @@
-// Watches MPRIS players and reports whether a dock application is playing.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_media_playback_monitor.h
+//
+// Purpose:
+// Declares an MPRIS monitor that reports whether a dock application is
+// actively playing media.
+//
+// Responsibilities:
+// - Discover available MPRIS players.
+// - Track playback status and application identity.
+// - Notify consumers when effective playback state changes.
+//
+// Dependencies and ownership:
+// The monitor owns its shared implementation and D-Bus subscriptions;
+// returned strings and signals use value semantics.
+//
+// Design notes:
+// Media state is exposed independently from preview rendering.
+//
+// ------------------------------------------------------------
 
 #pragma once
 

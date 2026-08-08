@@ -5,11 +5,24 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Declares the startup helper that ensures Docklight's Plasma
-// geometry-bridge package is available to the current user.
+// File:
+// plasma_geometry_bridge_manager.h
 //
-// The helper owns no persistent state; installation files and the
-// Plasma shell process own the resulting integration lifecycle.
+// Purpose:
+// Declares startup support for installing Docklight's Plasma
+// geometry-bridge package.
+//
+// Responsibilities:
+// - Locate packaged bridge files.
+// - Ensure the per-user package is current.
+// - Coordinate any required Plasma shell refresh.
+//
+// Dependencies and ownership:
+// The helper owns no persistent state; installed files and Plasma own the
+// resulting lifecycle.
+//
+// Design notes:
+// Installation support is kept outside the runtime geometry service.
 //
 // ------------------------------------------------------------
 

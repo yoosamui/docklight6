@@ -1,4 +1,23 @@
-// MPRIS playback discovery for animated window previews.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_media_playback_monitor.cpp
+//
+// Implementation overview:
+// Implements MPRIS player discovery and playback-state tracking for dock
+// applications.
+//
+// Important implementation decisions:
+// - Players are discovered through session D-Bus name changes.
+// - Desktop identities are normalized before matching dock applications.
+// - Signals are emitted only when effective playback state changes.
+//
+// ------------------------------------------------------------
 
 #include "dock_media_playback_monitor.h"
 

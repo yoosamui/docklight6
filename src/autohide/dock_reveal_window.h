@@ -1,7 +1,28 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Declares the transparent edge surface used to reveal a hidden dock.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_reveal_window.h
+//
+// Purpose:
+// Declares the transparent edge surface used to reveal an autohidden dock.
+//
+// Responsibilities:
+// - Track the selected monitor and dock placement.
+// - Apply layer-shell geometry for the active screen edge.
+// - Emit a reveal request when the pointer enters.
+//
+// Dependencies and ownership:
+// The object owns its GTK surface and signal; monitor references use GLib
+// ownership.
+//
+// Design notes:
+// The reveal surface remains separate from the visible dock window.
+//
 // ------------------------------------------------------------
 
 #pragma once

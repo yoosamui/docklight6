@@ -1,4 +1,30 @@
-// Typed encoding and validation for the KWin D-Bus protocol.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// kwin_protocol_codec.h
+//
+// Purpose:
+// Declares typed conversion and validation helpers for KWin protocol
+// payloads.
+//
+// Responsibilities:
+// - Parse protocol versions, revisions, arrays, and window values.
+// - Encode outbound values using the shared wire representation.
+// - Reject malformed transport data at the integration boundary.
+//
+// Dependencies and ownership:
+// Functions operate on caller-owned values and return owned decoded data;
+// the codec holds no state.
+//
+// Design notes:
+// Transport parsing is isolated from KWinWindowBackend state management.
+//
+// ------------------------------------------------------------
 #pragma once
 
 #include "windowing/managed_window.h"

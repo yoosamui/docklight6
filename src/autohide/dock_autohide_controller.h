@@ -1,7 +1,29 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Declares pointer-driven dock autohide lifecycle and timing.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_autohide_controller.h
+//
+// Purpose:
+// Declares the controller for dock autohide lifecycle, timing, and
+// edge-trigger coordination.
+//
+// Responsibilities:
+// - Apply configured autohide modes and monitor placement.
+// - Coordinate dock visibility with pointer and overlap state.
+// - Manage temporary visibility inhibition.
+//
+// Dependencies and ownership:
+// The controller borrows DockWindow and owns its reveal window, timers, and
+// signal connections.
+//
+// Design notes:
+// Visibility policy is centralized outside the dock widget.
+//
 // ------------------------------------------------------------
 
 #pragma once

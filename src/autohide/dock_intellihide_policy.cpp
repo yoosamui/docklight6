@@ -1,7 +1,23 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Implements intellihide overlap filtering and rectangle intersection.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_intellihide_policy.cpp
+//
+// Implementation overview:
+// Implements side-effect-free intellihide overlap filtering and rectangle
+// intersection.
+//
+// Important implementation decisions:
+// - Empty rectangles never overlap.
+// - Only eligible visible windows on the relevant desktop affect the
+//   result.
+// - All calculations use normalized window geometry.
+//
 // ------------------------------------------------------------
 
 #include "dock_intellihide_policy.h"

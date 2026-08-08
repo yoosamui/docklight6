@@ -5,11 +5,23 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines the version and stable D-Bus names shared by Docklight, its
-// KWin script, and the Plasma geometry bridge.
+// File:
+// kwin_integration_protocol.h
 //
-// These protocol constants own no resources. Compatibility changes
-// must be coordinated with every producer and consumer.
+// Purpose:
+// Declares the protocol version and stable D-Bus names shared by Docklight
+// integrations.
+//
+// Responsibilities:
+// - Centralize service, object, interface, and version identifiers.
+// - Provide one compatibility contract to each producer and consumer.
+//
+// Dependencies and ownership:
+// Constants are compile-time values and own no runtime resources.
+//
+// Design notes:
+// Protocol changes must be coordinated with the KWin script and Plasma
+// bridge.
 //
 // ------------------------------------------------------------
 

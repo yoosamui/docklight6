@@ -1,4 +1,22 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// kwin_protocol_codec_test.cpp
+//
+// Implementation overview:
 // Verifies KWin protocol encoding, decoding, and validation in isolation.
+//
+// Important implementation decisions:
+// - Valid and malformed scalar values exercise strict parsing.
+// - Array round trips cover escaping and delimiter preservation.
+// - Window payload tests enforce required fields and value ranges.
+//
+// ------------------------------------------------------------
 
 #include "integrations/kwin/kwin_protocol_codec.h"
 

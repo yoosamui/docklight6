@@ -1,7 +1,22 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Implements release log filtering and the always-visible startup log.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// docklight_log.cpp
+//
+// Implementation overview:
+// Implements release log filtering and the always-visible startup log
+// channel.
+//
+// Important implementation decisions:
+// - Release builds suppress nonessential GLib diagnostics.
+// - Startup messages bypass the general filter.
+// - Debug builds retain the default GLib writer.
+//
 // ------------------------------------------------------------
 
 #include "docklight_log.h"

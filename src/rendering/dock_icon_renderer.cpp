@@ -1,7 +1,21 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Implements stateless dock icon transformations.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_icon_renderer.cpp
+//
+// Implementation overview:
+// Implements stateless pixbuf transformations for dock hover effects.
+//
+// Important implementation decisions:
+// - All effects derive frames from the supplied source pixbuf.
+// - Scaling and blur dimensions follow shared layout metrics.
+// - Rendering functions retain no widget or animation state.
+//
 // ------------------------------------------------------------
 
 #include "dock_icon_renderer.h"

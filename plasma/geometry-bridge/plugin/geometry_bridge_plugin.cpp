@@ -5,12 +5,16 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Registers GeometryBridge as the QML type provided by the Docklight
-// Plasma geometry-bridge plugin.
+// File:
+// geometry_bridge_plugin.cpp
 //
-// Qt owns plugin and QML-created object lifetimes. This translation
-// unit contains registration only; D-Bus behavior remains in
-// GeometryBridge.
+// Implementation overview:
+// Registers GeometryBridge as the QML type exported by the Docklight Plasma
+// geometry-bridge plugin.
+//
+// Important implementation decisions:
+// - Type registration is isolated from the bridge implementation.
+// - Qt owns the plugin and QML-created object lifetimes.
 //
 // ------------------------------------------------------------
 

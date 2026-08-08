@@ -5,11 +5,24 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Declares installation-path discovery and restart of Docklight's KWin
-// window-integration script.
+// File:
+// kwin_script_manager.h
 //
-// The manager owns no persistent state; KWin owns the loaded script
-// after the D-Bus scripting operations complete.
+// Purpose:
+// Declares installation-path discovery and restart support for Docklight's
+// KWin script.
+//
+// Responsibilities:
+// - Locate the installed integration script.
+// - Request unload and load operations through KWin scripting.
+// - Report whether the integration was restarted successfully.
+//
+// Dependencies and ownership:
+// The manager owns no persistent state; KWin owns loaded script instances.
+//
+// Design notes:
+// Script lifecycle support remains separate from window backend
+// synchronization.
 //
 // ------------------------------------------------------------
 

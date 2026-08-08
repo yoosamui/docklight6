@@ -5,11 +5,23 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines the application grouping derived by WindowRegistry from
-// normalized managed windows.
+// File:
+// running_application.h
 //
-// The value owns its application identity and ordered window IDs; it
-// does not own or control the corresponding windows.
+// Purpose:
+// Declares application groups derived by WindowRegistry from normalized
+// managed windows.
+//
+// Responsibilities:
+// - Associate a desktop-file identity with ordered window IDs.
+// - Track the active member of an application group.
+//
+// Dependencies and ownership:
+// The value owns identifiers and ordering data but does not own or control
+// corresponding windows.
+//
+// Design notes:
+// Grouping state stays independent of launcher and UI implementations.
 //
 // ------------------------------------------------------------
 

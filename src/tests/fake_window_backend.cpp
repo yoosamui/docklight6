@@ -5,11 +5,18 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
+// File:
+// fake_window_backend.cpp
+//
+// Implementation overview:
 // Implements the in-memory WindowBackend used by registry and
 // application-controller tests.
 //
-// Mutators update owned state and emit production-equivalent signals;
-// no desktop session, compositor, or D-Bus connection is required.
+// Important implementation decisions:
+// - Mutators update owned state before emitting production-equivalent
+//   signals.
+// - Requested window actions are recorded or reflected deterministically.
+// - No desktop session, compositor, or D-Bus connection is required.
 //
 // ------------------------------------------------------------
 

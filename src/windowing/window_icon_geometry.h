@@ -5,11 +5,23 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines the plain screen-space rectangle published for a window's
-// corresponding dock icon or for the dock surface itself.
+// File:
+// window_icon_geometry.h
 //
-// The value owns no compositor resource and is safe to copy across the
-// backend, D-Bus service, and geometry bridge boundaries.
+// Purpose:
+// Declares the screen-space rectangle published for a window's dock icon or
+// the dock surface.
+//
+// Responsibilities:
+// - Represent icon and surface geometry using plain integer coordinates.
+// - Support equality checks for change suppression.
+// - Cross backend, D-Bus, and Plasma bridge boundaries safely.
+//
+// Dependencies and ownership:
+// The value owns scalar data and no compositor resource.
+//
+// Design notes:
+// A transport-neutral value keeps geometry publication independent of GTK.
 //
 // ------------------------------------------------------------
 

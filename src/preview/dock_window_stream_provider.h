@@ -1,4 +1,29 @@
-// Persistent KWin/PipeWire window streams for live preview thumbnails.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_window_stream_provider.h
+//
+// Purpose:
+// Declares persistent per-window live streams used by preview thumbnails.
+//
+// Responsibilities:
+// - Start a stream for a target window and size.
+// - Deliver decoded frames through a typed callback.
+// - Stop individual streams or all provider activity.
+//
+// Dependencies and ownership:
+// The provider owns an opaque implementation containing Wayland and
+// PipeWire resources; callbacks receive shared pixbuf references.
+//
+// Design notes:
+// Native streaming details are hidden from preview widgets.
+//
+// ------------------------------------------------------------
 
 #pragma once
 

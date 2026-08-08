@@ -1,7 +1,22 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Implements the transparent layer-shell edge reveal surface.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_reveal_window.cpp
+//
+// Implementation overview:
+// Implements the transparent layer-shell edge surface that reveals a hidden
+// dock.
+//
+// Important implementation decisions:
+// - The surface accepts pointer entry without taking keyboard focus.
+// - Monitor anchors and margins follow the current dock placement.
+// - A transparent draw handler keeps the trigger visually unobtrusive.
+//
 // ------------------------------------------------------------
 
 #include "dock_reveal_window.h"

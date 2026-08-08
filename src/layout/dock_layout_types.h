@@ -5,11 +5,23 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines the plain orientation, location, request, monitor, item, and
-// placement types shared by Docklight layout components.
+// File:
+// dock_layout_types.h
 //
-// The declarations contain no GTK behavior and own no external
-// resources. They form the data boundary around DockLayoutEngine.
+// Purpose:
+// Declares the plain orientation, location, request, monitor, item, and
+// placement types shared by layout components.
+//
+// Responsibilities:
+// - Represent layout inputs and calculated placement.
+// - Provide stable enums at configuration and UI boundaries.
+// - Keep geometry data independent of GTK types.
+//
+// Dependencies and ownership:
+// All declarations are value types and own no external resources.
+//
+// Design notes:
+// These types form the data boundary around DockLayoutEngine.
 //
 // ------------------------------------------------------------
 

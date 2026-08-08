@@ -1,7 +1,29 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Declares the dock home widget and its global dock actions.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_home_item.h
+//
+// Purpose:
+// Declares the dock home widget and the global actions exposed by its menu.
+//
+// Responsibilities:
+// - Render and size the home icon.
+// - Build and dispatch the dock context menu.
+// - Coordinate settings, about, quit, and window actions.
+//
+// Dependencies and ownership:
+// The widget borrows DockWindow and WindowRegistry and owns its GTK
+// children and signal connections.
+//
+// Design notes:
+// Application-wide actions are kept separate from launcher-specific
+// DockItem behavior.
+//
 // ------------------------------------------------------------
 
 #pragma once

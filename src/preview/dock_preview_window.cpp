@@ -1,4 +1,24 @@
-// Interactive horizontal window-group preview surface.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_preview_window.cpp
+//
+// Implementation overview:
+// Implements the interactive horizontal preview surface for an
+// application's window group.
+//
+// Important implementation decisions:
+// - Static thumbnails and live streams share the same card update path.
+// - Preview placement follows monitor bounds and dock orientation.
+// - Window activation and close actions are delegated to the application
+//   controller.
+//
+// ------------------------------------------------------------
 
 #include "dock_preview_window.h"
 

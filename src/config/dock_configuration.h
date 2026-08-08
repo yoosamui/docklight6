@@ -5,11 +5,24 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines the complete, plain-data configuration snapshot shared by
-// the configuration manager and dock window controller.
+// File:
+// dock_configuration.h
 //
-// The structure owns its settings and layout request by value. It
-// contains no file-monitoring or GTK behavior.
+// Purpose:
+// Declares the complete plain-data configuration snapshot shared by
+// configuration and dock controllers.
+//
+// Responsibilities:
+// - Combine validated runtime settings with a layout request.
+// - Provide a single value for atomic configuration updates.
+//
+// Dependencies and ownership:
+// The structure owns both values and holds no file-monitoring or GTK
+// resources.
+//
+// Design notes:
+// Consumers receive complete snapshots instead of interpreting
+// configuration text.
 //
 // ------------------------------------------------------------
 

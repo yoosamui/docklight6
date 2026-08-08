@@ -1,7 +1,29 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Declares release log filtering and the always-visible startup log.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// docklight_log.h
+//
+// Purpose:
+// Declares Docklight logging initialization and the always-visible startup
+// message helper.
+//
+// Responsibilities:
+// - Install process-wide release filtering.
+// - Emit formatted startup diagnostics.
+// - Keep logging policy behind a small application interface.
+//
+// Dependencies and ownership:
+// The logging subsystem owns only process-wide writer configuration and no
+// caller data.
+//
+// Design notes:
+// Initialization must occur before other subsystems emit diagnostics.
+//
 // ------------------------------------------------------------
 
 #pragma once

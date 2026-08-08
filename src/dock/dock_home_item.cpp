@@ -1,7 +1,22 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Implements the dock home widget, its menu, and global actions.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_home_item.cpp
+//
+// Implementation overview:
+// Implements the dock home widget, its menu, and global dock actions.
+//
+// Important implementation decisions:
+// - Menu actions are routed to dock, settings, about, and window services.
+// - Layout metrics determine sizing consistently with other dock items.
+// - Registry-dependent actions remain optional when integration is
+//   unavailable.
+//
 // ------------------------------------------------------------
 
 #include "dock_home_item.h"

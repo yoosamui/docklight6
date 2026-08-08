@@ -1,7 +1,29 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Declares the side-effect-free window-overlap policy for intellihide.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_intellihide_policy.h
+//
+// Purpose:
+// Declares the pure overlap policy used to decide whether intellihide
+// should conceal the dock.
+//
+// Responsibilities:
+// - Compare dock geometry with managed-window geometry.
+// - Filter windows according to intellihide eligibility.
+// - Return policy results without mutating window state.
+//
+// Dependencies and ownership:
+// Inputs are borrowed immutable values; the policy owns no state or
+// external resources.
+//
+// Design notes:
+// Keeping the policy pure makes layout behavior independently testable.
+//
 // ------------------------------------------------------------
 
 #pragma once

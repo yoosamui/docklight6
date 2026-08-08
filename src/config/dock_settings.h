@@ -5,11 +5,24 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines the validated runtime settings consumed by dock widgets and
+// File:
+// dock_settings.h
+//
+// Purpose:
+// Declares the validated runtime settings consumed by dock widgets and
 // layout orchestration.
 //
-// Values are owned by DockSettings and exposed through typed accessors.
-// File parsing and persistence belong to DockConfigurationManager.
+// Responsibilities:
+// - Store monitor, sizing, preview, hover, and color preferences.
+// - Expose typed getters and controlled setters.
+// - Keep persistence details outside the runtime value object.
+//
+// Dependencies and ownership:
+// DockSettings owns all scalar and string values; it owns no GTK or file
+// resources.
+//
+// Design notes:
+// DockConfigurationManager is responsible for parsing and persistence.
 //
 // ------------------------------------------------------------
 

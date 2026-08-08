@@ -1,4 +1,30 @@
-// Interactive horizontal window-group preview surface.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_preview_window.h
+//
+// Purpose:
+// Declares the interactive window-group preview surface shown from a dock
+// item.
+//
+// Responsibilities:
+// - Build and update preview cards for managed windows.
+// - Position the surface relative to dock placement and monitor bounds.
+// - Coordinate thumbnails, live streams, and window actions.
+//
+// Dependencies and ownership:
+// The window borrows DockApplicationController and owns its GTK widgets,
+// providers, cached frames, and signals.
+//
+// Design notes:
+// Transport-specific capture details remain behind provider interfaces.
+//
+// ------------------------------------------------------------
 
 #pragma once
 

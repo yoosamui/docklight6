@@ -5,11 +5,24 @@
 // Author and Maintainer: yoosamui
 // ------------------------------------------------------------
 //
-// Defines compile-time visual baselines and pure scaling helpers used
-// to derive dock-item, tooltip, and hover dimensions.
+// File:
+// dock_layout_metrics.h
 //
-// Runtime preferences are passed in as values; this class owns no
-// resources and performs no rendering or placement.
+// Purpose:
+// Declares visual baselines and pure scaling helpers for dock, tooltip,
+// preview, and hover dimensions.
+//
+// Responsibilities:
+// - Centralize size relationships used across widgets.
+// - Scale baseline values from the configured icon size.
+// - Keep visual measurements consistent across layout consumers.
+//
+// Dependencies and ownership:
+// The class owns no state or resources; all helpers operate on supplied
+// values.
+//
+// Design notes:
+// Runtime preferences remain inputs rather than global mutable settings.
 //
 // ------------------------------------------------------------
 

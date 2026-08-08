@@ -1,7 +1,22 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Implements pointer-driven autohide with a persistent edge trigger.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_autohide_controller.cpp
+//
+// Implementation overview:
+// Implements pointer-driven dock hiding and reveal timing around a
+// persistent edge trigger.
+//
+// Important implementation decisions:
+// - Placement changes are mirrored to the reveal surface.
+// - Timers are cancelled and replaced as visibility intent changes.
+// - Intellihide overlap participates in the same visibility policy.
+//
 // ------------------------------------------------------------
 
 #include "dock_autohide_controller.h"

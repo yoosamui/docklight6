@@ -1,4 +1,22 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_icon_renderer_test.cpp
+//
+// Implementation overview:
 // Verifies stateless icon transformations without constructing GTK widgets.
+//
+// Important implementation decisions:
+// - GLib and GDK are initialized without a display-backed window.
+// - Pixel and frame assertions cover highlight, zoom, and blur output.
+// - Shared layout metrics define expected rendered dimensions.
+//
+// ------------------------------------------------------------
 
 #include "rendering/dock_icon_renderer.h"
 #include "layout/dock_layout_metrics.h"

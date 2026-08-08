@@ -1,4 +1,23 @@
-// Implements KWin protocol encoding and validation.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// kwin_protocol_codec.cpp
+//
+// Implementation overview:
+// Implements typed encoding, decoding, and validation for the KWin D-Bus
+// protocol.
+//
+// Important implementation decisions:
+// - Integer parsing rejects partial and out-of-range values.
+// - Array serialization preserves delimiters through explicit escaping.
+// - Window payloads are validated before reaching backend state.
+//
+// ------------------------------------------------------------
 #include "kwin_protocol_codec.h"
 
 #include <glib.h>

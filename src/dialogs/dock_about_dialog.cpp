@@ -1,7 +1,21 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Implements the Docklight About dialog.
+// Copyright (c) 2018-2026 yoosamui
+// Author and Maintainer: yoosamui
+// ------------------------------------------------------------
+//
+// File:
+// dock_about_dialog.cpp
+//
+// Implementation overview:
+// Implements creation and presentation of the Docklight About dialog.
+//
+// Important implementation decisions:
+// - The dialog is transient for the dock window.
+// - Layer-shell integration keeps it above the dock where supported.
+// - Application metadata and artwork are assembled at presentation time.
+//
 // ------------------------------------------------------------
 
 #include "dock_about_dialog.h"
@@ -186,4 +200,3 @@ void DockAboutDialog::show(
     dialog.run();
     dialog.hide();
 }
-
