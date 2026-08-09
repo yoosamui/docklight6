@@ -326,6 +326,41 @@ void DockAutohideController::cancel_animation()
     m_animation_timer.disconnect();
 }
 
+ScreenPosition DockAutohideController::hidden_x11_position() const
+{
+    const int width = std::max(
+        1,
+        m_window.get_allocated_width());
+    const int height = std::max(
+        1,
+        m_window.get_allocated_height());
+
+    ScreenPosition hidden{
+        m_shown_x,
+        m_shown_y};
+
+    if (m_placement.anchor_top &&
+        m_placement.is_horizontal())
+    {
+        hidden.y -= height;
+    }
+    else if (m_placement.anchor_bottom &&
+             m_placement.is_horizontal())
+    {
+        hidden.y += height;
+    }
+    else if (m_placement.anchor_left)
+    {
+        hidden.x -= width;
+    }
+    else if (m_placement.anchor_right)
+    {
+        hidden.x += width;
+    }
+
+    return hidden;
+}
+
 void DockAutohideController::animate_x11(
     bool hiding)
 {
@@ -351,43 +386,17 @@ void DockAutohideController::animate_x11(
         m_has_shown_position = true;
     }
 
-    const int width = std::max(
-        1,
-        m_window.get_allocated_width());
-    const int height = std::max(
-        1,
-        m_window.get_allocated_height());
-
-    int hidden_x = m_shown_x;
-    int hidden_y = m_shown_y;
-
-    if (m_placement.anchor_top &&
-        m_placement.is_horizontal())
-    {
-        hidden_y -= height;
-    }
-    else if (m_placement.anchor_bottom &&
-             m_placement.is_horizontal())
-    {
-        hidden_y += height;
-    }
-    else if (m_placement.anchor_left)
-    {
-        hidden_x -= width;
-    }
-    else if (m_placement.anchor_right)
-    {
-        hidden_x += width;
-    }
+    const auto hidden =
+        hidden_x11_position();
 
     cancel_animation();
 
     m_animation_start_x = current_x;
     m_animation_start_y = current_y;
     m_animation_target_x =
-        hiding ? hidden_x : m_shown_x;
+        hiding ? hidden.x : m_shown_x;
     m_animation_target_y =
-        hiding ? hidden_y : m_shown_y;
+        hiding ? hidden.y : m_shown_y;
     m_animating_to_hidden = hiding;
 
     const double remaining = std::hypot(
@@ -396,9 +405,13 @@ void DockAutohideController::animate_x11(
         static_cast<double>(
             m_animation_target_y - current_y));
     const double full_distance =
-        m_placement.is_horizontal()
-            ? static_cast<double>(height)
-            : static_cast<double>(width);
+        std::max(
+            1.0,
+            std::hypot(
+                static_cast<double>(
+                    hidden.x - m_shown_x),
+                static_cast<double>(
+                    hidden.y - m_shown_y)));
     const double distance_fraction = std::clamp(
         remaining / std::max(1.0, full_distance),
         0.0,
@@ -517,6 +530,18 @@ void DockAutohideController::reveal()
         if (!m_window.get_mapped())
         {
             m_suppress_next_map_hide = true;
+
+            if (!m_window.m_uses_layer_shell &&
+                m_has_placement &&
+                m_has_shown_position)
+            {
+                const auto hidden =
+                    hidden_x11_position();
+                m_window.move(
+                    hidden.x,
+                    hidden.y);
+            }
+
             m_window.show();
         }
 

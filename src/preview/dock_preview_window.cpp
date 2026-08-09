@@ -40,7 +40,6 @@ namespace
     constexpr unsigned int X11_STATIC_RETRY_MS = 80;
     constexpr unsigned int X11_STATIC_RETRY_COUNT = 8;
     constexpr unsigned int XFWM_RECOVERY_SETTLE_MS = 500;
-    constexpr unsigned int XFWM_CACHE_REFRESH_MS = 250;
     constexpr unsigned int X11_CHANGE_PROBE_MS = 200;
     constexpr std::int64_t X11_LIVE_GRACE_US = 750000;
     constexpr int X11_PROBE_WIDTH = 96;
@@ -976,9 +975,9 @@ void DockPreviewWindow::prime_thumbnail_cache(
             }
         }
 
-        // Capture a newly active Xfwm window immediately. This avoids waiting
-        // for the periodic refresh and prevents the first preview from passing
-        // through blank and icon-only states when no disk seed exists yet.
+        // Capture a newly active Xfwm window once. Refreshing it continuously
+        // while the preview is closed keeps XComposite busy at idle; visible
+        // previews already have their own demand-driven live refresh path.
         for (const auto &window_id :
              m_thumbnail_cache_active)
         {
@@ -1004,27 +1003,7 @@ void DockPreviewWindow::prime_thumbnail_cache(
                 X11_STATIC_RETRY_COUNT);
         }
 
-        if (!m_thumbnail_cache_active.empty() &&
-            !m_thumbnail_cache_refresh.connected())
-        {
-            m_thumbnail_cache_refresh =
-                Glib::signal_timeout().connect(
-                    [this]()
-                    {
-                        for (const auto &window_id :
-                             m_thumbnail_cache_active)
-                        {
-                            request_active_cache_refresh(
-                                window_id);
-                        }
-                        return true;
-                    },
-                    XFWM_CACHE_REFRESH_MS);
-        }
-        else if (m_thumbnail_cache_active.empty())
-        {
-            m_thumbnail_cache_refresh.disconnect();
-        }
+        m_thumbnail_cache_refresh.disconnect();
     }
 }
 
@@ -1361,10 +1340,6 @@ void DockPreviewWindow::show_preview(
         position,
         size.width,
         size.height);
-    // Keep the first frame visible; the X11 slide makes the easing obvious,
-    // and avoiding zero opacity prevents compositor-specific invisible maps.
-    set_opacity(0.18);
-    show_all();
 
     // set_size_request() only changes the toplevel's minimum requisition.
     // A mapped layer-shell surface otherwise retains the previous group's
@@ -1377,8 +1352,11 @@ void DockPreviewWindow::show_preview(
         position,
         size.width,
         size.height);
+
+    set_opacity(1.0);
+
+    show_all();
     queue_resize();
-    start_opacity_animation(false);
 }
 
 void DockPreviewWindow::hide_preview()
@@ -1468,6 +1446,7 @@ void DockPreviewWindow::start_opacity_animation(
     m_opacity_animation_start_us =
         g_get_monotonic_time();
     m_animation_moves_window =
+        hiding &&
         !m_uses_layer_shell &&
         m_has_position;
 
@@ -2514,7 +2493,15 @@ void DockPreviewWindow::clear_cards()
     stop_live_streams();
     m_media_title.clear();
     m_live_window_ids.clear();
+    m_thumbnail_cache_refresh.disconnect();
+
+    for (auto &retry : m_thumbnail_cache_retries)
+        retry.second.disconnect();
+    m_thumbnail_cache_retries.clear();
+
     m_thumbnail_targets.clear();
+    m_thumbnail_cache_active.clear();
+    m_thumbnail_cache_in_flight.clear();
     m_thumbnail_recovery_requested.clear();
     m_thumbnail_recovery_queue.clear();
     m_thumbnail_recovery_active.clear();

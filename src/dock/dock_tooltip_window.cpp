@@ -299,17 +299,14 @@ void DockTooltipWindow::show_tooltip(
         Glib::signal_timeout().connect(
             [this]()
             {
-                // Keep the first frame barely visible. Some Xfce compositor
-                // setups make a freshly mapped fully-transparent override
-                // window appear to stick at zero opacity until it is remapped.
-                set_opacity(0.08);
+                set_opacity(1.0);
                 show_all();
+
                 apply_position(
                     m_request_location,
                     m_request_position,
                     m_request_width,
                     m_tooltip_height);
-                start_opacity_animation(false);
                 return false;
             },
             DockConstants::TOOLTIP_REMAP_DELAY_MS);
@@ -368,6 +365,7 @@ void DockTooltipWindow::start_opacity_animation(
     m_opacity_animation_start_us =
         g_get_monotonic_time();
     m_animation_moves_window =
+        hiding &&
         !m_uses_layer_shell;
 
     if (m_animation_moves_window)

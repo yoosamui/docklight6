@@ -59,6 +59,7 @@ private:
     void schedule_hide();
     void cancel_hide();
     void cancel_animation();
+    ScreenPosition hidden_x11_position() const;
     void animate_x11(bool hiding);
     bool advance_x11_animation();
     void reveal_immediately();

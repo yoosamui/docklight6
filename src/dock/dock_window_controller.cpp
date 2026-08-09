@@ -1649,7 +1649,7 @@ void DockWindowController::start_hide_timer()
                     m_window.pointer_is_inside() ||
                     m_preview_pointer_inside)
                 {
-                    return true;
+                    return false;
                 }
 
                 hide_tooltip();
