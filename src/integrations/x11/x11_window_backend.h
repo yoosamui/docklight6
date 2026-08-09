@@ -44,6 +44,8 @@ private:
     static void on_window_closed(WnckScreen *, WnckWindow *, gpointer data);
     static void on_screen_changed(WnckScreen *, gpointer data);
     static void on_screen_value_changed(WnckScreen *, gpointer, gpointer data);
+    static void on_active_workspace_changed(
+        WnckScreen *, WnckWorkspace *, gpointer data);
     static void on_window_changed(WnckWindow *, gpointer data);
     static void on_window_state_changed(WnckWindow *,
                                         WnckWindowState,
@@ -52,6 +54,11 @@ private:
 
     void watch_window(WnckWindow *window);
     void snapshot_changed();
+    bool defer_activation_until_workspace(
+        const std::vector<WindowId> &window_ids,
+        WnckWindow *target,
+        guint32 timestamp);
+    void complete_pending_activation();
     WnckWindow *find_window(const WindowId &window_id) const;
     static WindowId window_id(WnckWindow *window);
     static ManagedWindow managed_window(WnckWindow *window,
@@ -59,6 +66,9 @@ private:
 
     WnckHandle *m_handle = nullptr;
     WnckScreen *m_screen = nullptr;
+    std::vector<WindowId> m_pending_activation_window_ids;
+    int m_pending_activation_workspace = -1;
+    guint32 m_pending_activation_timestamp = 0;
     bool m_started = false;
     bool m_connected = false;
 };

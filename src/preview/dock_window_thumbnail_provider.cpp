@@ -217,14 +217,58 @@ bool capture_x11_window(
             XSync(display, False);
         }
 
+        int drawable_width = attributes.width;
+        int drawable_height = attributes.height;
+
+        if (pixmap != None && !x_capture_error)
+        {
+            ::Window root = None;
+            int x = 0;
+            int y = 0;
+            unsigned int width = 0;
+            unsigned int height = 0;
+            unsigned int border_width = 0;
+            unsigned int depth = 0;
+
+            x_capture_error = false;
+            const bool has_pixmap_geometry =
+                XGetGeometry(
+                    display,
+                    pixmap,
+                    &root,
+                    &x,
+                    &y,
+                    &width,
+                    &height,
+                    &border_width,
+                    &depth) != 0;
+            XSync(display, False);
+
+            if (has_pixmap_geometry &&
+                !x_capture_error &&
+                width > 0 &&
+                height > 0)
+            {
+                drawable_width =
+                    static_cast<int>(width);
+                drawable_height =
+                    static_cast<int>(height);
+            }
+            else
+            {
+                XFreePixmap(display, pixmap);
+                pixmap = None;
+            }
+        }
+
         Drawable drawable =
             pixmap != None && !x_capture_error
                 ? pixmap
                 : window;
         x_capture_error = false;
 
-        int capture_width = attributes.width;
-        int capture_height = attributes.height;
+        int capture_width = drawable_width;
+        int capture_height = drawable_height;
         Visual *capture_visual = attributes.visual;
 
         // Scale the composited window on the X server before reading pixels
@@ -249,18 +293,18 @@ bool capture_x11_window(
                 1.0,
                 completion.x11_oversample *
                     completion.target_width /
-                    attributes.width,
+                    drawable_width,
                 completion.x11_oversample *
                     completion.target_height /
-                    attributes.height});
+                    drawable_height});
             const int scaled_width = std::max(
                 1,
                 static_cast<int>(std::lround(
-                    attributes.width * scale)));
+                    drawable_width * scale)));
             const int scaled_height = std::max(
                 1,
                 static_cast<int>(std::lround(
-                    attributes.height * scale)));
+                    drawable_height * scale)));
 
             auto *source_format =
                 XRenderFindVisualFormat(
@@ -299,13 +343,13 @@ bool capture_x11_window(
 
                 XTransform transform = {{
                     {XDoubleToFixed(
-                         static_cast<double>(attributes.width) /
+                         static_cast<double>(drawable_width) /
                          scaled_width),
                      XDoubleToFixed(0.0),
                      XDoubleToFixed(0.0)},
                     {XDoubleToFixed(0.0),
                      XDoubleToFixed(
-                         static_cast<double>(attributes.height) /
+                         static_cast<double>(drawable_height) /
                          scaled_height),
                      XDoubleToFixed(0.0)},
                     {XDoubleToFixed(0.0),
@@ -524,13 +568,16 @@ gboolean deliver_thumbnail(gpointer data)
                         y * destination_stride);
             }
 
-            const double scale = std::min(
+            // Match compositor thumbnail actors: fit inside the card while
+            // preserving aspect ratio, but never enlarge a small source.
+            const double scale = std::min({
+                1.0,
                 static_cast<double>(
                     completion->target_width) /
                     completion->source_width,
                 static_cast<double>(
                     completion->target_height) /
-                    completion->source_height);
+                    completion->source_height});
             const int scaled_width = std::max(
                 1,
                 static_cast<int>(std::lround(

@@ -70,6 +70,9 @@ public:
     void set_rounded_corners(
         bool enabled,
         int radius);
+    void prime_thumbnail_cache(
+        const std::vector<ApplicationWindowEntry>
+            &entries);
 
     DockPreviewSize preferred_size(
         const std::vector<ApplicationWindowEntry>
@@ -114,6 +117,7 @@ private:
         std::string caption;
         bool active = false;
         bool minimized = false;
+        bool on_current_desktop = false;
         bool application_auxiliary = false;
         bool capture_in_flight = false;
         bool has_thumbnail = false;
@@ -168,6 +172,10 @@ private:
         m_thumbnail_targets;
     std::map<WindowId, Glib::RefPtr<Gdk::Pixbuf>>
         m_thumbnail_cache;
+    std::set<WindowId>
+        m_thumbnail_cache_in_flight;
+    std::set<WindowId>
+        m_known_window_ids;
     std::vector<WindowId> m_window_ids;
     sigc::connection m_x11_live_refresh;
     sigc::connection m_x11_probe_refresh;

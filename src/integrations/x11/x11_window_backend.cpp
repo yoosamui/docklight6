@@ -8,6 +8,7 @@
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
+#include <gio/gio.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -41,6 +42,133 @@ guint32 event_time()
     }
 
     return GDK_CURRENT_TIME;
+}
+
+bool is_muffin(WnckScreen *screen)
+{
+    if (!screen)
+        return false;
+
+    const char *manager =
+        wnck_screen_get_window_manager_name(screen);
+    if (!manager)
+        return false;
+
+    auto *normalized = g_ascii_strdown(manager, -1);
+    const bool result =
+        normalized &&
+        std::string(normalized).find("muffin") !=
+            std::string::npos;
+    g_free(normalized);
+    return result;
+}
+
+bool cinnamon_eval_boolean(const std::string &script)
+{
+    GError *error = nullptr;
+    auto *connection =
+        g_bus_get_sync(
+            G_BUS_TYPE_SESSION,
+            nullptr,
+            &error);
+    if (!connection)
+    {
+        g_warning(
+            "Cannot connect to Cinnamon: %s",
+            error ? error->message : "unknown error");
+        g_clear_error(&error);
+        return false;
+    }
+
+    auto *reply =
+        g_dbus_connection_call_sync(
+            connection,
+            "org.Cinnamon",
+            "/org/Cinnamon",
+            "org.Cinnamon",
+            "Eval",
+            g_variant_new("(s)", script.c_str()),
+            G_VARIANT_TYPE("(bs)"),
+            G_DBUS_CALL_FLAGS_NONE,
+            1000,
+            nullptr,
+            &error);
+    g_object_unref(connection);
+
+    if (!reply)
+    {
+        g_warning(
+            "Cinnamon window action failed: %s",
+            error ? error->message : "unknown error");
+        g_clear_error(&error);
+        return false;
+    }
+
+    gboolean success = FALSE;
+    const char *result = nullptr;
+    g_variant_get(reply, "(b&s)", &success, &result);
+    const bool accepted =
+        success && result && g_str_equal(result, "true");
+    if (!accepted)
+    {
+        g_warning(
+            "Cinnamon did not accept window action: %s",
+            result ? result : "no result");
+    }
+    g_variant_unref(reply);
+    return accepted;
+}
+
+bool muffin_activate_windows(
+    WnckScreen *screen,
+    const std::vector<WnckWindow *> &windows)
+{
+    if (!is_muffin(screen) || windows.empty())
+        return false;
+
+    std::string script = "(() => { const ids = [";
+    for (std::size_t index = 0;
+         index < windows.size();
+         ++index)
+    {
+        if (index > 0)
+            script += ',';
+        script += std::to_string(
+            wnck_window_get_xid(windows[index]));
+    }
+
+    script +=
+        "]; const wins = global.get_window_actors()"
+        ".map(a => a.meta_window)"
+        ".filter(w => ids.includes(w.get_xwindow()));"
+        "if (wins.length === 0) return false;"
+        "const target = wins[wins.length - 1];"
+        "wins.forEach(w => w.unminimize());"
+        "target.get_workspace().activate_with_focus("
+        "target, global.get_current_time());"
+        "return true; })()";
+
+    return cinnamon_eval_boolean(script);
+}
+
+bool muffin_set_minimized(
+    WnckScreen *screen,
+    WnckWindow *window,
+    bool minimized)
+{
+    if (!is_muffin(screen) || !window)
+        return false;
+
+    const std::string script =
+        "(() => { const xid = " +
+        std::to_string(wnck_window_get_xid(window)) +
+        "; const actor = global.get_window_actors()"
+        ".find(a => a.meta_window.get_xwindow() === xid);"
+        "if (!actor) return false; actor.meta_window." +
+        std::string(minimized ? "minimize" : "unminimize") +
+        "(); return true; })()";
+
+    return cinnamon_eval_boolean(script);
 }
 
 bool is_application_auxiliary(
@@ -129,7 +257,7 @@ void X11WindowBackend::start()
     g_signal_connect(m_screen, "active-window-changed",
                      G_CALLBACK(on_screen_value_changed), this);
     g_signal_connect(m_screen, "active-workspace-changed",
-                     G_CALLBACK(on_screen_value_changed), this);
+                     G_CALLBACK(on_active_workspace_changed), this);
     g_signal_connect(m_screen, "window-stacking-changed",
                      G_CALLBACK(on_screen_changed), this);
 
@@ -163,6 +291,9 @@ void X11WindowBackend::stop()
 
     const bool was_connected = m_connected;
     m_screen = nullptr;
+    m_pending_activation_window_ids.clear();
+    m_pending_activation_workspace = -1;
+    m_pending_activation_timestamp = 0;
     g_clear_object(&m_handle);
     m_started = false;
     m_connected = false;
@@ -254,27 +385,136 @@ bool X11WindowBackend::activate_window(const WindowId &id)
     if (!window)
         return false;
 
-    wnck_window_activate(window, event_time());
+    if (is_muffin(m_screen))
+    {
+        // Never fall through to wnck_window_activate() on Muffin: it moves
+        // an off-workspace window onto the current workspace.
+        return muffin_activate_windows(
+            m_screen, {window});
+    }
+
+    const guint32 timestamp = event_time();
+    if (defer_activation_until_workspace(
+            {id}, window, timestamp))
+    {
+        return true;
+    }
+
+    wnck_window_activate(window, timestamp);
     return true;
 }
 
 bool X11WindowBackend::present_windows(const std::vector<WindowId> &ids)
 {
-    WnckWindow *last = nullptr;
+    std::vector<WnckWindow *> windows;
+    windows.reserve(ids.size());
+
     for (const auto &id : ids)
+    {
+        auto *window = find_window(id);
+        if (window)
+            windows.push_back(window);
+    }
+
+    if (windows.empty())
+        return false;
+
+    if (is_muffin(m_screen))
+    {
+        return muffin_activate_windows(
+            m_screen, windows);
+    }
+
+    const guint32 timestamp = event_time();
+    auto *target = windows.back();
+
+    if (defer_activation_until_workspace(
+            ids, target, timestamp))
+    {
+        return true;
+    }
+
+    for (auto *window : windows)
+    {
+        if (wnck_window_is_minimized(window))
+            wnck_window_unminimize(window, timestamp);
+    }
+
+    wnck_window_activate(target, timestamp);
+    return true;
+}
+
+bool X11WindowBackend::defer_activation_until_workspace(
+    const std::vector<WindowId> &window_ids,
+    WnckWindow *target,
+    guint32 timestamp)
+{
+    if (!target || !m_screen ||
+        wnck_window_is_pinned(target))
+    {
+        return false;
+    }
+
+    auto *workspace =
+        wnck_window_get_workspace(target);
+
+    if (!workspace ||
+        workspace ==
+            wnck_screen_get_active_workspace(m_screen))
+    {
+        return false;
+    }
+
+    m_pending_activation_window_ids = window_ids;
+    m_pending_activation_workspace =
+        wnck_workspace_get_number(workspace);
+    m_pending_activation_timestamp = timestamp;
+
+    wnck_workspace_activate(workspace, timestamp);
+    return true;
+}
+
+void X11WindowBackend::complete_pending_activation()
+{
+    if (!m_screen ||
+        m_pending_activation_window_ids.empty())
+    {
+        return;
+    }
+
+    auto *workspace =
+        wnck_screen_get_active_workspace(m_screen);
+
+    if (!workspace ||
+        wnck_workspace_get_number(workspace) !=
+            m_pending_activation_workspace)
+    {
+        return;
+    }
+
+    const auto window_ids =
+        std::move(m_pending_activation_window_ids);
+    const guint32 timestamp =
+        m_pending_activation_timestamp;
+
+    m_pending_activation_workspace = -1;
+    m_pending_activation_timestamp = 0;
+
+    WnckWindow *target = nullptr;
+    for (const auto &id : window_ids)
     {
         auto *window = find_window(id);
         if (!window)
             continue;
-        wnck_window_unminimize(window, event_time());
-        last = window;
+
+        if (wnck_window_is_minimized(window))
+            wnck_window_unminimize(window, timestamp);
+
+        target = window;
     }
 
-    if (!last)
-        return false;
-
-    wnck_window_activate(last, event_time());
-    return true;
+    if (target)
+        wnck_window_activate(target, timestamp);
 }
 
 bool X11WindowBackend::hide_windows(const std::vector<WindowId> &ids)
@@ -312,10 +552,21 @@ bool X11WindowBackend::set_window_minimized(const WindowId &id,
     if (!window)
         return false;
 
+    if (is_muffin(m_screen))
+        return muffin_set_minimized(
+            m_screen, window, minimized);
+
     if (minimized)
         wnck_window_minimize(window);
     else
-        wnck_window_unminimize(window, event_time());
+    {
+        const guint32 timestamp = event_time();
+        if (!defer_activation_until_workspace(
+                {id}, window, timestamp))
+        {
+            wnck_window_unminimize(window, timestamp);
+        }
+    }
     return true;
 }
 
@@ -376,6 +627,17 @@ void X11WindowBackend::on_screen_value_changed(WnckScreen *,
                                                 gpointer data)
 {
     static_cast<X11WindowBackend *>(data)->snapshot_changed();
+}
+
+void X11WindowBackend::on_active_workspace_changed(
+    WnckScreen *,
+    WnckWorkspace *,
+    gpointer data)
+{
+    auto *backend =
+        static_cast<X11WindowBackend *>(data);
+    backend->snapshot_changed();
+    backend->complete_pending_activation();
 }
 
 void X11WindowBackend::on_window_changed(WnckWindow *, gpointer data)

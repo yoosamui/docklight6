@@ -1076,6 +1076,7 @@ bool DockItem::on_button_release_event(
     m_last_primary_action_time = now;
 
     start_primary_action_effect();
+    perform_primary_action();
 
     return true;
 }
@@ -1120,7 +1121,6 @@ bool DockItem::advance_primary_action_effect()
     }
 
     image.set_opacity(1.0);
-    perform_primary_action();
 
     return false;
 }

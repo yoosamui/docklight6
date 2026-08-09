@@ -204,13 +204,24 @@ void DockWindowController::initialize()
                                 hide_preview();
                         }
 
+                        std::vector<ApplicationWindowEntry>
+                            all_window_entries;
+
                         for (auto *item :
-                             m_window
-                                 .dock_items())
+                             m_window.dock_items())
                         {
-                            item
-                                ->refresh_indicator();
+                            item->refresh_indicator();
+                            const auto entries =
+                                item->window_entries();
+                            all_window_entries.insert(
+                                all_window_entries.end(),
+                                entries.begin(),
+                                entries.end());
                         }
+
+                        m_preview_window
+                            ->prime_thumbnail_cache(
+                                all_window_entries);
 
                         schedule_icon_geometry_update();
                         schedule_intellihide_update();
@@ -237,11 +248,21 @@ void DockWindowController::initialize()
                     });
     }
 
-    for (auto *item :
-         m_window.dock_items())
+    std::vector<ApplicationWindowEntry>
+        all_window_entries;
+
+    for (auto *item : m_window.dock_items())
     {
         item->refresh_indicator();
+        const auto entries = item->window_entries();
+        all_window_entries.insert(
+            all_window_entries.end(),
+            entries.begin(),
+            entries.end());
     }
+
+    m_preview_window->prime_thumbnail_cache(
+        all_window_entries);
 
     m_icon_theme =
         Gtk::IconTheme::get_default();
@@ -1178,6 +1199,24 @@ void DockWindowController::dock_items_reordered()
 
 void DockWindowController::dock_items_changed()
 {
+    std::vector<ApplicationWindowEntry>
+        all_window_entries;
+
+    for (auto *item : m_window.dock_items())
+    {
+        if (item)
+        {
+            const auto entries = item->window_entries();
+            all_window_entries.insert(
+                all_window_entries.end(),
+                entries.begin(),
+                entries.end());
+        }
+    }
+
+    m_preview_window->prime_thumbnail_cache(
+        all_window_entries);
+
     // Fit the children immediately so a newly added item cannot overflow a
     // full-height dock. Defer layer-shell surface changes until the current
     // window-registry callback has returned; resizing the surface here can
@@ -1495,51 +1534,52 @@ void DockWindowController::activate_preview_window(
     const auto desktop_id =
         m_preview_desktop_id;
 
-    Glib::signal_idle().connect_once(
-        [this, desktop_id, window_id]()
+    for (auto *item : m_window.dock_items())
+    {
+        if (item &&
+            item->desktop_id() == desktop_id)
         {
-            if (m_settings
-                    .close_preview_after_activation())
+            const auto entries =
+                item->window_entries();
+            const auto selected =
+                std::find_if(
+                    entries.begin(),
+                    entries.end(),
+                    [&window_id](
+                        const ApplicationWindowEntry
+                            &entry)
+                    {
+                        return entry.id == window_id;
+                    });
+
+            // Run the window action while GTK still exposes the button
+            // event timestamp. Muffin rejects delayed X11 activation and
+            // unminimize requests as untrusted focus-stealing attempts.
+            if (selected != entries.end() &&
+                selected->active &&
+                !selected->minimized)
+            {
+                item->minimize_window(window_id);
+            }
+            else
+            {
+                item->show_window(window_id);
+            }
+
+            break;
+        }
+    }
+
+    // Destroying preview-card widgets from their own release handler is
+    // unsafe, so only the optional teardown remains deferred.
+    if (m_settings.close_preview_after_activation())
+    {
+        Glib::signal_idle().connect_once(
+            [this]()
             {
                 hide_preview();
-            }
-
-            for (auto *item : m_window.dock_items())
-            {
-                if (item &&
-                    item->desktop_id() == desktop_id)
-                {
-                    const auto entries =
-                        item->window_entries();
-                    const auto selected =
-                        std::find_if(
-                            entries.begin(),
-                            entries.end(),
-                            [&window_id](
-                                const ApplicationWindowEntry
-                                    &entry)
-                            {
-                                return entry.id == window_id;
-                            });
-
-                    // A preview card toggles only the window that is
-                    // already at the front. Clicking another visible
-                    // window must raise and activate it, not minimize it.
-                    if (selected != entries.end() &&
-                        selected->active &&
-                        !selected->minimized)
-                    {
-                        item->minimize_window(window_id);
-                    }
-                    else
-                    {
-                        item->show_window(window_id);
-                    }
-
-                    break;
-                }
-            }
-        });
+            });
+    }
 }
 
 void DockWindowController::close_preview_window(

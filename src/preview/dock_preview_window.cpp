@@ -35,6 +35,8 @@ namespace
     constexpr int HEADER_HEIGHT = 32;
     constexpr int CLOSE_BUTTON_SIZE = 16;
     constexpr unsigned int X11_LIVE_REFRESH_MS = 33;
+    constexpr unsigned int X11_STATIC_RETRY_MS = 80;
+    constexpr unsigned int X11_STATIC_RETRY_COUNT = 8;
     constexpr unsigned int X11_CHANGE_PROBE_MS = 200;
     constexpr std::int64_t X11_LIVE_GRACE_US = 750000;
     constexpr int X11_PROBE_WIDTH = 96;
@@ -43,6 +45,24 @@ namespace
     constexpr double CARD_CORNER_RADIUS = 7.0;
     constexpr double PREVIEW_PI =
         3.14159265358979323846;
+
+    bool uses_xfwm_session()
+    {
+        const char *desktop =
+            g_getenv("XDG_CURRENT_DESKTOP");
+        if (!desktop)
+            desktop = g_getenv("XDG_SESSION_DESKTOP");
+        if (!desktop)
+            return false;
+
+        auto *normalized = g_ascii_strdown(desktop, -1);
+        const bool result =
+            normalized &&
+            std::string(normalized).find("xfce") !=
+                std::string::npos;
+        g_free(normalized);
+        return result;
+    }
 
     void append_rounded_rectangle(
         const Cairo::RefPtr<Cairo::Context>
@@ -136,6 +156,45 @@ namespace
         }
 
         return title;
+    }
+
+    Glib::RefPtr<Gdk::Pixbuf> scaled_to_fit(
+        const Glib::RefPtr<Gdk::Pixbuf> &source,
+        int target_width,
+        int target_height)
+    {
+        if (!source ||
+            target_width <= 0 ||
+            target_height <= 0)
+        {
+            return source;
+        }
+
+        const double scale = std::min({
+            1.0,
+            static_cast<double>(target_width) /
+                source->get_width(),
+            static_cast<double>(target_height) /
+                source->get_height()});
+        const int width = std::max(
+            1,
+            static_cast<int>(std::lround(
+                source->get_width() * scale)));
+        const int height = std::max(
+            1,
+            static_cast<int>(std::lround(
+                source->get_height() * scale)));
+
+        if (width == source->get_width() &&
+            height == source->get_height())
+        {
+            return source;
+        }
+
+        return source->scale_simple(
+            width,
+            height,
+            Gdk::INTERP_BILINEAR);
     }
 
     std::uint64_t pixbuf_signature(
@@ -543,6 +602,82 @@ void DockPreviewWindow::set_rounded_corners(
         ".dock-preview { border-radius: " +
         std::to_string(effective_radius) +
         "px; }");
+}
+
+void DockPreviewWindow::prime_thumbnail_cache(
+    const std::vector<ApplicationWindowEntry>
+        &entries)
+{
+    if (!m_uses_layer_shell)
+    {
+        std::set<WindowId> known_window_ids;
+        for (const auto &entry : entries)
+        {
+            if (!entry.id.empty())
+                known_window_ids.insert(entry.id);
+        }
+
+        m_known_window_ids =
+            std::move(known_window_ids);
+
+        for (auto cached = m_thumbnail_cache.begin();
+             cached != m_thumbnail_cache.end();)
+        {
+            if (m_known_window_ids.count(
+                    cached->first) == 0)
+            {
+                cached = m_thumbnail_cache.erase(cached);
+            }
+            else
+            {
+                ++cached;
+            }
+        }
+
+        for (const auto &entry : entries)
+        {
+            if (entry.id.empty() ||
+                (uses_xfwm_session() &&
+                 (entry.minimized ||
+                  !entry.on_current_desktop)) ||
+                m_thumbnail_cache.count(entry.id) != 0 ||
+                m_thumbnail_cache_in_flight.count(
+                    entry.id) != 0)
+            {
+                continue;
+            }
+
+            m_thumbnail_cache_in_flight.insert(
+                entry.id);
+
+            // Remember a compositor-scaled frame while Xfwm still exposes
+            // the mapped window pixmap. Minimized and off-workspace windows
+            // may no longer have a readable pixmap when the preview opens.
+            // Keep enough resolution for the largest configured card so the
+            // cached frame is never stretched to fill a later preview.
+            m_thumbnail_provider.request(
+                entry.id,
+                MAX_HEIGHT * 2,
+                MAX_HEIGHT,
+                [this](
+                    const WindowId &window_id,
+                    const Glib::RefPtr<Gdk::Pixbuf>
+                        &thumbnail)
+                {
+                    m_thumbnail_cache_in_flight.erase(
+                        window_id);
+
+                    if (thumbnail &&
+                        m_known_window_ids.count(
+                            window_id) != 0)
+                    {
+                        m_thumbnail_cache[window_id] =
+                            thumbnail;
+                    }
+                },
+                1.0);
+        }
+    }
 }
 
 DockPreviewSize DockPreviewWindow::preferred_size(
@@ -977,6 +1112,7 @@ void DockPreviewWindow::rebuild(
                 entry.caption,
                 entry.active,
                 entry.minimized,
+                entry.on_current_desktop,
                 entry.application_auxiliary,
                 false,
                 false,
@@ -996,7 +1132,11 @@ void DockPreviewWindow::rebuild(
         if (cached != m_thumbnail_cache.end() &&
             cached->second)
         {
-            image->set(cached->second);
+            image->set(
+                scaled_to_fit(
+                    cached->second,
+                    size.card_width,
+                    image_height));
             target->second.has_thumbnail = true;
         }
 
@@ -1016,6 +1156,25 @@ void DockPreviewWindow::request_thumbnail(
     if (target == m_thumbnail_targets.end() ||
         target->second.capture_in_flight)
     {
+        return;
+    }
+
+    // Xfwm unmaps minimized and off-workspace windows. A named composite
+    // pixmap for an unmapped window can expose stale backing storage from a
+    // different client. Keep only a frame captured while this window was
+    // mapped; otherwise show its own application icon.
+    if (uses_xfwm_session() &&
+        (target->second.minimized ||
+         !target->second.on_current_desktop))
+    {
+        if (!target->second.has_thumbnail)
+        {
+            target->second.image->set_pixel_size(
+                target->second.fallback_size);
+            target->second.image->set_from_icon_name(
+                target->second.fallback_icon,
+                Gtk::ICON_SIZE_DIALOG);
+        }
         return;
     }
 
@@ -1050,21 +1209,31 @@ void DockPreviewWindow::request_thumbnail(
             {
                 m_thumbnail_cache[completed_window_id] =
                     thumbnail;
-
-                if (!target.has_thumbnail)
-                {
-                    target.image->set(thumbnail);
-                    target.has_thumbnail = true;
-                }
+                target.image->set(thumbnail);
+                target.image->queue_draw();
+                target.has_thumbnail = true;
             }
             else if (!target.has_thumbnail)
             {
-                if (target.initial_capture_failures < 2)
+                if (target.initial_capture_failures <
+                    X11_STATIC_RETRY_COUNT)
                 {
                     ++target.initial_capture_failures;
-                    request_thumbnail(
-                        completed_window_id,
-                        generation);
+                    Glib::signal_timeout().connect(
+                        [this,
+                         completed_window_id,
+                         generation]()
+                        {
+                            if (generation == m_generation)
+                            {
+                                request_thumbnail(
+                                    completed_window_id,
+                                    generation);
+                            }
+
+                            return false;
+                        },
+                        X11_STATIC_RETRY_MS);
                     return;
                 }
 
@@ -1077,8 +1246,7 @@ void DockPreviewWindow::request_thumbnail(
                     Gtk::ICON_SIZE_DIALOG);
             }
         },
-        2.0,
-        true);
+        2.0);
 }
 
 void DockPreviewWindow::request_x11_change_probe(
@@ -1091,7 +1259,9 @@ void DockPreviewWindow::request_x11_change_probe(
     if (found == m_thumbnail_targets.end() ||
         found->second.capture_in_flight ||
         found->second.probe_in_flight ||
-        found->second.minimized)
+        found->second.minimized ||
+        (uses_xfwm_session() &&
+         !found->second.on_current_desktop))
     {
         return;
     }
@@ -1148,7 +1318,9 @@ void DockPreviewWindow::request_live_x11_thumbnail(
 
     if (found == m_thumbnail_targets.end() ||
         found->second.capture_in_flight ||
-        found->second.minimized)
+        found->second.minimized ||
+        (uses_xfwm_session() &&
+         !found->second.on_current_desktop))
     {
         return;
     }
@@ -1198,8 +1370,7 @@ void DockPreviewWindow::request_live_x11_thumbnail(
             m_thumbnail_cache[completed_window_id] = frame;
             thumbnail.has_thumbnail = true;
         },
-        X11_LIVE_OVERSAMPLE,
-        true);
+        X11_LIVE_OVERSAMPLE);
 }
 
 void DockPreviewWindow::start_live_streams()
@@ -1212,7 +1383,9 @@ void DockPreviewWindow::start_live_streams()
         // Firefox exposes one browser-wide MPRIS player and can leave it
         // associated with an unrelated tab. Refresh the complete visible
         // group on X11 so a playing page cannot be omitted by stale metadata.
-        if (!entry.second.minimized)
+        if (!entry.second.minimized &&
+            (!uses_xfwm_session() ||
+             entry.second.on_current_desktop))
             desired_windows.insert(entry.first);
     }
 

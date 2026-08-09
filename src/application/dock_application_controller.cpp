@@ -209,22 +209,28 @@ bool DockApplicationController::
         return minimize();
     }
 
-    // A group on the current desktop always has priority, including when its
-    // windows are minimized. If the preceding click hid the complete
-    // application, restore every workspace's windows in place, then raise
-    // and activate only the current desktop's group.
-    if (!current_windows.empty())
+    // If the complete application was hidden, restore every workspace's
+    // windows in place. Prefer the current workspace when it contains part
+    // of the group; otherwise visit the most recently used remote group.
+    if (!has_unminimized_window())
     {
-        if (!has_unminimized_window())
+        auto target_windows = current_windows;
+        if (target_windows.empty())
         {
-            return restore_all_and_activate(
-                *running_application,
-                current_windows);
+            target_windows =
+                most_recent_desktop_group(
+                    *running_application,
+                    false);
         }
 
-        return activate_windows(
-            current_windows);
+        return restore_all_and_activate(
+            *running_application,
+            target_windows);
     }
+
+    // A group on the current desktop always has priority.
+    if (!current_windows.empty())
+        return activate_windows(current_windows);
 
     auto target_windows =
         most_recent_desktop_group(
