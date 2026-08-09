@@ -23,6 +23,8 @@
 #include <gtk-layer-shell.h>
 #include <gtkmm.h>
 
+#include <algorithm>
+
 namespace
 {
 void keep_dialog_above(
@@ -58,6 +60,46 @@ void keep_dialog_above(
             parent_window->gobj());
     gtk_layer_set_monitor(window, monitor);
 }
+
+void center_dialog_on_parent_monitor(
+    Gtk::Window &dialog,
+    Gtk::Window &parent)
+{
+    if (gtk_layer_is_supported())
+        return;
+
+    const auto parent_window = parent.get_window();
+    if (!parent_window)
+        return;
+
+    const auto display = parent_window->get_display();
+    const auto monitor = display
+                             ? display->get_monitor_at_window(
+                                   parent_window)
+                             : Glib::RefPtr<Gdk::Monitor>{};
+    if (!monitor)
+        return;
+
+    Gdk::Rectangle geometry;
+    monitor->get_geometry(geometry);
+
+    Gtk::Requisition minimum;
+    Gtk::Requisition natural;
+    dialog.get_preferred_size(minimum, natural);
+    const int width = std::max(
+        1,
+        natural.width);
+    const int height = std::max(
+        1,
+        natural.height);
+
+    dialog.set_position(Gtk::WIN_POS_NONE);
+    dialog.move(
+        geometry.get_x() +
+            (geometry.get_width() - width) / 2,
+        geometry.get_y() +
+            (geometry.get_height() - height) / 2);
+}
 }
 
 void DockAboutDialog::show(
@@ -81,8 +123,7 @@ void DockAboutDialog::show(
         true;
     dialog.set_skip_taskbar_hint(true);
     dialog.set_skip_pager_hint(true);
-    dialog.set_position(
-        Gtk::WIN_POS_CENTER_ON_PARENT);
+    dialog.set_position(Gtk::WIN_POS_NONE);
     dialog.set_default_size(
         600,
         -1);
@@ -194,6 +235,9 @@ void DockAboutDialog::show(
             true);
 
     dialog.show_all_children();
+    center_dialog_on_parent_monitor(
+        dialog,
+        parent);
     dialog.present();
     dialog.run();
     dialog.hide();
