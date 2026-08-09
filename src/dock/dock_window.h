@@ -116,6 +116,7 @@ private:
         int y,
         int width,
         int height);
+    void prepare_x11_monitor_change();
     void capture_x11_base_workarea(
         const MonitorGeometry &output,
         const MonitorGeometry &fallback);

@@ -985,6 +985,46 @@ void DockWindow::capture_x11_base_workarea(
         m_x11_base_workarea.height);
 }
 
+void DockWindow::prepare_x11_monitor_change()
+{
+    if (m_uses_layer_shell)
+        return;
+
+    m_has_x11_base_workarea = false;
+
+    if (!get_realized())
+        return;
+
+    auto gdk_window = get_window();
+    auto display = get_display();
+    if (!gdk_window || !display ||
+        !GDK_IS_X11_DISPLAY(display->gobj()))
+    {
+        return;
+    }
+
+    Display *xdisplay =
+        gdk_x11_display_get_xdisplay(display->gobj());
+    const ::Window xid =
+        gdk_x11_window_get_xid(gdk_window->gobj());
+
+    XDeleteProperty(
+        xdisplay,
+        xid,
+        XInternAtom(
+            xdisplay,
+            "_NET_WM_STRUT",
+            False));
+    XDeleteProperty(
+        xdisplay,
+        xid,
+        XInternAtom(
+            xdisplay,
+            "_NET_WM_STRUT_PARTIAL",
+            False));
+    XFlush(xdisplay);
+}
+
 void DockWindow::apply_x11_strut(
     const DockPlacement &placement,
     int x,

@@ -366,6 +366,12 @@ void DockWindowController::set_monitor(
         hide_tooltip();
         hide_preview();
 
+        // Remove the reservation from the old X11 output before deriving
+        // geometry for the new one. Same-monitor work-area notifications do
+        // not enter this branch, so they retain the cached panel-only area
+        // and cannot feed DockLight's own strut back into its position.
+        m_window.prepare_x11_monitor_change();
+
         if (m_window.m_uses_layer_shell)
         {
             gtk_layer_set_monitor(
