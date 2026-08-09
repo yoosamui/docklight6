@@ -38,8 +38,11 @@ X11BackendKind select_x11_backend_kind(
     const auto manager =
         lowercase(window_manager_name);
 
+    // KWin on X11 exposes ordinary EWMH/XIDs. Keep it on the native X11
+    // capture path; the KWin UUID/ScreenShot2 path produces icon fallbacks
+    // for applications such as Chrome and Nemo.
     if (contains(manager, "kwin"))
-        return X11BackendKind::kwin;
+        return X11BackendKind::ewmh_fallback;
     if (contains(manager, "muffin"))
         return X11BackendKind::muffin;
     if (contains(manager, "mutter") ||
@@ -60,7 +63,7 @@ X11BackendKind select_x11_backend_kind(
     if (contains(desktop, "kde") ||
         contains(desktop, "plasma"))
     {
-        return X11BackendKind::kwin;
+        return X11BackendKind::ewmh_fallback;
     }
     if (contains(desktop, "cinnamon"))
         return X11BackendKind::muffin;

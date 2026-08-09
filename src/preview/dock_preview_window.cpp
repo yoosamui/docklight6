@@ -149,7 +149,8 @@ namespace
     }
 
     std::string persistent_thumbnail_identity(
-        const ApplicationWindowEntry &entry)
+        const ApplicationWindowEntry &entry,
+        bool stable_process_identity = false)
     {
         const auto start_time =
             process_start_time(entry.process_id);
@@ -158,6 +159,15 @@ namespace
             start_time.empty())
         {
             return {};
+        }
+
+        if (stable_process_identity)
+        {
+            return sha256(
+                "docklight-x11-thumbnail-v2\n" +
+                entry.id + "\n" +
+                std::to_string(entry.process_id) + "\n" +
+                start_time);
         }
 
         return sha256(
@@ -263,6 +273,26 @@ namespace
             normalized &&
             std::string(normalized).find("xfce") !=
                 std::string::npos;
+        g_free(normalized);
+        return result;
+    }
+
+    bool uses_kde_session()
+    {
+        const char *desktop =
+            g_getenv("XDG_CURRENT_DESKTOP");
+        if (!desktop)
+            desktop = g_getenv("XDG_SESSION_DESKTOP");
+        if (!desktop)
+            return false;
+
+        auto *normalized = g_ascii_strdown(desktop, -1);
+        const bool result =
+            normalized &&
+            (std::string(normalized).find("kde") !=
+                 std::string::npos ||
+             std::string(normalized).find("plasma") !=
+                 std::string::npos);
         g_free(normalized);
         return result;
     }
@@ -838,6 +868,8 @@ void DockPreviewWindow::prime_thumbnail_cache(
     {
         const bool xfwm_session =
             uses_xfwm_session();
+        const bool kde_x11_session =
+            uses_kde_session();
         const auto previously_active =
             m_thumbnail_cache_active;
         std::set<WindowId> known_window_ids;
@@ -849,51 +881,133 @@ void DockPreviewWindow::prime_thumbnail_cache(
             {
                 known_window_ids.insert(entry.id);
 
-                if (xfwm_session)
+                const auto visible_target =
+                    m_thumbnail_targets.find(
+                        entry.id);
+                if (kde_x11_session &&
+                    visible_target !=
+                    m_thumbnail_targets.end())
                 {
-                    const auto identity =
-                        persistent_thumbnail_identity(
-                            entry);
-                    const auto previous_identity =
-                        m_thumbnail_cache_keys.find(
-                            entry.id);
-                    if (previous_identity ==
-                            m_thumbnail_cache_keys.end() ||
-                        previous_identity->second != identity)
-                    {
-                        m_thumbnail_cache_persisted.erase(
-                            entry.id);
-                    }
-                    m_thumbnail_cache_keys[entry.id] =
-                        identity;
+                    auto &target =
+                        visible_target->second;
+                    const bool was_minimized =
+                        target.minimized;
 
-                    if (m_thumbnail_cache.count(
-                            entry.id) == 0 &&
-                        !identity.empty())
+                    target.active =
+                        entry.active;
+                    target.minimized =
+                        entry.minimized;
+                    target.on_current_desktop =
+                        entry.on_current_desktop;
+                    target.application_auxiliary =
+                        entry.application_auxiliary;
+
+                    if (entry.minimized)
                     {
-                        auto persisted =
-                            load_persistent_thumbnail(
-                                entry.id,
-                                identity);
-                        if (persisted)
+                        const auto recovered =
+                            m_thumbnail_cache.find(
+                                entry.id);
+                        if (recovered !=
+                                m_thumbnail_cache.end() &&
+                            recovered->second)
                         {
-                            m_thumbnail_cache[entry.id] =
-                                std::move(persisted);
-                            m_thumbnail_cache_persisted.insert(
+                            target.image->set(
+                                scaled_to_fit(
+                                    recovered->second,
+                                    target.target_width,
+                                    target.target_height));
+                            target.has_thumbnail = true;
+                        }
+                        else
+                        {
+                            target.has_thumbnail = false;
+                            target.image->set_pixel_size(
+                                target.fallback_size);
+                            target.image->set_from_icon_name(
+                                target.fallback_icon,
+                                Gtk::ICON_SIZE_DIALOG);
+                            show_thumbnail_fallback(
                                 entry.id);
                         }
                     }
-
+                    else if (was_minimized)
+                    {
+                        const auto cached =
+                            m_thumbnail_cache.find(
+                                entry.id);
+                        if (cached !=
+                                m_thumbnail_cache.end() &&
+                            cached->second)
+                        {
+                            target.image->set(
+                                scaled_to_fit(
+                                    cached->second,
+                                    target.target_width,
+                                    target.target_height));
+                            target.has_thumbnail = true;
+                        }
+                    }
                 }
 
-                if (!xfwm_session ||
+                const auto identity =
+                    persistent_thumbnail_identity(
+                        entry,
+                        kde_x11_session);
+                const auto previous_identity =
+                    m_thumbnail_cache_keys.find(
+                        entry.id);
+                if (previous_identity ==
+                        m_thumbnail_cache_keys.end() ||
+                    previous_identity->second != identity)
+                {
+                    m_thumbnail_cache_persisted.erase(
+                        entry.id);
+                }
+                m_thumbnail_cache_keys[entry.id] =
+                    identity;
+
+                // Never read a minimized window's native X11 pixmap. Load a
+                // complete frame saved while it was mapped, including one
+                // persisted by a previous DockLight process.
+                const bool persistent_cache_session =
+                    xfwm_session ||
+                    kde_x11_session;
+                const bool capture_unsafe =
+                    (kde_x11_session &&
+                     entry.minimized) ||
+                    (xfwm_session &&
+                     (entry.minimized ||
+                      !entry.on_current_desktop));
+                if (persistent_cache_session &&
+                    capture_unsafe &&
+                    m_thumbnail_cache.count(
+                        entry.id) == 0 &&
+                    !identity.empty())
+                {
+                    auto persisted =
+                        load_persistent_thumbnail(
+                            entry.id,
+                            identity);
+                    if (persisted)
+                    {
+                        m_thumbnail_cache[entry.id] =
+                            std::move(persisted);
+                        m_thumbnail_cache_persisted.insert(
+                            entry.id);
+                    }
+                }
+
+                if ((!xfwm_session &&
+                     !kde_x11_session) ||
                     (!entry.minimized &&
-                     entry.on_current_desktop))
+                     (!xfwm_session ||
+                      entry.on_current_desktop)))
                 {
                     eligible_window_ids.insert(
                         entry.id);
 
-                    if (xfwm_session &&
+                    if ((xfwm_session ||
+                         kde_x11_session) &&
                         entry.active)
                     {
                         active_window_ids.insert(
@@ -975,7 +1089,7 @@ void DockPreviewWindow::prime_thumbnail_cache(
             }
         }
 
-        // Capture a newly active Xfwm window once. Refreshing it continuously
+        // Capture a newly active mapped window once. Refreshing continuously
         // while the preview is closed keeps XComposite busy at idle; visible
         // previews already have their own demand-driven live refresh path.
         for (const auto &window_id :
@@ -1004,6 +1118,7 @@ void DockPreviewWindow::prime_thumbnail_cache(
         }
 
         m_thumbnail_cache_refresh.disconnect();
+
     }
 }
 
@@ -1154,10 +1269,9 @@ void DockPreviewWindow::request_active_cache_refresh(
 
     m_thumbnail_cache_in_flight.insert(window_id);
 
-    // Xfwm has no readable backing pixmap for hidden workspaces in this
-    // session. Refresh only the active, mapped window: it is safe to use the
-    // guarded native fallback, and the resulting frame becomes the last-known
-    // image shown after minimize or a workspace switch.
+    // Refresh only the active, mapped window. The resulting valid frame is
+    // the last-known image shown after minimization. Xfwm alone needs the
+    // guarded native fallback; other X11 compositors use XComposite.
     m_thumbnail_provider.request(
         window_id,
         MAX_HEIGHT * 2,
@@ -1206,7 +1320,7 @@ void DockPreviewWindow::request_active_cache_refresh(
             }
         },
         1.0,
-        true,
+        uses_xfwm_session(),
         uses_xfwm_session());
 }
 
@@ -1214,7 +1328,9 @@ void DockPreviewWindow::persist_thumbnail_cache(
     const WindowId &window_id,
     const Glib::RefPtr<Gdk::Pixbuf> &thumbnail)
 {
-    if (!uses_xfwm_session() ||
+    if (m_uses_layer_shell ||
+        (!uses_xfwm_session() &&
+         !uses_kde_session()) ||
         window_id.empty() ||
         !thumbnail)
     {
@@ -1979,13 +2095,16 @@ void DockPreviewWindow::request_thumbnail(
         return;
     }
 
-    // Xfwm unmaps minimized and off-workspace windows. A named composite
-    // pixmap for an unmapped window can expose stale backing storage from a
-    // different client. Keep only a frame captured while this window was
-    // mapped; otherwise show its own application icon.
-    if (uses_xfwm_session() &&
-        (target->second.minimized ||
-         !target->second.on_current_desktop))
+    // Minimized X11 pixmaps can contain compositor garbage. Keep the last
+    // frame captured while mapped; only use the icon when no cache exists.
+    const bool kde_x11_session =
+        !m_uses_layer_shell &&
+        uses_kde_session();
+    if ((kde_x11_session &&
+         target->second.minimized) ||
+        (uses_xfwm_session() &&
+         (target->second.minimized ||
+          !target->second.on_current_desktop)))
     {
         if (!target->second.has_thumbnail)
             show_thumbnail_fallback(window_id);
@@ -1998,8 +2117,10 @@ void DockPreviewWindow::request_thumbnail(
         window_id,
         target->second.target_width,
         target->second.target_height,
-        [this, generation](
-            const WindowId &completed_window_id,
+        [this,
+         generation,
+         window_id](
+            const WindowId &,
             const Glib::RefPtr<Gdk::Pixbuf>
                 &thumbnail)
         {
@@ -2008,7 +2129,7 @@ void DockPreviewWindow::request_thumbnail(
 
             const auto completed =
                 m_thumbnail_targets.find(
-                    completed_window_id);
+                    window_id);
 
             if (completed ==
                 m_thumbnail_targets.end())
@@ -2020,22 +2141,24 @@ void DockPreviewWindow::request_thumbnail(
             target.capture_in_flight = false;
 
             if (thumbnail &&
-                (!uses_xfwm_session() ||
+                (m_uses_layer_shell ||
+                 (!uses_xfwm_session() &&
+                  !uses_kde_session()) ||
                  m_thumbnail_cache_eligible.count(
-                     completed_window_id) != 0))
+                     window_id) != 0))
             {
-                m_thumbnail_cache[completed_window_id] =
+                m_thumbnail_cache[window_id] =
                     thumbnail;
                 m_thumbnail_cache_dirty.insert(
-                    completed_window_id);
+                    window_id);
                 target.image->set(thumbnail);
                 target.image->queue_draw();
                 target.has_thumbnail = true;
                 m_thumbnail_recovery_requested.erase(
-                    completed_window_id);
+                    window_id);
 
                 if (m_thumbnail_recovery_active ==
-                    completed_window_id)
+                    window_id)
                 {
                     m_thumbnail_recovery_active.clear();
                     start_next_thumbnail_recovery();
@@ -2044,18 +2167,18 @@ void DockPreviewWindow::request_thumbnail(
             else if (!target.has_thumbnail)
             {
                 if (target.initial_capture_failures <
-                    X11_STATIC_RETRY_COUNT)
+                        X11_STATIC_RETRY_COUNT)
                 {
                     ++target.initial_capture_failures;
                     Glib::signal_timeout().connect(
                         [this,
-                         completed_window_id,
+                         window_id,
                          generation]()
                         {
                             if (generation == m_generation)
                             {
                                 request_thumbnail(
-                                    completed_window_id,
+                                    window_id,
                                     generation);
                             }
 
@@ -2065,10 +2188,8 @@ void DockPreviewWindow::request_thumbnail(
                     return;
                 }
 
-                // An icon is shown only when the initial static capture fails.
-                // A live stream keeps this static image until its first frame.
                 show_thumbnail_fallback(
-                    completed_window_id);
+                    window_id);
             }
         },
         2.0,
@@ -2208,7 +2329,11 @@ void DockPreviewWindow::request_x11_change_probe(
             auto &target = completed->second;
             target.probe_in_flight = false;
 
-            if (!frame)
+            if (!frame ||
+                (!m_uses_layer_shell &&
+                 uses_kde_session() &&
+                 m_thumbnail_cache_eligible.count(
+                     completed_window_id) == 0))
                 return;
 
             const auto signature =
@@ -2282,7 +2407,11 @@ void DockPreviewWindow::request_live_x11_thumbnail(
             auto &thumbnail = completed->second;
             thumbnail.capture_in_flight = false;
 
-            if (!frame)
+            if (!frame ||
+                (!m_uses_layer_shell &&
+                 uses_kde_session() &&
+                 m_thumbnail_cache_eligible.count(
+                     completed_window_id) == 0))
                 return;
 
             const auto signature =
