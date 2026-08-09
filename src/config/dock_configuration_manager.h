@@ -38,7 +38,8 @@
 class DockConfigurationManager
 {
 public:
-    DockConfigurationManager();
+    explicit DockConfigurationManager(
+        const std::string &config_home = {});
 
     void start_monitoring();
     bool save_setting(

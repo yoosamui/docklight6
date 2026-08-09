@@ -80,6 +80,8 @@ bool has_same_dock_state(
            left.maximized == right.maximized &&
            left.skip_taskbar ==
                right.skip_taskbar &&
+           left.include_when_skip_taskbar ==
+               right.include_when_skip_taskbar &&
            left.on_current_desktop ==
                right.on_current_desktop;
 }
@@ -537,7 +539,8 @@ void WindowRegistry::load_snapshot()
             canonical_desktop_file_name(
                 window);
 
-        if (window.skip_taskbar ||
+        if ((window.skip_taskbar &&
+             !window.include_when_skip_taskbar) ||
             is_docklight_window(window))
         {
             continue;
@@ -766,7 +769,8 @@ void WindowRegistry::on_window_updated(
                        window.id;
             });
 
-    if (normalized_window.skip_taskbar ||
+    if ((normalized_window.skip_taskbar &&
+         !normalized_window.include_when_skip_taskbar) ||
         is_docklight_window(
             normalized_window))
     {

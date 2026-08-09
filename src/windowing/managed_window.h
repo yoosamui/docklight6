@@ -61,5 +61,9 @@ struct ManagedWindow
     bool minimized = false;
     bool maximized = false;
     bool skip_taskbar = false;
+    // Some application-owned auxiliary windows (for example browser
+    // Picture-in-Picture players) intentionally skip the taskbar but still
+    // belong in that application's window preview group.
+    bool include_when_skip_taskbar = false;
     bool on_current_desktop = true;
 };

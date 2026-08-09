@@ -356,6 +356,57 @@ void verifies_incremental_updates()
     assert(!registry.active_window());
 }
 
+void verifies_skip_taskbar_auxiliary_grouping()
+{
+    FakeWindowBackend backend;
+
+    auto picture_in_picture =
+        window(
+            "picture-in-picture",
+            "org.mozilla.firefox",
+            true);
+    picture_in_picture.include_when_skip_taskbar =
+        true;
+
+    backend.set_snapshot(
+        {
+            window(
+                "browser-window",
+                "org.mozilla.firefox"),
+            picture_in_picture,
+            window(
+                "desktop-panel",
+                "org.example.panel",
+                true)
+        },
+        {
+            "desktop-panel",
+            "picture-in-picture",
+            "browser-window"
+        },
+        WindowId{"browser-window"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    assert(registry.find_window(
+        "browser-window"));
+    assert(registry.find_window(
+        "picture-in-picture"));
+    assert(!registry.find_window(
+        "desktop-panel"));
+
+    const auto firefox =
+        registry.find_application(
+            "org.mozilla.firefox");
+
+    assert(firefox);
+    assert(firefox->window_ids ==
+           std::vector<WindowId>({
+               "picture-in-picture",
+               "browser-window"}));
+}
+
 void verifies_group_lifetime()
 {
     FakeWindowBackend backend;
@@ -592,6 +643,7 @@ int main()
     verifies_process_executable_fallback();
     verifies_snapshot_and_grouping();
     verifies_incremental_updates();
+    verifies_skip_taskbar_auxiliary_grouping();
     verifies_group_lifetime();
     verifies_stacking_and_disconnect();
     verifies_global_window_actions();

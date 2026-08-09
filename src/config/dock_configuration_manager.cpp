@@ -414,11 +414,14 @@ bool same_configuration(
 
 }
 
-DockConfigurationManager::DockConfigurationManager()
+DockConfigurationManager::DockConfigurationManager(
+    const std::string &config_home)
 {
     m_config_directory =
         Glib::build_filename(
-            Glib::get_user_config_dir(),
+            config_home.empty()
+                ? Glib::get_user_config_dir()
+                : config_home,
             "docklight6");
 
     m_config_path =

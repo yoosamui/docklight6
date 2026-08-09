@@ -28,8 +28,6 @@
 
 int main()
 {
-    Gio::init();
-
     GError *error = nullptr;
     char *temporary_directory =
         g_dir_make_tmp(
@@ -44,18 +42,16 @@ int main()
 
     g_free(temporary_directory);
 
-    assert(Glib::setenv(
-        "XDG_CONFIG_HOME",
-        config_home,
-        true));
+    Gio::init();
 
     std::string config_path;
 
     {
-        DockConfigurationManager initial_configuration;
+        DockConfigurationManager initial_configuration(
+            config_home);
 
         assert(initial_configuration.current().settings
-                   .preview_card_height() == 200);
+                   .preview_card_height() == 512);
         assert(initial_configuration.current().settings
                    .display_preview());
         assert(!initial_configuration.current().settings
@@ -86,7 +82,7 @@ int main()
         version_block.size());
 
     const std::string new_preview_default =
-        "preview_card_height = 200";
+        "preview_card_height = 512";
     const auto preview_position =
         legacy_contents.find(new_preview_default);
 
@@ -101,7 +97,8 @@ int main()
         config_path,
         legacy_contents);
 
-    DockConfigurationManager configuration;
+    DockConfigurationManager configuration(
+        config_home);
 
     assert(configuration.current().settings
                .preview_card_height() == 200);
@@ -111,7 +108,8 @@ int main()
         "0"));
 
     {
-        DockConfigurationManager explicit_auto_configuration;
+        DockConfigurationManager explicit_auto_configuration(
+            config_home);
 
         assert(explicit_auto_configuration.current().settings
                    .preview_card_height() == 0);
@@ -210,7 +208,8 @@ int main()
                "gradient_background=false") !=
            std::string::npos);
 
-    DockConfigurationManager reloaded;
+    DockConfigurationManager reloaded(
+        config_home);
     const auto &current =
         reloaded.current();
 

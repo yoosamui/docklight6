@@ -48,6 +48,7 @@ public:
 
         std::atomic<bool> alive{true};
         GDBusConnection *connection = nullptr;
+        bool x11 = false;
     };
 
     using Callback = std::function<

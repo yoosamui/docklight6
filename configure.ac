@@ -63,6 +63,8 @@ PKG_CHECK_MODULES([X11_BACKEND],
     libwnck-3.0 >= 3.20
     gdk-x11-3.0 >= 3.24
     x11
+    xcomposite
+    xrender
 ])
 
 AC_PATH_PROG(

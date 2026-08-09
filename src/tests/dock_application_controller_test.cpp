@@ -977,6 +977,8 @@ void verifies_grouped_window_entries()
         "Downloads";
     second_window.icon_name =
         "folder-download";
+    second_window.skip_taskbar = true;
+    second_window.include_when_skip_taskbar = true;
 
     backend.set_snapshot(
         {
@@ -1031,6 +1033,7 @@ void verifies_grouped_window_entries()
                .on_current_desktop);
     assert(entries[1].active);
     assert(!entries[1].minimized);
+    assert(entries[1].application_auxiliary);
 
     controller.set_manage_all_workspaces(
         false);

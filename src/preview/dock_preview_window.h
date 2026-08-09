@@ -114,6 +114,7 @@ private:
         std::string caption;
         bool active = false;
         bool minimized = false;
+        bool application_auxiliary = false;
         bool capture_in_flight = false;
         bool has_thumbnail = false;
         bool has_live_signature = false;
@@ -127,7 +128,11 @@ private:
     void request_thumbnail(
         const WindowId &window_id,
         unsigned int generation);
+    void request_live_x11_thumbnail(
+        const WindowId &window_id,
+        unsigned int generation);
     void start_live_streams();
+    void stop_live_streams();
     void clear_cards();
     void apply_position(
         DockLocation location,
@@ -154,6 +159,7 @@ private:
     std::map<WindowId, ThumbnailTarget>
         m_thumbnail_targets;
     std::vector<WindowId> m_window_ids;
+    sigc::connection m_x11_live_refresh;
 
     sigc::signal<void> m_pointer_entered;
     sigc::signal<void> m_pointer_left;

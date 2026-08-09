@@ -1299,6 +1299,14 @@ void DockWindowController::show_preview(
         [](const ApplicationWindowEntry &left,
            const ApplicationWindowEntry &right)
         {
+            // Browser PiP and similar application-owned utility windows are
+            // the media surfaces users expect to find first in the group.
+            if (left.application_auxiliary !=
+                right.application_auxiliary)
+            {
+                return left.application_auxiliary;
+            }
+
             const auto &left_label =
                 left.caption.empty()
                     ? left.id

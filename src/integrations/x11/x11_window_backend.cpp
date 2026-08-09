@@ -25,6 +25,57 @@ guint32 event_time()
     return timestamp == 0 ? GDK_CURRENT_TIME : timestamp;
 }
 
+bool is_application_auxiliary(
+    WnckWindow *window,
+    WnckScreen *screen)
+{
+    if (!window || !screen ||
+        !wnck_window_is_skip_tasklist(window) ||
+        !wnck_window_is_above(window) ||
+        wnck_window_get_window_type(window) !=
+            WNCK_WINDOW_UTILITY)
+    {
+        return false;
+    }
+
+    const auto process_id =
+        wnck_window_get_pid(window);
+    const std::string class_group =
+        safe_string(
+            wnck_window_get_class_group_name(
+                window));
+
+    for (GList *item =
+             wnck_screen_get_windows(screen);
+         item;
+         item = item->next)
+    {
+        auto *candidate =
+            WNCK_WINDOW(item->data);
+
+        if (candidate == window ||
+            wnck_window_is_skip_tasklist(candidate))
+        {
+            continue;
+        }
+
+        const bool same_process =
+            process_id > 0 &&
+            wnck_window_get_pid(candidate) ==
+                process_id;
+        const bool same_class =
+            !class_group.empty() &&
+            class_group == safe_string(
+                wnck_window_get_class_group_name(
+                    candidate));
+
+        if (same_process || same_class)
+            return true;
+    }
+
+    return false;
+}
+
 }
 
 X11WindowBackend::~X11WindowBackend()
@@ -379,6 +430,8 @@ ManagedWindow X11WindowBackend::managed_window(WnckWindow *window,
     result.minimized = wnck_window_is_minimized(window);
     result.maximized = wnck_window_is_maximized(window);
     result.skip_taskbar = wnck_window_is_skip_tasklist(window);
+    result.include_when_skip_taskbar =
+        is_application_auxiliary(window, screen);
 
     int x = 0;
     int y = 0;

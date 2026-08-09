@@ -852,6 +852,9 @@ DockApplicationController::
                 window_id};
         entry.minimized =
             window->minimized;
+        entry.application_auxiliary =
+            window->skip_taskbar &&
+            window->include_when_skip_taskbar;
         entry.on_current_desktop =
             window->on_current_desktop;
 

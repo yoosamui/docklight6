@@ -20,13 +20,22 @@
 
 #include "dock_window_thumbnail_provider.h"
 
+#include <gdk/gdk.h>
+#include <gdk/gdkx.h>
 #include <gio/gio.h>
 #include <glib.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/extensions/Xcomposite.h>
+#include <X11/extensions/Xrender.h>
 
 #include <algorithm>
 #include <cerrno>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
+#include <limits>
+#include <mutex>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -54,6 +63,313 @@ struct Completion
     std::vector<unsigned char> rgba;
     DockWindowThumbnailProvider::Callback callback;
 };
+
+std::mutex x_error_handler_mutex;
+thread_local bool x_capture_error = false;
+
+int capture_x_error_handler(
+    Display *,
+    XErrorEvent *)
+{
+    x_capture_error = true;
+    return 0;
+}
+
+unsigned char pixel_channel(
+    unsigned long pixel,
+    unsigned long mask)
+{
+    if (mask == 0)
+        return 0;
+
+    unsigned int shift = 0;
+    while (((mask >> shift) & 1UL) == 0UL)
+        ++shift;
+
+    const unsigned long maximum = mask >> shift;
+    const unsigned long value =
+        (pixel & mask) >> shift;
+
+    return static_cast<unsigned char>(
+        (value * 255UL + maximum / 2UL) /
+        maximum);
+}
+
+bool capture_x11_window(
+    Completion &completion)
+{
+    char *end = nullptr;
+    errno = 0;
+    const auto parsed = std::strtoull(
+        completion.window_id.c_str(),
+        &end,
+        0);
+
+    if (errno != 0 ||
+        !end ||
+        *end != '\0' ||
+        parsed == 0 ||
+        parsed > std::numeric_limits<unsigned long>::max())
+    {
+        return false;
+    }
+
+    Display *display = XOpenDisplay(nullptr);
+    if (!display)
+        return false;
+
+    const ::Window window =
+        static_cast<::Window>(parsed);
+    XWindowAttributes attributes{};
+    Pixmap pixmap = None;
+    Pixmap scaled_pixmap = None;
+    Picture source_picture = None;
+    Picture scaled_picture = None;
+    XImage *image = nullptr;
+    bool success = false;
+
+    // X errors are asynchronous. Serialize the process-global handler while
+    // probing a client that may disappear between the registry snapshot and
+    // this worker, and synchronize before restoring the previous handler.
+    std::lock_guard<std::mutex> guard(
+        x_error_handler_mutex);
+    auto previous_handler = XSetErrorHandler(
+        capture_x_error_handler);
+    x_capture_error = false;
+
+    if (XGetWindowAttributes(
+            display,
+            window,
+            &attributes) &&
+        attributes.width > 0 &&
+        attributes.height > 0)
+    {
+        int event_base = 0;
+        int error_base = 0;
+        if (XCompositeQueryExtension(
+                display,
+                &event_base,
+                &error_base))
+        {
+            pixmap = XCompositeNameWindowPixmap(
+                display,
+                window);
+            XSync(display, False);
+        }
+
+        Drawable drawable =
+            pixmap != None && !x_capture_error
+                ? pixmap
+                : window;
+        x_capture_error = false;
+
+        int capture_width = attributes.width;
+        int capture_height = attributes.height;
+        Visual *capture_visual = attributes.visual;
+
+        // Scale the composited window on the X server before reading pixels
+        // back. The old path transferred and converted every source pixel on
+        // every frame, which made video previews CPU-bound. XRender keeps the
+        // large image in the compositor/X server and transfers only the small
+        // preview-sized result.
+        int render_event_base = 0;
+        int render_error_base = 0;
+        if (completion.target_width > 0 &&
+            completion.target_height > 0 &&
+            XRenderQueryExtension(
+                display,
+                &render_event_base,
+                &render_error_base))
+        {
+            const double scale = std::min(
+                static_cast<double>(
+                    completion.target_width) /
+                    attributes.width,
+                static_cast<double>(
+                    completion.target_height) /
+                    attributes.height);
+            const int scaled_width = std::max(
+                1,
+                static_cast<int>(std::lround(
+                    attributes.width * scale)));
+            const int scaled_height = std::max(
+                1,
+                static_cast<int>(std::lround(
+                    attributes.height * scale)));
+
+            auto *source_format =
+                XRenderFindVisualFormat(
+                    display,
+                    attributes.visual);
+            auto *destination_visual =
+                DefaultVisualOfScreen(
+                    attributes.screen);
+            auto *destination_format =
+                XRenderFindVisualFormat(
+                    display,
+                    destination_visual);
+
+            if (source_format && destination_format)
+            {
+                scaled_pixmap = XCreatePixmap(
+                    display,
+                    RootWindowOfScreen(attributes.screen),
+                    static_cast<unsigned int>(scaled_width),
+                    static_cast<unsigned int>(scaled_height),
+                    static_cast<unsigned int>(
+                        DefaultDepthOfScreen(
+                            attributes.screen)));
+                source_picture = XRenderCreatePicture(
+                    display,
+                    drawable,
+                    source_format,
+                    0,
+                    nullptr);
+                scaled_picture = XRenderCreatePicture(
+                    display,
+                    scaled_pixmap,
+                    destination_format,
+                    0,
+                    nullptr);
+
+                XTransform transform = {{
+                    {XDoubleToFixed(
+                         static_cast<double>(attributes.width) /
+                         scaled_width),
+                     XDoubleToFixed(0.0),
+                     XDoubleToFixed(0.0)},
+                    {XDoubleToFixed(0.0),
+                     XDoubleToFixed(
+                         static_cast<double>(attributes.height) /
+                         scaled_height),
+                     XDoubleToFixed(0.0)},
+                    {XDoubleToFixed(0.0),
+                     XDoubleToFixed(0.0),
+                     XDoubleToFixed(1.0)}}};
+
+                XRenderSetPictureTransform(
+                    display,
+                    source_picture,
+                    &transform);
+                XRenderSetPictureFilter(
+                    display,
+                    source_picture,
+                    FilterBilinear,
+                    nullptr,
+                    0);
+                XRenderComposite(
+                    display,
+                    PictOpSrc,
+                    source_picture,
+                    None,
+                    scaled_picture,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    static_cast<unsigned int>(scaled_width),
+                    static_cast<unsigned int>(scaled_height));
+                XSync(display, False);
+
+                if (!x_capture_error)
+                {
+                    drawable = scaled_pixmap;
+                    capture_width = scaled_width;
+                    capture_height = scaled_height;
+                    capture_visual = destination_visual;
+                }
+            }
+        }
+
+        x_capture_error = false;
+
+        image = XGetImage(
+            display,
+            drawable,
+            0,
+            0,
+            static_cast<unsigned int>(capture_width),
+            static_cast<unsigned int>(capture_height),
+            AllPlanes,
+            ZPixmap);
+        XSync(display, False);
+
+        if (image && !x_capture_error)
+        {
+            completion.source_width =
+                capture_width;
+            completion.source_height =
+                capture_height;
+            completion.rgba.resize(
+                static_cast<std::size_t>(
+                    capture_width) *
+                capture_height * 4);
+
+            const unsigned long red_mask =
+                capture_visual
+                    ? capture_visual->red_mask
+                    : image->red_mask;
+            const unsigned long green_mask =
+                capture_visual
+                    ? capture_visual->green_mask
+                    : image->green_mask;
+            const unsigned long blue_mask =
+                capture_visual
+                    ? capture_visual->blue_mask
+                    : image->blue_mask;
+
+            for (int y = 0;
+                 y < capture_height;
+                 ++y)
+            {
+                for (int x = 0;
+                     x < capture_width;
+                     ++x)
+                {
+                    const auto pixel =
+                        XGetPixel(image, x, y);
+                    const auto index =
+                        (static_cast<std::size_t>(y) *
+                             capture_width +
+                         x) *
+                        4;
+
+                    completion.rgba[index] =
+                        pixel_channel(pixel, red_mask);
+                    completion.rgba[index + 1] =
+                        pixel_channel(pixel, green_mask);
+                    completion.rgba[index + 2] =
+                        pixel_channel(pixel, blue_mask);
+                    completion.rgba[index + 3] = 255;
+                }
+            }
+
+            success = true;
+        }
+    }
+
+    if (image)
+        XDestroyImage(image);
+    if (source_picture != None)
+        XRenderFreePicture(display, source_picture);
+    if (scaled_picture != None)
+        XRenderFreePicture(display, scaled_picture);
+    if (scaled_pixmap != None)
+        XFreePixmap(display, scaled_pixmap);
+    if (pixmap != None)
+        XFreePixmap(display, pixmap);
+
+    XSync(display, False);
+    XSetErrorHandler(previous_handler);
+    XCloseDisplay(display);
+
+    if (!success)
+        completion.rgba.clear();
+
+    return success;
+}
 
 int variant_integer(
     GVariant *values,
@@ -186,8 +502,20 @@ void capture(
         completion->state.lock();
 
     if (!active_state ||
-        !active_state->alive ||
-        !active_state->connection)
+        !active_state->alive)
+    {
+        schedule_delivery(std::move(completion));
+        return;
+    }
+
+    if (active_state->x11)
+    {
+        capture_x11_window(*completion);
+        schedule_delivery(std::move(completion));
+        return;
+    }
+
+    if (!active_state->connection)
     {
         schedule_delivery(std::move(completion));
         return;
@@ -405,6 +733,13 @@ DockWindowThumbnailProvider::
     DockWindowThumbnailProvider()
     : m_state(std::make_shared<State>())
 {
+    auto display = gdk_display_get_default();
+    m_state->x11 =
+        display && GDK_IS_X11_DISPLAY(display);
+
+    if (m_state->x11)
+        return;
+
     GError *error = nullptr;
     m_state->connection = g_bus_get_sync(
         G_BUS_TYPE_SESSION,

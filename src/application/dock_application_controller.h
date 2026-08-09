@@ -54,6 +54,7 @@ struct ApplicationWindowEntry
 
     bool active = false;
     bool minimized = false;
+    bool application_auxiliary = false;
     bool on_current_desktop = true;
 };
 
