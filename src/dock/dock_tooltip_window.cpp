@@ -35,16 +35,17 @@ namespace
 
 double ease_opacity(
     double progress,
-    bool hiding)
+    bool /* hiding */)
 {
     progress = std::clamp(
         progress,
         0.0,
         1.0);
 
-    return hiding
-        ? progress * progress * progress
-        : 1.0 - std::pow(1.0 - progress, 3.0);
+    // Match the preview's fade-only transition: smoothstep gives appearing
+    // and disappearing tooltips the same gentle start and finish.
+    return progress * progress *
+           (3.0 - 2.0 * progress);
 }
 
 ScreenPosition animation_offset(
