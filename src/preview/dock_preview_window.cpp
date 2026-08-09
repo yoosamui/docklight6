@@ -669,8 +669,39 @@ DockPreviewWindow::DockPreviewWindow()
 {
     set_decorated(false);
     set_resizable(false);
+    set_app_paintable(true);
     set_accept_focus(false);
     set_focus_on_map(false);
+
+    // CSS rounds the child surface, not the native X11 toplevel. Ensure the
+    // pixels outside that surface can actually be transparent on X11 by
+    // selecting an RGBA visual before realization and clearing the complete
+    // toplevel on every draw.
+    auto screen = get_screen();
+
+    if (screen)
+    {
+        auto rgba_visual = screen->get_rgba_visual();
+
+        if (rgba_visual)
+        {
+            gtk_widget_set_visual(
+                GTK_WIDGET(gobj()),
+                rgba_visual->gobj());
+        }
+    }
+
+    signal_draw().connect(
+        [](const Cairo::RefPtr<Cairo::Context> &context)
+        {
+            context->save();
+            context->set_operator(Cairo::OPERATOR_SOURCE);
+            context->set_source_rgba(0.0, 0.0, 0.0, 0.0);
+            context->paint();
+            context->restore();
+            return false;
+        },
+        false);
 
     add_events(
         Gdk::ENTER_NOTIFY_MASK |

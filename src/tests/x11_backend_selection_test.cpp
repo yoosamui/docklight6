@@ -72,11 +72,11 @@ int main()
     passed &= expect_backend(
         "KWin",
         "KDE",
-        X11BackendKind::ewmh_fallback);
+        X11BackendKind::kwin);
     passed &= expect_backend(
         "kwin_x11",
         "KDE",
-        X11BackendKind::ewmh_fallback);
+        X11BackendKind::kwin);
     passed &= expect_backend(
         "Muffin",
         "X-Cinnamon",
@@ -107,11 +107,11 @@ int main()
     passed &= expect_backend(
         "",
         "KDE",
-        X11BackendKind::ewmh_fallback);
+        X11BackendKind::kwin);
     passed &= expect_backend(
         "",
         "KDE:Plasma",
-        X11BackendKind::ewmh_fallback);
+        X11BackendKind::kwin);
     passed &= expect_backend(
         "",
         "Cinnamon",

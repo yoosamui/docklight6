@@ -1,6 +1,6 @@
 #include "kwin_x11_window_backend.h"
 
-std::string KWinX11WindowBackend::name() const
+KWinX11WindowBackend::KWinX11WindowBackend()
+    : EwmhWindowBackend("KWin/X11")
 {
-    return "KWin/X11";
 }

@@ -1,16 +1,15 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// KDE/KWin X11 backend. KWin's script protocol supplies stable internal IDs,
-// authoritative state, stacking order, and commands on X11 as well as Wayland.
+// KDE/KWin X11 backend using native EWMH/XIDs through libwnck.
 // ------------------------------------------------------------
 
 #pragma once
 
-#include "integrations/kwin/kwin_window_backend.h"
+#include "ewmh_window_backend.h"
 
-class KWinX11WindowBackend : public KWinWindowBackend
+class KWinX11WindowBackend : public EwmhWindowBackend
 {
 public:
-    std::string name() const override;
+    KWinX11WindowBackend();
 };

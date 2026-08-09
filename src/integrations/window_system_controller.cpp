@@ -7,8 +7,8 @@
 // window_system_controller.cpp
 //
 // Implementation overview:
-// Selects the KWin script/D-Bus backend for KDE on Wayland and X11, and a
-// WM-specific EWMH backend for other X11 window managers.
+// Selects the KWin script/D-Bus backend for KDE on Wayland and a
+// WM-specific EWMH backend on X11.
 //
 // Important implementation decisions:
 // - Muffin, Mutter, and xfwm4 never share concrete backend classes.
@@ -273,7 +273,6 @@ void WindowSystemController::start()
             m_backend =
                 std::make_unique<
                     KWinX11WindowBackend>();
-            uses_kwin_protocol = true;
             break;
         case X11BackendKind::muffin:
             m_backend =

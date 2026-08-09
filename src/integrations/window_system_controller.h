@@ -11,8 +11,8 @@
 //
 // Responsibilities:
 // - Detect the active desktop, compositor, and X11 window manager.
-// - Select script-backed KWin integration on Wayland/X11, or a WM-specific
-//   EWMH integration for other X11 window managers.
+// - Select script-backed KWin integration on Wayland or a WM-specific EWMH
+//   integration on X11.
 // - Construct and start backend, registry, and D-Bus service in order.
 // - Provision companion KWin and Plasma components after connection.
 // - Tear the integration stack down safely.

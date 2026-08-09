@@ -73,7 +73,39 @@ DockTooltipWindow::DockTooltipWindow()
 {
     set_decorated(false);
     set_resizable(false);
+    set_app_paintable(true);
     set_accept_focus(false);
+
+    // X11 otherwise commonly realizes this undecorated toplevel with an
+    // opaque visual. In that case GTK clips the tooltip background to its
+    // CSS radius, but the transparent pixels around it are displayed as the
+    // square window background. Request the alpha-capable visual before the
+    // native window is realized.
+    auto screen = get_screen();
+
+    if (screen)
+    {
+        auto rgba_visual = screen->get_rgba_visual();
+
+        if (rgba_visual)
+        {
+            gtk_widget_set_visual(
+                GTK_WIDGET(gobj()),
+                rgba_visual->gobj());
+        }
+    }
+
+    signal_draw().connect(
+        [](const Cairo::RefPtr<Cairo::Context> &context)
+        {
+            context->save();
+            context->set_operator(Cairo::OPERATOR_SOURCE);
+            context->set_source_rgba(0.0, 0.0, 0.0, 0.0);
+            context->paint();
+            context->restore();
+            return false;
+        },
+        false);
 
     // The width is set for each label. The height stays stable so tooltip
     // placement remains predictable on every dock edge.
