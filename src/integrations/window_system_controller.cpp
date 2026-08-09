@@ -7,8 +7,7 @@
 // window_system_controller.cpp
 //
 // Implementation overview:
-// Detects KDE Wayland sessions and coordinates the KWin backend,
-// registry, D-Bus service, script, and Plasma geometry bridge.
+// Selects KWin for KDE Wayland and the generic EWMH backend for X11.
 //
 // Important implementation decisions:
 // - Unsupported sessions keep the dock usable without window control.
@@ -25,6 +24,8 @@
 #include "integrations/kwin/kwin_script_manager.h"
 #include "integrations/kwin/kwin_window_backend.h"
 #include "integrations/plasma/plasma_geometry_bridge_manager.h"
+#include "integrations/x11/x11_window_backend.h"
+#include "windowing/window_backend.h"
 #include "windowing/window_registry.h"
 
 #include <glib.h>
@@ -204,24 +205,41 @@ void WindowSystemController::start()
 
     log_detected_environment();
 
-    if (!is_kde_wayland_session())
+    const bool kde_wayland =
+        is_kde_wayland_session();
+    const bool x11 = is_x11_session();
+
+    if (!kde_wayland && !x11)
     {
         g_message(
             "Window integration is not enabled for this desktop session");
         return;
     }
 
-    m_kwin_backend =
-        std::make_unique<
-            KWinWindowBackend>();
+    if (x11)
+    {
+        m_backend =
+            std::make_unique<X11WindowBackend>();
+    }
+    else
+    {
+        m_backend =
+            std::make_unique<KWinWindowBackend>();
+    }
+
     m_registry =
         std::make_unique<
             WindowRegistry>(
-            *m_kwin_backend);
-    m_kwin_service =
-        std::make_unique<
-            KWinIntegrationService>(
-            *m_kwin_backend);
+            *m_backend);
+
+    if (kde_wayland)
+    {
+        m_kwin_service =
+            std::make_unique<
+                KWinIntegrationService>(
+                static_cast<KWinWindowBackend &>(
+                    *m_backend));
+    }
 
     m_connection_changed =
         m_registry
@@ -233,6 +251,21 @@ void WindowSystemController::start()
                         on_connection_changed));
 
     m_registry->start();
+
+    if (x11)
+    {
+        if (m_registry->connected())
+        {
+            g_message(
+                "Generic X11/EWMH window integration is ready");
+        }
+        else
+        {
+            g_warning(
+                "No EWMH-compatible X11 window manager was detected");
+        }
+        return;
+    }
 
     if (!m_kwin_service->start())
     {
@@ -269,15 +302,15 @@ void WindowSystemController::stop()
 
     m_kwin_service.reset();
     m_registry.reset();
-    m_kwin_backend.reset();
+    m_backend.reset();
 
     m_started = false;
 }
 
 bool WindowSystemController::available() const
 {
-    return m_kwin_service &&
-           m_kwin_service->available();
+    return m_registry &&
+           m_registry->connected();
 }
 
 WindowRegistry *
@@ -321,12 +354,29 @@ bool WindowSystemController::
     return wayland && kde;
 }
 
+bool WindowSystemController::is_x11_session()
+{
+    const auto session_type =
+        lowercase(
+            environment_value(
+                "XDG_SESSION_TYPE"));
+
+    // An explicit Wayland session wins even when DISPLAY is also exported
+    // for XWayland clients.
+    if (session_type == "wayland")
+        return false;
+
+    return session_type == "x11" ||
+           (!environment_value("DISPLAY").empty() &&
+            environment_value("WAYLAND_DISPLAY").empty());
+}
+
 void WindowSystemController::
     on_connection_changed(
         bool connected)
 {
     g_message(
-        "KWin window integration %s",
+        "Window integration %s",
         connected
             ? "connected"
             : "disconnected");

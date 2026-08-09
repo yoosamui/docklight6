@@ -30,10 +30,14 @@
 #include "windowing/window_registry.h"
 
 #include <gtk-layer-shell.h>
+#include <gdk/gdkx.h>
+#include <X11/Xatom.h>
 
 #include <algorithm>
+#include <chrono>
 #include <memory>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -99,27 +103,46 @@ DockWindow::DockWindow(
     GtkWindow *gtk_win =
         GTK_WINDOW(gobj());
 
-    gtk_layer_init_for_window(gtk_win);
-    gtk_layer_set_keyboard_mode(
-        gtk_win,
-        GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
+    m_uses_layer_shell =
+        gtk_layer_is_supported();
 
-    gtk_layer_set_monitor(
-        gtk_win,
-        monitor
-            ? monitor->gobj()
-            : nullptr);
+    if (m_uses_layer_shell)
+    {
+        gtk_layer_init_for_window(gtk_win);
+        gtk_layer_set_keyboard_mode(
+            gtk_win,
+            GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
+
+        gtk_layer_set_monitor(
+            gtk_win,
+            monitor
+                ? monitor->gobj()
+                : nullptr);
+
+        gtk_layer_set_namespace(
+            gtk_win,
+            "docklight6");
+
+        gtk_layer_set_layer(
+            gtk_win,
+            GTK_LAYER_SHELL_LAYER_TOP);
+    }
+    else
+    {
+        // On X11, Muffin and other EWMH window managers place an ordinary
+        // undecorated window like an application (often at screen centre).
+        // Mark it as a dock before realization so explicit edge coordinates
+        // and struts are honored from the very first map.
+        set_type_hint(Gdk::WINDOW_TYPE_HINT_DOCK);
+        set_skip_taskbar_hint(true);
+        set_skip_pager_hint(true);
+        set_keep_above(true);
+        stick();
+        set_position(Gtk::WIN_POS_NONE);
+    }
 
     m_overlay_window.set_monitor(
         monitor);
-
-    gtk_layer_set_namespace(
-        gtk_win,
-        "docklight6");
-
-    gtk_layer_set_layer(
-        gtk_win,
-        GTK_LAYER_SHELL_LAYER_TOP);
 
     get_style_context()->add_class(
         "dock-window");
@@ -647,7 +670,9 @@ DockWindow::content_geometry() const
 // This function performs compositor-facing side effects but does not derive
 // geometry or monitor policy.
 void DockWindow::apply_dock_layout(
-    const DockPlacement &placement)
+    const DockPlacement &placement,
+    const MonitorGeometry &output,
+    const MonitorGeometry &workarea)
 {
     apply_visual_style();
     apply_dock_orientation(
@@ -655,6 +680,85 @@ void DockWindow::apply_dock_layout(
 
     GtkWindow *gtk_win =
         GTK_WINDOW(gobj());
+
+    if (!m_uses_layer_shell)
+    {
+        // Capture the work area before this window publishes its own strut.
+        // This matters for compositor-owned panels (notably Cinnamon's),
+        // which reserve space in _NET_WORKAREA without owning an X11 client
+        // window whose _NET_WM_STRUT_PARTIAL we could inspect. Reading the
+        // work area again after our strut is installed would only see the
+        // larger of the panel and DockLight reservations.
+        capture_x11_base_workarea(
+            output,
+            workarea);
+
+        const auto &base_workarea =
+            m_has_x11_base_workarea
+                ? m_x11_base_workarea
+                : workarea;
+
+        gtk_widget_set_size_request(
+            GTK_WIDGET(gtk_win),
+            placement.width,
+            placement.height);
+
+        const int width =
+            placement.width > 0
+                ? placement.width
+                : std::max(
+                      1,
+                      output.width -
+                          placement.margin_left -
+                          placement.margin_right);
+        const int height =
+            placement.height > 0
+                ? placement.height
+                : std::max(
+                      1,
+                      output.height -
+                          placement.margin_top -
+                          placement.margin_bottom);
+        int x = output.x + (output.width - width) / 2;
+        int y = output.y + (output.height - height) / 2;
+
+        if (placement.is_vertical() &&
+            placement.anchor_left)
+        {
+            x = base_workarea.x + placement.margin_left;
+        }
+        else if (placement.is_vertical() &&
+                 placement.anchor_right)
+        {
+            x = base_workarea.x + base_workarea.width -
+                placement.margin_right - width;
+        }
+        else if (placement.anchor_left)
+            x = output.x + placement.margin_left;
+        else if (placement.anchor_right)
+            x = output.x + output.width - placement.margin_right - width;
+
+        if (placement.is_horizontal() &&
+            placement.anchor_top)
+        {
+            y = base_workarea.y + placement.margin_top;
+        }
+        else if (placement.is_horizontal() &&
+                 placement.anchor_bottom)
+        {
+            y = base_workarea.y + base_workarea.height -
+                placement.margin_bottom - height;
+        }
+        else if (placement.anchor_top)
+            y = output.y + placement.margin_top;
+        else if (placement.anchor_bottom)
+            y = output.y + output.height - placement.margin_bottom - height;
+
+        resize(width, height);
+        move(x, y);
+        apply_x11_strut(placement, x, y, width, height);
+        return;
+    }
 
     gtk_layer_set_anchor(
         gtk_win,
@@ -719,6 +823,246 @@ void DockWindow::apply_dock_layout(
             gtk_win,
             placement.exclusive_zone);
     }
+}
+
+void DockWindow::capture_x11_base_workarea(
+    const MonitorGeometry &output,
+    const MonitorGeometry &fallback)
+{
+    if (m_has_x11_base_workarea)
+        return;
+
+    auto display = get_display();
+    if (!display ||
+        !GDK_IS_X11_DISPLAY(display->gobj()))
+    {
+        return;
+    }
+
+    Display *xdisplay =
+        gdk_x11_display_get_xdisplay(display->gobj());
+    const ::Window root =
+        DefaultRootWindow(xdisplay);
+
+    auto read_cardinals =
+        [xdisplay, root](
+            const char *property_name,
+            unsigned long requested,
+            std::vector<unsigned long> &values)
+        {
+            const Atom property = XInternAtom(
+                xdisplay,
+                property_name,
+                False);
+            Atom actual_type = None;
+            int actual_format = 0;
+            unsigned long item_count = 0;
+            unsigned long bytes_after = 0;
+            unsigned char *data = nullptr;
+
+            const int status = XGetWindowProperty(
+                xdisplay,
+                root,
+                property,
+                0,
+                static_cast<long>(requested),
+                False,
+                XA_CARDINAL,
+                &actual_type,
+                &actual_format,
+                &item_count,
+                &bytes_after,
+                &data);
+
+            if (status != Success ||
+                actual_type != XA_CARDINAL ||
+                actual_format != 32 ||
+                !data)
+            {
+                if (data)
+                    XFree(data);
+                return false;
+            }
+
+            const auto *cardinals =
+                reinterpret_cast<unsigned long *>(data);
+            values.assign(
+                cardinals,
+                cardinals + item_count);
+            XFree(data);
+            return true;
+        };
+
+    std::vector<unsigned long> desktops;
+    std::vector<unsigned long> workareas;
+    unsigned long desktop = 0;
+
+    if (read_cardinals(
+            "_NET_CURRENT_DESKTOP",
+            1,
+            desktops) &&
+        !desktops.empty())
+    {
+        desktop = desktops.front();
+    }
+
+    // A just-terminated DockLight instance can leave Muffin's root work area
+    // temporarily reflecting its old strut. Sample before this window maps
+    // and keep the least-reserved result, giving the WM time to process the
+    // previous client's destruction without accumulating one dock height on
+    // every development restart.
+    std::vector<unsigned long> best_workareas;
+    unsigned long long best_area = 0;
+
+    for (int sample = 0; sample < 20; ++sample)
+    {
+        if (read_cardinals(
+                "_NET_WORKAREA",
+                4096,
+                workareas) &&
+            workareas.size() >= (desktop + 1) * 4)
+        {
+            const std::size_t sample_offset =
+                static_cast<std::size_t>(desktop) * 4;
+            const auto sample_area =
+                static_cast<unsigned long long>(
+                    workareas[sample_offset + 2]) *
+                workareas[sample_offset + 3];
+
+            if (sample_area > best_area)
+            {
+                best_area = sample_area;
+                best_workareas = workareas;
+            }
+        }
+
+        if (sample + 1 < 20)
+        {
+            std::this_thread::sleep_for(
+                std::chrono::milliseconds(10));
+        }
+    }
+
+    if (best_workareas.empty())
+    {
+        m_x11_base_workarea = fallback;
+        m_has_x11_base_workarea = true;
+        return;
+    }
+
+    workareas = std::move(best_workareas);
+
+    const std::size_t offset =
+        static_cast<std::size_t>(desktop) * 4;
+    const int root_x =
+        static_cast<int>(workareas[offset]);
+    const int root_y =
+        static_cast<int>(workareas[offset + 1]);
+    const int root_right = root_x +
+        static_cast<int>(workareas[offset + 2]);
+    const int root_bottom = root_y +
+        static_cast<int>(workareas[offset + 3]);
+
+    const int right = std::min(
+        output.x + output.width,
+        root_right);
+    const int bottom = std::min(
+        output.y + output.height,
+        root_bottom);
+
+    m_x11_base_workarea = {
+        std::max(output.x, root_x),
+        std::max(output.y, root_y),
+        std::max(1, right - std::max(output.x, root_x)),
+        std::max(1, bottom - std::max(output.y, root_y))};
+    m_has_x11_base_workarea = true;
+
+    g_message(
+        "X11 base work area: %d,%d %dx%d",
+        m_x11_base_workarea.x,
+        m_x11_base_workarea.y,
+        m_x11_base_workarea.width,
+        m_x11_base_workarea.height);
+}
+
+void DockWindow::apply_x11_strut(
+    const DockPlacement &placement,
+    int x,
+    int y,
+    int width,
+    int height)
+{
+    if (!get_realized())
+        return;
+
+    auto gdk_window = get_window();
+    auto display = get_display();
+    if (!gdk_window || !display ||
+        !GDK_IS_X11_DISPLAY(display->gobj()))
+    {
+        return;
+    }
+
+    Display *xdisplay =
+        gdk_x11_display_get_xdisplay(display->gobj());
+    const ::Window xid =
+        gdk_x11_window_get_xid(gdk_window->gobj());
+    const Atom strut = XInternAtom(
+        xdisplay, "_NET_WM_STRUT", False);
+    const Atom strut_partial = XInternAtom(
+        xdisplay, "_NET_WM_STRUT_PARTIAL", False);
+
+    unsigned long values[12] = {};
+    if (placement.exclusive_zone < 0)
+    {
+        const int screen_width = DisplayWidth(
+            xdisplay, DefaultScreen(xdisplay));
+        const int screen_height = DisplayHeight(
+            xdisplay, DefaultScreen(xdisplay));
+
+        if (placement.is_vertical() &&
+            placement.anchor_left)
+        {
+            values[0] = static_cast<unsigned long>(std::max(0, x + width));
+            values[4] = static_cast<unsigned long>(std::max(0, y));
+            values[5] = static_cast<unsigned long>(std::max(0, y + height - 1));
+        }
+        else if (placement.is_vertical() &&
+                 placement.anchor_right)
+        {
+            values[1] = static_cast<unsigned long>(std::max(0, screen_width - x));
+            values[6] = static_cast<unsigned long>(std::max(0, y));
+            values[7] = static_cast<unsigned long>(std::max(0, y + height - 1));
+        }
+        else if (placement.is_horizontal() &&
+                 placement.anchor_top)
+        {
+            values[2] = static_cast<unsigned long>(std::max(0, y + height));
+            values[8] = static_cast<unsigned long>(std::max(0, x));
+            values[9] = static_cast<unsigned long>(std::max(0, x + width - 1));
+        }
+        else if (placement.is_horizontal() &&
+                 placement.anchor_bottom)
+        {
+            values[3] = static_cast<unsigned long>(std::max(0, screen_height - y));
+            values[10] = static_cast<unsigned long>(std::max(0, x));
+            values[11] = static_cast<unsigned long>(std::max(0, x + width - 1));
+        }
+
+        XChangeProperty(xdisplay, xid, strut, XA_CARDINAL, 32,
+                        PropModeReplace,
+                        reinterpret_cast<unsigned char *>(values), 4);
+        XChangeProperty(xdisplay, xid, strut_partial, XA_CARDINAL, 32,
+                        PropModeReplace,
+                        reinterpret_cast<unsigned char *>(values), 12);
+    }
+    else
+    {
+        XDeleteProperty(xdisplay, xid, strut);
+        XDeleteProperty(xdisplay, xid, strut_partial);
+    }
+
+    XFlush(xdisplay);
 }
 
 void DockWindow::apply_dock_orientation(

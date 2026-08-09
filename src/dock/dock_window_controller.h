@@ -180,6 +180,7 @@ private:
     sigc::connection m_preview_show_timer;
     sigc::connection m_media_playback_changed;
     sigc::connection m_realize;
+    sigc::connection m_map;
     sigc::connection m_size_allocate;
     sigc::connection m_window_registry_changed;
     sigc::connection

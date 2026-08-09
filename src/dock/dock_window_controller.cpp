@@ -125,6 +125,7 @@ DockWindowController::~DockWindowController()
     m_icon_refresh.disconnect();
     m_media_playback_changed.disconnect();
     m_realize.disconnect();
+    m_map.disconnect();
     m_size_allocate.disconnect();
     m_window_registry_changed.disconnect();
     m_window_geometry_changed.disconnect();
@@ -279,6 +280,16 @@ void DockWindowController::initialize()
                 &DockWindowController::
                     update_dock_layout));
 
+    // EWMH window managers are allowed to adjust a client's initial map
+    // position. Reassert the calculated dock coordinates once the X11
+    // window is managed; the coalesced update is harmless on layer-shell.
+    m_map =
+        m_window.signal_map().connect(
+            [this]()
+            {
+                schedule_layout_update();
+            });
+
     update_dock_layout();
 }
 
@@ -355,9 +366,12 @@ void DockWindowController::set_monitor(
         hide_tooltip();
         hide_preview();
 
-        gtk_layer_set_monitor(
-            GTK_WINDOW(m_window.gobj()),
-            m_monitor->gobj());
+        if (m_window.m_uses_layer_shell)
+        {
+            gtk_layer_set_monitor(
+                GTK_WINDOW(m_window.gobj()),
+                m_monitor->gobj());
+        }
 
         m_window.m_overlay_window.set_monitor(
             m_monitor);
@@ -414,6 +428,12 @@ void DockWindowController::update_dock_layout()
             output_geometry;
     }
 
+    // Preserve the compositor's native EWMH work area for X11 placement.
+    // The adjusted copy below contains Docklight's sizing-only bottom inset
+    // and must not shift the actual dock surface away from its screen edge.
+    const auto native_workarea_geometry =
+        workarea_geometry;
+
     const int reported_bottom_inset =
         std::max(
             0,
@@ -431,11 +451,18 @@ void DockWindowController::update_dock_layout()
             m_settings.minimum_bottom_workarea_inset()) +
         DockLayoutMetrics::DOCK_MARGIN;
 
+    // This compatibility inset exists to keep a bottom-positioned dock out
+    // of desktop environments that under-report their bottom reservation.
+    // Applying it to a vertical dock shortens the main-axis work area and
+    // shifts its centre upward, cancelling a real top-panel inset.
     const int missing_bottom_inset =
-        std::max(
-            0,
-            required_bottom_inset -
-                reported_bottom_inset);
+        m_layout_request.location ==
+                DockLocation::bottom
+            ? std::max(
+                  0,
+                  required_bottom_inset -
+                      reported_bottom_inset)
+            : 0;
 
     workarea_geometry.height =
         std::max(
@@ -491,9 +518,12 @@ void DockWindowController::update_dock_layout()
     apply_workarea_insets(
         placement,
         output_geometry,
-        workarea_geometry);
+        native_workarea_geometry);
 
-    m_window.apply_dock_layout(placement);
+    m_window.apply_dock_layout(
+        placement,
+        output_geometry,
+        native_workarea_geometry);
 
     m_autohide_controller->set_placement(
         placement);

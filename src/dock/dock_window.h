@@ -107,7 +107,18 @@ private:
             DockItem *> &items);
     void create_dock();
     void apply_dock_layout(
-        const DockPlacement &placement);
+        const DockPlacement &placement,
+        const MonitorGeometry &output,
+        const MonitorGeometry &workarea);
+    void apply_x11_strut(
+        const DockPlacement &placement,
+        int x,
+        int y,
+        int width,
+        int height);
+    void capture_x11_base_workarea(
+        const MonitorGeometry &output,
+        const MonitorGeometry &fallback);
     void apply_dock_orientation(
         DockOrientation orientation);
     void apply_visual_style();
@@ -163,4 +174,7 @@ private:
     bool m_item_drop_accepted = false;
 
     bool m_has_synchronized_items = false;
+    bool m_uses_layer_shell = false;
+    bool m_has_x11_base_workarea = false;
+    MonitorGeometry m_x11_base_workarea;
 };

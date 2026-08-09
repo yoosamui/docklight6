@@ -12,3 +12,8 @@ CFLAGS="-O0 -g3" \
     DOCKLIGHT_BUILD_DIR="$DOCKLIGHT_BUILD_DIR" \
     ./autogen.sh
 make -C "$DOCKLIGHT_BUILD_DIR" -j"$(nproc)"
+sudo install -m 0755 \
+    "$DOCKLIGHT_BUILD_DIR/src/docklight6" \
+    /usr/local/bin/docklight6
+pkill docklight6 || true
+exec gdb /usr/local/bin/docklight6

@@ -51,6 +51,8 @@ docklight6_SOURCES = \
     windowing/window_registry.cpp \
     integrations/window_system_controller.h \
     integrations/window_system_controller.cpp \
+    integrations/x11/x11_window_backend.h \
+    integrations/x11/x11_window_backend.cpp \
     integrations/kwin/kwin_integration_protocol.h \
     integrations/kwin/kwin_protocol_codec.h \
     integrations/kwin/kwin_protocol_codec.cpp \
@@ -123,13 +125,15 @@ docklight6_CPPFLAGS = \
     $(GTKMM_CFLAGS) \
     $(GTK_LAYER_SHELL_CFLAGS) \
     $(PIPEWIRE_CFLAGS) \
-    $(WAYLAND_CFLAGS)
+    $(WAYLAND_CFLAGS) \
+    $(X11_BACKEND_CFLAGS)
 
 docklight6_LDADD = \
     $(GTKMM_LIBS) \
     $(GTK_LAYER_SHELL_LIBS) \
     $(PIPEWIRE_LIBS) \
-    $(WAYLAND_LIBS)
+    $(WAYLAND_LIBS) \
+    $(X11_BACKEND_LIBS)
 
 dock_application_controller_test_SOURCES = \
     tests/dock_application_controller_test.cpp \

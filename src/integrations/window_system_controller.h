@@ -7,8 +7,7 @@
 // window_system_controller.h
 //
 // Purpose:
-// Declares lifecycle ownership for Docklight's optional KDE Wayland
-// window-integration stack.
+// Declares lifecycle ownership for Docklight's desktop window integration.
 //
 // Responsibilities:
 // - Detect whether the current desktop can use the KWin integration.
@@ -33,7 +32,7 @@
 #include <memory>
 
 class KWinIntegrationService;
-class KWinWindowBackend;
+class WindowBackend;
 class WindowRegistry;
 
 class WindowSystemController
@@ -52,13 +51,14 @@ public:
 
 private:
     static bool is_kde_wayland_session();
+    static bool is_x11_session();
 
     void on_connection_changed(
         bool connected);
 
 private:
-    std::unique_ptr<KWinWindowBackend>
-        m_kwin_backend;
+    std::unique_ptr<WindowBackend>
+        m_backend;
     std::unique_ptr<WindowRegistry>
         m_registry;
     std::unique_ptr<KWinIntegrationService>
