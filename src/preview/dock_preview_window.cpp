@@ -35,6 +35,11 @@ namespace
     constexpr int HEADER_HEIGHT = 32;
     constexpr int CLOSE_BUTTON_SIZE = 16;
     constexpr unsigned int X11_LIVE_REFRESH_MS = 33;
+    constexpr unsigned int X11_CHANGE_PROBE_MS = 200;
+    constexpr std::int64_t X11_LIVE_GRACE_US = 750000;
+    constexpr int X11_PROBE_WIDTH = 96;
+    constexpr int X11_PROBE_HEIGHT = 54;
+    constexpr double X11_LIVE_OVERSAMPLE = 1.5;
     constexpr double CARD_CORNER_RADIUS = 7.0;
     constexpr double PREVIEW_PI =
         3.14159265358979323846;
@@ -622,7 +627,23 @@ void DockPreviewWindow::set_dynamic_refresh(
     bool enabled,
     const std::string &media_title)
 {
-    m_dynamic_refresh = enabled;
+    // Firefox can leave its single browser-wide MPRIS player associated with
+    // a different tab after a video enters Picture-in-Picture. A recognized
+    // X11 application auxiliary is itself sufficient evidence that the
+    // preview needs live frames; do not let stale MPRIS metadata freeze it.
+    const bool has_x11_application_auxiliary =
+        !m_uses_layer_shell &&
+        std::any_of(
+            m_thumbnail_targets.begin(),
+            m_thumbnail_targets.end(),
+            [](const auto &entry)
+            {
+                return !entry.second.minimized &&
+                       entry.second.application_auxiliary;
+            });
+
+    m_dynamic_refresh =
+        enabled || has_x11_application_auxiliary;
 
     if (!media_title.empty())
         m_media_title = media_title;
@@ -960,6 +981,10 @@ void DockPreviewWindow::rebuild(
                 false,
                 false,
                 false,
+                0,
+                false,
+                false,
+                0,
                 0});
 
         request_thumbnail(
@@ -1026,6 +1051,64 @@ void DockPreviewWindow::request_thumbnail(
         });
 }
 
+void DockPreviewWindow::request_x11_change_probe(
+    const WindowId &window_id,
+    unsigned int generation)
+{
+    const auto found =
+        m_thumbnail_targets.find(window_id);
+
+    if (found == m_thumbnail_targets.end() ||
+        found->second.capture_in_flight ||
+        found->second.probe_in_flight ||
+        found->second.minimized)
+    {
+        return;
+    }
+
+    found->second.probe_in_flight = true;
+
+    m_thumbnail_provider.request(
+        window_id,
+        X11_PROBE_WIDTH,
+        X11_PROBE_HEIGHT,
+        [this, generation](
+            const WindowId &completed_window_id,
+            const Glib::RefPtr<Gdk::Pixbuf> &frame)
+        {
+            if (generation != m_generation)
+                return;
+
+            const auto completed =
+                m_thumbnail_targets.find(
+                    completed_window_id);
+
+            if (completed == m_thumbnail_targets.end())
+                return;
+
+            auto &target = completed->second;
+            target.probe_in_flight = false;
+
+            if (!frame)
+                return;
+
+            const auto signature =
+                pixbuf_signature(frame);
+
+            if (target.has_probe_signature &&
+                signature != target.probe_signature)
+            {
+                target.live_until_us =
+                    g_get_monotonic_time() +
+                    X11_LIVE_GRACE_US;
+            }
+
+            target.has_probe_signature = true;
+            target.probe_signature = signature;
+        },
+        1.0);
+}
+
 void DockPreviewWindow::request_live_x11_thumbnail(
     const WindowId &window_id,
     unsigned int generation)
@@ -1077,39 +1160,28 @@ void DockPreviewWindow::request_live_x11_thumbnail(
 
             thumbnail.has_live_signature = true;
             thumbnail.live_signature = signature;
+            thumbnail.live_until_us =
+                g_get_monotonic_time() +
+                X11_LIVE_GRACE_US;
             thumbnail.image->set(frame);
             thumbnail.image->queue_draw();
             thumbnail.has_thumbnail = true;
-        });
+        },
+        X11_LIVE_OVERSAMPLE);
 }
 
 void DockPreviewWindow::start_live_streams()
 {
     const auto generation = m_generation;
     std::set<WindowId> desired_windows;
-    bool has_application_auxiliary = false;
-
-    if (!m_uses_layer_shell)
-    {
-        has_application_auxiliary =
-            std::any_of(
-                m_thumbnail_targets.begin(),
-                m_thumbnail_targets.end(),
-                [](const auto &entry)
-                {
-                    return !entry.second.minimized &&
-                           entry.second.application_auxiliary;
-                });
-    }
 
     for (const auto &entry : m_thumbnail_targets)
     {
-        if (!entry.second.minimized &&
-            (!has_application_auxiliary ||
-             entry.second.application_auxiliary))
-        {
+        // Firefox exposes one browser-wide MPRIS player and can leave it
+        // associated with an unrelated tab. Refresh the complete visible
+        // group on X11 so a playing page cannot be omitted by stale metadata.
+        if (!entry.second.minimized)
             desired_windows.insert(entry.first);
-        }
     }
 
     if (desired_windows == m_live_window_ids)
@@ -1137,17 +1209,62 @@ void DockPreviewWindow::start_live_streams()
                         return false;
                     }
 
+                    const auto now =
+                        g_get_monotonic_time();
+
                     for (const auto &window_id :
                          m_live_window_ids)
                     {
-                        request_live_x11_thumbnail(
+                        const auto target =
+                            m_thumbnail_targets.find(
+                                window_id);
+
+                        if (target == m_thumbnail_targets.end())
+                            continue;
+
+                        const bool matches_media_title =
+                            !m_media_title.empty() &&
+                            target->second.caption.find(
+                                m_media_title) !=
+                                std::string::npos;
+
+                        if (target->second.application_auxiliary ||
+                            target->second.active ||
+                            matches_media_title ||
+                            target->second.live_until_us > now)
+                        {
+                            request_live_x11_thumbnail(
+                                window_id,
+                                generation);
+                        }
+                    }
+
+                    return true;
+                },
+                X11_LIVE_REFRESH_MS);
+
+        m_x11_probe_refresh =
+            Glib::signal_timeout().connect(
+                [this, generation]()
+                {
+                    if (generation != m_generation ||
+                        !m_dynamic_refresh ||
+                        !get_visible())
+                    {
+                        return false;
+                    }
+
+                    for (const auto &window_id :
+                         m_live_window_ids)
+                    {
+                        request_x11_change_probe(
                             window_id,
                             generation);
                     }
 
                     return true;
                 },
-                X11_LIVE_REFRESH_MS);
+                X11_CHANGE_PROBE_MS);
 
         return;
     }
@@ -1218,6 +1335,7 @@ void DockPreviewWindow::start_live_streams()
 void DockPreviewWindow::stop_live_streams()
 {
     m_x11_live_refresh.disconnect();
+    m_x11_probe_refresh.disconnect();
     m_stream_provider.stop_all();
     m_live_window_ids.clear();
 }

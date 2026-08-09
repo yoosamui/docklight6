@@ -33,6 +33,7 @@
 #include <cerrno>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <cstdlib>
 #include <limits>
 #include <mutex>
@@ -60,6 +61,7 @@ struct Completion
     int source_height = 0;
     int target_width = 0;
     int target_height = 0;
+    double x11_oversample = 2.0;
     std::vector<unsigned char> rgba;
     DockWindowThumbnailProvider::Callback callback;
 };
@@ -75,24 +77,81 @@ int capture_x_error_handler(
     return 0;
 }
 
-unsigned char pixel_channel(
-    unsigned long pixel,
+struct PixelChannel
+{
+    unsigned long mask = 0;
+    unsigned long maximum = 0;
+    unsigned int shift = 0;
+};
+
+PixelChannel pixel_channel(
     unsigned long mask)
 {
     if (mask == 0)
-        return 0;
+        return {};
 
     unsigned int shift = 0;
     while (((mask >> shift) & 1UL) == 0UL)
         ++shift;
 
-    const unsigned long maximum = mask >> shift;
+    return {
+        mask,
+        mask >> shift,
+        shift};
+}
+
+unsigned char pixel_channel(
+    unsigned long pixel,
+    const PixelChannel &channel)
+{
+    if (channel.mask == 0 ||
+        channel.maximum == 0)
+    {
+        return 0;
+    }
+
     const unsigned long value =
-        (pixel & mask) >> shift;
+        (pixel & channel.mask) >> channel.shift;
+
+    if (channel.maximum == 255UL)
+        return static_cast<unsigned char>(value);
 
     return static_cast<unsigned char>(
-        (value * 255UL + maximum / 2UL) /
-        maximum);
+        (value * 255UL + channel.maximum / 2UL) /
+        channel.maximum);
+}
+
+unsigned long image_pixel(
+    XImage *image,
+    int x,
+    int y)
+{
+    // XGetPixel dispatches through a function pointer for every pixel. The
+    // XRender destination used here is normally 32 bpp, so read that common
+    // layout directly; retain XGetPixel for unusual visuals.
+    if (image && image->bits_per_pixel == 32)
+    {
+        std::uint32_t value = 0;
+        std::memcpy(
+            &value,
+            image->data +
+                static_cast<std::size_t>(y) * image->bytes_per_line +
+                static_cast<std::size_t>(x) * 4,
+            sizeof(value));
+
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+        if (image->byte_order == LSBFirst)
+#else
+        if (image->byte_order == MSBFirst)
+#endif
+        {
+            value = GUINT32_SWAP_LE_BE(value);
+        }
+
+        return value;
+    }
+
+    return XGetPixel(image, x, y);
 }
 
 bool capture_x11_window(
@@ -181,13 +240,17 @@ bool capture_x11_window(
                 &render_event_base,
                 &render_error_base))
         {
-            const double scale = std::min(
-                static_cast<double>(
-                    completion.target_width) /
+            // Keep a higher-resolution intermediate so the final GdkPixbuf
+            // downscale has enough samples to preserve text and fine edges.
+            // Never enlarge beyond the compositor's native window pixmap.
+            const double scale = std::min({
+                1.0,
+                completion.x11_oversample *
+                    completion.target_width /
                     attributes.width,
-                static_cast<double>(
-                    completion.target_height) /
-                    attributes.height);
+                completion.x11_oversample *
+                    completion.target_height /
+                    attributes.height});
             const int scaled_width = std::max(
                 1,
                 static_cast<int>(std::lround(
@@ -307,18 +370,21 @@ bool capture_x11_window(
                     capture_width) *
                 capture_height * 4);
 
-            const unsigned long red_mask =
+            const auto red_channel =
+                pixel_channel(
                 capture_visual
                     ? capture_visual->red_mask
-                    : image->red_mask;
-            const unsigned long green_mask =
+                    : image->red_mask);
+            const auto green_channel =
+                pixel_channel(
                 capture_visual
                     ? capture_visual->green_mask
-                    : image->green_mask;
-            const unsigned long blue_mask =
+                    : image->green_mask);
+            const auto blue_channel =
+                pixel_channel(
                 capture_visual
                     ? capture_visual->blue_mask
-                    : image->blue_mask;
+                    : image->blue_mask);
 
             for (int y = 0;
                  y < capture_height;
@@ -329,7 +395,7 @@ bool capture_x11_window(
                      ++x)
                 {
                     const auto pixel =
-                        XGetPixel(image, x, y);
+                        image_pixel(image, x, y);
                     const auto index =
                         (static_cast<std::size_t>(y) *
                              capture_width +
@@ -337,11 +403,11 @@ bool capture_x11_window(
                         4;
 
                     completion.rgba[index] =
-                        pixel_channel(pixel, red_mask);
+                        pixel_channel(pixel, red_channel);
                     completion.rgba[index + 1] =
-                        pixel_channel(pixel, green_mask);
+                        pixel_channel(pixel, green_channel);
                     completion.rgba[index + 2] =
-                        pixel_channel(pixel, blue_mask);
+                        pixel_channel(pixel, blue_channel);
                     completion.rgba[index + 3] = 255;
                 }
             }
@@ -486,6 +552,7 @@ void capture(
     WindowId window_id,
     int target_width,
     int target_height,
+    double x11_oversample,
     DockWindowThumbnailProvider::Callback callback)
 {
     auto completion =
@@ -494,6 +561,8 @@ void capture(
     completion->window_id = std::move(window_id);
     completion->target_width = target_width;
     completion->target_height = target_height;
+    completion->x11_oversample =
+        std::clamp(x11_oversample, 1.0, 2.0);
     completion->callback = std::move(callback);
 
     // Hold the provider state for the entire capture so its shared session
@@ -766,7 +835,8 @@ void DockWindowThumbnailProvider::request(
     const WindowId &window_id,
     int target_width,
     int target_height,
-    Callback callback)
+    Callback callback,
+    double x11_oversample)
 {
     if (window_id.empty() ||
         target_width <= 0 ||
@@ -782,6 +852,7 @@ void DockWindowThumbnailProvider::request(
         window_id,
         target_width,
         target_height,
+        x11_oversample,
         std::move(callback))
         .detach();
 }

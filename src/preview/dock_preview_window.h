@@ -119,6 +119,10 @@ private:
         bool has_thumbnail = false;
         bool has_live_signature = false;
         std::uint64_t live_signature = 0;
+        bool probe_in_flight = false;
+        bool has_probe_signature = false;
+        std::uint64_t probe_signature = 0;
+        std::int64_t live_until_us = 0;
     };
 
     void rebuild(
@@ -129,6 +133,9 @@ private:
         const WindowId &window_id,
         unsigned int generation);
     void request_live_x11_thumbnail(
+        const WindowId &window_id,
+        unsigned int generation);
+    void request_x11_change_probe(
         const WindowId &window_id,
         unsigned int generation);
     void start_live_streams();
@@ -160,6 +167,7 @@ private:
         m_thumbnail_targets;
     std::vector<WindowId> m_window_ids;
     sigc::connection m_x11_live_refresh;
+    sigc::connection m_x11_probe_refresh;
 
     sigc::signal<void> m_pointer_entered;
     sigc::signal<void> m_pointer_left;

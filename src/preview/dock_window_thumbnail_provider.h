@@ -63,7 +63,8 @@ public:
         const WindowId &window_id,
         int target_width,
         int target_height,
-        Callback callback);
+        Callback callback,
+        double x11_oversample = 2.0);
 
 private:
     std::shared_ptr<State> m_state;
