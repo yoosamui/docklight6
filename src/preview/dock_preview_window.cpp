@@ -966,7 +966,7 @@ void DockPreviewWindow::rebuild(
                       "application-x-executable"}
                 : entry.icon_name;
 
-        m_thumbnail_targets.emplace(
+        const auto target = m_thumbnail_targets.emplace(
             entry.id,
             ThumbnailTarget{
                 image,
@@ -985,7 +985,20 @@ void DockPreviewWindow::rebuild(
                 false,
                 false,
                 0,
-                0});
+                0,
+                0}).first;
+
+        // Cards are recreated whenever a preview is reopened. Seed the new
+        // Gtk::Image with the last successfully captured frame so a transient
+        // XComposite failure cannot flash the application icon.
+        const auto cached =
+            m_thumbnail_cache.find(entry.id);
+        if (cached != m_thumbnail_cache.end() &&
+            cached->second)
+        {
+            image->set(cached->second);
+            target->second.has_thumbnail = true;
+        }
 
         request_thumbnail(
             entry.id,
@@ -1033,13 +1046,28 @@ void DockPreviewWindow::request_thumbnail(
             auto &target = completed->second;
             target.capture_in_flight = false;
 
-            if (thumbnail && !target.has_thumbnail)
+            if (thumbnail)
             {
-                target.image->set(thumbnail);
-                target.has_thumbnail = true;
+                m_thumbnail_cache[completed_window_id] =
+                    thumbnail;
+
+                if (!target.has_thumbnail)
+                {
+                    target.image->set(thumbnail);
+                    target.has_thumbnail = true;
+                }
             }
             else if (!target.has_thumbnail)
             {
+                if (target.initial_capture_failures < 2)
+                {
+                    ++target.initial_capture_failures;
+                    request_thumbnail(
+                        completed_window_id,
+                        generation);
+                    return;
+                }
+
                 // An icon is shown only when the initial static capture fails.
                 // A live stream keeps this static image until its first frame.
                 target.image->set_pixel_size(
@@ -1048,7 +1076,9 @@ void DockPreviewWindow::request_thumbnail(
                     target.fallback_icon,
                     Gtk::ICON_SIZE_DIALOG);
             }
-        });
+        },
+        2.0,
+        true);
 }
 
 void DockPreviewWindow::request_x11_change_probe(
@@ -1165,9 +1195,11 @@ void DockPreviewWindow::request_live_x11_thumbnail(
                 X11_LIVE_GRACE_US;
             thumbnail.image->set(frame);
             thumbnail.image->queue_draw();
+            m_thumbnail_cache[completed_window_id] = frame;
             thumbnail.has_thumbnail = true;
         },
-        X11_LIVE_OVERSAMPLE);
+        X11_LIVE_OVERSAMPLE,
+        true);
 }
 
 void DockPreviewWindow::start_live_streams()
@@ -1318,6 +1350,8 @@ void DockPreviewWindow::start_live_streams()
                     thumbnail.live_signature = signature;
                     thumbnail.image->set(frame);
                     thumbnail.image->queue_draw();
+                    m_thumbnail_cache[completed_window_id] =
+                        frame;
                     thumbnail.has_thumbnail = true;
                 }))
         {

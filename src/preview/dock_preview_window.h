@@ -123,6 +123,7 @@ private:
         bool has_probe_signature = false;
         std::uint64_t probe_signature = 0;
         std::int64_t live_until_us = 0;
+        unsigned int initial_capture_failures = 0;
     };
 
     void rebuild(
@@ -165,6 +166,8 @@ private:
     std::vector<Gtk::EventBox *> m_cards;
     std::map<WindowId, ThumbnailTarget>
         m_thumbnail_targets;
+    std::map<WindowId, Glib::RefPtr<Gdk::Pixbuf>>
+        m_thumbnail_cache;
     std::vector<WindowId> m_window_ids;
     sigc::connection m_x11_live_refresh;
     sigc::connection m_x11_probe_refresh;

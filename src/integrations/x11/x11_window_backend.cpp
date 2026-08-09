@@ -7,6 +7,7 @@
 #include "x11_window_backend.h"
 
 #include <gdk/gdk.h>
+#include <gdk/gdkx.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -22,7 +23,24 @@ const char *safe_string(const char *value)
 guint32 event_time()
 {
     const guint32 timestamp = gtk_get_current_event_time();
-    return timestamp == 0 ? GDK_CURRENT_TIME : timestamp;
+    if (timestamp != 0)
+        return timestamp;
+
+    // Dock clicks finish after their animation and preview clicks are
+    // dispatched from an idle callback. At that point GTK no longer has a
+    // current event. Muffin treats CurrentTime as an untrusted activation
+    // request and may reject it, so retain the timestamp of the actual user
+    // interaction recorded by GDK's X11 display.
+    auto *display = gdk_display_get_default();
+    if (display && GDK_IS_X11_DISPLAY(display))
+    {
+        const guint32 user_time =
+            gdk_x11_display_get_user_time(display);
+        if (user_time != 0)
+            return user_time;
+    }
+
+    return GDK_CURRENT_TIME;
 }
 
 bool is_application_auxiliary(

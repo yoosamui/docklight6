@@ -62,6 +62,7 @@ struct Completion
     int target_width = 0;
     int target_height = 0;
     double x11_oversample = 2.0;
+    bool x11_native_capture = false;
     std::vector<unsigned char> rgba;
     DockWindowThumbnailProvider::Callback callback;
 };
@@ -233,7 +234,8 @@ bool capture_x11_window(
         // preview-sized result.
         int render_event_base = 0;
         int render_error_base = 0;
-        if (completion.target_width > 0 &&
+        if (!completion.x11_native_capture &&
+            completion.target_width > 0 &&
             completion.target_height > 0 &&
             XRenderQueryExtension(
                 display,
@@ -320,6 +322,10 @@ bool capture_x11_window(
                     FilterBilinear,
                     nullptr,
                     0);
+
+                // Hold the server only for the short XRender snapshot. Pixel
+                // readback and conversion happen after other clients resume.
+                XGrabServer(display);
                 XRenderComposite(
                     display,
                     PictOpSrc,
@@ -335,6 +341,8 @@ bool capture_x11_window(
                     static_cast<unsigned int>(scaled_width),
                     static_cast<unsigned int>(scaled_height));
                 XSync(display, False);
+                XUngrabServer(display);
+                XFlush(display);
 
                 if (!x_capture_error)
                 {
@@ -348,6 +356,9 @@ bool capture_x11_window(
 
         x_capture_error = false;
 
+        if (completion.x11_native_capture)
+            XGrabServer(display);
+
         image = XGetImage(
             display,
             drawable,
@@ -358,6 +369,12 @@ bool capture_x11_window(
             AllPlanes,
             ZPixmap);
         XSync(display, False);
+
+        if (completion.x11_native_capture)
+        {
+            XUngrabServer(display);
+            XFlush(display);
+        }
 
         if (image && !x_capture_error)
         {
@@ -553,6 +570,7 @@ void capture(
     int target_width,
     int target_height,
     double x11_oversample,
+    bool x11_native_capture,
     DockWindowThumbnailProvider::Callback callback)
 {
     auto completion =
@@ -563,6 +581,8 @@ void capture(
     completion->target_height = target_height;
     completion->x11_oversample =
         std::clamp(x11_oversample, 1.0, 2.0);
+    completion->x11_native_capture =
+        x11_native_capture;
     completion->callback = std::move(callback);
 
     // Hold the provider state for the entire capture so its shared session
@@ -836,7 +856,8 @@ void DockWindowThumbnailProvider::request(
     int target_width,
     int target_height,
     Callback callback,
-    double x11_oversample)
+    double x11_oversample,
+    bool x11_native_capture)
 {
     if (window_id.empty() ||
         target_width <= 0 ||
@@ -853,6 +874,7 @@ void DockWindowThumbnailProvider::request(
         target_width,
         target_height,
         x11_oversample,
+        x11_native_capture,
         std::move(callback))
         .detach();
 }
