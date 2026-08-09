@@ -7,7 +7,7 @@
 // dock_window_thumbnail_provider.h
 //
 // Purpose:
-// Declares asynchronous static window capture through KWin's Wayland-safe
+// Declares asynchronous static window capture through native X11 or KWin's
 // screenshot interface.
 //
 // Responsibilities:

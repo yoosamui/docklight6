@@ -45,6 +45,14 @@ int main()
     bool passed = true;
 
     passed &= expect_backend(
+        "KWin",
+        "KDE",
+        X11BackendKind::kwin);
+    passed &= expect_backend(
+        "kwin_x11",
+        "KDE",
+        X11BackendKind::kwin);
+    passed &= expect_backend(
         "Muffin",
         "X-Cinnamon",
         X11BackendKind::muffin);
@@ -71,6 +79,14 @@ int main()
 
     // Desktop metadata is a startup fallback only when EWMH has not yet
     // exposed the actual manager name.
+    passed &= expect_backend(
+        "",
+        "KDE",
+        X11BackendKind::kwin);
+    passed &= expect_backend(
+        "",
+        "KDE:Plasma",
+        X11BackendKind::kwin);
     passed &= expect_backend(
         "",
         "Cinnamon",

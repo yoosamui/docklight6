@@ -38,6 +38,8 @@ X11BackendKind select_x11_backend_kind(
     const auto manager =
         lowercase(window_manager_name);
 
+    if (contains(manager, "kwin"))
+        return X11BackendKind::kwin;
     if (contains(manager, "muffin"))
         return X11BackendKind::muffin;
     if (contains(manager, "mutter") ||
@@ -55,6 +57,11 @@ X11BackendKind select_x11_backend_kind(
 
     const auto desktop =
         lowercase(desktop_name);
+    if (contains(desktop, "kde") ||
+        contains(desktop, "plasma"))
+    {
+        return X11BackendKind::kwin;
+    }
     if (contains(desktop, "cinnamon"))
         return X11BackendKind::muffin;
     if (contains(desktop, "gnome"))
@@ -70,6 +77,8 @@ const char *x11_backend_kind_name(
 {
     switch (kind)
     {
+    case X11BackendKind::kwin:
+        return "KWin/X11";
     case X11BackendKind::muffin:
         return "Muffin";
     case X11BackendKind::mutter:

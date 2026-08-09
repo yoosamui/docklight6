@@ -7,8 +7,8 @@
 // dock_window_thumbnail_provider.cpp
 //
 // Implementation overview:
-// Implements asynchronous static thumbnail capture through KWin's
-// ScreenShot2 interface.
+// Implements asynchronous static thumbnail capture through native X11 or
+// KWin's ScreenShot2 interface.
 //
 // Important implementation decisions:
 // - D-Bus requests do not block the GTK main loop.
@@ -70,6 +70,24 @@ struct Completion
 
 std::mutex x_error_handler_mutex;
 thread_local bool x_capture_error = false;
+
+bool is_x11_window_id(
+    const WindowId &window_id)
+{
+    char *end = nullptr;
+    errno = 0;
+    const auto parsed = std::strtoull(
+        window_id.c_str(),
+        &end,
+        0);
+
+    return errno == 0 &&
+           end &&
+           *end == '\0' &&
+           parsed > 0 &&
+           parsed <=
+               std::numeric_limits<unsigned long>::max();
+}
 
 int capture_x_error_handler(
     Display *,
@@ -703,7 +721,8 @@ void capture(
         return;
     }
 
-    if (active_state->x11)
+    if (active_state->x11 &&
+        is_x11_window_id(completion->window_id))
     {
         capture_x11_window(*completion);
         schedule_delivery(std::move(completion));
@@ -931,9 +950,6 @@ DockWindowThumbnailProvider::
     auto display = gdk_display_get_default();
     m_state->x11 =
         display && GDK_IS_X11_DISPLAY(display);
-
-    if (m_state->x11)
-        return;
 
     GError *error = nullptr;
     m_state->connection = g_bus_get_sync(

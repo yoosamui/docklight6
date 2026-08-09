@@ -7,7 +7,8 @@
 // window_system_controller.cpp
 //
 // Implementation overview:
-// Selects KWin for KDE Wayland and a WM-specific EWMH backend for X11.
+// Selects the KWin script/D-Bus backend for KDE on Wayland and X11, and a
+// WM-specific EWMH backend for other X11 window managers.
 //
 // Important implementation decisions:
 // - Muffin, Mutter, and xfwm4 never share concrete backend classes.
@@ -27,6 +28,7 @@
 #include "integrations/kwin/kwin_window_backend.h"
 #include "integrations/plasma/plasma_geometry_bridge_manager.h"
 #include "integrations/x11/ewmh_fallback_window_backend.h"
+#include "integrations/x11/kwin_x11_window_backend.h"
 #include "integrations/x11/muffin_window_backend.h"
 #include "integrations/x11/mutter_window_backend.h"
 #include "integrations/x11/xfwm4_window_backend.h"
@@ -249,6 +251,7 @@ void WindowSystemController::start()
     const bool kde_wayland =
         is_kde_wayland_session();
     const bool x11 = is_x11_session();
+    bool uses_kwin_protocol = kde_wayland;
 
     if (!kde_wayland && !x11)
     {
@@ -266,6 +269,12 @@ void WindowSystemController::start()
 
         switch (backend_kind)
         {
+        case X11BackendKind::kwin:
+            m_backend =
+                std::make_unique<
+                    KWinX11WindowBackend>();
+            uses_kwin_protocol = true;
+            break;
         case X11BackendKind::muffin:
             m_backend =
                 std::make_unique<
@@ -304,7 +313,7 @@ void WindowSystemController::start()
             WindowRegistry>(
             *m_backend);
 
-    if (kde_wayland)
+    if (uses_kwin_protocol)
     {
         m_kwin_service =
             std::make_unique<
@@ -324,7 +333,7 @@ void WindowSystemController::start()
 
     m_registry->start();
 
-    if (x11)
+    if (x11 && !uses_kwin_protocol)
     {
         if (m_registry->connected())
         {
@@ -352,9 +361,12 @@ void WindowSystemController::start()
     g_message(
         "KWin window integration is ready for the KWin script");
 
-    PlasmaGeometryBridgeManager
-        bridge_manager;
-    bridge_manager.ensure();
+    if (kde_wayland)
+    {
+        PlasmaGeometryBridgeManager
+            bridge_manager;
+        bridge_manager.ensure();
+    }
 
     KWinScriptManager script_manager;
     script_manager.restart();
