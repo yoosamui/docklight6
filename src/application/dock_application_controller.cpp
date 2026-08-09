@@ -851,6 +851,8 @@ DockApplicationController::
             window->desktop_numbers;
         entry.frame_geometry =
             window->frame_geometry;
+        entry.process_id =
+            window->process_id;
         entry.active =
             running_application
                 ->active_window_id ==

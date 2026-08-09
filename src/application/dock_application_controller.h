@@ -51,6 +51,7 @@ struct ApplicationWindowEntry
     std::string icon_name;
     std::vector<unsigned int> desktop_numbers;
     WindowGeometry frame_geometry;
+    std::int64_t process_id = 0;
 
     bool active = false;
     bool minimized = false;

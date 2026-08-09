@@ -299,7 +299,6 @@ bool capture_x11_window(
         int render_event_base = 0;
         int render_error_base = 0;
         if (drawable_valid &&
-            !completion.x11_native_capture &&
             completion.target_width > 0 &&
             completion.target_height > 0 &&
             XRenderQueryExtension(

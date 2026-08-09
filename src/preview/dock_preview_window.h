@@ -143,12 +143,19 @@ private:
     void request_cached_thumbnail(
         const WindowId &window_id,
         unsigned int retries_remaining);
+    void request_active_cache_refresh(
+        const WindowId &window_id);
+    void persist_thumbnail_cache(
+        const WindowId &window_id,
+        const Glib::RefPtr<Gdk::Pixbuf>
+            &thumbnail);
     void show_thumbnail_fallback(
         const WindowId &window_id);
     void start_next_thumbnail_recovery();
     void request_live_x11_thumbnail(
         const WindowId &window_id,
-        unsigned int generation);
+        unsigned int generation,
+        bool allow_xfwm_group_fallback = false);
     void request_x11_change_probe(
         const WindowId &window_id,
         unsigned int generation);
@@ -181,14 +188,24 @@ private:
         m_thumbnail_targets;
     std::map<WindowId, Glib::RefPtr<Gdk::Pixbuf>>
         m_thumbnail_cache;
+    std::map<WindowId, std::string>
+        m_thumbnail_cache_keys;
+    std::set<WindowId>
+        m_thumbnail_cache_persisted;
+    std::set<WindowId>
+        m_thumbnail_cache_dirty;
     std::set<WindowId>
         m_thumbnail_cache_in_flight;
     std::set<WindowId>
         m_known_window_ids;
     std::set<WindowId>
         m_thumbnail_cache_eligible;
+    std::set<WindowId>
+        m_thumbnail_cache_active;
     std::map<WindowId, sigc::connection>
         m_thumbnail_cache_retries;
+    sigc::connection
+        m_thumbnail_cache_refresh;
     std::set<WindowId>
         m_thumbnail_recovery_requested;
     std::deque<WindowId>
