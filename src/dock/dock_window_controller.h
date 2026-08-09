@@ -133,6 +133,8 @@ private:
     void preview_pointer_left();
     void activate_preview_window(
         const WindowId &window_id);
+    void reload_preview_thumbnail(
+        const WindowId &window_id);
     void close_preview_window(
         const WindowId &window_id);
     void start_hide_timer();

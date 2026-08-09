@@ -201,20 +201,27 @@ bool capture_x11_window(
             display,
             window,
             &attributes) &&
+        attributes.map_state == IsViewable &&
+        attributes.c_class == InputOutput &&
         attributes.width > 0 &&
         attributes.height > 0)
     {
         int event_base = 0;
         int error_base = 0;
-        if (XCompositeQueryExtension(
+        const bool composite_available =
+            XCompositeQueryExtension(
                 display,
                 &event_base,
-                &error_base))
+                &error_base);
+        if (composite_available)
         {
             pixmap = XCompositeNameWindowPixmap(
                 display,
                 window);
             XSync(display, False);
+
+            if (x_capture_error)
+                pixmap = None;
         }
 
         int drawable_width = attributes.width;
@@ -246,8 +253,10 @@ bool capture_x11_window(
 
             if (has_pixmap_geometry &&
                 !x_capture_error &&
-                width > 0 &&
-                height > 0)
+                width == static_cast<unsigned int>(
+                             attributes.width) &&
+                height == static_cast<unsigned int>(
+                              attributes.height))
             {
                 drawable_width =
                     static_cast<int>(width);
@@ -261,8 +270,19 @@ bool capture_x11_window(
             }
         }
 
+        // When Composite is available, never fall back to reading the window
+        // drawable after NameWindowPixmap fails. During Xfwm map/unmap
+        // transitions that drawable can expose stale storage, including
+        // pixels belonging to another client.
+        const bool named_pixmap_valid =
+            pixmap != None && !x_capture_error;
+        const bool drawable_valid =
+            !composite_available ||
+            named_pixmap_valid ||
+            completion.x11_native_capture;
+
         Drawable drawable =
-            pixmap != None && !x_capture_error
+            named_pixmap_valid
                 ? pixmap
                 : window;
         x_capture_error = false;
@@ -278,7 +298,8 @@ bool capture_x11_window(
         // preview-sized result.
         int render_event_base = 0;
         int render_error_base = 0;
-        if (!completion.x11_native_capture &&
+        if (drawable_valid &&
+            !completion.x11_native_capture &&
             completion.target_width > 0 &&
             completion.target_height > 0 &&
             XRenderQueryExtension(
@@ -400,27 +421,51 @@ bool capture_x11_window(
 
         x_capture_error = false;
 
-        if (completion.x11_native_capture)
+        if (drawable_valid &&
+            completion.x11_native_capture)
             XGrabServer(display);
 
-        image = XGetImage(
-            display,
-            drawable,
-            0,
-            0,
-            static_cast<unsigned int>(capture_width),
-            static_cast<unsigned int>(capture_height),
-            AllPlanes,
-            ZPixmap);
-        XSync(display, False);
+        if (drawable_valid)
+        {
+            image = XGetImage(
+                display,
+                drawable,
+                0,
+                0,
+                static_cast<unsigned int>(capture_width),
+                static_cast<unsigned int>(capture_height),
+                AllPlanes,
+                ZPixmap);
+            XSync(display, False);
+        }
 
-        if (completion.x11_native_capture)
+        if (drawable_valid &&
+            completion.x11_native_capture)
         {
             XUngrabServer(display);
             XFlush(display);
         }
 
-        if (image && !x_capture_error)
+        const bool image_read_succeeded =
+            image && !x_capture_error;
+        XWindowAttributes verified_attributes{};
+        x_capture_error = false;
+        const bool same_viewable_window =
+            drawable_valid &&
+            XGetWindowAttributes(
+                display,
+                window,
+                &verified_attributes) != 0;
+        XSync(display, False);
+
+        if (image_read_succeeded &&
+            !x_capture_error &&
+            same_viewable_window &&
+            verified_attributes.map_state == IsViewable &&
+            verified_attributes.c_class == InputOutput &&
+            verified_attributes.width == attributes.width &&
+            verified_attributes.height == attributes.height &&
+            verified_attributes.visual == attributes.visual)
         {
             completion.source_width =
                 capture_width;

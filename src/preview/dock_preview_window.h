@@ -36,6 +36,7 @@
 #include <sigc++/signal.h>
 
 #include <cstdint>
+#include <deque>
 #include <map>
 #include <set>
 #include <string>
@@ -98,6 +99,8 @@ public:
     sigc::signal<void, const WindowId &> &
     signal_activate_window();
     sigc::signal<void, const WindowId &> &
+    signal_reload_thumbnail();
+    sigc::signal<void, const WindowId &> &
     signal_close_window();
 
 protected:
@@ -137,6 +140,12 @@ private:
     void request_thumbnail(
         const WindowId &window_id,
         unsigned int generation);
+    void request_cached_thumbnail(
+        const WindowId &window_id,
+        unsigned int retries_remaining);
+    void show_thumbnail_fallback(
+        const WindowId &window_id);
+    void start_next_thumbnail_recovery();
     void request_live_x11_thumbnail(
         const WindowId &window_id,
         unsigned int generation);
@@ -176,6 +185,19 @@ private:
         m_thumbnail_cache_in_flight;
     std::set<WindowId>
         m_known_window_ids;
+    std::set<WindowId>
+        m_thumbnail_cache_eligible;
+    std::map<WindowId, sigc::connection>
+        m_thumbnail_cache_retries;
+    std::set<WindowId>
+        m_thumbnail_recovery_requested;
+    std::deque<WindowId>
+        m_thumbnail_recovery_queue;
+    WindowId m_thumbnail_recovery_active;
+    std::set<WindowId>
+        m_thumbnail_recovery_capture_allowed;
+    sigc::connection
+        m_thumbnail_recovery_delay;
     std::vector<WindowId> m_window_ids;
     sigc::connection m_x11_live_refresh;
     sigc::connection m_x11_probe_refresh;
@@ -184,6 +206,8 @@ private:
     sigc::signal<void> m_pointer_left;
     sigc::signal<void, const WindowId &>
         m_activate_window;
+    sigc::signal<void, const WindowId &>
+        m_reload_thumbnail;
     sigc::signal<void, const WindowId &>
         m_close_window;
 

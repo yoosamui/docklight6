@@ -84,6 +84,13 @@ DockWindowController::DockWindowController(
                 &DockWindowController::
                     activate_preview_window));
     m_preview_window
+        ->signal_reload_thumbnail()
+        .connect(
+            sigc::mem_fun(
+                *this,
+                &DockWindowController::
+                    reload_preview_thumbnail));
+    m_preview_window
         ->signal_close_window()
         .connect(
             sigc::mem_fun(
@@ -1580,6 +1587,23 @@ void DockWindowController::activate_preview_window(
                 hide_preview();
             });
     }
+}
+
+void DockWindowController::reload_preview_thumbnail(
+    const WindowId &window_id)
+{
+    if (!m_window.m_window_registry ||
+        window_id.empty())
+    {
+        return;
+    }
+
+    // On Xfwm, presenting an off-workspace or minimized window first visits
+    // its workspace and maps it. The registry update then primes the cache
+    // from the readable composite pixmap. This path is requested only by an
+    // actual icon fallback in DockPreviewWindow.
+    m_window.m_window_registry->present_windows(
+        {window_id});
 }
 
 void DockWindowController::close_preview_window(

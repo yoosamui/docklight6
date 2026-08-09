@@ -37,6 +37,7 @@ namespace
     constexpr unsigned int X11_LIVE_REFRESH_MS = 33;
     constexpr unsigned int X11_STATIC_RETRY_MS = 80;
     constexpr unsigned int X11_STATIC_RETRY_COUNT = 8;
+    constexpr unsigned int XFWM_RECOVERY_SETTLE_MS = 500;
     constexpr unsigned int X11_CHANGE_PROBE_MS = 200;
     constexpr std::int64_t X11_LIVE_GRACE_US = 750000;
     constexpr int X11_PROBE_WIDTH = 96;
@@ -541,6 +542,10 @@ DockPreviewWindow::DockPreviewWindow()
 
 DockPreviewWindow::~DockPreviewWindow()
 {
+    m_thumbnail_recovery_delay.disconnect();
+    for (auto &retry : m_thumbnail_cache_retries)
+        retry.second.disconnect();
+    m_thumbnail_cache_retries.clear();
     stop_live_streams();
     ++m_generation;
     clear_cards();
@@ -611,14 +616,27 @@ void DockPreviewWindow::prime_thumbnail_cache(
     if (!m_uses_layer_shell)
     {
         std::set<WindowId> known_window_ids;
+        std::set<WindowId> eligible_window_ids;
         for (const auto &entry : entries)
         {
             if (!entry.id.empty())
+            {
                 known_window_ids.insert(entry.id);
+
+                if (!uses_xfwm_session() ||
+                    (!entry.minimized &&
+                     entry.on_current_desktop))
+                {
+                    eligible_window_ids.insert(
+                        entry.id);
+                }
+            }
         }
 
         m_known_window_ids =
             std::move(known_window_ids);
+        m_thumbnail_cache_eligible =
+            std::move(eligible_window_ids);
 
         for (auto cached = m_thumbnail_cache.begin();
              cached != m_thumbnail_cache.end();)
@@ -634,12 +652,31 @@ void DockPreviewWindow::prime_thumbnail_cache(
             }
         }
 
+        for (auto retry =
+                 m_thumbnail_cache_retries.begin();
+             retry != m_thumbnail_cache_retries.end();)
+        {
+            if (m_thumbnail_cache_eligible.count(
+                    retry->first) == 0)
+            {
+                retry->second.disconnect();
+                retry =
+                    m_thumbnail_cache_retries.erase(
+                        retry);
+            }
+            else
+            {
+                ++retry;
+            }
+        }
+
         for (const auto &entry : entries)
         {
             if (entry.id.empty() ||
-                (uses_xfwm_session() &&
-                 (entry.minimized ||
-                  !entry.on_current_desktop)) ||
+                m_thumbnail_cache_eligible.count(
+                    entry.id) == 0 ||
+                entry.id ==
+                    m_thumbnail_recovery_active ||
                 m_thumbnail_cache.count(entry.id) != 0 ||
                 m_thumbnail_cache_in_flight.count(
                     entry.id) != 0)
@@ -647,37 +684,130 @@ void DockPreviewWindow::prime_thumbnail_cache(
                 continue;
             }
 
-            m_thumbnail_cache_in_flight.insert(
-                entry.id);
-
-            // Remember a compositor-scaled frame while Xfwm still exposes
-            // the mapped window pixmap. Minimized and off-workspace windows
-            // may no longer have a readable pixmap when the preview opens.
-            // Keep enough resolution for the largest configured card so the
-            // cached frame is never stretched to fill a later preview.
-            m_thumbnail_provider.request(
+            request_cached_thumbnail(
                 entry.id,
-                MAX_HEIGHT * 2,
-                MAX_HEIGHT,
-                [this](
-                    const WindowId &window_id,
-                    const Glib::RefPtr<Gdk::Pixbuf>
-                        &thumbnail)
-                {
-                    m_thumbnail_cache_in_flight.erase(
-                        window_id);
-
-                    if (thumbnail &&
-                        m_known_window_ids.count(
-                            window_id) != 0)
-                    {
-                        m_thumbnail_cache[window_id] =
-                            thumbnail;
-                    }
-                },
-                1.0);
+                X11_STATIC_RETRY_COUNT);
         }
     }
+}
+
+void DockPreviewWindow::request_cached_thumbnail(
+    const WindowId &window_id,
+    unsigned int retries_remaining)
+{
+    if (window_id.empty() ||
+        m_thumbnail_cache.count(window_id) != 0 ||
+        m_thumbnail_cache_in_flight.count(
+            window_id) != 0 ||
+        m_thumbnail_cache_eligible.count(
+            window_id) == 0)
+    {
+        return;
+    }
+
+    m_thumbnail_cache_in_flight.insert(window_id);
+
+    // Remember a compositor-scaled frame while Xfwm still exposes the
+    // mapped window pixmap. The registry can announce a new window slightly
+    // before that pixmap exists, so retry cache priming just like the visible
+    // preview capture. Once minimized or moved off-workspace, the last valid
+    // frame remains available without reading Xfwm's unmapped backing store.
+    m_thumbnail_provider.request(
+        window_id,
+        MAX_HEIGHT * 2,
+        MAX_HEIGHT,
+        [this, retries_remaining](
+            const WindowId &completed_window_id,
+            const Glib::RefPtr<Gdk::Pixbuf> &thumbnail)
+        {
+            m_thumbnail_cache_in_flight.erase(
+                completed_window_id);
+
+            if (thumbnail &&
+                m_known_window_ids.count(
+                    completed_window_id) != 0 &&
+                m_thumbnail_cache_eligible.count(
+                    completed_window_id) != 0)
+            {
+                // A capture already in flight when recovery presented the
+                // window can finish while Xfwm is still painting it. Only
+                // the request started after the settle delay may complete an
+                // icon recovery.
+                if (m_thumbnail_recovery_active ==
+                        completed_window_id &&
+                    m_thumbnail_recovery_capture_allowed.count(
+                        completed_window_id) == 0)
+                {
+                    return;
+                }
+
+                m_thumbnail_recovery_capture_allowed.erase(
+                    completed_window_id);
+                m_thumbnail_cache[completed_window_id] =
+                    thumbnail;
+                m_thumbnail_recovery_requested.erase(
+                    completed_window_id);
+
+                const auto target =
+                    m_thumbnail_targets.find(
+                        completed_window_id);
+                if (target != m_thumbnail_targets.end() &&
+                    !target->second.has_thumbnail)
+                {
+                    target->second.image->set(
+                        scaled_to_fit(
+                            thumbnail,
+                            target->second.target_width,
+                            target->second.target_height));
+                    target->second.image->queue_draw();
+                    target->second.has_thumbnail = true;
+                }
+
+                if (m_thumbnail_recovery_active ==
+                    completed_window_id)
+                {
+                    m_thumbnail_recovery_active.clear();
+                    start_next_thumbnail_recovery();
+                }
+
+                const auto retry =
+                    m_thumbnail_cache_retries.find(
+                        completed_window_id);
+                if (retry !=
+                    m_thumbnail_cache_retries.end())
+                {
+                    retry->second.disconnect();
+                    m_thumbnail_cache_retries.erase(retry);
+                }
+                return;
+            }
+
+            if (retries_remaining == 0 ||
+                m_thumbnail_cache_eligible.count(
+                    completed_window_id) == 0)
+            {
+                return;
+            }
+
+            auto &retry =
+                m_thumbnail_cache_retries[
+                    completed_window_id];
+            retry.disconnect();
+            retry = Glib::signal_timeout().connect(
+                [this,
+                 completed_window_id,
+                 retries_remaining]()
+                {
+                    request_cached_thumbnail(
+                        completed_window_id,
+                        retries_remaining - 1);
+                    return false;
+                },
+                X11_STATIC_RETRY_MS);
+        },
+        1.0,
+        m_thumbnail_recovery_capture_allowed.count(
+            window_id) != 0);
 }
 
 DockPreviewSize DockPreviewWindow::preferred_size(
@@ -1168,13 +1298,7 @@ void DockPreviewWindow::request_thumbnail(
          !target->second.on_current_desktop))
     {
         if (!target->second.has_thumbnail)
-        {
-            target->second.image->set_pixel_size(
-                target->second.fallback_size);
-            target->second.image->set_from_icon_name(
-                target->second.fallback_icon,
-                Gtk::ICON_SIZE_DIALOG);
-        }
+            show_thumbnail_fallback(window_id);
         return;
     }
 
@@ -1205,13 +1329,25 @@ void DockPreviewWindow::request_thumbnail(
             auto &target = completed->second;
             target.capture_in_flight = false;
 
-            if (thumbnail)
+            if (thumbnail &&
+                (!uses_xfwm_session() ||
+                 m_thumbnail_cache_eligible.count(
+                     completed_window_id) != 0))
             {
                 m_thumbnail_cache[completed_window_id] =
                     thumbnail;
                 target.image->set(thumbnail);
                 target.image->queue_draw();
                 target.has_thumbnail = true;
+                m_thumbnail_recovery_requested.erase(
+                    completed_window_id);
+
+                if (m_thumbnail_recovery_active ==
+                    completed_window_id)
+                {
+                    m_thumbnail_recovery_active.clear();
+                    start_next_thumbnail_recovery();
+                }
             }
             else if (!target.has_thumbnail)
             {
@@ -1239,14 +1375,103 @@ void DockPreviewWindow::request_thumbnail(
 
                 // An icon is shown only when the initial static capture fails.
                 // A live stream keeps this static image until its first frame.
-                target.image->set_pixel_size(
-                    target.fallback_size);
-                target.image->set_from_icon_name(
-                    target.fallback_icon,
-                    Gtk::ICON_SIZE_DIALOG);
+                show_thumbnail_fallback(
+                    completed_window_id);
             }
         },
         2.0);
+}
+
+void DockPreviewWindow::show_thumbnail_fallback(
+    const WindowId &window_id)
+{
+    const auto found =
+        m_thumbnail_targets.find(window_id);
+
+    if (found == m_thumbnail_targets.end() ||
+        found->second.has_thumbnail)
+    {
+        return;
+    }
+
+    auto &target = found->second;
+    target.image->set_pixel_size(
+        target.fallback_size);
+    target.image->set_from_icon_name(
+        target.fallback_icon,
+        Gtk::ICON_SIZE_DIALOG);
+
+    // Xfwm cannot provide a reliable pixmap for an unmapped window. Only an
+    // actual icon fallback requests this visible recovery: the controller
+    // visits the window's workspace and presents it, after which cache
+    // priming captures the newly mapped pixmap and replaces this icon.
+    if (uses_xfwm_session() &&
+        m_thumbnail_recovery_requested.insert(
+            window_id).second)
+    {
+        m_thumbnail_recovery_queue.push_back(
+            window_id);
+        start_next_thumbnail_recovery();
+    }
+}
+
+void DockPreviewWindow::start_next_thumbnail_recovery()
+{
+    if (!m_thumbnail_recovery_active.empty())
+        return;
+
+    while (!m_thumbnail_recovery_queue.empty())
+    {
+        const auto window_id =
+            m_thumbnail_recovery_queue.front();
+        m_thumbnail_recovery_queue.pop_front();
+
+        const auto target =
+            m_thumbnail_targets.find(window_id);
+        if (target == m_thumbnail_targets.end() ||
+            target->second.has_thumbnail ||
+            m_thumbnail_recovery_requested.count(
+                window_id) == 0)
+        {
+            continue;
+        }
+
+        m_thumbnail_recovery_active = window_id;
+        m_reload_thumbnail.emit(window_id);
+
+        // Workspace activation and unminimize are asynchronous in Xfwm.
+        // Wait beyond the animation/first-paint interval, then start a fresh
+        // capture. If the registry has not observed the new workspace yet,
+        // keep waiting instead of caching a partial or stale pixmap.
+        m_thumbnail_recovery_delay.disconnect();
+        m_thumbnail_recovery_delay =
+            Glib::signal_timeout().connect(
+                [this, window_id]()
+                {
+                    if (m_thumbnail_recovery_active !=
+                        window_id)
+                    {
+                        return false;
+                    }
+
+                    if (m_thumbnail_cache_eligible.count(
+                            window_id) == 0 ||
+                        m_thumbnail_cache_in_flight.count(
+                            window_id) != 0)
+                    {
+                        return true;
+                    }
+
+                    m_thumbnail_recovery_capture_allowed.insert(
+                        window_id);
+                    request_cached_thumbnail(
+                        window_id,
+                        X11_STATIC_RETRY_COUNT);
+                    return false;
+                },
+                XFWM_RECOVERY_SETTLE_MS);
+        return;
+    }
 }
 
 void DockPreviewWindow::request_x11_change_probe(
@@ -1553,6 +1778,11 @@ void DockPreviewWindow::clear_cards()
     m_media_title.clear();
     m_live_window_ids.clear();
     m_thumbnail_targets.clear();
+    m_thumbnail_recovery_requested.clear();
+    m_thumbnail_recovery_queue.clear();
+    m_thumbnail_recovery_active.clear();
+    m_thumbnail_recovery_capture_allowed.clear();
+    m_thumbnail_recovery_delay.disconnect();
     m_window_ids.clear();
 
     for (auto *card : m_cards)
@@ -1669,6 +1899,12 @@ sigc::signal<void, const WindowId &> &
 DockPreviewWindow::signal_activate_window()
 {
     return m_activate_window;
+}
+
+sigc::signal<void, const WindowId &> &
+DockPreviewWindow::signal_reload_thumbnail()
+{
+    return m_reload_thumbnail;
 }
 
 sigc::signal<void, const WindowId &> &
