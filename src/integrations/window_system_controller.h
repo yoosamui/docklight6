@@ -10,7 +10,8 @@
 // Declares lifecycle ownership for Docklight's desktop window integration.
 //
 // Responsibilities:
-// - Detect whether the current desktop can use the KWin integration.
+// - Detect the active desktop, compositor, and X11 window manager.
+// - Select KWin, Muffin, Mutter, xfwm4, or EWMH fallback integration.
 // - Construct and start backend, registry, and D-Bus service in order.
 // - Provision companion KWin and Plasma components after connection.
 // - Tear the integration stack down safely.

@@ -4,14 +4,13 @@
 // Generic EWMH/X11 window backend implemented through libwnck.
 // ------------------------------------------------------------
 
-#include "x11_window_backend.h"
+#include "ewmh_window_backend.h"
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
-#include <gio/gio.h>
-
 #include <algorithm>
 #include <cstdlib>
+#include <utility>
 
 namespace
 {
@@ -42,133 +41,6 @@ guint32 event_time()
     }
 
     return GDK_CURRENT_TIME;
-}
-
-bool is_muffin(WnckScreen *screen)
-{
-    if (!screen)
-        return false;
-
-    const char *manager =
-        wnck_screen_get_window_manager_name(screen);
-    if (!manager)
-        return false;
-
-    auto *normalized = g_ascii_strdown(manager, -1);
-    const bool result =
-        normalized &&
-        std::string(normalized).find("muffin") !=
-            std::string::npos;
-    g_free(normalized);
-    return result;
-}
-
-bool cinnamon_eval_boolean(const std::string &script)
-{
-    GError *error = nullptr;
-    auto *connection =
-        g_bus_get_sync(
-            G_BUS_TYPE_SESSION,
-            nullptr,
-            &error);
-    if (!connection)
-    {
-        g_warning(
-            "Cannot connect to Cinnamon: %s",
-            error ? error->message : "unknown error");
-        g_clear_error(&error);
-        return false;
-    }
-
-    auto *reply =
-        g_dbus_connection_call_sync(
-            connection,
-            "org.Cinnamon",
-            "/org/Cinnamon",
-            "org.Cinnamon",
-            "Eval",
-            g_variant_new("(s)", script.c_str()),
-            G_VARIANT_TYPE("(bs)"),
-            G_DBUS_CALL_FLAGS_NONE,
-            1000,
-            nullptr,
-            &error);
-    g_object_unref(connection);
-
-    if (!reply)
-    {
-        g_warning(
-            "Cinnamon window action failed: %s",
-            error ? error->message : "unknown error");
-        g_clear_error(&error);
-        return false;
-    }
-
-    gboolean success = FALSE;
-    const char *result = nullptr;
-    g_variant_get(reply, "(b&s)", &success, &result);
-    const bool accepted =
-        success && result && g_str_equal(result, "true");
-    if (!accepted)
-    {
-        g_warning(
-            "Cinnamon did not accept window action: %s",
-            result ? result : "no result");
-    }
-    g_variant_unref(reply);
-    return accepted;
-}
-
-bool muffin_activate_windows(
-    WnckScreen *screen,
-    const std::vector<WnckWindow *> &windows)
-{
-    if (!is_muffin(screen) || windows.empty())
-        return false;
-
-    std::string script = "(() => { const ids = [";
-    for (std::size_t index = 0;
-         index < windows.size();
-         ++index)
-    {
-        if (index > 0)
-            script += ',';
-        script += std::to_string(
-            wnck_window_get_xid(windows[index]));
-    }
-
-    script +=
-        "]; const wins = global.get_window_actors()"
-        ".map(a => a.meta_window)"
-        ".filter(w => ids.includes(w.get_xwindow()));"
-        "if (wins.length === 0) return false;"
-        "const target = wins[wins.length - 1];"
-        "wins.forEach(w => w.unminimize());"
-        "target.get_workspace().activate_with_focus("
-        "target, global.get_current_time());"
-        "return true; })()";
-
-    return cinnamon_eval_boolean(script);
-}
-
-bool muffin_set_minimized(
-    WnckScreen *screen,
-    WnckWindow *window,
-    bool minimized)
-{
-    if (!is_muffin(screen) || !window)
-        return false;
-
-    const std::string script =
-        "(() => { const xid = " +
-        std::to_string(wnck_window_get_xid(window)) +
-        "; const actor = global.get_window_actors()"
-        ".find(a => a.meta_window.get_xwindow() === xid);"
-        "if (!actor) return false; actor.meta_window." +
-        std::string(minimized ? "minimize" : "unminimize") +
-        "(); return true; })()";
-
-    return cinnamon_eval_boolean(script);
 }
 
 bool is_application_auxiliary(
@@ -224,12 +96,19 @@ bool is_application_auxiliary(
 
 }
 
-X11WindowBackend::~X11WindowBackend()
+EwmhWindowBackend::EwmhWindowBackend(
+    std::string backend_name)
+    : m_backend_name(
+          std::move(backend_name))
+{
+}
+
+EwmhWindowBackend::~EwmhWindowBackend()
 {
     stop();
 }
 
-void X11WindowBackend::start()
+void EwmhWindowBackend::start()
 {
     if (m_started)
         return;
@@ -272,7 +151,7 @@ void X11WindowBackend::start()
     notify_snapshot_changed();
 }
 
-void X11WindowBackend::stop()
+void EwmhWindowBackend::stop()
 {
     if (!m_started)
         return;
@@ -302,12 +181,12 @@ void X11WindowBackend::stop()
         notify_connection_changed(false);
 }
 
-std::string X11WindowBackend::name() const
+std::string EwmhWindowBackend::name() const
 {
-    return "X11/EWMH";
+    return m_backend_name;
 }
 
-WindowBackendCapabilities X11WindowBackend::capabilities() const
+WindowBackendCapabilities EwmhWindowBackend::capabilities() const
 {
     WindowBackendCapabilities result;
     result.can_activate = true;
@@ -322,12 +201,12 @@ WindowBackendCapabilities X11WindowBackend::capabilities() const
     return result;
 }
 
-bool X11WindowBackend::connected() const
+bool EwmhWindowBackend::connected() const
 {
     return m_connected;
 }
 
-std::vector<ManagedWindow> X11WindowBackend::windows() const
+std::vector<ManagedWindow> EwmhWindowBackend::windows() const
 {
     std::vector<ManagedWindow> result;
 
@@ -345,7 +224,7 @@ std::vector<ManagedWindow> X11WindowBackend::windows() const
     return result;
 }
 
-std::vector<WindowId> X11WindowBackend::stacking_order() const
+std::vector<WindowId> EwmhWindowBackend::stacking_order() const
 {
     std::vector<WindowId> result;
 
@@ -362,7 +241,7 @@ std::vector<WindowId> X11WindowBackend::stacking_order() const
     return result;
 }
 
-std::optional<WindowId> X11WindowBackend::active_window() const
+std::optional<WindowId> EwmhWindowBackend::active_window() const
 {
     if (!m_screen)
         return std::nullopt;
@@ -374,23 +253,21 @@ std::optional<WindowId> X11WindowBackend::active_window() const
 }
 
 std::optional<WindowIconGeometry>
-X11WindowBackend::dock_surface_geometry() const
+EwmhWindowBackend::dock_surface_geometry() const
 {
     return std::nullopt;
 }
 
-bool X11WindowBackend::activate_window(const WindowId &id)
+bool EwmhWindowBackend::activate_window(const WindowId &id)
 {
     auto *window = find_window(id);
     if (!window)
         return false;
 
-    if (is_muffin(m_screen))
+    if (const auto handled =
+            activate_windows_override({window}))
     {
-        // Never fall through to wnck_window_activate() on Muffin: it moves
-        // an off-workspace window onto the current workspace.
-        return muffin_activate_windows(
-            m_screen, {window});
+        return *handled;
     }
 
     const guint32 timestamp = event_time();
@@ -404,7 +281,7 @@ bool X11WindowBackend::activate_window(const WindowId &id)
     return true;
 }
 
-bool X11WindowBackend::present_windows(const std::vector<WindowId> &ids)
+bool EwmhWindowBackend::present_windows(const std::vector<WindowId> &ids)
 {
     std::vector<WnckWindow *> windows;
     windows.reserve(ids.size());
@@ -419,10 +296,10 @@ bool X11WindowBackend::present_windows(const std::vector<WindowId> &ids)
     if (windows.empty())
         return false;
 
-    if (is_muffin(m_screen))
+    if (const auto handled =
+            activate_windows_override(windows))
     {
-        return muffin_activate_windows(
-            m_screen, windows);
+        return *handled;
     }
 
     const guint32 timestamp = event_time();
@@ -444,7 +321,7 @@ bool X11WindowBackend::present_windows(const std::vector<WindowId> &ids)
     return true;
 }
 
-bool X11WindowBackend::defer_activation_until_workspace(
+bool EwmhWindowBackend::defer_activation_until_workspace(
     const std::vector<WindowId> &window_ids,
     WnckWindow *target,
     guint32 timestamp)
@@ -474,7 +351,7 @@ bool X11WindowBackend::defer_activation_until_workspace(
     return true;
 }
 
-void X11WindowBackend::complete_pending_activation()
+void EwmhWindowBackend::complete_pending_activation()
 {
     if (!m_screen ||
         m_pending_activation_window_ids.empty())
@@ -517,7 +394,7 @@ void X11WindowBackend::complete_pending_activation()
         wnck_window_activate(target, timestamp);
 }
 
-bool X11WindowBackend::hide_windows(const std::vector<WindowId> &ids)
+bool EwmhWindowBackend::hide_windows(const std::vector<WindowId> &ids)
 {
     bool handled = false;
     for (const auto &id : ids)
@@ -531,12 +408,12 @@ bool X11WindowBackend::hide_windows(const std::vector<WindowId> &ids)
     return handled;
 }
 
-bool X11WindowBackend::raise_window(const WindowId &id)
+bool EwmhWindowBackend::raise_window(const WindowId &id)
 {
     return activate_window(id);
 }
 
-bool X11WindowBackend::close_window(const WindowId &id)
+bool EwmhWindowBackend::close_window(const WindowId &id)
 {
     auto *window = find_window(id);
     if (!window)
@@ -545,16 +422,20 @@ bool X11WindowBackend::close_window(const WindowId &id)
     return true;
 }
 
-bool X11WindowBackend::set_window_minimized(const WindowId &id,
+bool EwmhWindowBackend::set_window_minimized(const WindowId &id,
                                              bool minimized)
 {
     auto *window = find_window(id);
     if (!window)
         return false;
 
-    if (is_muffin(m_screen))
-        return muffin_set_minimized(
-            m_screen, window, minimized);
+    if (const auto handled =
+            set_window_minimized_override(
+                window,
+                minimized))
+    {
+        return *handled;
+    }
 
     if (minimized)
         wnck_window_minimize(window);
@@ -570,7 +451,7 @@ bool X11WindowBackend::set_window_minimized(const WindowId &id,
     return true;
 }
 
-bool X11WindowBackend::set_window_maximized(const WindowId &id,
+bool EwmhWindowBackend::set_window_maximized(const WindowId &id,
                                              bool maximized)
 {
     auto *window = find_window(id);
@@ -584,7 +465,7 @@ bool X11WindowBackend::set_window_maximized(const WindowId &id,
     return true;
 }
 
-bool X11WindowBackend::set_window_icon_geometry(
+bool EwmhWindowBackend::set_window_icon_geometry(
     const WindowId &id,
     const WindowIconGeometry &geometry)
 {
@@ -600,60 +481,75 @@ bool X11WindowBackend::set_window_icon_geometry(
     return true;
 }
 
-void X11WindowBackend::on_window_opened(WnckScreen *,
+std::optional<bool>
+EwmhWindowBackend::activate_windows_override(
+    const std::vector<WnckWindow *> &)
+{
+    return std::nullopt;
+}
+
+std::optional<bool>
+EwmhWindowBackend::set_window_minimized_override(
+    WnckWindow *,
+    bool)
+{
+    return std::nullopt;
+}
+
+void EwmhWindowBackend::on_window_opened(WnckScreen *,
                                          WnckWindow *window,
                                          gpointer data)
 {
-    auto *backend = static_cast<X11WindowBackend *>(data);
+    auto *backend = static_cast<EwmhWindowBackend *>(data);
     backend->watch_window(window);
     backend->snapshot_changed();
 }
 
-void X11WindowBackend::on_window_closed(WnckScreen *,
+void EwmhWindowBackend::on_window_closed(WnckScreen *,
                                          WnckWindow *window,
                                          gpointer data)
 {
     g_signal_handlers_disconnect_by_data(window, data);
-    static_cast<X11WindowBackend *>(data)->snapshot_changed();
+    static_cast<EwmhWindowBackend *>(data)->snapshot_changed();
 }
 
-void X11WindowBackend::on_screen_changed(WnckScreen *, gpointer data)
+void EwmhWindowBackend::on_screen_changed(WnckScreen *, gpointer data)
 {
-    static_cast<X11WindowBackend *>(data)->snapshot_changed();
+    static_cast<EwmhWindowBackend *>(data)->snapshot_changed();
 }
 
-void X11WindowBackend::on_screen_value_changed(WnckScreen *,
+void EwmhWindowBackend::on_screen_value_changed(WnckScreen *,
                                                 gpointer,
                                                 gpointer data)
 {
-    static_cast<X11WindowBackend *>(data)->snapshot_changed();
+    static_cast<EwmhWindowBackend *>(data)->snapshot_changed();
 }
 
-void X11WindowBackend::on_active_workspace_changed(
+void EwmhWindowBackend::on_active_workspace_changed(
     WnckScreen *,
     WnckWorkspace *,
     gpointer data)
 {
     auto *backend =
-        static_cast<X11WindowBackend *>(data);
+        static_cast<EwmhWindowBackend *>(data);
     backend->snapshot_changed();
     backend->complete_pending_activation();
 }
 
-void X11WindowBackend::on_window_changed(WnckWindow *, gpointer data)
+void EwmhWindowBackend::on_window_changed(WnckWindow *, gpointer data)
 {
-    static_cast<X11WindowBackend *>(data)->snapshot_changed();
+    static_cast<EwmhWindowBackend *>(data)->snapshot_changed();
 }
 
-void X11WindowBackend::on_window_state_changed(WnckWindow *,
+void EwmhWindowBackend::on_window_state_changed(WnckWindow *,
                                                 WnckWindowState,
                                                 WnckWindowState,
                                                 gpointer data)
 {
-    static_cast<X11WindowBackend *>(data)->snapshot_changed();
+    static_cast<EwmhWindowBackend *>(data)->snapshot_changed();
 }
 
-void X11WindowBackend::watch_window(WnckWindow *window)
+void EwmhWindowBackend::watch_window(WnckWindow *window)
 {
     if (!window)
         return;
@@ -670,12 +566,12 @@ void X11WindowBackend::watch_window(WnckWindow *window)
                      G_CALLBACK(on_window_state_changed), this);
 }
 
-void X11WindowBackend::snapshot_changed()
+void EwmhWindowBackend::snapshot_changed()
 {
     notify_snapshot_changed();
 }
 
-WnckWindow *X11WindowBackend::find_window(const WindowId &id) const
+WnckWindow *EwmhWindowBackend::find_window(const WindowId &id) const
 {
     if (!m_screen)
         return nullptr;
@@ -691,12 +587,12 @@ WnckWindow *X11WindowBackend::find_window(const WindowId &id) const
     return nullptr;
 }
 
-WindowId X11WindowBackend::window_id(WnckWindow *window)
+WindowId EwmhWindowBackend::window_id(WnckWindow *window)
 {
     return std::to_string(wnck_window_get_xid(window));
 }
 
-ManagedWindow X11WindowBackend::managed_window(WnckWindow *window,
+ManagedWindow EwmhWindowBackend::managed_window(WnckWindow *window,
                                                 WnckScreen *screen)
 {
     ManagedWindow result;

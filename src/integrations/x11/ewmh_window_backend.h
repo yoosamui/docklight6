@@ -11,11 +11,10 @@
 #define WNCK_I_KNOW_THIS_IS_UNSTABLE
 #include <libwnck/libwnck.h>
 
-class X11WindowBackend : public WindowBackend
+class EwmhWindowBackend : public WindowBackend
 {
 public:
-    X11WindowBackend() = default;
-    ~X11WindowBackend() override;
+    ~EwmhWindowBackend() override;
 
     void start() override;
     void stop() override;
@@ -38,6 +37,19 @@ public:
     bool set_window_maximized(const WindowId &window_id, bool maximized) override;
     bool set_window_icon_geometry(const WindowId &window_id,
                                   const WindowIconGeometry &geometry) override;
+
+protected:
+    explicit EwmhWindowBackend(
+        std::string backend_name);
+
+    virtual std::optional<bool>
+    activate_windows_override(
+        const std::vector<WnckWindow *> &windows);
+
+    virtual std::optional<bool>
+    set_window_minimized_override(
+        WnckWindow *window,
+        bool minimized);
 
 private:
     static void on_window_opened(WnckScreen *, WnckWindow *, gpointer data);
@@ -66,6 +78,7 @@ private:
 
     WnckHandle *m_handle = nullptr;
     WnckScreen *m_screen = nullptr;
+    std::string m_backend_name;
     std::vector<WindowId> m_pending_activation_window_ids;
     int m_pending_activation_workspace = -1;
     guint32 m_pending_activation_timestamp = 0;

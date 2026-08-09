@@ -7,9 +7,11 @@
 // window_system_controller.cpp
 //
 // Implementation overview:
-// Selects KWin for KDE Wayland and the generic EWMH backend for X11.
+// Selects KWin for KDE Wayland and a WM-specific EWMH backend for X11.
 //
 // Important implementation decisions:
+// - Muffin, Mutter, and xfwm4 never share concrete backend classes.
+// - Unknown EWMH-compatible X11 managers use an explicit fallback backend.
 // - Unsupported sessions keep the dock usable without window control.
 // - Owned components are created and destroyed in dependency order.
 // - Companion integrations are ensured only after backend connection.
@@ -24,7 +26,11 @@
 #include "integrations/kwin/kwin_script_manager.h"
 #include "integrations/kwin/kwin_window_backend.h"
 #include "integrations/plasma/plasma_geometry_bridge_manager.h"
-#include "integrations/x11/x11_window_backend.h"
+#include "integrations/x11/ewmh_fallback_window_backend.h"
+#include "integrations/x11/muffin_window_backend.h"
+#include "integrations/x11/mutter_window_backend.h"
+#include "integrations/x11/xfwm4_window_backend.h"
+#include "integrations/x11/x11_backend_selection.h"
 #include "windowing/window_backend.h"
 #include "windowing/window_registry.h"
 
@@ -102,6 +108,37 @@ std::string detected_desktop()
 std::string detected_window_manager(
     const std::string &desktop)
 {
+    const auto session_type =
+        lowercase(
+            environment_value(
+                "XDG_SESSION_TYPE"));
+
+    if (session_type != "wayland")
+    {
+        auto *handle =
+            wnck_handle_new(
+                WNCK_CLIENT_TYPE_PAGER);
+        auto *screen =
+            wnck_handle_get_default_screen(
+                handle);
+        if (screen)
+            wnck_screen_force_update(screen);
+
+        const char *manager =
+            screen
+                ? wnck_screen_get_window_manager_name(
+                      screen)
+                : nullptr;
+        const std::string result =
+            manager
+                ? manager
+                : "";
+        g_clear_object(&handle);
+
+        if (!result.empty())
+            return result;
+    }
+
     if (identifies_kde(desktop) ||
         lowercase(
             environment_value(
@@ -167,19 +204,16 @@ std::string detected_compositor()
     return "unknown";
 }
 
-void log_detected_environment()
+void log_detected_environment(
+    const std::string &desktop,
+    const std::string &window_manager)
 {
-    const auto desktop =
-        detected_desktop();
-
     DocklightLog::startup(
         "detected Desktop: %s",
         desktop.c_str());
     DocklightLog::startup(
         "detected WM: %s",
-        detected_window_manager(
-            desktop)
-            .c_str());
+        window_manager.c_str());
     DocklightLog::startup(
         "detected compositor: %s",
         detected_compositor().c_str());
@@ -203,7 +237,14 @@ void WindowSystemController::start()
 
     m_started = true;
 
-    log_detected_environment();
+    const auto desktop =
+        detected_desktop();
+    const auto window_manager =
+        detected_window_manager(desktop);
+
+    log_detected_environment(
+        desktop,
+        window_manager);
 
     const bool kde_wayland =
         is_kde_wayland_session();
@@ -218,8 +259,39 @@ void WindowSystemController::start()
 
     if (x11)
     {
-        m_backend =
-            std::make_unique<X11WindowBackend>();
+        const auto backend_kind =
+            select_x11_backend_kind(
+                window_manager,
+                desktop);
+
+        switch (backend_kind)
+        {
+        case X11BackendKind::muffin:
+            m_backend =
+                std::make_unique<
+                    MuffinWindowBackend>();
+            break;
+        case X11BackendKind::mutter:
+            m_backend =
+                std::make_unique<
+                    MutterWindowBackend>();
+            break;
+        case X11BackendKind::xfwm4:
+            m_backend =
+                std::make_unique<
+                    Xfwm4WindowBackend>();
+            break;
+        case X11BackendKind::ewmh_fallback:
+            m_backend =
+                std::make_unique<
+                    EwmhFallbackWindowBackend>();
+            break;
+        }
+
+        DocklightLog::startup(
+            "selected backend: %s",
+            x11_backend_kind_name(
+                backend_kind));
     }
     else
     {
@@ -257,7 +329,8 @@ void WindowSystemController::start()
         if (m_registry->connected())
         {
             g_message(
-                "Generic X11/EWMH window integration is ready");
+                "%s window integration is ready",
+                m_backend->name().c_str());
         }
         else
         {

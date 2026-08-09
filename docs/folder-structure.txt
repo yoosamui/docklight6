@@ -59,6 +59,15 @@ src/
 │   │   ├── kwin_window_backend.h             # Declares the KWin-specific window backend.
 │   │   └── kwin_window_command.h             # Defines normalized KWin window-command names and arguments.
 │   │
+│   ├── x11/                                  # WM-specific X11 backends over shared EWMH/libwnck mechanics.
+│   │   ├── ewmh_window_backend.cpp            # Implements shared EWMH window discovery, state, and commands.
+│   │   ├── ewmh_window_backend.h              # Declares the common base used by concrete X11 backends.
+│   │   ├── muffin_window_backend.*            # Adds Cinnamon/Muffin-specific window actions.
+│   │   ├── mutter_window_backend.*            # Selects the GNOME/Mutter X11 integration.
+│   │   ├── xfwm4_window_backend.*             # Selects the XFCE/xfwm4 X11 integration.
+│   │   ├── ewmh_fallback_window_backend.*     # Handles other EWMH-compatible X11 window managers.
+│   │   └── x11_backend_selection.*            # Classifies the WM without mixing concrete implementations.
+│   │
 │   └── plasma/                               # Plasma-specific dock geometry integration.
 │       ├── plasma_geometry_bridge_manager.cpp # Installs, checks, and coordinates the Plasma geometry bridge.
 │       └── plasma_geometry_bridge_manager.h  # Declares geometry-bridge lifecycle and availability management.

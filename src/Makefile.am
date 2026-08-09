@@ -9,7 +9,8 @@ check_PROGRAMS = \
     window_registry_test \
     kwin_window_backend_test \
     kwin_protocol_codec_test \
-    kwin_integration_service_test
+    kwin_integration_service_test \
+    x11_backend_selection_test
 
 TESTS = \
     $(check_PROGRAMS) \
@@ -51,8 +52,18 @@ docklight6_SOURCES = \
     windowing/window_registry.cpp \
     integrations/window_system_controller.h \
     integrations/window_system_controller.cpp \
-    integrations/x11/x11_window_backend.h \
-    integrations/x11/x11_window_backend.cpp \
+    integrations/x11/ewmh_window_backend.h \
+    integrations/x11/ewmh_window_backend.cpp \
+    integrations/x11/ewmh_fallback_window_backend.h \
+    integrations/x11/ewmh_fallback_window_backend.cpp \
+    integrations/x11/muffin_window_backend.h \
+    integrations/x11/muffin_window_backend.cpp \
+    integrations/x11/mutter_window_backend.h \
+    integrations/x11/mutter_window_backend.cpp \
+    integrations/x11/xfwm4_window_backend.h \
+    integrations/x11/xfwm4_window_backend.cpp \
+    integrations/x11/x11_backend_selection.h \
+    integrations/x11/x11_backend_selection.cpp \
     integrations/kwin/kwin_integration_protocol.h \
     integrations/kwin/kwin_protocol_codec.h \
     integrations/kwin/kwin_protocol_codec.cpp \
@@ -281,6 +292,11 @@ kwin_integration_service_test_CPPFLAGS = \
 
 kwin_integration_service_test_LDADD = \
     $(GTKMM_LIBS)
+
+x11_backend_selection_test_SOURCES = \
+    tests/x11_backend_selection_test.cpp \
+    integrations/x11/x11_backend_selection.h \
+    integrations/x11/x11_backend_selection.cpp
 
 EXTRA_DIST = \
     tests/kwin_minimize_effect_test.js \
