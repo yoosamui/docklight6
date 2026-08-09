@@ -6,6 +6,37 @@ previews, multi-monitor placement, and configurable auto-hide behavior.
 
 **Current version:** `6.0.29` Only KDE-Plasma Wayland
 
+Here is the current desktop/session compatibility matrix. PASS means confirmed
+in a real desktop session; PENDING means implemented but still needs
+real-session verification.
+
+| Desktop / WM | Session | Selected backend | Result |
+|---|---|---|---|
+| KDE Plasma / KWin | Wayland | KWinWindowBackend | PASS |
+| KDE Plasma / KWin | X11 | EwmhFallbackWindowBackend | PASS |
+| XFCE / xfwm4 | X11 | Xfwm4WindowBackend | PASS |
+| Cinnamon / Muffin | X11 | MuffinWindowBackend | PASS |
+| GNOME / Mutter | X11 | MutterWindowBackend | PENDING |
+| Other EWMH window managers | X11 | EwmhFallbackWindowBackend | PENDING |
+| GNOME / Mutter | Wayland | No backend | NOT IMPLEMENTED |
+| Cinnamon / Muffin | Wayland | No backend | NOT IMPLEMENTED |
+| XFCE Wayland | Wayland | No backend | NOT IMPLEMENTED |
+| Sway / wlroots | Wayland | No backend | NOT IMPLEMENTED |
+| Hyprland | Wayland | No backend | NOT IMPLEMENTED |
+| Wayfire / wlroots | Wayland | No backend | NOT IMPLEMENTED |
+| labwc / wlroots | Wayland | No backend | NOT IMPLEMENTED |
+| COSMIC | Wayland | No backend | NOT IMPLEMENTED |
+| Generic/other compositor | Wayland | No backend | NOT IMPLEMENTED |
+
+Important current-code details:
+
+- Cinnamon/Muffin and GNOME/Mutter have separate X11 backends.
+- KWin X11 currently deliberately selects `EwmhFallbackWindowBackend`, even
+  though a `KWinX11WindowBackend` class exists.
+- KDE Plasma/KWin is currently the only enabled Wayland environment.
+- Every non-KDE Wayland session exits window-integration startup without
+  creating a backend.
+
 **Project status:** Feature complete. Development now focuses on maintenance,
 bug fixes, compatibility, and translations.
 
