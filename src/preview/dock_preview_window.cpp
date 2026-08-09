@@ -48,6 +48,9 @@ namespace
     constexpr double CARD_CORNER_RADIUS = 7.0;
     constexpr double PREVIEW_PI =
         3.14159265358979323846;
+    // Temporary test: keep preview transitions as a pure fade, without the
+    // directional slide used by the normal overlay animation.
+    constexpr bool TEST_PREVIEW_FADE_ONLY = true;
 
     double ease_opacity(
         double progress,
@@ -57,6 +60,14 @@ namespace
             progress,
             0.0,
             1.0);
+
+        if (TEST_PREVIEW_FADE_ONLY)
+        {
+            // Smoothstep gives both fade-in and fade-out a gentle start and
+            // finish instead of accelerating at only one end.
+            return progress * progress *
+                   (3.0 - 2.0 * progress);
+        }
 
         return hiding
             ? progress * progress * progress
@@ -1469,9 +1480,12 @@ void DockPreviewWindow::show_preview(
         size.width,
         size.height);
 
-    // Keep the first frame visible so xfwm4 maps the overlay, then ease it
-    // from the edge into its final position and opacity.
-    set_opacity(0.18);
+    // For the fade-only test, begin fully transparent. The normal animation
+    // keeps a faint first frame so xfwm4 maps the moving overlay reliably.
+    set_opacity(
+        TEST_PREVIEW_FADE_ONLY
+            ? 0.0
+            : 0.18);
 
     show_all();
     queue_resize();
@@ -1565,6 +1579,7 @@ void DockPreviewWindow::start_opacity_animation(
     m_opacity_animation_start_us =
         g_get_monotonic_time();
     m_animation_moves_window =
+        !TEST_PREVIEW_FADE_ONLY &&
         !m_uses_layer_shell &&
         m_has_position;
 
