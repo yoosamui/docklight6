@@ -1353,10 +1353,13 @@ void DockPreviewWindow::show_preview(
         size.width,
         size.height);
 
-    set_opacity(1.0);
+    // Keep the first frame visible so xfwm4 maps the overlay, then ease it
+    // from the edge into its final position and opacity.
+    set_opacity(0.18);
 
     show_all();
     queue_resize();
+    start_opacity_animation(false);
 }
 
 void DockPreviewWindow::hide_preview()
@@ -1446,7 +1449,6 @@ void DockPreviewWindow::start_opacity_animation(
     m_opacity_animation_start_us =
         g_get_monotonic_time();
     m_animation_moves_window =
-        hiding &&
         !m_uses_layer_shell &&
         m_has_position;
 

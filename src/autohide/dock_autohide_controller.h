@@ -60,7 +60,9 @@ private:
     void cancel_hide();
     void cancel_animation();
     ScreenPosition hidden_x11_position() const;
-    void animate_x11(bool hiding);
+    void animate_x11(
+        bool hiding,
+        bool start_at_hidden_edge = false);
     bool advance_x11_animation();
     void reveal_immediately();
     void hide_now();
@@ -97,4 +99,5 @@ private:
     bool m_animating_to_hidden = false;
     bool m_pointer_inside = false;
     bool m_suppress_next_map_hide = false;
+    bool m_pending_x11_reveal_animation = false;
 };

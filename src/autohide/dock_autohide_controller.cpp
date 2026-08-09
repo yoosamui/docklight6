@@ -29,6 +29,8 @@
 namespace
 {
 
+constexpr double X11_REVEAL_INITIAL_OPACITY = 0.18;
+
 bool same_placement(
     const DockPlacement &left,
     const DockPlacement &right)
@@ -109,6 +111,16 @@ void DockAutohideController::initialize()
         m_window.signal_map_event().connect(
             [this](GdkEventAny *)
             {
+                if (m_pending_x11_reveal_animation)
+                {
+                    m_pending_x11_reveal_animation = false;
+                    m_suppress_next_map_hide = false;
+                    m_window.set_opacity(
+                        X11_REVEAL_INITIAL_OPACITY);
+                    animate_x11(false, true);
+                    return false;
+                }
+
                 if (m_suppress_next_map_hide)
                 {
                     m_suppress_next_map_hide = false;
@@ -362,7 +374,8 @@ ScreenPosition DockAutohideController::hidden_x11_position() const
 }
 
 void DockAutohideController::animate_x11(
-    bool hiding)
+    bool hiding,
+    bool start_at_hidden_edge)
 {
     // Layer-shell surfaces are positioned by the Wayland compositor and
     // cannot be moved one frame at a time. Xfce's X11 dock window, however,
@@ -388,6 +401,16 @@ void DockAutohideController::animate_x11(
 
     const auto hidden =
         hidden_x11_position();
+
+    if (!hiding && start_at_hidden_edge)
+    {
+        current_x = hidden.x;
+        current_y = hidden.y;
+        m_window.move(current_x, current_y);
+    }
+
+    if (hiding)
+        m_window.set_opacity(1.0);
 
     cancel_animation();
 
@@ -470,13 +493,28 @@ bool DockAutohideController::advance_x11_animation()
             eased));
     m_window.move(x, y);
 
+    if (!m_animating_to_hidden)
+    {
+        m_window.set_opacity(
+            X11_REVEAL_INITIAL_OPACITY +
+            (1.0 - X11_REVEAL_INITIAL_OPACITY) *
+                eased);
+    }
+
     if (progress < 1.0)
         return true;
 
     m_animation_timer.disconnect();
 
     if (m_animating_to_hidden)
+    {
         m_window.hide();
+        m_window.set_opacity(1.0);
+    }
+    else
+    {
+        m_window.set_opacity(1.0);
+    }
 
     return false;
 }
@@ -485,6 +523,8 @@ void DockAutohideController::reveal_immediately()
 {
     cancel_hide();
     cancel_animation();
+    m_pending_x11_reveal_animation = false;
+    m_window.set_opacity(1.0);
 
     if (m_hidden)
     {
@@ -530,19 +570,29 @@ void DockAutohideController::reveal()
         if (!m_window.get_mapped())
         {
             m_suppress_next_map_hide = true;
-
-            if (!m_window.m_uses_layer_shell &&
+            const bool defer_x11_reveal =
+                !m_window.m_uses_layer_shell &&
                 m_has_placement &&
-                m_has_shown_position)
+                m_has_shown_position;
+
+            if (defer_x11_reveal)
             {
                 const auto hidden =
                     hidden_x11_position();
+                m_pending_x11_reveal_animation = true;
+                m_window.set_opacity(0.0);
                 m_window.move(
                     hidden.x,
                     hidden.y);
             }
 
             m_window.show();
+
+            if (defer_x11_reveal)
+            {
+                m_reveal_window.hide();
+                return;
+            }
         }
 
         animate_x11(false);

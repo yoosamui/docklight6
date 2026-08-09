@@ -299,7 +299,9 @@ void DockTooltipWindow::show_tooltip(
         Glib::signal_timeout().connect(
             [this]()
             {
-                set_opacity(1.0);
+                // Start partly visible so xfwm4 maps the overlay reliably,
+                // then ease both opacity and position into the final state.
+                set_opacity(0.18);
                 show_all();
 
                 apply_position(
@@ -307,6 +309,7 @@ void DockTooltipWindow::show_tooltip(
                     m_request_position,
                     m_request_width,
                     m_tooltip_height);
+                start_opacity_animation(false);
                 return false;
             },
             DockConstants::TOOLTIP_REMAP_DELAY_MS);
@@ -365,7 +368,6 @@ void DockTooltipWindow::start_opacity_animation(
     m_opacity_animation_start_us =
         g_get_monotonic_time();
     m_animation_moves_window =
-        hiding &&
         !m_uses_layer_shell;
 
     if (m_animation_moves_window)
