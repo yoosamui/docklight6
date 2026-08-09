@@ -131,7 +131,9 @@ private:
     void clear_cards();
     void apply_position(
         DockLocation location,
-        const ScreenPosition &position);
+        const ScreenPosition &position,
+        int width,
+        int height);
 
 private:
     DockWindowThumbnailProvider
@@ -164,5 +166,11 @@ private:
     int m_card_user_height = CARD_USER_HEIGHT;
     std::string m_media_title;
     std::set<WindowId> m_live_window_ids;
+    MonitorGeometry m_monitor_geometry;
+    ScreenPosition m_position;
+    DockLocation m_location = DockLocation::bottom;
+    DockPreviewSize m_size;
     bool m_dynamic_refresh = false;
+    bool m_has_position = false;
+    bool m_uses_layer_shell = false;
 };

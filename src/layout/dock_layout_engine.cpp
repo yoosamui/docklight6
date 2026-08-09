@@ -160,21 +160,6 @@ DockLayoutEngine::calculate_tooltip_position(
     const int dock_width = dock.width;
     const int dock_height = dock.height;
 
-    // With an exclusive zone, KWin positions an overlay margin from the
-    // remaining work-area edge. The dock thickness is already excluded in
-    // that coordinate system. Autohiding docks have no reservation, so their
-    // tooltip still needs to clear the dock thickness explicitly.
-    const bool dock_reserves_space =
-        request.autohide == DockAutohide::none;
-
-    const int horizontal_edge_offset =
-        (dock_reserves_space ? 0 : dock_height) +
-        tooltip_distance;
-
-    const int vertical_edge_offset =
-        (dock_reserves_space ? 0 : dock_width) +
-        tooltip_distance;
-
     // Prefer the compositor's current dock coordinates. During an
     // asynchronous layer-shell relayout they can briefly differ from the
     // position implied by the requested alignment, which would leave the
@@ -216,28 +201,22 @@ DockLayoutEngine::calculate_tooltip_position(
     {
     case DockLocation::bottom:
         position.x = dock_x + item.center_x - tooltip_width / 2;
-        // Bottom-anchored margins are measured from the screen edge. Clear
-        // both the dock thickness and the requested tooltip distance.
-        position.y = horizontal_edge_offset;
+        position.y = dock_y - tooltip_height - tooltip_distance;
         break;
 
     case DockLocation::top:
         position.x = dock_x + item.center_x - tooltip_width / 2;
-        position.y = horizontal_edge_offset;
+        position.y = dock_y + dock_height + tooltip_distance;
         break;
 
     case DockLocation::left:
-        // Side-anchored margins are likewise measured from the screen edge.
-        position.x = vertical_edge_offset;
-        // GTK item allocations use a top-origin coordinate system. Keep the
-        // side tooltip in that same system so its vertical centre follows the
-        // item centre directly.
+        position.x = dock_x + dock_width + tooltip_distance;
         position.y =
             dock_y + item.center_y - tooltip_height / 2;
         break;
 
     case DockLocation::right:
-        position.x = vertical_edge_offset;
+        position.x = dock_x - tooltip_width - tooltip_distance;
         position.y =
             dock_y + item.center_y - tooltip_height / 2;
         break;

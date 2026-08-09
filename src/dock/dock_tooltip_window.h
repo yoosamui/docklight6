@@ -68,7 +68,9 @@ private:
     void make_input_transparent();
     void apply_position(
         DockLocation location,
-        const ScreenPosition &position);
+        const ScreenPosition &position,
+        int width,
+        int height);
 
     bool is_current_request(
         const Glib::ustring &text,
@@ -89,6 +91,7 @@ private:
         DockLocation::bottom;
 
     ScreenPosition m_request_position;
+    MonitorGeometry m_monitor_geometry;
 
     int m_tooltip_height = DockLayoutMetrics::TOOLTIP_HEIGHT;
     int m_tooltip_distance = DockLayoutMetrics::TOOLTIP_DISTANCE;
@@ -96,4 +99,5 @@ private:
     int m_request_width = 0;
 
     bool m_has_request = false;
+    bool m_uses_layer_shell = false;
 };

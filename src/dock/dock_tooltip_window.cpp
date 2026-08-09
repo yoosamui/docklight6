@@ -62,11 +62,24 @@ DockTooltipWindow::DockTooltipWindow()
 
     auto window = GTK_WINDOW(gobj());
 
-    gtk_layer_init_for_window(window);
-    gtk_layer_set_keyboard_interactivity(window, FALSE);
-    gtk_layer_set_namespace(window, "docklight6-tooltip");
-    gtk_layer_set_layer(window, GTK_LAYER_SHELL_LAYER_OVERLAY);
-    gtk_layer_set_exclusive_zone(window, 0);
+    m_uses_layer_shell = gtk_layer_is_supported();
+
+    if (m_uses_layer_shell)
+    {
+        gtk_layer_init_for_window(window);
+        gtk_layer_set_keyboard_interactivity(window, FALSE);
+        gtk_layer_set_namespace(window, "docklight6-tooltip");
+        gtk_layer_set_layer(window, GTK_LAYER_SHELL_LAYER_OVERLAY);
+        gtk_layer_set_exclusive_zone(window, 0);
+    }
+    else
+    {
+        set_type_hint(Gdk::WINDOW_TYPE_HINT_TOOLTIP);
+        set_skip_taskbar_hint(true);
+        set_skip_pager_hint(true);
+        set_keep_above(true);
+        set_position(Gtk::WIN_POS_NONE);
+    }
 
     signal_realize().connect(
         sigc::mem_fun(
@@ -84,11 +97,25 @@ void DockTooltipWindow::set_monitor(
     const Glib::RefPtr<Gdk::Monitor>
         &monitor)
 {
-    gtk_layer_set_monitor(
-        GTK_WINDOW(gobj()),
-        monitor
-            ? monitor->gobj()
-            : nullptr);
+    if (monitor)
+    {
+        Gdk::Rectangle geometry;
+        monitor->get_geometry(geometry);
+        m_monitor_geometry = {
+            geometry.get_x(),
+            geometry.get_y(),
+            geometry.get_width(),
+            geometry.get_height()};
+    }
+
+    if (m_uses_layer_shell)
+    {
+        gtk_layer_set_monitor(
+            GTK_WINDOW(gobj()),
+            monitor
+                ? monitor->gobj()
+                : nullptr);
+    }
 }
 
 void DockTooltipWindow::set_rounded_corners(
@@ -221,13 +248,22 @@ void DockTooltipWindow::show_tooltip(
         tooltip_width,
         m_tooltip_height);
 
-    apply_position(location, position);
+    apply_position(
+        location,
+        position,
+        tooltip_width,
+        m_tooltip_height);
 
     m_reveal_timer =
         Glib::signal_timeout().connect(
             [this]()
             {
                 show_all();
+                apply_position(
+                    m_request_location,
+                    m_request_position,
+                    m_request_width,
+                    m_tooltip_height);
                 return false;
             },
             DockConstants::TOOLTIP_REMAP_DELAY_MS);
@@ -282,8 +318,18 @@ bool DockTooltipWindow::is_current_request(
 
 void DockTooltipWindow::apply_position(
     DockLocation location,
-    const ScreenPosition &position)
+    const ScreenPosition &position,
+    int width,
+    int height)
 {
+    if (!m_uses_layer_shell)
+    {
+        move(
+            m_monitor_geometry.x + position.x,
+            m_monitor_geometry.y + position.y);
+        return;
+    }
+
     auto window = GTK_WINDOW(gobj());
 
     const bool right =
@@ -320,7 +366,12 @@ void DockTooltipWindow::apply_position(
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_RIGHT,
-        right ? position.x : 0);
+        right
+            ? std::max(
+                  0,
+                  m_monitor_geometry.width -
+                      position.x - width)
+            : 0);
 
     gtk_layer_set_margin(
         window,
@@ -330,5 +381,10 @@ void DockTooltipWindow::apply_position(
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_BOTTOM,
-        anchor_bottom ? position.y : 0);
+        anchor_bottom
+            ? std::max(
+                  0,
+                  m_monitor_geometry.height -
+                      position.y - height)
+            : 0);
 }

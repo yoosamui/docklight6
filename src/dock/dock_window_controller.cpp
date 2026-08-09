@@ -876,6 +876,24 @@ DockWindowController::dock_screen_position(
                   1,
                   m_window.get_allocated_height());
 
+    // X11 dock placement consumes the pre-existing EWMH work area directly,
+    // so its mapped root coordinates can differ from the layer-shell-style
+    // position implied by output-edge margins. Auxiliary windows must follow
+    // the actual dock surface on every edge.
+    if (!m_window.m_uses_layer_shell)
+    {
+        auto gdk_window = m_window.get_window();
+        if (gdk_window)
+        {
+            int root_x = 0;
+            int root_y = 0;
+            gdk_window->get_origin(
+                root_x,
+                root_y);
+            return {root_x, root_y};
+        }
+    }
+
     if (prefer_surface_geometry &&
         m_window.m_window_registry)
     {

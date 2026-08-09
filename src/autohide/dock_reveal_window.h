@@ -45,9 +45,15 @@ public:
 
 private:
     void prepare_reconfiguration();
+    void apply_x11_placement();
     bool on_enter_notify_event(
         GdkEventCrossing *event) override;
 
 private:
     sigc::signal<void> m_signal_reveal_requested;
+    Glib::RefPtr<Gdk::Monitor> m_monitor;
+    MonitorGeometry m_monitor_geometry;
+    DockPlacement m_placement;
+    bool m_has_placement = false;
+    bool m_uses_layer_shell = false;
 };

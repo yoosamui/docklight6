@@ -434,17 +434,44 @@ DockPreviewWindow::DockPreviewWindow()
     set_rounded_corners(true, 10);
 
     auto *window = GTK_WINDOW(gobj());
-    gtk_layer_init_for_window(window);
-    gtk_layer_set_namespace(
-        window,
-        "docklight6-preview");
-    gtk_layer_set_layer(
-        window,
-        GTK_LAYER_SHELL_LAYER_OVERLAY);
-    gtk_layer_set_keyboard_mode(
-        window,
-        GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
-    gtk_layer_set_exclusive_zone(window, 0);
+    m_uses_layer_shell = gtk_layer_is_supported();
+
+    if (m_uses_layer_shell)
+    {
+        gtk_layer_init_for_window(window);
+        gtk_layer_set_namespace(
+            window,
+            "docklight6-preview");
+        gtk_layer_set_layer(
+            window,
+            GTK_LAYER_SHELL_LAYER_OVERLAY);
+        gtk_layer_set_keyboard_mode(
+            window,
+            GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
+        gtk_layer_set_exclusive_zone(window, 0);
+    }
+    else
+    {
+        set_type_hint(Gdk::WINDOW_TYPE_HINT_UTILITY);
+        set_skip_taskbar_hint(true);
+        set_skip_pager_hint(true);
+        set_keep_above(true);
+        stick();
+        set_position(Gtk::WIN_POS_NONE);
+    }
+
+    signal_map().connect(
+        [this]()
+        {
+            if (m_has_position)
+            {
+                apply_position(
+                    m_location,
+                    m_position,
+                    m_size.width,
+                    m_size.height);
+            }
+        });
 }
 
 DockPreviewWindow::~DockPreviewWindow()
@@ -457,9 +484,23 @@ DockPreviewWindow::~DockPreviewWindow()
 void DockPreviewWindow::set_monitor(
     const Glib::RefPtr<Gdk::Monitor> &monitor)
 {
-    gtk_layer_set_monitor(
-        GTK_WINDOW(gobj()),
-        monitor ? monitor->gobj() : nullptr);
+    if (monitor)
+    {
+        Gdk::Rectangle geometry;
+        monitor->get_geometry(geometry);
+        m_monitor_geometry = {
+            geometry.get_x(),
+            geometry.get_y(),
+            geometry.get_width(),
+            geometry.get_height()};
+    }
+
+    if (m_uses_layer_shell)
+    {
+        gtk_layer_set_monitor(
+            GTK_WINDOW(gobj()),
+            monitor ? monitor->gobj() : nullptr);
+    }
 }
 
 void DockPreviewWindow::set_card_user_height(
@@ -540,7 +581,15 @@ void DockPreviewWindow::show_preview(
     rebuild(entries, size);
     set_size_request(size.width, size.height);
     set_default_size(size.width, size.height);
-    apply_position(location, position);
+    m_location = location;
+    m_position = position;
+    m_size = size;
+    m_has_position = true;
+    apply_position(
+        location,
+        position,
+        size.width,
+        size.height);
     show_all();
 
     // set_size_request() only changes the toplevel's minimum requisition.
@@ -549,6 +598,11 @@ void DockPreviewWindow::show_preview(
     // calculated monitor-constrained allocation so the window itself, not
     // only its thumbnail children, shrinks or grows.
     resize(size.width, size.height);
+    apply_position(
+        location,
+        position,
+        size.width,
+        size.height);
     queue_resize();
 }
 
@@ -1070,8 +1124,18 @@ void DockPreviewWindow::clear_cards()
 
 void DockPreviewWindow::apply_position(
     DockLocation location,
-    const ScreenPosition &position)
+    const ScreenPosition &position,
+    int width,
+    int height)
 {
+    if (!m_uses_layer_shell)
+    {
+        move(
+            m_monitor_geometry.x + position.x,
+            m_monitor_geometry.y + position.y);
+        return;
+    }
+
     auto *window = GTK_WINDOW(gobj());
     const bool right =
         location == DockLocation::right;
@@ -1102,7 +1166,12 @@ void DockPreviewWindow::apply_position(
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_RIGHT,
-        right ? position.x : 0);
+        right
+            ? std::max(
+                  0,
+                  m_monitor_geometry.width -
+                      position.x - width)
+            : 0);
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_TOP,
@@ -1110,7 +1179,12 @@ void DockPreviewWindow::apply_position(
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_BOTTOM,
-        bottom ? position.y : 0);
+        bottom
+            ? std::max(
+                  0,
+                  m_monitor_geometry.height -
+                      position.y - height)
+            : 0);
 }
 
 bool DockPreviewWindow::on_enter_notify_event(
