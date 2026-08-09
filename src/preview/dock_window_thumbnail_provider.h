@@ -65,7 +65,8 @@ public:
         int target_height,
         Callback callback,
         double x11_oversample = 2.0,
-        bool x11_native_capture = false);
+        bool x11_native_capture = false,
+        bool x11_xfwm_mode = false);
 
 private:
     std::shared_ptr<State> m_state;

@@ -63,6 +63,7 @@ struct Completion
     int target_height = 0;
     double x11_oversample = 2.0;
     bool x11_native_capture = false;
+    bool x11_xfwm_mode = false;
     std::vector<unsigned char> rgba;
     DockWindowThumbnailProvider::Callback callback;
 };
@@ -201,8 +202,9 @@ bool capture_x11_window(
             display,
             window,
             &attributes) &&
-        attributes.map_state == IsViewable &&
-        attributes.c_class == InputOutput &&
+        (!completion.x11_xfwm_mode ||
+         (attributes.map_state == IsViewable &&
+          attributes.c_class == InputOutput)) &&
         attributes.width > 0 &&
         attributes.height > 0)
     {
@@ -220,7 +222,8 @@ bool capture_x11_window(
                 window);
             XSync(display, False);
 
-            if (x_capture_error)
+            if (completion.x11_xfwm_mode &&
+                x_capture_error)
                 pixmap = None;
         }
 
@@ -253,10 +256,14 @@ bool capture_x11_window(
 
             if (has_pixmap_geometry &&
                 !x_capture_error &&
-                width == static_cast<unsigned int>(
-                             attributes.width) &&
-                height == static_cast<unsigned int>(
-                              attributes.height))
+                ((!completion.x11_xfwm_mode &&
+                  width > 0 &&
+                  height > 0) ||
+                 (completion.x11_xfwm_mode &&
+                  width == static_cast<unsigned int>(
+                               attributes.width) &&
+                  height == static_cast<unsigned int>(
+                                attributes.height))))
             {
                 drawable_width =
                     static_cast<int>(width);
@@ -277,6 +284,7 @@ bool capture_x11_window(
         const bool named_pixmap_valid =
             pixmap != None && !x_capture_error;
         const bool drawable_valid =
+            !completion.x11_xfwm_mode ||
             !composite_available ||
             named_pixmap_valid ||
             completion.x11_native_capture;
@@ -299,6 +307,8 @@ bool capture_x11_window(
         int render_event_base = 0;
         int render_error_base = 0;
         if (drawable_valid &&
+            (!completion.x11_native_capture ||
+             completion.x11_xfwm_mode) &&
             completion.target_width > 0 &&
             completion.target_height > 0 &&
             XRenderQueryExtension(
@@ -445,26 +455,29 @@ bool capture_x11_window(
             XFlush(display);
         }
 
-        const bool image_read_succeeded =
-            image && !x_capture_error;
-        XWindowAttributes verified_attributes{};
-        x_capture_error = false;
-        const bool same_viewable_window =
-            drawable_valid &&
-            XGetWindowAttributes(
-                display,
-                window,
-                &verified_attributes) != 0;
-        XSync(display, False);
+        bool image_is_valid = image && !x_capture_error;
+        if (image_is_valid && completion.x11_xfwm_mode)
+        {
+            XWindowAttributes verified_attributes{};
+            x_capture_error = false;
+            const bool same_viewable_window =
+                XGetWindowAttributes(
+                    display,
+                    window,
+                    &verified_attributes) != 0;
+            XSync(display, False);
 
-        if (image_read_succeeded &&
-            !x_capture_error &&
-            same_viewable_window &&
-            verified_attributes.map_state == IsViewable &&
-            verified_attributes.c_class == InputOutput &&
-            verified_attributes.width == attributes.width &&
-            verified_attributes.height == attributes.height &&
-            verified_attributes.visual == attributes.visual)
+            image_is_valid =
+                !x_capture_error &&
+                same_viewable_window &&
+                verified_attributes.map_state == IsViewable &&
+                verified_attributes.c_class == InputOutput &&
+                verified_attributes.width == attributes.width &&
+                verified_attributes.height == attributes.height &&
+                verified_attributes.visual == attributes.visual;
+        }
+
+        if (image_is_valid)
         {
             completion.source_width =
                 capture_width;
@@ -662,6 +675,7 @@ void capture(
     int target_height,
     double x11_oversample,
     bool x11_native_capture,
+    bool x11_xfwm_mode,
     DockWindowThumbnailProvider::Callback callback)
 {
     auto completion =
@@ -674,6 +688,7 @@ void capture(
         std::clamp(x11_oversample, 1.0, 2.0);
     completion->x11_native_capture =
         x11_native_capture;
+    completion->x11_xfwm_mode = x11_xfwm_mode;
     completion->callback = std::move(callback);
 
     // Hold the provider state for the entire capture so its shared session
@@ -948,7 +963,8 @@ void DockWindowThumbnailProvider::request(
     int target_height,
     Callback callback,
     double x11_oversample,
-    bool x11_native_capture)
+    bool x11_native_capture,
+    bool x11_xfwm_mode)
 {
     if (window_id.empty() ||
         target_width <= 0 ||
@@ -966,6 +982,7 @@ void DockWindowThumbnailProvider::request(
         target_height,
         x11_oversample,
         x11_native_capture,
+        x11_xfwm_mode,
         std::move(callback))
         .detach();
 }

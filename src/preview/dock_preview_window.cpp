@@ -1119,7 +1119,8 @@ void DockPreviewWindow::request_cached_thumbnail(
         },
         1.0,
         m_thumbnail_recovery_capture_allowed.count(
-            window_id) != 0);
+            window_id) != 0,
+        uses_xfwm_session());
 }
 
 void DockPreviewWindow::request_active_cache_refresh(
@@ -1191,7 +1192,8 @@ void DockPreviewWindow::request_active_cache_refresh(
             }
         },
         1.0,
-        true);
+        true,
+        uses_xfwm_session());
 }
 
 void DockPreviewWindow::persist_thumbnail_cache(
@@ -1859,7 +1861,9 @@ void DockPreviewWindow::request_thumbnail(
                     completed_window_id);
             }
         },
-        2.0);
+        2.0,
+        false,
+        uses_xfwm_session());
 }
 
 void DockPreviewWindow::show_thumbnail_fallback(
@@ -2012,6 +2016,7 @@ void DockPreviewWindow::request_x11_change_probe(
             target.probe_signature = signature;
         },
         1.0,
+        uses_xfwm_session(),
         uses_xfwm_session());
 }
 
@@ -2092,7 +2097,8 @@ void DockPreviewWindow::request_live_x11_thumbnail(
             thumbnail.has_thumbnail = true;
         },
         X11_LIVE_OVERSAMPLE,
-        allow_xfwm_media_fallback);
+        allow_xfwm_media_fallback,
+        uses_xfwm_session());
 }
 
 void DockPreviewWindow::start_live_streams()
