@@ -88,6 +88,7 @@ public:
         const ScreenPosition &position,
         const DockPreviewSize &size);
     void hide_preview();
+    void hide_preview_immediately();
     void set_dynamic_refresh(
         bool enabled,
         const std::string &media_title = {});
@@ -162,6 +163,9 @@ private:
     void start_live_streams();
     void stop_live_streams();
     void clear_cards();
+    void cancel_opacity_animation();
+    void start_opacity_animation(bool hiding);
+    bool advance_opacity_animation();
     void apply_position(
         DockLocation location,
         const ScreenPosition &position,
@@ -218,6 +222,7 @@ private:
     std::vector<WindowId> m_window_ids;
     sigc::connection m_x11_live_refresh;
     sigc::connection m_x11_probe_refresh;
+    sigc::connection m_opacity_timer;
 
     sigc::signal<void> m_pointer_entered;
     sigc::signal<void> m_pointer_left;
@@ -230,6 +235,13 @@ private:
 
     unsigned int m_generation = 0;
     int m_card_user_height = CARD_USER_HEIGHT;
+    gint64 m_opacity_animation_start_us = 0;
+    double m_opacity_animation_start = 1.0;
+    double m_opacity_animation_target = 1.0;
+    int m_animation_start_x = 0;
+    int m_animation_start_y = 0;
+    int m_animation_target_x = 0;
+    int m_animation_target_y = 0;
     std::string m_media_title;
     std::set<WindowId> m_live_window_ids;
     MonitorGeometry m_monitor_geometry;
@@ -238,5 +250,7 @@ private:
     DockPreviewSize m_size;
     bool m_dynamic_refresh = false;
     bool m_has_position = false;
+    bool m_animation_moves_window = false;
+    bool m_opacity_animation_hiding = false;
     bool m_uses_layer_shell = false;
 };

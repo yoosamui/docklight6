@@ -58,6 +58,10 @@ private:
     void pointer_left();
     void schedule_hide();
     void cancel_hide();
+    void cancel_animation();
+    void animate_x11(bool hiding);
+    bool advance_x11_animation();
+    void reveal_immediately();
     void hide_now();
     void reveal();
     bool can_hide() const;
@@ -71,14 +75,25 @@ private:
     sigc::connection m_window_map;
     sigc::connection m_reveal_requested;
     sigc::connection m_hide_timer;
+    sigc::connection m_animation_timer;
 
     DockAutohide m_mode = DockAutohide::none;
     int m_inhibit_count = 0;
     bool m_intellihide_overlap = false;
     bool m_has_placement = false;
     DockPlacement m_placement;
+    int m_shown_x = 0;
+    int m_shown_y = 0;
+    int m_animation_start_x = 0;
+    int m_animation_start_y = 0;
+    int m_animation_target_x = 0;
+    int m_animation_target_y = 0;
+    gint64 m_animation_start_time_us = 0;
+    int m_animation_duration_ms = 0;
     bool m_initialized = false;
     bool m_hidden = false;
+    bool m_has_shown_position = false;
+    bool m_animating_to_hidden = false;
     bool m_pointer_inside = false;
     bool m_suppress_next_map_hide = false;
 };

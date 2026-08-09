@@ -23,6 +23,9 @@
 
 #include <glibmm/main.h>
 
+#include <algorithm>
+#include <cmath>
+
 namespace
 {
 
@@ -55,6 +58,7 @@ DockAutohideController::DockAutohideController(
 DockAutohideController::~DockAutohideController()
 {
     cancel_hide();
+    cancel_animation();
     m_pointer_enter.disconnect();
     m_pointer_leave.disconnect();
     m_window_map.disconnect();
@@ -178,7 +182,10 @@ void DockAutohideController::set_monitor(
     const bool was_hidden = m_hidden;
 
     if (was_hidden)
-        reveal();
+        reveal_immediately();
+
+    cancel_animation();
+    m_has_shown_position = false;
 
     m_reveal_window.set_monitor(monitor);
 
@@ -201,7 +208,10 @@ void DockAutohideController::set_placement(
     const bool was_hidden = m_hidden;
 
     if (was_hidden)
-        reveal();
+        reveal_immediately();
+
+    cancel_animation();
+    m_has_shown_position = false;
 
     m_reveal_window.apply_placement(placement);
 
@@ -311,6 +321,168 @@ void DockAutohideController::cancel_hide()
     m_hide_timer.disconnect();
 }
 
+void DockAutohideController::cancel_animation()
+{
+    m_animation_timer.disconnect();
+}
+
+void DockAutohideController::animate_x11(
+    bool hiding)
+{
+    // Layer-shell surfaces are positioned by the Wayland compositor and
+    // cannot be moved one frame at a time. Xfce's X11 dock window, however,
+    // has stable global coordinates and can slide cleanly through its edge.
+    if (m_window.m_uses_layer_shell ||
+        !m_has_placement)
+    {
+        if (hiding)
+            m_window.hide();
+        return;
+    }
+
+    int current_x = 0;
+    int current_y = 0;
+    m_window.get_position(current_x, current_y);
+
+    if (!m_has_shown_position)
+    {
+        m_shown_x = current_x;
+        m_shown_y = current_y;
+        m_has_shown_position = true;
+    }
+
+    const int width = std::max(
+        1,
+        m_window.get_allocated_width());
+    const int height = std::max(
+        1,
+        m_window.get_allocated_height());
+
+    int hidden_x = m_shown_x;
+    int hidden_y = m_shown_y;
+
+    if (m_placement.anchor_top &&
+        m_placement.is_horizontal())
+    {
+        hidden_y -= height;
+    }
+    else if (m_placement.anchor_bottom &&
+             m_placement.is_horizontal())
+    {
+        hidden_y += height;
+    }
+    else if (m_placement.anchor_left)
+    {
+        hidden_x -= width;
+    }
+    else if (m_placement.anchor_right)
+    {
+        hidden_x += width;
+    }
+
+    cancel_animation();
+
+    m_animation_start_x = current_x;
+    m_animation_start_y = current_y;
+    m_animation_target_x =
+        hiding ? hidden_x : m_shown_x;
+    m_animation_target_y =
+        hiding ? hidden_y : m_shown_y;
+    m_animating_to_hidden = hiding;
+
+    const double remaining = std::hypot(
+        static_cast<double>(
+            m_animation_target_x - current_x),
+        static_cast<double>(
+            m_animation_target_y - current_y));
+    const double full_distance =
+        m_placement.is_horizontal()
+            ? static_cast<double>(height)
+            : static_cast<double>(width);
+    const double distance_fraction = std::clamp(
+        remaining / std::max(1.0, full_distance),
+        0.0,
+        1.0);
+
+    m_animation_duration_ms = std::max(
+        DockConstants::AUTOHIDE_ANIMATION_FRAME_MS,
+        static_cast<int>(std::lround(
+            DockConstants::AUTOHIDE_ANIMATION_DURATION_MS *
+            distance_fraction)));
+    m_animation_start_time_us =
+        g_get_monotonic_time();
+
+    if (remaining < 0.5)
+    {
+        advance_x11_animation();
+        return;
+    }
+
+    m_animation_timer =
+        Glib::signal_timeout().connect(
+            sigc::mem_fun(
+                *this,
+                &DockAutohideController::
+                    advance_x11_animation),
+            DockConstants::
+                AUTOHIDE_ANIMATION_FRAME_MS);
+}
+
+bool DockAutohideController::advance_x11_animation()
+{
+    const double elapsed_ms =
+        static_cast<double>(
+            g_get_monotonic_time() -
+            m_animation_start_time_us) /
+        1000.0;
+    const double progress = std::clamp(
+        elapsed_ms /
+            std::max(1, m_animation_duration_ms),
+        0.0,
+        1.0);
+
+    // Hiding accelerates away from the pointer; revealing decelerates into
+    // place. Both curves have a gentle edge and a decisive middle section.
+    const double eased = m_animating_to_hidden
+        ? progress * progress * progress
+        : 1.0 - std::pow(1.0 - progress, 3.0);
+
+    const int x = static_cast<int>(std::lround(
+        m_animation_start_x +
+        (m_animation_target_x - m_animation_start_x) *
+            eased));
+    const int y = static_cast<int>(std::lround(
+        m_animation_start_y +
+        (m_animation_target_y - m_animation_start_y) *
+            eased));
+    m_window.move(x, y);
+
+    if (progress < 1.0)
+        return true;
+
+    m_animation_timer.disconnect();
+
+    if (m_animating_to_hidden)
+        m_window.hide();
+
+    return false;
+}
+
+void DockAutohideController::reveal_immediately()
+{
+    cancel_hide();
+    cancel_animation();
+
+    if (m_hidden)
+    {
+        m_hidden = false;
+        m_suppress_next_map_hide = true;
+        m_window.show();
+    }
+
+    m_reveal_window.hide();
+}
+
 void DockAutohideController::hide_now()
 {
     if (m_window.get_mapped())
@@ -331,7 +503,7 @@ void DockAutohideController::hide_now()
     m_hidden = true;
 
     m_reveal_window.show();
-    m_window.hide();
+    animate_x11(true);
 }
 
 void DockAutohideController::reveal()
@@ -341,8 +513,14 @@ void DockAutohideController::reveal()
     if (m_hidden)
     {
         m_hidden = false;
-        m_suppress_next_map_hide = true;
-        m_window.show();
+
+        if (!m_window.get_mapped())
+        {
+            m_suppress_next_map_hide = true;
+            m_window.show();
+        }
+
+        animate_x11(false);
     }
 
     m_reveal_window.hide();

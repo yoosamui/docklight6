@@ -35,11 +35,16 @@ namespace DockConstants
     // Leave one compositor frame between unmapping and mapping the tooltip so
     // its standard show animation is replayed for every dock item.
     constexpr int TOOLTIP_REMAP_DELAY_MS = 20; // Delay before remapping a tooltip
+    constexpr int TOOLTIP_FADE_DURATION_MS = 180;
+    constexpr int PREVIEW_FADE_DURATION_MS = 220;
+    constexpr int OVERLAY_ANIMATION_FRAME_MS = 16;
 
     // Autohide behaviour
 
     constexpr int AUTOHIDE_HIDE_DELAY_MS = 800;
     constexpr int AUTOHIDE_REVEAL_SIZE = 2;
+    constexpr int AUTOHIDE_ANIMATION_DURATION_MS = 220;
+    constexpr int AUTOHIDE_ANIMATION_FRAME_MS = 16;
 
     // Internal drag-and-drop target shared by dock items and the dock surface.
     constexpr char DOCK_ITEM_DRAG_TARGET[] =

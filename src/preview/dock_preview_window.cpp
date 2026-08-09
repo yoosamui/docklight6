@@ -50,6 +50,40 @@ namespace
     constexpr double PREVIEW_PI =
         3.14159265358979323846;
 
+    double ease_opacity(
+        double progress,
+        bool hiding)
+    {
+        progress = std::clamp(
+            progress,
+            0.0,
+            1.0);
+
+        return hiding
+            ? progress * progress * progress
+            : 1.0 - std::pow(1.0 - progress, 3.0);
+    }
+
+    ScreenPosition animation_offset(
+        DockLocation location)
+    {
+        constexpr int distance = 28;
+
+        switch (location)
+        {
+        case DockLocation::top:
+            return {0, -distance};
+        case DockLocation::bottom:
+            return {0, distance};
+        case DockLocation::left:
+            return {-distance, 0};
+        case DockLocation::right:
+            return {distance, 0};
+        }
+
+        return {};
+    }
+
     struct PersistentThumbnailPaths
     {
         std::string directory;
@@ -711,6 +745,7 @@ DockPreviewWindow::DockPreviewWindow()
 
 DockPreviewWindow::~DockPreviewWindow()
 {
+    cancel_opacity_animation();
     m_thumbnail_cache_refresh.disconnect();
     m_thumbnail_recovery_delay.disconnect();
     for (auto &retry : m_thumbnail_cache_retries)
@@ -1308,6 +1343,7 @@ void DockPreviewWindow::show_preview(
         return;
     }
 
+    cancel_opacity_animation();
     stop_live_streams();
     m_media_title.clear();
     m_live_window_ids.clear();
@@ -1325,6 +1361,9 @@ void DockPreviewWindow::show_preview(
         position,
         size.width,
         size.height);
+    // Keep the first frame visible; the X11 slide makes the easing obvious,
+    // and avoiding zero opacity prevents compositor-specific invisible maps.
+    set_opacity(0.18);
     show_all();
 
     // set_size_request() only changes the toplevel's minimum requisition.
@@ -1339,6 +1378,7 @@ void DockPreviewWindow::show_preview(
         size.width,
         size.height);
     queue_resize();
+    start_opacity_animation(false);
 }
 
 void DockPreviewWindow::hide_preview()
@@ -1364,8 +1404,197 @@ void DockPreviewWindow::hide_preview()
     }
 
     ++m_generation;
+
+    if (!get_mapped())
+    {
+        cancel_opacity_animation();
+        hide();
+        clear_cards();
+        set_opacity(1.0);
+        return;
+    }
+
+    start_opacity_animation(true);
+}
+
+void DockPreviewWindow::hide_preview_immediately()
+{
+    stop_live_streams();
+    m_media_title.clear();
+    m_live_window_ids.clear();
+    m_dynamic_refresh = false;
+
+    for (const auto &window_id : m_window_ids)
+    {
+        if (m_thumbnail_cache_dirty.count(window_id) == 0)
+            continue;
+
+        const auto cached =
+            m_thumbnail_cache.find(window_id);
+        if (cached != m_thumbnail_cache.end())
+        {
+            persist_thumbnail_cache(
+                window_id,
+                cached->second);
+        }
+    }
+
+    cancel_opacity_animation();
+    ++m_generation;
     hide();
     clear_cards();
+    set_opacity(1.0);
+}
+
+void DockPreviewWindow::cancel_opacity_animation()
+{
+    if (m_opacity_timer.connected())
+        m_opacity_timer.disconnect();
+}
+
+void DockPreviewWindow::start_opacity_animation(
+    bool hiding)
+{
+    cancel_opacity_animation();
+
+    m_opacity_animation_hiding = hiding;
+    m_opacity_animation_start =
+        std::clamp(
+            get_opacity(),
+            0.0,
+            1.0);
+    m_opacity_animation_target =
+        hiding ? 0.0 : 1.0;
+    m_opacity_animation_start_us =
+        g_get_monotonic_time();
+    m_animation_moves_window =
+        !m_uses_layer_shell &&
+        m_has_position;
+
+    if (m_animation_moves_window)
+    {
+        const auto offset =
+            animation_offset(
+                m_location);
+        const int visible_x =
+            m_monitor_geometry.x +
+            m_position.x;
+        const int visible_y =
+            m_monitor_geometry.y +
+            m_position.y;
+        const int hidden_x =
+            visible_x + offset.x;
+        const int hidden_y =
+            visible_y + offset.y;
+
+        if (hiding)
+        {
+            int current_x = visible_x;
+            int current_y = visible_y;
+            get_position(current_x, current_y);
+            m_animation_start_x = current_x;
+            m_animation_start_y = current_y;
+            m_animation_target_x = hidden_x;
+            m_animation_target_y = hidden_y;
+        }
+        else
+        {
+            m_animation_start_x = hidden_x;
+            m_animation_start_y = hidden_y;
+            m_animation_target_x = visible_x;
+            m_animation_target_y = visible_y;
+            move(
+                m_animation_start_x,
+                m_animation_start_y);
+        }
+    }
+
+    if (std::abs(
+            m_opacity_animation_target -
+            m_opacity_animation_start) < 0.01)
+    {
+        advance_opacity_animation();
+        return;
+    }
+
+    m_opacity_timer =
+        Glib::signal_timeout().connect(
+            sigc::mem_fun(
+                *this,
+                &DockPreviewWindow::
+                    advance_opacity_animation),
+            DockConstants::OVERLAY_ANIMATION_FRAME_MS);
+}
+
+bool DockPreviewWindow::advance_opacity_animation()
+{
+    const double elapsed_ms =
+        static_cast<double>(
+            g_get_monotonic_time() -
+            m_opacity_animation_start_us) /
+        1000.0;
+    const double progress =
+        std::clamp(
+            elapsed_ms /
+                std::max(
+                    1,
+                    DockConstants::
+                        PREVIEW_FADE_DURATION_MS),
+            0.0,
+            1.0);
+    const double eased =
+        ease_opacity(
+            progress,
+            m_opacity_animation_hiding);
+    const double opacity =
+        m_opacity_animation_start +
+        (m_opacity_animation_target -
+         m_opacity_animation_start) *
+            eased;
+
+    set_opacity(
+        std::clamp(
+            opacity,
+            0.0,
+            1.0));
+
+    if (m_animation_moves_window)
+    {
+        const int x = static_cast<int>(
+            std::lround(
+                m_animation_start_x +
+                (m_animation_target_x -
+                 m_animation_start_x) *
+                    eased));
+        const int y = static_cast<int>(
+            std::lround(
+                m_animation_start_y +
+                (m_animation_target_y -
+                 m_animation_start_y) *
+                    eased));
+        move(x, y);
+    }
+
+    if (progress < 1.0)
+        return true;
+
+    cancel_opacity_animation();
+    set_opacity(m_opacity_animation_target);
+
+    if (m_opacity_animation_hiding)
+    {
+        hide();
+        clear_cards();
+        set_opacity(1.0);
+    }
+    else if (m_animation_moves_window)
+    {
+        move(
+            m_animation_target_x,
+            m_animation_target_y);
+    }
+
+    return false;
 }
 
 void DockPreviewWindow::set_dynamic_refresh(

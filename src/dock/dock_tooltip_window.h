@@ -56,6 +56,7 @@ public:
         int tooltip_width,
         const ScreenPosition &position);
     void hide_tooltip();
+    void hide_tooltip_immediately();
 
     // The layout engine must receive this width before calculating the
     // position, otherwise a variable-width tooltip would not stay centered.
@@ -65,6 +66,9 @@ public:
 
 private:
     void cancel_reveal();
+    void cancel_opacity_animation();
+    void start_opacity_animation(bool hiding);
+    bool advance_opacity_animation();
     void make_input_transparent();
     void apply_position(
         DockLocation location,
@@ -86,6 +90,7 @@ private:
     Gtk::EventBox m_event_box;
 
     sigc::connection m_reveal_timer;
+    sigc::connection m_opacity_timer;
 
     DockLocation m_request_location =
         DockLocation::bottom;
@@ -97,7 +102,16 @@ private:
     int m_tooltip_distance = DockLayoutMetrics::TOOLTIP_DISTANCE;
     int m_icon_size = DockLayoutMetrics::BASE_ICON_SIZE;
     int m_request_width = 0;
+    gint64 m_opacity_animation_start_us = 0;
+    double m_opacity_animation_start = 1.0;
+    double m_opacity_animation_target = 1.0;
+    int m_animation_start_x = 0;
+    int m_animation_start_y = 0;
+    int m_animation_target_x = 0;
+    int m_animation_target_y = 0;
 
     bool m_has_request = false;
+    bool m_animation_moves_window = false;
+    bool m_opacity_animation_hiding = false;
     bool m_uses_layer_shell = false;
 };

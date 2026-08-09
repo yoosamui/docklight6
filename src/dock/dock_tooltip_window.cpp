@@ -26,8 +26,48 @@
 #include <gtk-layer-shell.h>
 
 #include <algorithm>
+#include <cmath>
 #include <glibmm/main.h>
 #include <pangomm/layout.h>
+
+namespace
+{
+
+double ease_opacity(
+    double progress,
+    bool hiding)
+{
+    progress = std::clamp(
+        progress,
+        0.0,
+        1.0);
+
+    return hiding
+        ? progress * progress * progress
+        : 1.0 - std::pow(1.0 - progress, 3.0);
+}
+
+ScreenPosition animation_offset(
+    DockLocation location)
+{
+    constexpr int distance = 3;
+
+    switch (location)
+    {
+    case DockLocation::top:
+        return {0, -distance};
+    case DockLocation::bottom:
+        return {0, distance};
+    case DockLocation::left:
+        return {-distance, 0};
+    case DockLocation::right:
+        return {distance, 0};
+    }
+
+    return {};
+}
+
+}
 
 DockTooltipWindow::DockTooltipWindow()
 {
@@ -228,6 +268,7 @@ void DockTooltipWindow::show_tooltip(
     }
 
     cancel_reveal();
+    cancel_opacity_animation();
 
     // Update layer-shell placement while the tooltip is unmapped, then reveal
     // it again below. The hide/show transition is what lets KWin apply the
@@ -258,12 +299,17 @@ void DockTooltipWindow::show_tooltip(
         Glib::signal_timeout().connect(
             [this]()
             {
+                // Keep the first frame barely visible. Some Xfce compositor
+                // setups make a freshly mapped fully-transparent override
+                // window appear to stick at zero opacity until it is remapped.
+                set_opacity(0.08);
                 show_all();
                 apply_position(
                     m_request_location,
                     m_request_position,
                     m_request_width,
                     m_tooltip_height);
+                start_opacity_animation(false);
                 return false;
             },
             DockConstants::TOOLTIP_REMAP_DELAY_MS);
@@ -273,13 +319,180 @@ void DockTooltipWindow::hide_tooltip()
 {
     cancel_reveal();
     m_has_request = false;
+
+    if (!get_mapped())
+    {
+        cancel_opacity_animation();
+        hide();
+        set_opacity(1.0);
+        return;
+    }
+
+    start_opacity_animation(true);
+}
+
+void DockTooltipWindow::hide_tooltip_immediately()
+{
+    cancel_reveal();
+    cancel_opacity_animation();
+    m_has_request = false;
     hide();
+    set_opacity(1.0);
 }
 
 void DockTooltipWindow::cancel_reveal()
 {
     if (m_reveal_timer.connected())
         m_reveal_timer.disconnect();
+}
+
+void DockTooltipWindow::cancel_opacity_animation()
+{
+    if (m_opacity_timer.connected())
+        m_opacity_timer.disconnect();
+}
+
+void DockTooltipWindow::start_opacity_animation(
+    bool hiding)
+{
+    cancel_opacity_animation();
+
+    m_opacity_animation_hiding = hiding;
+    m_opacity_animation_start =
+        std::clamp(
+            get_opacity(),
+            0.0,
+            1.0);
+    m_opacity_animation_target =
+        hiding ? 0.0 : 1.0;
+    m_opacity_animation_start_us =
+        g_get_monotonic_time();
+    m_animation_moves_window =
+        !m_uses_layer_shell;
+
+    if (m_animation_moves_window)
+    {
+        const auto offset =
+            animation_offset(
+                m_request_location);
+        const int visible_x =
+            m_monitor_geometry.x +
+            m_request_position.x;
+        const int visible_y =
+            m_monitor_geometry.y +
+            m_request_position.y;
+        const int hidden_x =
+            visible_x + offset.x;
+        const int hidden_y =
+            visible_y + offset.y;
+
+        if (hiding)
+        {
+            int current_x = visible_x;
+            int current_y = visible_y;
+            get_position(current_x, current_y);
+            m_animation_start_x = current_x;
+            m_animation_start_y = current_y;
+            m_animation_target_x = hidden_x;
+            m_animation_target_y = hidden_y;
+        }
+        else
+        {
+            m_animation_start_x = hidden_x;
+            m_animation_start_y = hidden_y;
+            m_animation_target_x = visible_x;
+            m_animation_target_y = visible_y;
+            move(
+                m_animation_start_x,
+                m_animation_start_y);
+        }
+    }
+
+    if (std::abs(
+            m_opacity_animation_target -
+            m_opacity_animation_start) < 0.01)
+    {
+        advance_opacity_animation();
+        return;
+    }
+
+    m_opacity_timer =
+        Glib::signal_timeout().connect(
+            sigc::mem_fun(
+                *this,
+                &DockTooltipWindow::
+                    advance_opacity_animation),
+            DockConstants::OVERLAY_ANIMATION_FRAME_MS);
+}
+
+bool DockTooltipWindow::advance_opacity_animation()
+{
+    const double elapsed_ms =
+        static_cast<double>(
+            g_get_monotonic_time() -
+            m_opacity_animation_start_us) /
+        1000.0;
+    const double progress =
+        std::clamp(
+            elapsed_ms /
+                std::max(
+                    1,
+                    DockConstants::
+                        TOOLTIP_FADE_DURATION_MS),
+            0.0,
+            1.0);
+    const double eased =
+        ease_opacity(
+            progress,
+            m_opacity_animation_hiding);
+    const double opacity =
+        m_opacity_animation_start +
+        (m_opacity_animation_target -
+         m_opacity_animation_start) *
+            eased;
+
+    set_opacity(
+        std::clamp(
+            opacity,
+            0.0,
+            1.0));
+
+    if (m_animation_moves_window)
+    {
+        const int x = static_cast<int>(
+            std::lround(
+                m_animation_start_x +
+                (m_animation_target_x -
+                 m_animation_start_x) *
+                    eased));
+        const int y = static_cast<int>(
+            std::lround(
+                m_animation_start_y +
+                (m_animation_target_y -
+                 m_animation_start_y) *
+                    eased));
+        move(x, y);
+    }
+
+    if (progress < 1.0)
+        return true;
+
+    cancel_opacity_animation();
+    set_opacity(m_opacity_animation_target);
+
+    if (m_opacity_animation_hiding)
+    {
+        hide();
+        set_opacity(1.0);
+    }
+    else if (m_animation_moves_window)
+    {
+        move(
+            m_animation_target_x,
+            m_animation_target_y);
+    }
+
+    return false;
 }
 
 void DockTooltipWindow::make_input_transparent()

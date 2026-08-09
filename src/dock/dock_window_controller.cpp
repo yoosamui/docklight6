@@ -1194,8 +1194,10 @@ void DockWindowController::hide_tooltip_immediately()
     m_pending_item = nullptr;
     m_pending_preview_desktop_id.clear();
     m_pending_tooltip_text.clear();
-    hide_tooltip();
-    hide_preview();
+    m_window.m_overlay_window.hide_tooltip_immediately();
+
+    if (m_preview_window)
+        m_preview_window->hide_preview_immediately();
 }
 
 void DockWindowController::dock_items_reordered()
