@@ -94,3 +94,44 @@ const char *x11_backend_kind_name(
 
     return "EWMH fallback";
 }
+
+std::string resolve_x11_desktop_file_name(
+    const std::string &class_group_name,
+    const std::string &window_caption)
+{
+    const auto window_class =
+        lowercase(class_group_name);
+
+    // LibreOffice exposes the same generic soffice.bin WM_CLASS for every
+    // module on X11. Its window title is the only module-specific EWMH value,
+    // so use it to select the installed launcher and matching themed icon.
+    if (window_class == "soffice.bin" ||
+        window_class == "soffice" ||
+        window_class == "libreoffice")
+    {
+        const auto caption =
+            lowercase(window_caption);
+        constexpr const char *modules[] = {
+            "writer",
+            "calc",
+            "impress",
+            "draw",
+            "math",
+            "base"};
+
+        for (const auto *module : modules)
+        {
+            const auto module_title =
+                std::string{"libreoffice "} +
+                module;
+            if (caption.find(module_title) !=
+                std::string::npos)
+            {
+                return std::string{"libreoffice-"} +
+                       module;
+            }
+        }
+    }
+
+    return class_group_name;
+}

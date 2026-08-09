@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 
 #include "ewmh_window_backend.h"
+#include "x11_backend_selection.h"
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
@@ -597,9 +598,13 @@ ManagedWindow EwmhWindowBackend::managed_window(WnckWindow *window,
 {
     ManagedWindow result;
     result.id = window_id(window);
-    result.desktop_file_name = safe_string(
-        wnck_window_get_class_group_name(window));
     result.caption = safe_string(wnck_window_get_name(window));
+    result.desktop_file_name =
+        resolve_x11_desktop_file_name(
+            safe_string(
+                wnck_window_get_class_group_name(
+                    window)),
+            result.caption);
     result.icon_name = result.desktop_file_name;
     result.process_id = wnck_window_get_pid(window);
     result.active = wnck_screen_get_active_window(screen) == window;

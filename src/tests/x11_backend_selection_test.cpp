@@ -38,6 +38,31 @@ bool expect_backend(
     return false;
 }
 
+bool expect_desktop_file_name(
+    const std::string &window_class,
+    const std::string &caption,
+    const std::string &expected)
+{
+    const auto actual =
+        resolve_x11_desktop_file_name(
+            window_class,
+            caption);
+    if (actual == expected)
+        return true;
+
+    std::cerr
+        << "desktop-file mismatch for class '"
+        << window_class
+        << "' and caption '"
+        << caption
+        << "': expected "
+        << expected
+        << ", got "
+        << actual
+        << '\n';
+    return false;
+}
+
 }
 
 int main()
@@ -103,6 +128,19 @@ int main()
         "",
         "LXQt",
         X11BackendKind::ewmh_fallback);
+
+    passed &= expect_desktop_file_name(
+        "soffice.bin",
+        "report.odt — LibreOffice Writer",
+        "libreoffice-writer");
+    passed &= expect_desktop_file_name(
+        "soffice.bin",
+        "budget.ods — LibreOffice Calc",
+        "libreoffice-calc");
+    passed &= expect_desktop_file_name(
+        "Navigator",
+        "Mozilla Firefox",
+        "Navigator");
 
     return passed ? 0 : 1;
 }

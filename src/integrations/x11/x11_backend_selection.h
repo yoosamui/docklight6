@@ -23,3 +23,7 @@ X11BackendKind select_x11_backend_kind(
 
 const char *x11_backend_kind_name(
     X11BackendKind kind);
+
+std::string resolve_x11_desktop_file_name(
+    const std::string &class_group_name,
+    const std::string &window_caption);
