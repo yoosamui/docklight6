@@ -574,7 +574,7 @@ void DockWindowController::update_dock_layout()
             workarea_geometry,
             dock_geometry);
 
-    apply_workarea_insets(
+    m_layout_engine.apply_workarea_insets(
         placement,
         output_geometry,
         native_workarea_geometry);
@@ -667,41 +667,6 @@ void DockWindowController::finish_autohide_drag(
 {
     m_autohide_controller->finish_drag(
         pointer_inside);
-}
-
-void DockWindowController::apply_workarea_insets(
-    DockPlacement &placement,
-    const MonitorGeometry &output,
-    const MonitorGeometry &workarea) const
-{
-    const int output_right =
-        output.x + output.width;
-
-    const int output_bottom =
-        output.y + output.height;
-
-    const int workarea_right =
-        workarea.x + workarea.width;
-
-    const int workarea_bottom =
-        workarea.y + workarea.height;
-
-    if (placement.is_horizontal())
-    {
-        placement.margin_left +=
-            std::max(0, workarea.x - output.x);
-
-        placement.margin_right +=
-            std::max(0, output_right - workarea_right);
-    }
-    else
-    {
-        placement.margin_top +=
-            std::max(0, workarea.y - output.y);
-
-        placement.margin_bottom +=
-            std::max(0, output_bottom - workarea_bottom);
-    }
 }
 
 void DockWindowController::update_effective_icon_size(

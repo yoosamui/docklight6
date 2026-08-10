@@ -7,6 +7,13 @@ import St from 'gi://St';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
+import {
+    calculateDockStrut,
+    isDockPlacementCommitted,
+    parseAuxiliaryPosition,
+    placeDockInWorkArea,
+} from './placement.js';
+
 const SERVICE = 'org.docklight6.WindowIntegration';
 const PATH = '/org/docklight6/WindowIntegration';
 const IFACE = 'org.docklight6.WindowIntegration1';
@@ -16,6 +23,7 @@ const DOCK_PLACEMENT_DELAY_MS = 30;
 // Wayland toplevel hidden past that boundary so an edge change cannot expose
 // the old orientation before GTK supplies the final allocation.
 const DOCK_TRANSITION_DELAY_MS = 300;
+const DOCK_PLACEMENT_MAX_ATTEMPTS = 40;
 const REGISTRATION_RETRY_MS = 250;
 const CONFIGURATION_SETTLE_MS = 50;
 
@@ -77,6 +85,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockPlacement = null;
         this._dockWindowSignals = [];
         this._dockPlacementSource = 0;
+        this._dockPlacementAttempts = 0;
         this._dockDiscoverySources = new Set();
         this._dockTransitioning = false;
         this._dockActor = null;
@@ -405,19 +414,19 @@ export default class DocklightWindowIntegration extends Extension {
             return null;
         }
 
-        const match = title.match(
-            /^Docklight 6 (Tooltip|Preview)@(-?\d+),(-?\d+)$/);
-        if (!match)
-            return null;
-
-        return {
-            x: Number.parseInt(match[2], 10),
-            y: Number.parseInt(match[3], 10),
-        };
+        return parseAuxiliaryPosition(title);
     }
 
     _isAuxiliaryWindow(window) {
         return this._auxiliaryPosition(window) !== null;
+    }
+
+    _isRevealWindow(window) {
+        try {
+            return window?.get_role?.() === 'docklight6-reveal';
+        } catch (_error) {
+            return false;
+        }
     }
 
     _considerAuxiliaryWindow(window) {
@@ -450,11 +459,26 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _placeAuxiliaryWindow(window, position = null) {
-        const target = position || this._auxiliaryPosition(window);
+        let target = position || this._auxiliaryPosition(window);
         if (!target)
             return;
 
         const rect = window.get_frame_rect();
+        if (this._isRevealWindow(window)) {
+            const monitorIndex = this._dockMonitorIndex();
+            const monitor = Main.layoutManager.monitors[monitorIndex];
+            if (monitor) {
+                target = placeDockInWorkArea(
+                    monitor,
+                    this._workAreaForMonitor(monitorIndex),
+                    {
+                        x: target.x,
+                        y: target.y,
+                        width: Math.max(1, rect.width),
+                        height: Math.max(1, rect.height),
+                    });
+            }
+        }
         if (rect.x !== target.x || rect.y !== target.y)
             window.move_frame(true, target.x, target.y);
     }
@@ -485,7 +509,9 @@ export default class DocklightWindowIntegration extends Extension {
                 // Mutter can apply its ordinary-toplevel initial placement
                 // after window-created. Reassert the configured edge when
                 // that late placement moves the dock back to the centre.
-                this._scheduleDockPlacement();
+                this._beginDockTransition();
+                this._scheduleDockPlacement(
+                    true, DOCK_PLACEMENT_DELAY_MS);
             }],
             ['size-changed', () => {
                 this._scheduleDockPlacement(this._dockTransitioning);
@@ -537,6 +563,7 @@ export default class DocklightWindowIntegration extends Extension {
         if (!this._dockTransitioning) {
             this._dockTransitioning = true;
             this._dockActorOpacity = 255;
+            this._dockPlacementAttempts = 0;
         }
 
         const actor = this._dockWindow.get_compositor_private?.();
@@ -565,11 +592,12 @@ export default class DocklightWindowIntegration extends Extension {
         }
 
         this._dockTransitioning = false;
+        this._dockPlacementAttempts = 0;
         this._dockActor = null;
         this._dockActorOpacity = 255;
     }
 
-    _scheduleDockPlacement(restart = false) {
+    _scheduleDockPlacement(restart = false, requestedDelay = null) {
         if (!this._enabled || !this._dockWindow)
             return;
 
@@ -580,17 +608,32 @@ export default class DocklightWindowIntegration extends Extension {
             this._dockPlacementSource = 0;
         }
 
-        const delay = this._dockTransitioning
+        const delay = requestedDelay ?? (this._dockTransitioning
             ? DOCK_TRANSITION_DELAY_MS
-            : DOCK_PLACEMENT_DELAY_MS;
+            : DOCK_PLACEMENT_DELAY_MS);
 
         this._dockPlacementSource = GLib.timeout_add(
             GLib.PRIORITY_DEFAULT,
             delay,
             () => {
                 this._dockPlacementSource = 0;
-                this._placeDockWindow();
-                this._finishDockTransition();
+                const committed = this._placeDockWindow();
+                if (committed) {
+                    this._finishDockTransition();
+                } else if (this._dockTransitioning &&
+                    ++this._dockPlacementAttempts <
+                        DOCK_PLACEMENT_MAX_ATTEMPTS) {
+                    // move_frame() is asynchronous on Wayland. Keep the
+                    // provisional frame out of the scene until Mutter's
+                    // frame rectangle (plus any strut compensation) proves
+                    // that the painted dock has reached the requested edge.
+                    this._scheduleDockPlacement(
+                        false, DOCK_PLACEMENT_DELAY_MS);
+                } else {
+                    // Do not leave DockLight permanently invisible if a
+                    // compositor rejects movement or a window disappears.
+                    this._finishDockTransition();
+                }
                 return GLib.SOURCE_REMOVE;
             });
     }
@@ -693,58 +736,33 @@ export default class DocklightWindowIntegration extends Extension {
             });
         }
 
-        const distances = [
-            ['top', Math.abs(dockRect.y - monitor.y)],
-            ['bottom', Math.abs(
-                monitor.y + monitor.height - dockRect.y - dockRect.height)],
-            ['left', Math.abs(dockRect.x - monitor.x)],
-            ['right', Math.abs(
-                monitor.x + monitor.width - dockRect.x - dockRect.width)],
-        ];
-        distances.sort((left, right) => left[1] - right[1]);
-        const edge = distances[0][0];
+        const strut = calculateDockStrut(monitor, dockRect);
 
-        let x = monitor.x;
-        let y = monitor.y;
-        let width = monitor.width;
-        let height = monitor.height;
-        if (edge === 'top')
-            height = Math.max(1, dockRect.y + dockRect.height - monitor.y);
-        else if (edge === 'bottom') {
-            y = dockRect.y;
-            height = Math.max(1, monitor.y + monitor.height - dockRect.y);
-        } else if (edge === 'left')
-            width = Math.max(1, dockRect.x + dockRect.width - monitor.x);
-        else {
-            x = dockRect.x;
-            width = Math.max(1, monitor.x + monitor.width - dockRect.x);
-        }
+        this._dockStrut.set_position(
+            Math.round(strut.x), Math.round(strut.y));
+        this._dockStrut.set_size(
+            Math.round(strut.width), Math.round(strut.height));
 
-        this._dockStrut.set_position(Math.round(x), Math.round(y));
-        this._dockStrut.set_size(Math.round(width), Math.round(height));
-
-        if (edge === 'top')
-            return {x: 0, y: -height};
-        if (edge === 'bottom')
-            return {x: 0, y: height};
-        if (edge === 'left')
-            return {x: -width, y: 0};
-        return {x: width, y: 0};
+        return strut.actorOffset;
     }
 
     _placeDockWindow() {
         const window = this._dockWindow;
         const placement = this._dockPlacement;
         if (!window || !placement)
-            return;
+            return false;
 
         const monitorIndex = this._dockMonitorIndex();
         const monitor = Main.layoutManager.monitors[monitorIndex];
         if (!monitor)
-            return;
+            return false;
         const rect = window.get_frame_rect();
-        const x = Math.round(placement.x);
-        const y = Math.round(placement.y);
+        const positionedPlacement = placeDockInWorkArea(
+            monitor,
+            this._workAreaForMonitor(monitorIndex),
+            placement);
+        const x = positionedPlacement.x;
+        const y = positionedPlacement.y;
         if (rect.x !== x || rect.y !== y)
             // This is Shell-managed dock placement, not an interactive user
             // move. A user operation makes Mutter apply its normal toplevel
@@ -752,22 +770,25 @@ export default class DocklightWindowIntegration extends Extension {
             // that inset is then exposed as a gap beside the dock strut.
             window.move_frame(false, x, y);
 
-        const actorOffset = this._updateDockStrut(monitor, placement);
+        const actorOffset = this._updateDockStrut(monitor, positionedPlacement);
 
         // Mutter constrains an ordinary Wayland toplevel against Shell's
         // synthetic strut, so Autohide::none can displace the compositor
         // actor inward by the dock's own thickness. Align the painted actor
-        // with the authoritative C++ placement using the opposite of the
-        // exact edge reservation. Non-reserving modes return a zero offset.
+        // with the work-area-corrected placement using the opposite of only
+        // DockLight's thickness; the strut can also include a native panel.
+        // Non-reserving modes return a zero offset.
         const actor = window.get_compositor_private?.();
         if (actor) {
             actor.translation_x = actorOffset.x;
             actor.translation_y = actorOffset.y;
         }
 
-        // Shell applies and reports the C++ layout-engine result verbatim;
-        // it must not derive a second placement from the Meta.Window frame.
-        this._publishDockSurfaceGeometry(placement);
+        // Publish the C++ layout result after resolving it against Shell's
+        // native work area; never derive geometry from the displaced frame.
+        this._publishDockSurfaceGeometry(positionedPlacement);
+        return isDockPlacementCommitted(
+            rect, positionedPlacement, actorOffset);
     }
 
     _publishDockSurfaceGeometry(rect) {

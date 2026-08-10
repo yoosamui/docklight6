@@ -5,6 +5,7 @@ EXTRA_DIST = \
     gnome/install-window-integration.sh \
     gnome/docklight-window-integration@docklight6/metadata.json \
     gnome/docklight-window-integration@docklight6/extension.js \
+    gnome/docklight-window-integration@docklight6/placement.js \
     kwin/install-minimize-effect.sh \
     kwin/install-window-integration.sh \
     kwin/org.docklight6.minimize/metadata.json \

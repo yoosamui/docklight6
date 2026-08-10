@@ -101,10 +101,6 @@ public:
 
 private:
     void update_dock_layout();
-    void apply_workarea_insets(
-        DockPlacement &placement,
-        const MonitorGeometry &output,
-        const MonitorGeometry &workarea) const;
     void update_effective_icon_size(
         const MonitorGeometry &monitor,
         DockOrientation orientation);

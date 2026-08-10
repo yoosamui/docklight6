@@ -15,6 +15,7 @@ check_PROGRAMS = \
 
 TESTS = \
     $(check_PROGRAMS) \
+    tests/gnome_placement_test.js \
     tests/kwin_minimize_effect_test.js \
     tests/kwin_script_test.js \
     tests/plasma_geometry_bridge_test.js
@@ -323,6 +324,7 @@ x11_backend_selection_test_SOURCES = \
     integrations/x11/x11_backend_selection.cpp
 
 EXTRA_DIST = \
+    tests/gnome_placement_test.js \
     tests/kwin_minimize_effect_test.js \
     tests/kwin_script_test.js \
     tests/plasma_geometry_bridge_test.js

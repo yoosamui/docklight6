@@ -67,6 +67,31 @@ int main()
     assert(placement.width == 400);
     assert(placement.height == 64);
 
+    const MonitorGeometry top_panel_workarea{
+        0,
+        32,
+        1920,
+        1048};
+
+    request.location = DockLocation::top;
+    placement = engine.calculate_dock_layout(
+        request,
+        top_panel_workarea,
+        dock);
+    engine.apply_workarea_insets(
+        placement,
+        monitor,
+        top_panel_workarea);
+    assert(placement.margin_top == 32);
+    assert(placement.margin_left == 760);
+    assert(placement.margin_right == 760);
+
+    const MonitorGeometry right_dock_workarea{
+        0,
+        32,
+        1856,
+        1048};
+
     request.location = DockLocation::left;
     placement = engine.calculate_dock_layout(
         request,
@@ -79,6 +104,19 @@ int main()
     assert(placement.anchor_bottom);
     assert(placement.orientation ==
            DockOrientation::vertical);
+
+    request.location = DockLocation::right;
+    placement = engine.calculate_dock_layout(
+        request,
+        right_dock_workarea,
+        {0, 0, 64, 400, false});
+    engine.apply_workarea_insets(
+        placement,
+        monitor,
+        right_dock_workarea);
+    assert(placement.margin_right == 64);
+    assert(placement.margin_top == 356);
+    assert(placement.margin_bottom == 324);
 
     const WindowGeometry dock_window{
         760,

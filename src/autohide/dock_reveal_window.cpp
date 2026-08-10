@@ -23,6 +23,7 @@
 #include <gtk-layer-shell.h>
 
 #include <algorithm>
+#include <string>
 
 DockRevealWindow::DockRevealWindow()
 {
@@ -33,6 +34,12 @@ DockRevealWindow::DockRevealWindow()
     set_focus_on_map(false);
     set_skip_taskbar_hint(true);
     set_skip_pager_hint(true);
+    // Use the established private-surface title family so already-loaded
+    // GNOME integration versions can place the reveal trigger too.
+    set_title("Docklight 6 Tooltip@0,0");
+    gtk_window_set_role(
+        GTK_WINDOW(gobj()),
+        "docklight6-reveal");
 
     add_events(Gdk::ENTER_NOTIFY_MASK);
 
@@ -283,6 +290,14 @@ void DockRevealWindow::apply_x11_placement()
     set_size_request(width, height);
     resize(width, height);
     move(x, y);
+
+    // GNOME Wayland ignores ordinary clients' move requests. Its Docklight
+    // integration recognizes this coordinate-bearing private-surface title
+    // and applies the same target through Mutter before the trigger is used.
+    set_title(
+        "Docklight 6 Tooltip@" +
+        std::to_string(x) + "," +
+        std::to_string(y));
 }
 
 sigc::signal<void> &

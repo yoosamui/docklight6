@@ -40,6 +40,11 @@ public:
         const MonitorGeometry &monitor,
         const DockWindowGeometry &dock) const;
 
+    void apply_workarea_insets(
+        DockPlacement &placement,
+        const MonitorGeometry &output,
+        const MonitorGeometry &workarea) const;
+
     ScreenPosition
     calculate_tooltip_position(
         const DockLayoutRequest &request,

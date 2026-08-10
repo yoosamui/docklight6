@@ -142,6 +142,53 @@ DockLayoutEngine::calculate_dock_layout(
     return placement;
 }
 
+// Moves every anchored edge into the compositor's native work area. Main-axis
+// insets keep centered/filled docks clear of panels at their ends; the
+// cross-axis inset keeps the dock itself clear of a panel on its chosen edge.
+void DockLayoutEngine::apply_workarea_insets(
+    DockPlacement &placement,
+    const MonitorGeometry &output,
+    const MonitorGeometry &workarea) const
+{
+    const int output_right =
+        output.x + output.width;
+    const int output_bottom =
+        output.y + output.height;
+    const int workarea_right =
+        workarea.x + workarea.width;
+    const int workarea_bottom =
+        workarea.y + workarea.height;
+
+    if (placement.is_horizontal())
+    {
+        placement.margin_left +=
+            std::max(0, workarea.x - output.x);
+        placement.margin_right +=
+            std::max(0, output_right - workarea_right);
+
+        if (placement.anchor_top)
+            placement.margin_top +=
+                std::max(0, workarea.y - output.y);
+        else if (placement.anchor_bottom)
+            placement.margin_bottom +=
+                std::max(0, output_bottom - workarea_bottom);
+    }
+    else
+    {
+        placement.margin_top +=
+            std::max(0, workarea.y - output.y);
+        placement.margin_bottom +=
+            std::max(0, output_bottom - workarea_bottom);
+
+        if (placement.anchor_left)
+            placement.margin_left +=
+                std::max(0, workarea.x - output.x);
+        else if (placement.anchor_right)
+            placement.margin_right +=
+                std::max(0, output_right - workarea_right);
+    }
+}
+
 // Calculates tooltip screen coordinates relative to the dock item and clamps
 // the result to the selected monitor. The caller applies the returned values
 // to the tooltip window after measurement is complete.
