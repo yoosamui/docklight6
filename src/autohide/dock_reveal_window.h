@@ -44,7 +44,24 @@ public:
     sigc::signal<void> &signal_reveal_requested();
 
 private:
+    enum class SurfaceBackend
+    {
+        layer_shell,
+        wayland_toplevel,
+        x11
+    };
+
+    struct ToplevelGeometry
+    {
+        int x = 0;
+        int y = 0;
+        int width = 1;
+        int height = 1;
+    };
+
     void prepare_reconfiguration();
+    ToplevelGeometry calculate_toplevel_geometry() const;
+    void apply_wayland_toplevel_placement();
     void apply_x11_placement();
     bool on_enter_notify_event(
         GdkEventCrossing *event) override;
@@ -55,5 +72,5 @@ private:
     MonitorGeometry m_monitor_geometry;
     DockPlacement m_placement;
     bool m_has_placement = false;
-    bool m_uses_layer_shell = false;
+    SurfaceBackend m_backend = SurfaceBackend::x11;
 };

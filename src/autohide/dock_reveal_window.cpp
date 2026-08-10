@@ -21,6 +21,7 @@
 #include "dock/dock_constants.h"
 
 #include <gtk-layer-shell.h>
+#include <gdk/gdkwayland.h>
 
 #include <algorithm>
 #include <string>
@@ -57,9 +58,15 @@ DockRevealWindow::DockRevealWindow()
 
     auto *window = GTK_WINDOW(gobj());
 
-    m_uses_layer_shell = gtk_layer_is_supported();
+    auto *display = gdk_display_get_default();
+    if (gtk_layer_is_supported())
+        m_backend = SurfaceBackend::layer_shell;
+    else if (display && GDK_IS_WAYLAND_DISPLAY(display))
+        m_backend = SurfaceBackend::wayland_toplevel;
+    else
+        m_backend = SurfaceBackend::x11;
 
-    if (m_uses_layer_shell)
+    if (m_backend == SurfaceBackend::layer_shell)
     {
         gtk_layer_init_for_window(window);
         gtk_layer_set_namespace(
@@ -96,7 +103,9 @@ DockRevealWindow::DockRevealWindow()
     signal_map().connect(
         [this]()
         {
-            if (!m_uses_layer_shell)
+            if (m_backend == SurfaceBackend::wayland_toplevel)
+                apply_wayland_toplevel_placement();
+            else if (m_backend == SurfaceBackend::x11)
                 apply_x11_placement();
         });
 }
@@ -118,7 +127,7 @@ void DockRevealWindow::set_monitor(
             geometry.get_height()};
     }
 
-    if (m_uses_layer_shell)
+    if (m_backend == SurfaceBackend::layer_shell)
     {
         gtk_layer_set_monitor(
             GTK_WINDOW(gobj()),
@@ -134,7 +143,13 @@ void DockRevealWindow::apply_placement(
     m_placement = placement;
     m_has_placement = true;
 
-    if (!m_uses_layer_shell)
+    if (m_backend == SurfaceBackend::wayland_toplevel)
+    {
+        apply_wayland_toplevel_placement();
+        return;
+    }
+
+    if (m_backend == SurfaceBackend::x11)
     {
         apply_x11_placement();
         return;
@@ -199,17 +214,19 @@ void DockRevealWindow::prepare_reconfiguration()
     if (get_mapped())
         hide();
 
-    if (m_uses_layer_shell && get_realized())
+    if (m_backend == SurfaceBackend::layer_shell && get_realized())
         gtk_widget_unrealize(GTK_WIDGET(gobj()));
 }
 
-void DockRevealWindow::apply_x11_placement()
+DockRevealWindow::ToplevelGeometry
+DockRevealWindow::calculate_toplevel_geometry() const
 {
+    ToplevelGeometry geometry;
     if (!m_has_placement ||
         m_monitor_geometry.width <= 0 ||
         m_monitor_geometry.height <= 0)
     {
-        return;
+        return geometry;
     }
 
     const bool horizontal =
@@ -288,17 +305,52 @@ void DockRevealWindow::apply_x11_placement()
             x = workarea.x + workarea.width - width;
     }
 
-    set_size_request(width, height);
-    resize(width, height);
-    move(x, y);
+    geometry.x = x;
+    geometry.y = y;
+    geometry.width = width;
+    geometry.height = height;
+    return geometry;
+}
+
+void DockRevealWindow::apply_wayland_toplevel_placement()
+{
+    if (!m_has_placement ||
+        m_monitor_geometry.width <= 0 ||
+        m_monitor_geometry.height <= 0)
+    {
+        return;
+    }
+
+    const auto geometry =
+        calculate_toplevel_geometry();
+
+    set_size_request(geometry.width, geometry.height);
+    resize(geometry.width, geometry.height);
 
     // GNOME Wayland ignores ordinary clients' move requests. Its Docklight
     // integration recognizes this coordinate-bearing private-surface title
-    // and applies the same target through Mutter before the trigger is used.
+    // and keeps the surface hidden until Mutter commits the target.
     set_title(
         "Docklight 6 Reveal@" +
-        std::to_string(x) + "," +
-        std::to_string(y));
+        std::to_string(geometry.x) + "," +
+        std::to_string(geometry.y));
+}
+
+void DockRevealWindow::apply_x11_placement()
+{
+    if (!m_has_placement ||
+        m_monitor_geometry.width <= 0 ||
+        m_monitor_geometry.height <= 0)
+    {
+        return;
+    }
+
+    const auto geometry =
+        calculate_toplevel_geometry();
+
+    set_size_request(geometry.width, geometry.height);
+    resize(geometry.width, geometry.height);
+    move(geometry.x, geometry.y);
 }
 
 sigc::signal<void> &

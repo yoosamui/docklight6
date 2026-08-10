@@ -43,6 +43,18 @@ assert.match(
     "private reveal surfaces must resist Mutter's late initial placement");
 assert.match(
     extensionSource,
+    /if \(this\._isAuxiliaryWindow\(window\)\)\s*this\._beginAuxiliaryTransition\(window, actor\)/,
+    "ordinary Wayland auxiliary actors must be hidden during their first map");
+assert.match(
+    extensionSource,
+    /_beginAuxiliaryTransition\(window, actor = null\)[\s\S]*?compositorActor\.set_opacity\(0\)/,
+    "a provisional centred auxiliary frame must not enter the scene");
+assert.match(
+    extensionSource,
+    /rect\.x === target\.x && rect\.y === target\.y[\s\S]*?_finishAuxiliaryTransition\(window\)/,
+    "auxiliary opacity must be restored only after placement is committed");
+assert.match(
+    extensionSource,
     /_considerAuxiliaryWindow\(window\)[\s\S]*?if \(this\._dockWindow === window\)\s*this\._clearDockWindow\(\)/,
     "late auxiliary metadata must undo provisional dock classification");
 const auxiliaryPlacementSource = extensionSource.match(

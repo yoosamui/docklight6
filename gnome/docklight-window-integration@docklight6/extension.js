@@ -99,6 +99,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockActor = null;
         this._dockActorOpacity = 255;
         this._auxiliaryWindowSignals = new Map();
+        this._auxiliaryTransitions = new Map();
         this._dialogWindowSignals = new Map();
         this._configurationReloadSource = 0;
         this._dockStrut = null;
@@ -119,6 +120,12 @@ export default class DocklightWindowIntegration extends Extension {
             const window = actor?.meta_window;
             if (!window)
                 return;
+
+            // Auxiliary GTK toplevels are subject to Mutter's provisional
+            // centred placement too. Hide their first actor before any
+            // classification work can expose it.
+            if (this._isAuxiliaryWindow(window))
+                this._beginAuxiliaryTransition(window, actor);
 
             // window-created can precede the compositor actor. Reconsider the
             // dock at map time, when opacity can still suppress Mutter's
@@ -458,6 +465,11 @@ export default class DocklightWindowIntegration extends Extension {
         if (this._dockWindow === window)
             this._clearDockWindow();
 
+        // Metadata can arrive after map. Begin the same guarded placement
+        // transition here as well so correcting a provisional dock identity
+        // cannot briefly restore Mutter's centred actor.
+        this._beginAuxiliaryTransition(window);
+
         if (!this._auxiliaryWindowSignals.has(window)) {
             const signals = [];
             for (const [signal, callback] of [
@@ -496,9 +508,81 @@ export default class DocklightWindowIntegration extends Extension {
             // reveal surface from the monitor edge, leaving no surface under
             // the pointer when it is pushed against that edge.
             window.move_frame(false, target.x, target.y);
+
+        if (this._auxiliaryTransitions.has(window))
+            this._scheduleAuxiliaryPlacement(window);
+    }
+
+    _beginAuxiliaryTransition(window, actor = null) {
+        if (this._auxiliaryTransitions.has(window))
+            return;
+
+        const compositorActor = actor ||
+            window.get_compositor_private?.();
+        if (!compositorActor)
+            return;
+
+        const opacity = compositorActor.get_opacity();
+        this._auxiliaryTransitions.set(window, {
+            actor: compositorActor,
+            opacity: opacity > 0 ? opacity : 255,
+            attempts: 0,
+            source: 0,
+        });
+        compositorActor.set_opacity(0);
+    }
+
+    _scheduleAuxiliaryPlacement(window) {
+        const transition = this._auxiliaryTransitions.get(window);
+        if (!transition || transition.source)
+            return;
+
+        transition.source = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            DOCK_PLACEMENT_DELAY_MS,
+            () => {
+                transition.source = 0;
+                const target = this._auxiliaryPosition(window);
+                if (!target) {
+                    this._finishAuxiliaryTransition(window);
+                    return GLib.SOURCE_REMOVE;
+                }
+
+                const rect = window.get_frame_rect();
+                if (rect.x === target.x && rect.y === target.y) {
+                    this._finishAuxiliaryTransition(window);
+                    return GLib.SOURCE_REMOVE;
+                }
+
+                window.move_frame(false, target.x, target.y);
+                if (++transition.attempts >= DOCK_PLACEMENT_MAX_ATTEMPTS) {
+                    // Avoid leaving a client invisible if this Mutter
+                    // version refuses the requested auxiliary coordinates.
+                    this._finishAuxiliaryTransition(window);
+                } else {
+                    this._scheduleAuxiliaryPlacement(window);
+                }
+                return GLib.SOURCE_REMOVE;
+            });
+    }
+
+    _finishAuxiliaryTransition(window) {
+        const transition = this._auxiliaryTransitions.get(window);
+        if (!transition)
+            return;
+
+        if (transition.source)
+            GLib.source_remove(transition.source);
+        try {
+            transition.actor.set_opacity(transition.opacity);
+        } catch (_error) {
+            // The actor can disappear while its GTK window is closing.
+        }
+        this._auxiliaryTransitions.delete(window);
     }
 
     _clearAuxiliaryWindow(window) {
+        this._finishAuxiliaryTransition(window);
         for (const id of this._auxiliaryWindowSignals.get(window) || []) {
             try {
                 window.disconnect(id);
