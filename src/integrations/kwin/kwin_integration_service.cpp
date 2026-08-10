@@ -283,7 +283,7 @@ bool KWinIntegrationService::start()
     if (!m_introspection)
     {
         g_warning(
-            "Cannot create KWin integration D-Bus interface: %s",
+            "Cannot create window integration D-Bus interface: %s",
             error
                 ? error->message
                 : "unknown error");
@@ -301,7 +301,7 @@ bool KWinIntegrationService::start()
     if (!m_connection)
     {
         g_warning(
-            "Cannot connect to the session D-Bus for KWin integration: %s",
+            "Cannot connect to the session D-Bus for window integration: %s",
             error
                 ? error->message
                 : "unknown error");
@@ -385,7 +385,7 @@ bool KWinIntegrationService::request_name()
     if (!result)
     {
         g_warning(
-            "Cannot acquire the KWin integration D-Bus name: %s",
+            "Cannot acquire the window integration D-Bus name: %s",
             error
                 ? error->message
                 : "unknown error");
@@ -410,7 +410,7 @@ bool KWinIntegrationService::request_name()
     if (!m_name_owned)
     {
         g_warning(
-            "Cannot acquire the KWin integration D-Bus name because another Docklight instance owns it");
+            "Cannot acquire the window integration D-Bus name because another Docklight instance owns it");
     }
 
     return m_name_owned;
@@ -446,7 +446,7 @@ void KWinIntegrationService::release_name()
     if (!result)
     {
         g_warning(
-            "Cannot release the KWin integration D-Bus name: %s",
+            "Cannot release the window integration D-Bus name: %s",
             error
                 ? error->message
                 : "unknown error");
@@ -486,7 +486,7 @@ bool KWinIntegrationService::register_object()
     if (m_object_registration_id == 0)
     {
         g_warning(
-            "Cannot register KWin integration D-Bus object: %s",
+            "Cannot register window integration D-Bus object: %s",
             error
                 ? error->message
                 : "unknown error");
@@ -1132,7 +1132,7 @@ void KWinIntegrationService::
         cancel_command_keepalive();
 
     g_message(
-        "KWin window command delivered: %s %s",
+        "Window command delivered: %s %s",
         command_name,
         identifier.c_str());
 
@@ -1174,7 +1174,7 @@ void KWinIntegrationService::clear_commands()
         g_dbus_method_invocation_return_dbus_error(
             invocation,
             "org.docklight6.Error.Disconnected",
-            "The KWin integration disconnected");
+            "The window integration disconnected");
 
         g_object_unref(invocation);
     }
@@ -1263,7 +1263,7 @@ void KWinIntegrationService::
         g_dbus_method_invocation_return_dbus_error(
             invocation,
             "org.docklight6.Error.NotRegistered",
-            "Register the KWin integration before publishing window state");
+            "Register the shell integration before publishing window state");
 
         return;
     }
@@ -1294,7 +1294,7 @@ void KWinIntegrationService::
             g_dbus_method_invocation_return_dbus_error(
                 invocation,
                 "org.docklight6.Error.AlreadyWaiting",
-                "The KWin integration already has two pending command requests");
+                "The shell integration already has two pending command requests");
             return;
         }
 
@@ -1595,7 +1595,7 @@ void KWinIntegrationService::
         invocation,
         G_DBUS_ERROR,
         G_DBUS_ERROR_UNKNOWN_METHOD,
-        "Unknown KWin integration method: %s",
+        "Unknown window integration method: %s",
         method_name);
 }
 

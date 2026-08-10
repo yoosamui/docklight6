@@ -5,6 +5,7 @@ check_PROGRAMS = \
     dock_autohide_layout_test \
     dock_configuration_manager_test \
     dock_icon_renderer_test \
+    gnome_wayland_window_backend_test \
     launcher_manager_test \
     window_registry_test \
     kwin_window_backend_test \
@@ -52,6 +53,8 @@ docklight6_SOURCES = \
     windowing/window_registry.cpp \
     integrations/window_system_controller.h \
     integrations/window_system_controller.cpp \
+    integrations/gnome/gnome_wayland_window_backend.h \
+    integrations/gnome/gnome_wayland_window_backend.cpp \
     integrations/x11/ewmh_window_backend.h \
     integrations/x11/ewmh_window_backend.cpp \
     integrations/x11/ewmh_fallback_window_backend.h \
@@ -260,6 +263,25 @@ kwin_window_backend_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)
 
 kwin_window_backend_test_LDADD = \
+    $(GTKMM_LIBS)
+
+gnome_wayland_window_backend_test_SOURCES = \
+    tests/gnome_wayland_window_backend_test.cpp \
+    windowing/managed_window.h \
+    windowing/window_icon_geometry.h \
+    windowing/window_backend.h \
+    windowing/window_backend.cpp \
+    integrations/kwin/kwin_integration_protocol.h \
+    integrations/kwin/kwin_window_command.h \
+    integrations/kwin/kwin_window_backend.h \
+    integrations/kwin/kwin_window_backend.cpp \
+    integrations/gnome/gnome_wayland_window_backend.h \
+    integrations/gnome/gnome_wayland_window_backend.cpp
+
+gnome_wayland_window_backend_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+gnome_wayland_window_backend_test_LDADD = \
     $(GTKMM_LIBS)
 
 kwin_protocol_codec_test_SOURCES = \

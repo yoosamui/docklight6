@@ -1,6 +1,10 @@
 SUBDIRS = src po
 
 EXTRA_DIST = \
+    gnome/README.md \
+    gnome/install-window-integration.sh \
+    gnome/docklight-window-integration@docklight6/metadata.json \
+    gnome/docklight-window-integration@docklight6/extension.js \
     kwin/install-minimize-effect.sh \
     kwin/install-window-integration.sh \
     kwin/org.docklight6.minimize/metadata.json \
@@ -34,10 +38,14 @@ dist_docklighticons_DATA = \
     data/icons/128x128/docklight.home.png
 
 .PHONY: \
+    install-gnome-integration \
     install-kwin-integration \
     install-kwin-minimize-effect \
     install-plasma-geometry-bridge \
     install-plasma-geometry-bridge-system
+
+install-gnome-integration:
+	$(SHELL) $(srcdir)/gnome/install-window-integration.sh
 
 install-kwin-integration:
 	$(SHELL) $(srcdir)/kwin/install-window-integration.sh

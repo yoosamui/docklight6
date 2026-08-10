@@ -53,6 +53,7 @@ public:
 
 private:
     static bool is_kde_wayland_session();
+    static bool is_gnome_wayland_session();
     static bool is_x11_session();
 
     void on_connection_changed(

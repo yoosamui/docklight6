@@ -111,13 +111,28 @@ docklight6
 ### Build without installing
 
 DockLight uses an out-of-source Autotools build, keeping generated files out of
-`src/`:
+`src/`. The default build is an unoptimized debug build with full debug symbols:
 
 ```sh
 ./autogen.sh
 make -C build -j"$(nproc)"
 make -C build check
 ./build/src/docklight6
+```
+
+Create a clean debug build in a dedicated directory with:
+
+```sh
+./create_debug.sh
+./build-debug/src/docklight6
+```
+
+Create an optimized release build with assertions and debug-only logging
+disabled:
+
+```sh
+./create_release.sh
+./build-release/src/docklight6
 ```
 
 Install the KWin integration separately when testing window management on KDE

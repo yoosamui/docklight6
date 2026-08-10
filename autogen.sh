@@ -5,6 +5,12 @@ set -eu
 SOURCE_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 DOCKLIGHT_BUILD_DIR=${DOCKLIGHT_BUILD_DIR:-"$SOURCE_DIR/build"}
 
+# Keep the everyday build suitable for debugging. Explicit caller-provided
+# flags still take precedence.
+CFLAGS=${CFLAGS:-"-O0 -g3"}
+CXXFLAGS=${CXXFLAGS:-"-O0 -g3 -DDEBUG"}
+export CFLAGS CXXFLAGS
+
 case $DOCKLIGHT_BUILD_DIR in
     /*) ;;
     *) DOCKLIGHT_BUILD_DIR="$SOURCE_DIR/$DOCKLIGHT_BUILD_DIR" ;;

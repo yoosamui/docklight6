@@ -7,7 +7,7 @@
 // window_system_controller.cpp
 //
 // Implementation overview:
-// Selects the KWin script/D-Bus backend for KDE on Wayland and a
+// Selects a shell/D-Bus backend for KDE or GNOME on Wayland and a
 // WM-specific EWMH backend on X11.
 //
 // Important implementation decisions:
@@ -23,6 +23,7 @@
 #include "window_system_controller.h"
 
 #include "docklight_log.h"
+#include "integrations/gnome/gnome_wayland_window_backend.h"
 #include "integrations/kwin/kwin_integration_service.h"
 #include "integrations/kwin/kwin_script_manager.h"
 #include "integrations/kwin/kwin_window_backend.h"
@@ -83,6 +84,13 @@ bool identifies_kde(
                std::string::npos ||
            normalized.find("plasma") !=
                std::string::npos;
+}
+
+bool identifies_gnome(
+    const std::string &desktop)
+{
+    return lowercase(desktop).find("gnome") !=
+           std::string::npos;
 }
 
 std::string detected_desktop()
@@ -250,10 +258,13 @@ void WindowSystemController::start()
 
     const bool kde_wayland =
         is_kde_wayland_session();
+    const bool gnome_wayland =
+        is_gnome_wayland_session();
     const bool x11 = is_x11_session();
-    bool uses_kwin_protocol = kde_wayland;
+    const bool uses_shell_protocol =
+        kde_wayland || gnome_wayland;
 
-    if (!kde_wayland && !x11)
+    if (!uses_shell_protocol && !x11)
     {
         g_message(
             "Window integration is not enabled for this desktop session");
@@ -301,6 +312,15 @@ void WindowSystemController::start()
             x11_backend_kind_name(
                 backend_kind));
     }
+    else if (gnome_wayland)
+    {
+        m_backend =
+            std::make_unique<
+                GnomeWaylandWindowBackend>();
+
+        DocklightLog::startup(
+            "selected backend: GNOME Wayland");
+    }
     else
     {
         m_backend =
@@ -312,7 +332,7 @@ void WindowSystemController::start()
             WindowRegistry>(
             *m_backend);
 
-    if (uses_kwin_protocol)
+    if (uses_shell_protocol)
     {
         m_kwin_service =
             std::make_unique<
@@ -332,7 +352,7 @@ void WindowSystemController::start()
 
     m_registry->start();
 
-    if (x11 && !uses_kwin_protocol)
+    if (x11 && !uses_shell_protocol)
     {
         if (m_registry->connected())
         {
@@ -351,14 +371,16 @@ void WindowSystemController::start()
     if (!m_kwin_service->start())
     {
         g_warning(
-            "KWin window integration could not be started");
+            "%s window integration could not be started",
+            m_backend->name().c_str());
 
         stop();
         return;
     }
 
     g_message(
-        "KWin window integration is ready for the KWin script");
+        "%s window integration is ready for the shell extension",
+        m_backend->name().c_str());
 
     if (kde_wayland)
     {
@@ -436,6 +458,31 @@ bool WindowSystemController::
             "true";
 
     return wayland && kde;
+}
+
+bool WindowSystemController::
+    is_gnome_wayland_session()
+{
+    const auto session_type =
+        lowercase(
+            environment_value(
+                "XDG_SESSION_TYPE"));
+
+    const bool wayland =
+        session_type == "wayland" ||
+        !environment_value(
+             "WAYLAND_DISPLAY")
+             .empty();
+
+    const bool gnome =
+        identifies_gnome(
+            environment_value(
+                "XDG_CURRENT_DESKTOP")) ||
+        identifies_gnome(
+            environment_value(
+                "XDG_SESSION_DESKTOP"));
+
+    return wayland && gnome;
 }
 
 bool WindowSystemController::is_x11_session()
