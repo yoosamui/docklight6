@@ -22,6 +22,7 @@ trap 'rm -rf -- "${PACKAGE_DIRECTORY}"' EXIT
 gnome-extensions pack \
     --force \
     --out-dir "${PACKAGE_DIRECTORY}" \
+    --extra-source=placement.js \
     "${SOURCE_DIRECTORY}"
 
 readonly PACKAGE_PATH="${PACKAGE_DIRECTORY}/${EXTENSION_ID}.shell-extension.zip"

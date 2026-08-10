@@ -136,6 +136,8 @@ public:
     signal_dock_surface_geometry_changed();
     sigc::signal<void> &
     signal_dock_placement_geometry_changed();
+    sigc::signal<void> &
+    signal_dock_reveal_requested();
 
 protected:
     void notify_window_added(
@@ -187,6 +189,8 @@ private:
         m_signal_dock_surface_geometry_changed;
     sigc::signal<void>
         m_signal_dock_placement_geometry_changed;
+    sigc::signal<void>
+        m_signal_dock_reveal_requested;
     std::optional<WindowIconGeometry>
         m_dock_placement_geometry;
 };

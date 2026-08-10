@@ -105,6 +105,12 @@ WindowBackend::
     return m_signal_dock_placement_geometry_changed;
 }
 
+sigc::signal<void> &
+WindowBackend::signal_dock_reveal_requested()
+{
+    return m_signal_dock_reveal_requested;
+}
+
 void WindowBackend::notify_window_added(
     const ManagedWindow &window)
 {

@@ -300,6 +300,23 @@ void verifies_dbus_state_transport()
 
     assert(registered);
 
+    bool reveal_requested = false;
+    sigc::connection reveal_connection =
+        backend
+            .signal_dock_reveal_requested()
+            .connect(
+                [&reveal_requested]()
+                {
+                    reveal_requested = true;
+                });
+    assert(accepted(
+        call_method(
+            client,
+            "RequestDockReveal",
+            nullptr)));
+    assert(reveal_requested);
+    reveal_connection.disconnect();
+
     const WindowIconGeometry
         requested_dock_geometry{
             760,

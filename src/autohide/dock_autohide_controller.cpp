@@ -21,6 +21,7 @@
 #include "dock/dock_constants.h"
 #include "dock/dock_window.h"
 
+#include <gdk/gdkx.h>
 #include <glibmm/main.h>
 
 #include <algorithm>
@@ -30,6 +31,7 @@ namespace
 {
 
 constexpr double X11_REVEAL_INITIAL_OPACITY = 0.18;
+constexpr int X11_REVEAL_PLACEMENT_DELAY_MS = 30;
 
 bool same_placement(
     const DockPlacement &left,
@@ -113,11 +115,34 @@ void DockAutohideController::initialize()
             {
                 if (m_pending_x11_reveal_animation)
                 {
-                    m_pending_x11_reveal_animation = false;
-                    m_suppress_next_map_hide = false;
-                    m_window.set_opacity(
-                        X11_REVEAL_INITIAL_OPACITY);
-                    animate_x11(false, true);
+                    // The window manager can apply its ordinary-window
+                    // centred position after this map event. Keep the dock
+                    // transparent until DockWindowController's queued layout
+                    // pass has reasserted the configured edge coordinates,
+                    // then start the slide from just outside that edge.
+                    m_x11_reveal_start_timer.disconnect();
+                    m_x11_reveal_start_timer =
+                        Glib::signal_timeout().connect(
+                            [this]()
+                            {
+                                if (!m_pending_x11_reveal_animation)
+                                    return false;
+
+                                m_pending_x11_reveal_animation = false;
+                                m_suppress_next_map_hide = false;
+
+                                if (!m_window.get_mapped())
+                                {
+                                    m_window.set_opacity(1.0);
+                                    return false;
+                                }
+
+                                m_window.set_opacity(
+                                    X11_REVEAL_INITIAL_OPACITY);
+                                animate_x11(false, true);
+                                return false;
+                            },
+                            X11_REVEAL_PLACEMENT_DELAY_MS);
                     return false;
                 }
 
@@ -293,6 +318,11 @@ void DockAutohideController::refresh_mapped_surface()
     schedule_hide();
 }
 
+void DockAutohideController::request_reveal()
+{
+    pointer_entered();
+}
+
 void DockAutohideController::pointer_entered()
 {
     m_pointer_inside = true;
@@ -348,7 +378,17 @@ void DockAutohideController::cancel_hide()
 
 void DockAutohideController::cancel_animation()
 {
+    m_x11_reveal_start_timer.disconnect();
     m_animation_timer.disconnect();
+}
+
+bool DockAutohideController::can_animate_x11() const
+{
+    const auto display = m_window.get_display();
+    return !m_window.m_uses_layer_shell &&
+           display &&
+           GDK_IS_X11_DISPLAY(display->gobj()) &&
+           m_has_placement;
 }
 
 ScreenPosition DockAutohideController::hidden_x11_position() const
@@ -393,8 +433,7 @@ void DockAutohideController::animate_x11(
     // Layer-shell surfaces are positioned by the Wayland compositor and
     // cannot be moved one frame at a time. Xfce's X11 dock window, however,
     // has stable global coordinates and can slide cleanly through its edge.
-    if (m_window.m_uses_layer_shell ||
-        !m_has_placement)
+    if (!can_animate_x11())
     {
         if (hiding)
             m_window.hide();
@@ -584,8 +623,7 @@ void DockAutohideController::reveal()
         {
             m_suppress_next_map_hide = true;
             const bool defer_x11_reveal =
-                !m_window.m_uses_layer_shell &&
-                m_has_placement &&
+                can_animate_x11() &&
                 m_has_shown_position;
 
             if (defer_x11_reveal)

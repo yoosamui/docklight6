@@ -187,6 +187,8 @@ private:
         m_window_geometry_changed;
     sigc::connection
         m_dock_surface_geometry_changed;
+    sigc::connection
+        m_dock_reveal_requested;
     sigc::connection m_dock_add;
     sigc::connection m_dock_remove;
 

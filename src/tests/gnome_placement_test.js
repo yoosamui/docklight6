@@ -10,6 +10,72 @@ const vm = require("vm");
 const helperPath = path.resolve(
     __dirname,
     "../../gnome/docklight-window-integration@docklight6/placement.js");
+const installerPath = path.resolve(
+    __dirname,
+    "../../gnome/install-window-integration.sh");
+const extensionPath = path.resolve(
+    __dirname,
+    "../../gnome/docklight-window-integration@docklight6/extension.js");
+
+// gnome-extensions pack only bundles its conventional entry points unless
+// imported modules are explicitly listed as extra sources. Keep the package
+// contract beside the geometry tests because missing this helper disables all
+// GNOME placement before any edge calculation can run.
+assert.match(
+    fs.readFileSync(extensionPath, "utf8"),
+    /from ['"]\.\/placement\.js['"]/);
+assert.match(
+    fs.readFileSync(installerPath, "utf8"),
+    /--extra-source=placement\.js/);
+
+const extensionSource = fs.readFileSync(extensionPath, "utf8");
+assert.match(
+    extensionSource,
+    /_placeAuxiliaryWindow[\s\S]*?move_frame\(false, target\.x, target\.y\)/,
+    "private reveal surfaces must not receive Mutter's interactive edge inset");
+assert.match(
+    extensionSource,
+    /\['size-changed', \(\) => this\._placeAuxiliaryWindow\(window\)\]/,
+    "private reveal surfaces must be replaced after their final GTK allocation");
+assert.match(
+    extensionSource,
+    /\['position-changed', \(\) => this\._placeAuxiliaryWindow\(window\)\]/,
+    "private reveal surfaces must resist Mutter's late initial placement");
+assert.match(
+    extensionSource,
+    /_considerAuxiliaryWindow\(window\)[\s\S]*?if \(this\._dockWindow === window\)\s*this\._clearDockWindow\(\)/,
+    "late auxiliary metadata must undo provisional dock classification");
+const auxiliaryPlacementSource = extensionSource.match(
+    /_placeAuxiliaryWindow\(window, position = null\) \{[\s\S]*?\n    \}\n\n    _clearAuxiliaryWindow/)[0];
+assert.doesNotMatch(
+    auxiliaryPlacementSource,
+    /placeDockInWorkArea/,
+    "private reveal coordinates are already resolved by the application");
+assert.match(
+    extensionSource,
+    /const dockStrut = this\._dockStrut;\s*this\._dockStrut = null;\s*try \{/,
+    "strut teardown must clear its reference before Shell can dispose it");
+assert.match(
+    extensionSource,
+    /addChrome\(this\._dockRevealActor,[\s\S]*?affectsInputRegion: true/,
+    "GNOME autohide must use a Shell-owned reactive edge strip");
+assert.match(
+    extensionSource,
+    /actor\.hide\(\);\s*this\._expectDockRemap\(\);\s*this\._call\('RequestDockReveal'/,
+    "the Shell edge strip must identify the expected dock before it remaps");
+assert.match(
+    extensionSource,
+    /\(!this\._dockDiscoveredOnce \|\| this\._dockRevealPending\)/,
+    "an expected autohide remap must use early application-id recognition");
+assert.match(
+    extensionSource,
+    /this\._dockWindow = window;[\s\S]*?this\._clearDockRevealExpectation\(\)/,
+    "dock discovery must consume the short-lived remap expectation");
+assert.match(
+    extensionSource,
+    /placement\.edge === 'bottom'[\s\S]*?monitor\.y \+ monitor\.height - revealSize/,
+    "the bottom reveal strip must touch the physical monitor edge");
+
 const source = fs.readFileSync(helperPath, "utf8")
     .replaceAll("export function ", "function ") +
     "\nthis.testApi = {calculateDockStrut, inferDockEdge, " +

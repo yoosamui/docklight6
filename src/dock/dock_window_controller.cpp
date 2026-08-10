@@ -139,6 +139,7 @@ DockWindowController::~DockWindowController()
     m_window_registry_connection_changed.disconnect();
     m_window_geometry_changed.disconnect();
     m_dock_surface_geometry_changed.disconnect();
+    m_dock_reveal_requested.disconnect();
     m_dock_add.disconnect();
     m_dock_remove.disconnect();
 }
@@ -268,6 +269,17 @@ void DockWindowController::initialize()
                     [this]()
                     {
                         schedule_icon_geometry_update();
+                    });
+
+        m_dock_reveal_requested =
+            m_window
+                .m_window_registry
+                ->signal_dock_reveal_requested()
+                .connect(
+                    [this]()
+                    {
+                        m_autohide_controller
+                            ->request_reveal();
                     });
     }
 

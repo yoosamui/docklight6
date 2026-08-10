@@ -73,6 +73,9 @@ constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "      <arg type='i' direction='out' name='width'/>"
     "      <arg type='i' direction='out' name='height'/>"
     "    </method>"
+    "    <method name='RequestDockReveal'>"
+    "      <arg type='b' direction='out' name='accepted'/>"
+    "    </method>"
     "    <method name='BeginSnapshot'>"
     "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
@@ -1409,6 +1412,19 @@ void KWinIntegrationService::
         }
 
         deliver_next_command();
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "RequestDockReveal") == 0)
+    {
+        m_backend
+            .signal_dock_reveal_requested()
+            .emit();
+        g_dbus_method_invocation_return_value(
+            invocation,
+            g_variant_new("(b)", true));
         return;
     }
 

@@ -53,6 +53,7 @@ public:
     void uninhibit(bool pointer_inside);
     void finish_drag(bool pointer_inside);
     void refresh_mapped_surface();
+    void request_reveal();
 
 private:
     void pointer_entered();
@@ -60,6 +61,7 @@ private:
     void schedule_hide();
     void cancel_hide();
     void cancel_animation();
+    bool can_animate_x11() const;
     ScreenPosition hidden_x11_position() const;
     void animate_x11(
         bool hiding,
@@ -80,6 +82,7 @@ private:
     sigc::connection m_reveal_requested;
     sigc::connection m_hide_timer;
     sigc::connection m_animation_timer;
+    sigc::connection m_x11_reveal_start_timer;
 
     DockAutohide m_mode = DockAutohide::none;
     int m_inhibit_count = 0;

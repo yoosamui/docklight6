@@ -34,9 +34,10 @@ DockRevealWindow::DockRevealWindow()
     set_focus_on_map(false);
     set_skip_taskbar_hint(true);
     set_skip_pager_hint(true);
-    // Use the established private-surface title family so already-loaded
-    // GNOME integration versions can place the reveal trigger too.
-    set_title("Docklight 6 Tooltip@0,0");
+    // Give Mutter an explicit private-surface identity before the first map.
+    // The GNOME integration uses the coordinates to place this ordinary
+    // Wayland toplevel and the kind to keep it distinct from the main dock.
+    set_title("Docklight 6 Reveal@0,0");
     gtk_window_set_role(
         GTK_WINDOW(gobj()),
         "docklight6-reveal");
@@ -295,7 +296,7 @@ void DockRevealWindow::apply_x11_placement()
     // integration recognizes this coordinate-bearing private-surface title
     // and applies the same target through Mutter before the trigger is used.
     set_title(
-        "Docklight 6 Tooltip@" +
+        "Docklight 6 Reveal@" +
         std::to_string(x) + "," +
         std::to_string(y));
 }

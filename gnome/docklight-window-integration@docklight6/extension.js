@@ -24,6 +24,7 @@ const DOCK_PLACEMENT_DELAY_MS = 30;
 // the old orientation before GTK supplies the final allocation.
 const DOCK_TRANSITION_DELAY_MS = 300;
 const DOCK_PLACEMENT_MAX_ATTEMPTS = 40;
+const DOCK_REVEAL_EXPECTATION_MS = 2000;
 const REGISTRATION_RETRY_MS = 250;
 const CONFIGURATION_SETTLE_MS = 50;
 
@@ -82,6 +83,13 @@ export default class DocklightWindowIntegration extends Extension {
         this._pendingWaits = 0;
         this._registrationRetrySource = 0;
         this._dockWindow = null;
+        // The application-id fallback is safe for the initial dock and for a
+        // remap explicitly requested by the Shell edge strip. At other times
+        // an autohide reveal window can be the only mapped Docklight surface
+        // and must not be mistaken for the dock while its title propagates.
+        this._dockDiscoveredOnce = false;
+        this._dockRevealPending = false;
+        this._dockRevealPendingSource = 0;
         this._dockPlacement = null;
         this._dockWindowSignals = [];
         this._dockPlacementSource = 0;
@@ -94,11 +102,15 @@ export default class DocklightWindowIntegration extends Extension {
         this._dialogWindowSignals = new Map();
         this._configurationReloadSource = 0;
         this._dockStrut = null;
+        this._dockRevealActor = null;
+        this._dockRevealSignal = 0;
         this._nativeWorkAreas = [];
 
         this._loadDockPlacement();
         this._refreshNativeWorkAreas();
         this._watchDockConfiguration();
+        this._ensureDockRevealActor();
+        this._updateDockRevealActor();
 
         this._connect(global.display, 'window-created', (_display, window) => {
             this._onWindowAdded(window);
@@ -134,6 +146,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._connect(Main.layoutManager, 'monitors-changed', () => {
             this._removeDockStrut();
             this._refreshNativeWorkAreas();
+            this._updateDockRevealActor();
             this._beginDockTransition();
             this._scheduleDockPlacement(true);
         });
@@ -175,11 +188,13 @@ export default class DocklightWindowIntegration extends Extension {
             GLib.source_remove(this._configurationReloadSource);
             this._configurationReloadSource = 0;
         }
+        this._clearDockRevealExpectation();
         for (const source of this._dockDiscoverySources)
             GLib.source_remove(source);
         this._dockDiscoverySources.clear();
         this._clearDockWindow();
         this._removeDockStrut();
+        this._destroyDockRevealActor();
         for (const window of [...this._auxiliaryWindowSignals.keys()])
             this._clearAuxiliaryWindow(window);
         for (const window of [...this._dialogWindowSignals.keys()])
@@ -258,6 +273,7 @@ export default class DocklightWindowIntegration extends Extension {
                         this._configurationReloadSource = 0;
                         if (this._loadDockPlacement()) {
                             this._scheduleDockPlacement();
+                            this._updateDockRevealActor();
                         }
                         return GLib.SOURCE_REMOVE;
                     });
@@ -284,6 +300,13 @@ export default class DocklightWindowIntegration extends Extension {
             role.toLowerCase() === 'docklight6-dock')
             return true;
 
+        // Explicit private-surface identities always win over the shared GTK
+        // application id. In particular, the reveal trigger maps immediately
+        // after the dock unmaps and can otherwise steal the dock identity.
+        if (parseAuxiliaryPosition(title) ||
+            role.toLowerCase() === 'docklight6-reveal')
+            return false;
+
         // GTK's title and role can arrive after Mutter has already placed the
         // first frame. The application id and NORMAL type are available early
         // enough to hide and move the initial dock before that frame is drawn.
@@ -296,6 +319,7 @@ export default class DocklightWindowIntegration extends Extension {
             return false;
         }
         return !this._dockWindow &&
+            (!this._dockDiscoveredOnce || this._dockRevealPending) &&
             applicationId === 'org.docklight6' &&
             (type === Meta.WindowType.NORMAL ||
                 type === Meta.WindowType.DOCK) &&
@@ -421,23 +445,25 @@ export default class DocklightWindowIntegration extends Extension {
         return this._auxiliaryPosition(window) !== null;
     }
 
-    _isRevealWindow(window) {
-        try {
-            return window?.get_role?.() === 'docklight6-reveal';
-        } catch (_error) {
-            return false;
-        }
-    }
-
     _considerAuxiliaryWindow(window) {
         const position = this._auxiliaryPosition(window);
         if (!position)
             return false;
 
+        // window-created can expose the shared GTK application id before the
+        // private-surface title and role arrive. If that provisional metadata
+        // made this reveal/tooltip surface look like the dock, undo the dock
+        // transition first. In particular this restores actor opacity and
+        // prevents the edge trigger from retaining dock placement signals.
+        if (this._dockWindow === window)
+            this._clearDockWindow();
+
         if (!this._auxiliaryWindowSignals.has(window)) {
             const signals = [];
             for (const [signal, callback] of [
                 ['notify::title', () => this._placeAuxiliaryWindow(window)],
+                ['size-changed', () => this._placeAuxiliaryWindow(window)],
+                ['position-changed', () => this._placeAuxiliaryWindow(window)],
                 ['unmanaged', () => this._clearAuxiliaryWindow(window)],
             ]) {
                 try {
@@ -459,28 +485,17 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _placeAuxiliaryWindow(window, position = null) {
-        let target = position || this._auxiliaryPosition(window);
+        const target = position || this._auxiliaryPosition(window);
         if (!target)
             return;
 
         const rect = window.get_frame_rect();
-        if (this._isRevealWindow(window)) {
-            const monitorIndex = this._dockMonitorIndex();
-            const monitor = Main.layoutManager.monitors[monitorIndex];
-            if (monitor) {
-                target = placeDockInWorkArea(
-                    monitor,
-                    this._workAreaForMonitor(monitorIndex),
-                    {
-                        x: target.x,
-                        y: target.y,
-                        width: Math.max(1, rect.width),
-                        height: Math.max(1, rect.height),
-                    });
-            }
-        }
         if (rect.x !== target.x || rect.y !== target.y)
-            window.move_frame(true, target.x, target.y);
+            // Auxiliary surfaces carry application-computed coordinates.
+            // Treating this as an interactive move makes Mutter inset a
+            // reveal surface from the monitor edge, leaving no surface under
+            // the pointer when it is pushed against that edge.
+            window.move_frame(false, target.x, target.y);
     }
 
     _clearAuxiliaryWindow(window) {
@@ -502,6 +517,9 @@ export default class DocklightWindowIntegration extends Extension {
 
         this._clearDockWindow();
         this._dockWindow = window;
+        this._dockDiscoveredOnce = true;
+        this._clearDockRevealExpectation();
+        this._updateDockRevealActor();
         this._beginDockTransition();
 
         for (const [signal, callback] of [
@@ -554,6 +572,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockWindowSignals = [];
         this._dockWindow = null;
         this._dockActor = null;
+        this._updateDockRevealActor();
     }
 
     _beginDockTransition() {
@@ -643,6 +662,7 @@ export default class DocklightWindowIntegration extends Extension {
         if (!available || width <= 0 || height <= 0) {
             this._dockPlacement = null;
             this._removeDockStrut();
+            this._updateDockRevealActor();
             return;
         }
 
@@ -658,8 +678,136 @@ export default class DocklightWindowIntegration extends Extension {
             return;
 
         this._dockPlacement = placement;
+        this._updateDockRevealActor();
         this._beginDockTransition();
         this._scheduleDockPlacement(true);
+    }
+
+    _ensureDockRevealActor() {
+        if (this._dockRevealActor)
+            return;
+
+        this._dockRevealActor = new St.Widget({
+            reactive: true,
+            track_hover: true,
+            can_focus: false,
+            visible: false,
+        });
+        this._dockRevealSignal = this._dockRevealActor.connect(
+            'notify::hover', actor => {
+                if (!actor.hover || !this._enabled ||
+                    this._dockAutohide === 'none' || this._dockWindow)
+                    return;
+
+                // Hide before asking GTK to remap the dock so the Shell input
+                // strip cannot consume the dock's first pointer-enter event.
+                actor.hide();
+                this._expectDockRemap();
+                this._call('RequestDockReveal', null, null, (reply, error) => {
+                    if (error || reply?.[0] !== true)
+                        this._clearDockRevealExpectation();
+                });
+            });
+        Main.layoutManager.addChrome(this._dockRevealActor, {
+            affectsStruts: false,
+            affectsInputRegion: true,
+            trackFullscreen: true,
+        });
+    }
+
+    _updateDockRevealActor() {
+        const actor = this._dockRevealActor;
+        if (!actor)
+            return;
+
+        if (!this._enabled || this._dockAutohide === 'none' ||
+            this._dockWindow || !this._dockPlacement) {
+            actor.hide();
+            return;
+        }
+
+        const monitorIndex = this._dockMonitorIndex();
+        const monitor = Main.layoutManager.monitors[monitorIndex];
+        if (!monitor) {
+            actor.hide();
+            return;
+        }
+
+        const placement = placeDockInWorkArea(
+            monitor,
+            this._workAreaForMonitor(monitorIndex),
+            this._dockPlacement);
+        const revealSize = 2;
+        let x = placement.x;
+        let y = placement.y;
+        let width = placement.width;
+        let height = placement.height;
+
+        if (placement.edge === 'top') {
+            y = monitor.y;
+            height = revealSize;
+        } else if (placement.edge === 'bottom') {
+            y = monitor.y + monitor.height - revealSize;
+            height = revealSize;
+        } else if (placement.edge === 'left') {
+            x = monitor.x;
+            width = revealSize;
+        } else {
+            x = monitor.x + monitor.width - revealSize;
+            width = revealSize;
+        }
+
+        actor.set_position(Math.round(x), Math.round(y));
+        actor.set_size(Math.max(1, Math.round(width)),
+            Math.max(1, Math.round(height)));
+        actor.show();
+    }
+
+    _expectDockRemap() {
+        this._clearDockRevealExpectation();
+        this._dockRevealPending = true;
+        this._dockRevealPendingSource = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            DOCK_REVEAL_EXPECTATION_MS,
+            () => {
+                this._dockRevealPending = false;
+                this._dockRevealPendingSource = 0;
+                return GLib.SOURCE_REMOVE;
+            });
+    }
+
+    _clearDockRevealExpectation() {
+        this._dockRevealPending = false;
+        if (this._dockRevealPendingSource) {
+            GLib.source_remove(this._dockRevealPendingSource);
+            this._dockRevealPendingSource = 0;
+        }
+    }
+
+    _destroyDockRevealActor() {
+        const actor = this._dockRevealActor;
+        this._dockRevealActor = null;
+        if (!actor)
+            return;
+
+        if (this._dockRevealSignal) {
+            try {
+                actor.disconnect(this._dockRevealSignal);
+            } catch (_error) {
+                // The actor may already be disposed during Shell teardown.
+            }
+        }
+        this._dockRevealSignal = 0;
+        try {
+            Main.layoutManager.removeChrome(actor);
+        } catch (_error) {
+            // Shell may already have removed its chrome during teardown.
+        }
+        try {
+            actor.destroy();
+        } catch (_error) {
+            // removeChrome() may dispose the actor on this Shell release.
+        }
     }
 
     _requestDockPlacement() {
@@ -712,9 +860,23 @@ export default class DocklightWindowIntegration extends Extension {
     _removeDockStrut() {
         if (!this._dockStrut)
             return;
-        Main.layoutManager.removeChrome(this._dockStrut);
-        this._dockStrut.destroy();
+
+        // Clear the shared reference before either Shell operation. Depending
+        // on the Shell version and shutdown timing, removeChrome() can dispose
+        // the actor; a subsequent destroy() then throws and previously left a
+        // disposed object in _dockStrut for the next placement pass.
+        const dockStrut = this._dockStrut;
         this._dockStrut = null;
+        try {
+            Main.layoutManager.removeChrome(dockStrut);
+        } catch (_error) {
+            // Shell may already have removed its chrome during teardown.
+        }
+        try {
+            dockStrut.destroy();
+        } catch (_error) {
+            // removeChrome() may have disposed it on this Shell release.
+        }
     }
 
     _updateDockStrut(monitor, dockRect) {

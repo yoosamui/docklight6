@@ -193,10 +193,25 @@ void WindowRegistry::start()
                         .emit();
                 }));
 
+    m_connections.push_back(
+        m_backend
+            .signal_dock_reveal_requested()
+            .connect(
+                [this]()
+                {
+                    m_signal_dock_reveal_requested.emit();
+                }));
+
     m_backend.start();
 
     if (!m_connected)
         load_snapshot();
+}
+
+sigc::signal<void> &
+WindowRegistry::signal_dock_reveal_requested()
+{
+    return m_signal_dock_reveal_requested;
 }
 
 void WindowRegistry::stop()
