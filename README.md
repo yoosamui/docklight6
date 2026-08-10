@@ -1,4 +1,10 @@
+
+
+
 # DockLight 6
+
+
+<img width="127" height="127" alt="docklight home" src="https://github.com/user-attachments/assets/7e338d8e-2ce2-4ede-b8dc-48aed38e25d2" />
 
 DockLight is a lightweight application dock for Linux with X11 and Wayland
 support. It provides application launchers, window management, live window
@@ -40,8 +46,8 @@ Important current-code details:
 **Project status:** Feature complete. Development now focuses on maintenance,
 bug fixes, compatibility, and translations.
 
-DockLight's complete window-management integration is designed for KDE Plasma
-6 on Wayland. On unsupported desktop sessions, the dock can still start, but
+DockLight's complete window-management integration is designed for X11 or
+Wayland. On unsupported desktop sessions, the dock can still start, but
 desktop-specific window actions and previews may not be available.
 
 ## Architecture
