@@ -186,6 +186,8 @@ private:
     sigc::connection m_size_allocate;
     sigc::connection m_window_registry_changed;
     sigc::connection
+        m_window_registry_connection_changed;
+    sigc::connection
         m_window_geometry_changed;
     sigc::connection
         m_dock_surface_geometry_changed;

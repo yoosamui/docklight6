@@ -52,6 +52,7 @@ public:
     void inhibit();
     void uninhibit(bool pointer_inside);
     void finish_drag(bool pointer_inside);
+    void refresh_mapped_surface();
 
 private:
     void pointer_entered();

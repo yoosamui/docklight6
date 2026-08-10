@@ -29,6 +29,7 @@
 #include <cmath>
 #include <glibmm/main.h>
 #include <pangomm/layout.h>
+#include <string>
 
 namespace
 {
@@ -570,9 +571,19 @@ void DockTooltipWindow::apply_position(
 {
     if (!m_uses_layer_shell)
     {
-        move(
-            m_monitor_geometry.x + position.x,
-            m_monitor_geometry.y + position.y);
+        const int global_x =
+            m_monitor_geometry.x + position.x;
+        const int global_y =
+            m_monitor_geometry.y + position.y;
+
+        // GNOME Wayland ignores client-requested toplevel coordinates. The
+        // Shell integration consumes this private title payload and moves the
+        // tooltip after Mutter creates its surface.
+        set_title(
+            "Docklight 6 Tooltip@" +
+            std::to_string(global_x) + "," +
+            std::to_string(global_y));
+        move(global_x, global_y);
         return;
     }
 

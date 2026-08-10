@@ -22,6 +22,7 @@
 #include "monitors/dock_monitor_manager.h"
 
 #include <glibmm/i18n.h>
+#include <gdk/gdkwayland.h>
 #include <gtk-layer-shell.h>
 #include <gtkmm.h>
 
@@ -124,6 +125,23 @@ void DockSettingsDialog::show(
 
     dialog.set_type_hint(
         Gdk::WINDOW_TYPE_HINT_DIALOG);
+
+    // Mutter attaches modal dialogs to their transient parent. Since the
+    // parent is the edge dock, changing the dock location would drag this
+    // dialog away from the monitor centre. GNOME's integration positions the
+    // ordinary Wayland dialog explicitly, so do not attach it to the dock.
+    auto *display = gdk_display_get_default();
+    if (display &&
+        GDK_IS_WAYLAND_DISPLAY(display) &&
+        !gtk_layer_is_supported())
+    {
+        dialog.unset_transient_for();
+    }
+
+    gtk_window_set_role(
+        GTK_WINDOW(dialog.gobj()),
+        "docklight6-settings");
+
     keep_dialog_above(
         dialog,
         parent,

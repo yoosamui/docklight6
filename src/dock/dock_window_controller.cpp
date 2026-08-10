@@ -33,6 +33,7 @@
 #include "windowing/window_icon_geometry.h"
 #include "windowing/window_registry.h"
 
+#include <gdk/gdkwayland.h>
 #include <gtk-layer-shell.h>
 #include <gtkmm/settings.h>
 
@@ -135,6 +136,7 @@ DockWindowController::~DockWindowController()
     m_map.disconnect();
     m_size_allocate.disconnect();
     m_window_registry_changed.disconnect();
+    m_window_registry_connection_changed.disconnect();
     m_window_geometry_changed.disconnect();
     m_dock_surface_geometry_changed.disconnect();
     m_dock_add.disconnect();
@@ -178,6 +180,20 @@ void DockWindowController::initialize()
 
     if (m_window.m_window_registry)
     {
+        m_window_registry_connection_changed =
+            m_window
+                .m_window_registry
+                ->signal_connection_changed()
+                .connect(
+                    [this](bool connected)
+                    {
+                        if (connected)
+                        {
+                            m_autohide_controller
+                                ->refresh_mapped_surface();
+                        }
+                    });
+
         m_window_registry_changed =
             m_window
                 .m_window_registry
@@ -311,12 +327,21 @@ void DockWindowController::initialize()
     // EWMH window managers are allowed to adjust a client's initial map
     // position. Reassert the calculated dock coordinates once the X11
     // window is managed; the coalesced update is harmless on layer-shell.
-    m_map =
-        m_window.signal_map().connect(
-            [this]()
-            {
-                schedule_layout_update();
-            });
+    auto *display = gdk_display_get_default();
+    const bool ordinary_wayland_window =
+        !m_window.m_uses_layer_shell &&
+        display &&
+        GDK_IS_WAYLAND_DISPLAY(display);
+
+    if (!ordinary_wayland_window)
+    {
+        m_map =
+            m_window.signal_map().connect(
+                [this]()
+                {
+                    schedule_layout_update();
+                });
+    }
 
     update_dock_layout();
 }
@@ -477,13 +502,13 @@ void DockWindowController::update_dock_layout()
                 workarea_geometry.height);
 
     // The compositor inset keeps the dock out of an occluded screen region.
-    // DOCK_MARGIN is additional visible space between that region and the
-    // dock; it must not be consumed as part of the occlusion workaround.
+    // DOCK_MARGIN is a main-axis content margin; adding it here creates an
+    // unrelated 8 px cross-axis gap when GNOME reports Docklight's own strut
+    // through the monitor work area.
     const int required_bottom_inset =
         std::max(
             reported_bottom_inset,
-            m_settings.minimum_bottom_workarea_inset()) +
-        DockLayoutMetrics::DOCK_MARGIN;
+            m_settings.minimum_bottom_workarea_inset());
 
     // This compatibility inset exists to keep a bottom-positioned dock out
     // of desktop environments that under-report their bottom reservation.
@@ -569,7 +594,8 @@ void DockWindowController::update_dock_layout()
 
     schedule_intellihide_update();
 
-    if (edge_changed)
+    if (edge_changed &&
+        m_window.m_uses_layer_shell)
     {
         m_edge_layout_update.disconnect();
 
@@ -914,7 +940,13 @@ DockWindowController::dock_screen_position(
     // so its mapped root coordinates can differ from the layer-shell-style
     // position implied by output-edge margins. Auxiliary windows must follow
     // the actual dock surface on every edge.
-    if (!m_window.m_uses_layer_shell)
+    auto *display = gdk_display_get_default();
+    const bool wayland_display =
+        display &&
+        GDK_IS_WAYLAND_DISPLAY(display);
+
+    if (!m_window.m_uses_layer_shell &&
+        !wayland_display)
     {
         auto gdk_window = m_window.get_window();
         if (gdk_window)

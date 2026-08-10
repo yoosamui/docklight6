@@ -319,7 +319,13 @@ bool KWinIntegrationService::start()
     }
 
     m_available = true;
-    schedule_effect_geometry_update();
+
+    if (m_backend
+            .capabilities()
+            .accepts_icon_geometry)
+    {
+        schedule_effect_geometry_update();
+    }
 
     return true;
 }
@@ -625,6 +631,9 @@ bool KWinIntegrationService::
 {
     if (!m_available ||
         !m_connection ||
+        !m_backend
+             .capabilities()
+             .accepts_icon_geometry ||
         window_id.empty() ||
         geometry.width <= 0 ||
         geometry.height <= 0)

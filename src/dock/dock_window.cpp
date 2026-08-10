@@ -34,12 +34,57 @@
 #include <X11/Xatom.h>
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <thread>
 #include <utility>
 #include <vector>
+
+namespace
+{
+
+bool environment_contains(
+    const char *name,
+    const std::string &needle)
+{
+    const auto value =
+        std::getenv(name);
+
+    if (!value)
+        return false;
+
+    std::string normalized(value);
+    std::transform(
+        normalized.begin(),
+        normalized.end(),
+        normalized.begin(),
+        [](unsigned char character)
+        {
+            return static_cast<char>(
+                std::tolower(character));
+        });
+
+    return normalized.find(needle) !=
+           std::string::npos;
+}
+
+bool is_gnome_wayland_session()
+{
+    return environment_contains(
+               "XDG_SESSION_TYPE",
+               "wayland") &&
+           (environment_contains(
+                "XDG_CURRENT_DESKTOP",
+                "gnome") ||
+            environment_contains(
+                "XDG_SESSION_DESKTOP",
+                "gnome"));
+}
+
+}
 
 DockWindow::DockWindow(
     const DockConfiguration &configuration,
@@ -59,6 +104,7 @@ DockWindow::DockWindow(
     set_app_paintable(true);
     set_accept_focus(false);
     set_focus_on_map(false);
+    set_title("Docklight 6 Dock");
 
     // Rounded CSS corners expose pixels from the toplevel underneath the
     // dock box. Give that toplevel an alpha-capable visual so those pixels
@@ -102,6 +148,10 @@ DockWindow::DockWindow(
 
     GtkWindow *gtk_win =
         GTK_WINDOW(gobj());
+
+    gtk_window_set_role(
+        gtk_win,
+        "docklight6-dock");
 
     m_uses_layer_shell =
         gtk_layer_is_supported();
@@ -698,6 +748,15 @@ void DockWindow::apply_dock_layout(
                 ? m_x11_base_workarea
                 : workarea;
 
+        // Mutter does not expose layer-shell. Keep every dock edge in the
+        // physical output coordinate space and let the GNOME integration
+        // manage the ordinary toplevel there. Other window managers retain
+        // their work-area-aware placement around compositor panels.
+        const auto &edge_area =
+            is_gnome_wayland_session()
+                ? output
+                : base_workarea;
+
         gtk_widget_set_size_request(
             GTK_WIDGET(gtk_win),
             placement.width,
@@ -725,12 +784,12 @@ void DockWindow::apply_dock_layout(
         if (placement.is_vertical() &&
             placement.anchor_left)
         {
-            x = base_workarea.x + placement.margin_left;
+            x = edge_area.x + placement.margin_left;
         }
         else if (placement.is_vertical() &&
                  placement.anchor_right)
         {
-            x = base_workarea.x + base_workarea.width -
+            x = edge_area.x + edge_area.width -
                 placement.margin_right - width;
         }
         else if (placement.anchor_left)
@@ -741,12 +800,12 @@ void DockWindow::apply_dock_layout(
         if (placement.is_horizontal() &&
             placement.anchor_top)
         {
-            y = base_workarea.y + placement.margin_top;
+            y = edge_area.y + placement.margin_top;
         }
         else if (placement.is_horizontal() &&
                  placement.anchor_bottom)
         {
-            y = base_workarea.y + base_workarea.height -
+            y = edge_area.y + edge_area.height -
                 placement.margin_bottom - height;
         }
         else if (placement.anchor_top)
@@ -760,45 +819,93 @@ void DockWindow::apply_dock_layout(
         return;
     }
 
+    bool anchor_left =
+        placement.anchor_left;
+    bool anchor_right =
+        placement.anchor_right;
+    bool anchor_top =
+        placement.anchor_top;
+    bool anchor_bottom =
+        placement.anchor_bottom;
+
+    int margin_left =
+        placement.margin_left;
+    int margin_right =
+        placement.margin_right;
+    int margin_top =
+        placement.margin_top;
+    int margin_bottom =
+        placement.margin_bottom;
+
+    // Mutter stretches a layer surface between opposite anchors even when
+    // GTK supplies an explicit main-axis size. For centered, non-fill docks,
+    // leave that axis unanchored; the layer-shell protocol then centers the
+    // compact surface. KWin retains its dual-anchor/equal-margin workaround.
+    if (is_gnome_wayland_session())
+    {
+        if (placement.is_horizontal() &&
+            placement.width > 0 &&
+            anchor_left &&
+            anchor_right &&
+            margin_left == margin_right)
+        {
+            anchor_left = false;
+            anchor_right = false;
+            margin_left = 0;
+            margin_right = 0;
+        }
+        else if (placement.is_vertical() &&
+                 placement.height > 0 &&
+                 anchor_top &&
+                 anchor_bottom &&
+                 margin_top == margin_bottom)
+        {
+            anchor_top = false;
+            anchor_bottom = false;
+            margin_top = 0;
+            margin_bottom = 0;
+        }
+    }
+
     gtk_layer_set_anchor(
         gtk_win,
         GTK_LAYER_SHELL_EDGE_LEFT,
-        placement.anchor_left);
+        anchor_left);
 
     gtk_layer_set_anchor(
         gtk_win,
         GTK_LAYER_SHELL_EDGE_RIGHT,
-        placement.anchor_right);
+        anchor_right);
 
     gtk_layer_set_anchor(
         gtk_win,
         GTK_LAYER_SHELL_EDGE_TOP,
-        placement.anchor_top);
+        anchor_top);
 
     gtk_layer_set_anchor(
         gtk_win,
         GTK_LAYER_SHELL_EDGE_BOTTOM,
-        placement.anchor_bottom);
+        anchor_bottom);
 
     gtk_layer_set_margin(
         gtk_win,
         GTK_LAYER_SHELL_EDGE_LEFT,
-        placement.margin_left);
+        margin_left);
 
     gtk_layer_set_margin(
         gtk_win,
         GTK_LAYER_SHELL_EDGE_RIGHT,
-        placement.margin_right);
+        margin_right);
 
     gtk_layer_set_margin(
         gtk_win,
         GTK_LAYER_SHELL_EDGE_TOP,
-        placement.margin_top);
+        margin_top);
 
     gtk_layer_set_margin(
         gtk_win,
         GTK_LAYER_SHELL_EDGE_BOTTOM,
-        placement.margin_bottom);
+        margin_bottom);
 
     // gtk-layer-shell uses the GTK widget request as the surface's natural
     // size. set_default_size() alone does not reliably resize an already

@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <regex>
@@ -103,6 +104,38 @@ std::string folded(
     return result;
 }
 
+bool is_kde_session()
+{
+    const auto identifies_kde =
+        [](const char *value)
+        {
+            if (!value)
+                return false;
+
+            const auto normalized =
+                folded(value);
+
+            return normalized.find("kde") !=
+                       std::string::npos ||
+                   normalized.find("plasma") !=
+                       std::string::npos;
+        };
+
+    const auto kde_full_session =
+        std::getenv(
+            "KDE_FULL_SESSION");
+
+    return identifies_kde(
+               std::getenv(
+                   "XDG_CURRENT_DESKTOP")) ||
+           identifies_kde(
+               std::getenv(
+                   "XDG_SESSION_DESKTOP")) ||
+           (kde_full_session &&
+            folded(kde_full_session) ==
+                "true");
+}
+
 std::string base_identifier(
     const Glib::RefPtr<Gdk::Monitor> &monitor,
     int index)
@@ -134,6 +167,9 @@ std::string base_identifier(
 std::vector<KdeOutput> kde_outputs()
 {
     std::vector<KdeOutput> outputs;
+
+    if (!is_kde_session())
+        return outputs;
 
     const auto executable =
         Glib::find_program_in_path(
@@ -584,37 +620,40 @@ void DockMonitorManager::start_monitoring()
             *m_applied_snapshot);
     }
 
-    try
+    if (is_kde_session())
     {
-        const auto output_config_path =
-            Glib::build_filename(
-                Glib::get_user_config_dir(),
-                "kwinoutputconfig.json");
-
-        auto output_config =
-            Gio::File::create_for_path(
-                output_config_path);
-
-        if (output_config->query_exists())
+        try
         {
-            m_kde_output_monitor =
-                output_config->monitor_file();
+            const auto output_config_path =
+                Glib::build_filename(
+                    Glib::get_user_config_dir(),
+                    "kwinoutputconfig.json");
 
-            m_kde_output_monitor
-                ->signal_changed()
-                .connect(
-                    [this](
-                        const Glib::RefPtr<Gio::File> &,
-                        const Glib::RefPtr<Gio::File> &,
-                        Gio::FileMonitorEvent)
-                    {
-                        schedule_monitor_update();
-                    });
+            auto output_config =
+                Gio::File::create_for_path(
+                    output_config_path);
+
+            if (output_config->query_exists())
+            {
+                m_kde_output_monitor =
+                    output_config->monitor_file();
+
+                m_kde_output_monitor
+                    ->signal_changed()
+                    .connect(
+                        [this](
+                            const Glib::RefPtr<Gio::File> &,
+                            const Glib::RefPtr<Gio::File> &,
+                            Gio::FileMonitorEvent)
+                        {
+                            schedule_monitor_update();
+                        });
+            }
         }
-    }
-    catch (const Glib::Error &)
-    {
-        // KDE integration is optional. GTK monitor events remain active.
+        catch (const Glib::Error &)
+        {
+            // KDE integration is optional. GTK monitor events remain active.
+        }
     }
 
     schedule_monitor_update();

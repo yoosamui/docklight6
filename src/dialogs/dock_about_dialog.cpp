@@ -20,6 +20,7 @@
 #include "config.h"
 
 #include <glibmm/i18n.h>
+#include <gdk/gdkwayland.h>
 #include <gtk-layer-shell.h>
 #include <gtkmm.h>
 
@@ -113,6 +114,22 @@ void DockAboutDialog::show(
 
     dialog.set_type_hint(
         Gdk::WINDOW_TYPE_HINT_DIALOG);
+
+    // A modal transient is positioned relative to the edge dock by Mutter,
+    // not relative to the monitor. The GNOME integration recognizes this
+    // dialog by its role and centres the ordinary Wayland toplevel itself.
+    auto *display = gdk_display_get_default();
+    if (display &&
+        GDK_IS_WAYLAND_DISPLAY(display) &&
+        !gtk_layer_is_supported())
+    {
+        dialog.unset_transient_for();
+    }
+
+    gtk_window_set_role(
+        GTK_WINDOW(dialog.gobj()),
+        "docklight6-about");
+
     keep_dialog_above(
         dialog,
         parent,

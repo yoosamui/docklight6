@@ -20,4 +20,11 @@ CFLAGS="$RELEASE_CFLAGS" \
     "$SOURCE_DIR/autogen.sh"
 make -C "$DOCKLIGHT_BUILD_DIR" -j"$(nproc)"
 
+sudo install -m 0755 \
+    "$DOCKLIGHT_BUILD_DIR/src/docklight6" \
+    /usr/local/bin/docklight6
+pkill docklight6 || true
+exec  /usr/local/bin/docklight6
+
+
 printf 'Release build created at %s/src/docklight6\n' "$DOCKLIGHT_BUILD_DIR"

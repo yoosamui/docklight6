@@ -387,10 +387,10 @@ void WindowSystemController::start()
         PlasmaGeometryBridgeManager
             bridge_manager;
         bridge_manager.ensure();
-    }
 
-    KWinScriptManager script_manager;
-    script_manager.restart();
+        KWinScriptManager script_manager;
+        script_manager.restart();
+    }
 }
 
 void WindowSystemController::stop()

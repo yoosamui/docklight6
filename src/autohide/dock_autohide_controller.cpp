@@ -280,6 +280,19 @@ void DockAutohideController::finish_drag(
         schedule_hide();
 }
 
+void DockAutohideController::refresh_mapped_surface()
+{
+    if (!m_hidden)
+        return;
+
+    // A compositor restart destroys the Shell extension's knowledge of an
+    // autohidden (unmapped) ordinary Wayland window. Briefly remap it when
+    // the window backend reconnects so Shell can rediscover and place the
+    // dock, then restore the configured hiding policy.
+    reveal_immediately();
+    schedule_hide();
+}
+
 void DockAutohideController::pointer_entered()
 {
     m_pointer_inside = true;
