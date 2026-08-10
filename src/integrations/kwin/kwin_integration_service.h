@@ -88,6 +88,9 @@ private:
     void return_dock_surface_geometry(
         GDBusMethodInvocation *invocation) const;
     void emit_dock_surface_geometry();
+    void return_dock_placement_geometry(
+        GDBusMethodInvocation *invocation) const;
+    void emit_dock_placement_geometry();
     void deliver_next_command();
     void cancel_command_keepalive();
     void clear_commands();
@@ -140,6 +143,8 @@ private:
         m_connection_changed;
     sigc::connection
         m_dock_surface_geometry_changed;
+    sigc::connection
+        m_dock_placement_geometry_changed;
 
     std::deque<GDBusMethodInvocation *>
         m_command_invocations;

@@ -72,6 +72,12 @@ public:
     virtual std::optional<WindowIconGeometry>
     dock_surface_geometry() const = 0;
 
+    std::optional<WindowIconGeometry>
+    dock_placement_geometry() const;
+    void set_dock_placement_geometry(
+        const std::optional<WindowIconGeometry>
+            &geometry);
+
     virtual bool activate_window(
         const WindowId &window_id) = 0;
     virtual bool present_windows(
@@ -128,6 +134,8 @@ public:
     signal_snapshot_changed();
     sigc::signal<void> &
     signal_dock_surface_geometry_changed();
+    sigc::signal<void> &
+    signal_dock_placement_geometry_changed();
 
 protected:
     void notify_window_added(
@@ -177,4 +185,8 @@ private:
         m_signal_snapshot_changed;
     sigc::signal<void>
         m_signal_dock_surface_geometry_changed;
+    sigc::signal<void>
+        m_signal_dock_placement_geometry_changed;
+    std::optional<WindowIconGeometry>
+        m_dock_placement_geometry;
 };

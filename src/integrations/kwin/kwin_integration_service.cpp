@@ -66,6 +66,13 @@ constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "      <arg type='i' direction='out' name='width'/>"
     "      <arg type='i' direction='out' name='height'/>"
     "    </method>"
+    "    <method name='GetDockPlacementGeometry'>"
+    "      <arg type='b' direction='out' name='available'/>"
+    "      <arg type='i' direction='out' name='x'/>"
+    "      <arg type='i' direction='out' name='y'/>"
+    "      <arg type='i' direction='out' name='width'/>"
+    "      <arg type='i' direction='out' name='height'/>"
+    "    </method>"
     "    <method name='BeginSnapshot'>"
     "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
@@ -126,6 +133,13 @@ constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "      <arg type='s' name='internal_id'/>"
     "    </signal>"
     "    <signal name='DockSurfaceGeometryChanged'>"
+    "      <arg type='b' name='available'/>"
+    "      <arg type='i' name='x'/>"
+    "      <arg type='i' name='y'/>"
+    "      <arg type='i' name='width'/>"
+    "      <arg type='i' name='height'/>"
+    "    </signal>"
+    "    <signal name='DockPlacementGeometryChanged'>"
     "      <arg type='b' name='available'/>"
     "      <arg type='i' name='x'/>"
     "      <arg type='i' name='y'/>"
@@ -252,6 +266,15 @@ KWinIntegrationService::
                     *this,
                     &KWinIntegrationService::
                         emit_dock_surface_geometry));
+
+    m_dock_placement_geometry_changed =
+        m_backend
+            .signal_dock_placement_geometry_changed()
+            .connect(
+                sigc::mem_fun(
+                    *this,
+                    &KWinIntegrationService::
+                        emit_dock_placement_geometry));
 }
 
 KWinIntegrationService::
@@ -265,6 +288,8 @@ KWinIntegrationService::
     m_snapshot_changed.disconnect();
     m_connection_changed.disconnect();
     m_dock_surface_geometry_changed
+        .disconnect();
+    m_dock_placement_geometry_changed
         .disconnect();
 }
 
@@ -1084,6 +1109,59 @@ void KWinIntegrationService::
 }
 
 void KWinIntegrationService::
+    return_dock_placement_geometry(
+        GDBusMethodInvocation *invocation) const
+{
+    const auto geometry =
+        m_backend.dock_placement_geometry();
+
+    g_dbus_method_invocation_return_value(
+        invocation,
+        g_variant_new(
+            "(biiii)",
+            geometry.has_value(),
+            geometry ? geometry->x : 0,
+            geometry ? geometry->y : 0,
+            geometry ? geometry->width : 0,
+            geometry ? geometry->height : 0));
+}
+
+void KWinIntegrationService::
+    emit_dock_placement_geometry()
+{
+    if (!m_available || !m_connection)
+        return;
+
+    const auto geometry =
+        m_backend.dock_placement_geometry();
+    GError *error = nullptr;
+
+    g_dbus_connection_emit_signal(
+        m_connection,
+        nullptr,
+        KWinIntegrationProtocol::OBJECT_PATH,
+        KWinIntegrationProtocol::INTERFACE_NAME,
+        "DockPlacementGeometryChanged",
+        g_variant_new(
+            "(biiii)",
+            geometry.has_value(),
+            geometry ? geometry->x : 0,
+            geometry ? geometry->y : 0,
+            geometry ? geometry->width : 0,
+            geometry ? geometry->height : 0),
+        &error);
+
+    if (error)
+    {
+        g_warning(
+            "Cannot publish Docklight placement geometry: %s",
+            error->message);
+    }
+
+    g_clear_error(&error);
+}
+
+void KWinIntegrationService::
     deliver_next_command()
 {
     if (m_command_invocations.empty() ||
@@ -1263,6 +1341,15 @@ void KWinIntegrationService::
             "GetDockSurfaceGeometry") == 0)
     {
         return_dock_surface_geometry(
+            invocation);
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "GetDockPlacementGeometry") == 0)
+    {
+        return_dock_placement_geometry(
             invocation);
         return;
     }

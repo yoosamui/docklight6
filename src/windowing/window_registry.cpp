@@ -253,6 +253,14 @@ WindowRegistry::dock_surface_geometry() const
     return m_backend.dock_surface_geometry();
 }
 
+void WindowRegistry::set_dock_placement_geometry(
+    const std::optional<WindowIconGeometry>
+        &geometry)
+{
+    m_backend.set_dock_placement_geometry(
+        geometry);
+}
+
 const ManagedWindow *
 WindowRegistry::find_window(
     const WindowId &window_id) const

@@ -592,6 +592,40 @@ void DockWindowController::update_dock_layout()
         m_layout_request.location;
     m_has_applied_layout = true;
 
+    if (m_window.m_window_registry)
+    {
+        const int requested_width =
+            placement.width > 0
+                ? placement.width
+                : std::max(
+                      1,
+                      output_geometry.width -
+                          placement.margin_left -
+                          placement.margin_right);
+        const int requested_height =
+            placement.height > 0
+                ? placement.height
+                : std::max(
+                      1,
+                      output_geometry.height -
+                          placement.margin_top -
+                          placement.margin_bottom);
+        const auto position =
+            dock_screen_position(
+                false,
+                requested_width,
+                requested_height);
+
+        const WindowIconGeometry geometry{
+            position.x,
+            position.y,
+            requested_width,
+            requested_height};
+        m_window.m_window_registry
+            ->set_dock_placement_geometry(
+                geometry);
+    }
+
     schedule_intellihide_update();
 
     if (edge_changed &&

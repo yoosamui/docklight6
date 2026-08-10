@@ -63,6 +63,9 @@ public:
     active_window() const;
     std::optional<WindowIconGeometry>
     dock_surface_geometry() const;
+    void set_dock_placement_geometry(
+        const std::optional<WindowIconGeometry>
+            &geometry);
 
     const ManagedWindow *find_window(
         const WindowId &window_id) const;

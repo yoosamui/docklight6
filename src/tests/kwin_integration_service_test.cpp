@@ -300,6 +300,36 @@ void verifies_dbus_state_transport()
 
     assert(registered);
 
+    const WindowIconGeometry
+        requested_dock_geometry{
+            760,
+            1016,
+            400,
+            64};
+    backend.set_dock_placement_geometry(
+        requested_dock_geometry);
+
+    result = call_method(
+        client,
+        "GetDockPlacementGeometry",
+        nullptr);
+
+    gboolean placement_available = false;
+    WindowIconGeometry returned_placement;
+    g_variant_get(
+        result,
+        "(biiii)",
+        &placement_available,
+        &returned_placement.x,
+        &returned_placement.y,
+        &returned_placement.width,
+        &returned_placement.height);
+    g_variant_unref(result);
+
+    assert(placement_available);
+    assert(returned_placement ==
+           requested_dock_geometry);
+
     assert(accepted(
         call_method(
             client,
