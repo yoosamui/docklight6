@@ -243,6 +243,16 @@ bool LauncherManager::set_attached(
     const std::string &desktop_id,
     bool attached)
 {
+    if (attached &&
+        is_transient_window_id(
+            desktop_id))
+    {
+        g_warning(
+            "Cannot attach transient window identity '%s'",
+            desktop_id.c_str());
+        return false;
+    }
+
     const auto normalized_id =
         normalize_resolved_id(
             desktop_id);
@@ -466,10 +476,48 @@ LauncherManager::normalize_desktop_id(
     return normalized;
 }
 
+bool LauncherManager::is_transient_window_id(
+    const std::string &desktop_id)
+{
+    const auto normalized =
+        normalize_desktop_id(
+            desktop_id);
+
+    constexpr char prefix[] = "window:";
+    constexpr char suffix[] = ".desktop";
+    constexpr std::size_t prefix_length =
+        sizeof(prefix) - 1;
+    constexpr std::size_t suffix_length =
+        sizeof(suffix) - 1;
+
+    if (normalized.size() <=
+            prefix_length + suffix_length ||
+        normalized.compare(
+            0,
+            prefix_length,
+            prefix) != 0 ||
+        normalized.compare(
+            normalized.size() - suffix_length,
+            suffix_length,
+            suffix) != 0)
+    {
+        return false;
+    }
+
+    return std::all_of(
+        normalized.begin() + prefix_length,
+        normalized.end() - suffix_length,
+        [](unsigned char character)
+        {
+            return std::isdigit(character);
+        });
+}
+
 std::vector<std::string>
 LauncherManager::read_config() const
 {
     std::vector<std::string> ids;
+    bool removed_transient_id = false;
 
     std::ifstream file(m_data_path);
 
@@ -481,6 +529,15 @@ LauncherManager::read_config() const
 
         if (line.empty() || line[0] == '#')
             continue;
+
+        if (is_transient_window_id(line))
+        {
+            removed_transient_id = true;
+            g_warning(
+                "Removing transient window identity '%s' from attached launchers",
+                line.c_str());
+            continue;
+        }
 
         const auto normalized_id =
             normalize_desktop_id(line);
@@ -501,6 +558,9 @@ LauncherManager::read_config() const
         if (!duplicate)
             ids.push_back(line);
     }
+
+    if (removed_transient_id)
+        write_config(ids);
 
     return ids;
 }

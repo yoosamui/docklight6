@@ -126,7 +126,7 @@ export function isDockPlacementCommitted(frameRect, placement, actorOffset) {
 }
 
 export function isPointerInsideDockInterior(
-    placement, pointerX, pointerY, edgeMargin = 4) {
+    placement, pointerX, pointerY, edgeMargin = 0) {
     const insideRect =
         pointerX >= placement.x &&
         pointerX < placement.x + placement.width &&
@@ -142,6 +142,10 @@ export function isPointerInsideDockInterior(
     if (placement.edge === 'left')
         return pointerX >= placement.x + edgeMargin;
     return pointerX < placement.x + placement.width - edgeMargin;
+}
+
+export function isSyntheticApplicationId(applicationId) {
+    return /^window:\d+$/i.test(String(applicationId || '').trim());
 }
 
 export function calculateDockStrut(monitor, dockRect) {

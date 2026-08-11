@@ -90,19 +90,38 @@ Build and install DockLight into `/usr/local`:
 sudo ./install_docklight.sh
 ```
 
-Run the system installer through `sudo` from the Plasma user account. This
-allows it to refresh that user's KDE application cache and register the
-permissions required for Wayland previews.
-
-Install the KWin window integration as the logged-in Plasma user (do not use
+The root installer owns only the DockLight core. Configure the current
+desktop integration separately as the logged-in desktop user (without
 `sudo`):
 
 ```sh
-make -C build install-kwin-integration
+./setup_backend.sh auto
 ```
 
-The command installs and enables the KWin script for the current user and
-reloads KWin. DockLight can then be launched from the application menu or with:
+Backend integrations can coexist for a user. Install them explicitly when the
+same system is used with more than one desktop:
+
+```sh
+./setup_backend.sh gnome
+./setup_backend.sh plasma
+./setup_backend.sh x11
+```
+
+The GNOME command installs and enables the Shell extension. A newly installed
+or updated GNOME extension may require one logout and login before Shell can
+activate it. The Plasma command installs and enables the required KWin script.
+X11 uses EWMH directly and needs no companion component.
+
+Inspect every available integration without changing the system:
+
+```sh
+./setup_backend.sh status
+```
+
+The setup command also prints the selected backend's installed, enabled, and
+active state after every installation or update.
+
+DockLight can then be launched from the application menu or with:
 
 ```sh
 docklight6
@@ -139,7 +158,7 @@ Install the KWin integration separately when testing window management on KDE
 Plasma Wayland:
 
 ```sh
-make -C build install-kwin-integration
+./setup_backend.sh plasma
 ```
 
 Use `./clean.sh` to remove the build directory and start a clean build.
@@ -155,11 +174,12 @@ sudo apt install qt6-base-dev qt6-declarative-dev
 ```
 
 ```sh
-make -C build install-kwin-minimize-effect
-make -C build install-plasma-geometry-bridge
+./setup_backend.sh plasma \
+    --with-minimize-effect \
+    --with-geometry-bridge
 ```
 
-Both commands must be run as the logged-in Plasma user, without `sudo`.
+The setup command must be run as the logged-in Plasma user, without `sudo`.
 
 ## Configuration and diagnostics
 

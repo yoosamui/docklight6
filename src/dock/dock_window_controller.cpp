@@ -142,6 +142,7 @@ DockWindowController::~DockWindowController()
     m_dock_reveal_requested.disconnect();
     m_dock_pointer_inside_changed.disconnect();
     m_dock_animation_completed.disconnect();
+    m_gnome_placement_fallback.disconnect();
     m_dock_add.disconnect();
     m_dock_remove.disconnect();
 }
@@ -195,6 +196,12 @@ void DockWindowController::initialize()
                             m_autohide_controller
                                 ->refresh_mapped_surface();
                         }
+
+                        // Re-evaluate the configured policy on both edges of
+                        // the connection. A disconnect reveals immediately;
+                        // a reconnect restores normal autohide behavior.
+                        m_autohide_controller->set_mode(
+                            m_layout_request.autohide);
                     });
 
         m_window_registry_changed =
@@ -277,8 +284,11 @@ void DockWindowController::initialize()
                         if (m_window.m_initial_gnome_placement_pending)
                         {
                             m_window.m_initial_gnome_placement_pending = false;
+                            m_gnome_placement_fallback.disconnect();
                             m_window.set_opacity(1.0);
                         }
+                        m_autohide_controller->set_mode(
+                            m_layout_request.autohide);
                         schedule_icon_geometry_update();
                     });
 
@@ -314,6 +324,29 @@ void DockWindowController::initialize()
                         m_autohide_controller
                             ->finish_shell_animation(hidden);
                     });
+    }
+
+    if (m_window.m_initial_gnome_placement_pending)
+    {
+        m_gnome_placement_fallback =
+            Glib::signal_timeout().connect(
+                [this]()
+                {
+                    if (!m_window.m_initial_gnome_placement_pending)
+                        return false;
+
+                    m_window.m_initial_gnome_placement_pending = false;
+                    m_window.set_opacity(1.0);
+                    m_autohide_controller->set_mode(
+                        m_layout_request.autohide);
+                    g_warning(
+                        "GNOME Shell did not place the Docklight surface; "
+                        "keeping the dock visible until window integration "
+                        "is available");
+                    return false;
+                },
+                DockConstants::
+                    GNOME_PLACEMENT_FALLBACK_DELAY_MS);
     }
 
     std::vector<ApplicationWindowEntry>

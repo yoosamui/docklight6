@@ -75,6 +75,7 @@ private:
     void hide_now(bool refresh_pointer = true);
     void reveal();
     bool can_hide() const;
+    bool has_shell_reveal_trigger() const;
     bool uses_shell_reveal_trigger() const;
 
 private:

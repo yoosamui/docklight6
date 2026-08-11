@@ -3,6 +3,7 @@
 set -euo pipefail
 
 readonly EXTENSION_ID="docklight-window-integration@docklight6"
+readonly DEVELOPMENT_EXTENSION_ID="docklight-window-integration-test@docklight6"
 readonly SCRIPT_DIRECTORY="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly SOURCE_DIRECTORY="${SCRIPT_DIRECTORY}/${EXTENSION_ID}"
 
@@ -30,6 +31,17 @@ readonly PACKAGE_PATH="${PACKAGE_DIRECTORY}/${EXTENSION_ID}.shell-extension.zip"
 gnome-extensions install \
     --force \
     "${PACKAGE_PATH}"
+
+# A development copy implements the same private D-Bus client and cannot run
+# safely beside the production extension. This cleanup is intentionally
+# limited to Docklight's GNOME backend and does not touch other integrations.
+if gnome-extensions list --enabled |
+    grep -Fqx "${DEVELOPMENT_EXTENSION_ID}"
+then
+    gnome-extensions disable \
+        "${DEVELOPMENT_EXTENSION_ID}"
+    echo "Disabled conflicting Docklight GNOME development extension"
+fi
 
 if gnome-extensions info "${EXTENSION_ID}" >/dev/null 2>&1; then
     gnome-extensions enable "${EXTENSION_ID}"

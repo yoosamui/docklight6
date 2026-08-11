@@ -45,6 +45,39 @@ bool has_desktop_suffix(
                suffix) == 0;
 }
 
+bool is_transient_window_identity(
+    const std::string &value)
+{
+    constexpr char prefix[] = "window:";
+    constexpr char suffix[] = ".desktop";
+    constexpr std::size_t prefix_length =
+        sizeof(prefix) - 1;
+    constexpr std::size_t suffix_length =
+        sizeof(suffix) - 1;
+
+    if (value.size() <=
+            prefix_length + suffix_length ||
+        value.compare(
+            0,
+            prefix_length,
+            prefix) != 0 ||
+        value.compare(
+            value.size() - suffix_length,
+            suffix_length,
+            suffix) != 0)
+    {
+        return false;
+    }
+
+    return std::all_of(
+        value.begin() + prefix_length,
+        value.end() - suffix_length,
+        [](unsigned char character)
+        {
+            return std::isdigit(character);
+        });
+}
+
 bool is_docklight_window(
     const ManagedWindow &window)
 {
@@ -1096,8 +1129,12 @@ WindowRegistry::canonical_desktop_file_name(
         normalize_desktop_file_name(
             window.desktop_file_name);
 
-    if (reported_name.empty())
+    if (reported_name.empty() ||
+        is_transient_window_identity(
+            reported_name))
+    {
         return {};
+    }
 
     const auto cache_key =
         std::make_pair(

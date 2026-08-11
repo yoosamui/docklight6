@@ -45,6 +45,7 @@ namespace DockConstants
     constexpr int AUTOHIDE_REVEAL_SIZE = 2;
     constexpr int AUTOHIDE_ANIMATION_DURATION_MS = 220;
     constexpr int AUTOHIDE_ANIMATION_FRAME_MS = 16;
+    constexpr int GNOME_PLACEMENT_FALLBACK_DELAY_MS = 2000;
 
     // Internal drag-and-drop target shared by dock items and the dock surface.
     constexpr char DOCK_ITEM_DRAG_TARGET[] =

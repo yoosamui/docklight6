@@ -14,6 +14,7 @@ import {
     clampAuxiliaryToWorkArea,
     isDockPlacementCommitted,
     isPointerInsideDockInterior,
+    isSyntheticApplicationId,
     parseAuxiliaryPosition,
     placeDockInWorkArea,
 } from './placement.js';
@@ -170,6 +171,7 @@ export default class DocklightWindowIntegration extends Extension {
             this._publishActiveWindow();
         });
         this._connect(global.display, 'restacked', () => {
+            this._enforceDockWindowLayer();
             this._publishStackingOrder();
         });
         this._connect(global.workspace_manager, 'active-workspace-changed', () => {
@@ -678,6 +680,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._clearDockWindow();
         this._dockWindow = window;
         this._dockDiscoveredOnce = true;
+        this._enforceDockWindowLayer();
         this._updateDockRevealActor();
         this._beginDockTransition();
 
@@ -710,6 +713,18 @@ export default class DocklightWindowIntegration extends Extension {
         // this interval, avoiding a visible centred/old-axis frame followed
         // by the configured edge frame.
         this._scheduleDockPlacement(true);
+    }
+
+    _enforceDockWindowLayer() {
+        if (!this._dockWindow)
+            return;
+
+        try {
+            this._dockWindow.make_above();
+            this._dockWindow.stick();
+        } catch (_error) {
+            // The dock can be unmanaged while a restack is being delivered.
+        }
     }
 
     _clearDockWindow() {
@@ -1387,8 +1402,23 @@ export default class DocklightWindowIntegration extends Extension {
 
     _applicationId(window) {
         const app = this._tracker.get_window_app(window);
-        return app?.get_id() || window.get_gtk_application_id() ||
-            window.get_wm_class_instance() || window.get_wm_class() || '';
+        const trackedId = app?.get_id() || '';
+        if (trackedId && !isSyntheticApplicationId(trackedId))
+            return trackedId;
+
+        for (const candidate of [
+            window.get_gtk_application_id(),
+            window.get_wm_class_instance(),
+            window.get_wm_class(),
+        ]) {
+            if (candidate && !isSyntheticApplicationId(candidate))
+                return candidate;
+        }
+
+        // Shell creates window:<stable-sequence> identities for unmatched
+        // applications. They are session-local window handles, not
+        // application identities, so do not expose them as dock items.
+        return '';
     }
 
     _workspaceNumber(window) {

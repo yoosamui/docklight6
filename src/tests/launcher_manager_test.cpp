@@ -188,6 +188,55 @@ void verifies_order_and_persistence()
     g_rmdir(directory.c_str());
 }
 
+void verifies_transient_window_ids_are_not_persisted()
+{
+    GError *error = nullptr;
+    auto *temporary_directory =
+        g_dir_make_tmp(
+            "docklight-transient-launchers-XXXXXX",
+            &error);
+
+    assert(temporary_directory);
+    assert(!error);
+
+    const std::string directory =
+        temporary_directory;
+    g_free(temporary_directory);
+
+    const auto data_path =
+        directory + "/docklight.data";
+    {
+        std::ofstream file(data_path);
+        file << "org.example.Real.desktop\n"
+             << "window:218.desktop\n"
+             << "WINDOW:42\n";
+        assert(file);
+    }
+
+    LauncherManager manager(data_path);
+    assert(LauncherManager::is_transient_window_id(
+        "window:218"));
+    assert(LauncherManager::is_transient_window_id(
+        "WINDOW:42.desktop"));
+    assert(!LauncherManager::is_transient_window_id(
+        "window:editor.desktop"));
+    assert(manager.attached_ids() ==
+        std::vector<std::string>({
+            "org.example.Real.desktop"}));
+    assert(!manager.set_attached(
+        "window:999", true));
+
+    std::ifstream migrated(data_path);
+    std::string contents(
+        (std::istreambuf_iterator<char>(migrated)),
+        std::istreambuf_iterator<char>());
+    assert(contents ==
+        "org.example.Real.desktop\n");
+
+    g_remove(data_path.c_str());
+    g_rmdir(directory.c_str());
+}
+
 }
 
 int main()
@@ -196,6 +245,7 @@ int main()
 
     verifies_executable_alias_resolution();
     verifies_order_and_persistence();
+    verifies_transient_window_ids_are_not_persisted();
 
     return 0;
 }

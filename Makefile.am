@@ -1,6 +1,8 @@
 SUBDIRS = src po
 
 EXTRA_DIST = \
+    setup_backend.sh \
+    tests/setup_backend_test.sh \
     gnome/README.md \
     gnome/install-window-integration.sh \
     gnome/docklight-window-integration@docklight6/metadata.json \
@@ -24,6 +26,8 @@ EXTRA_DIST = \
     plasma/geometry-bridge/package/contents/ui/main.qml \
     plasma/geometry-bridge/package/contents/ui/bridge/qmldir \
     protocols/zkde-screencast-unstable-v1.xml
+
+TESTS = tests/setup_backend_test.sh
 
 dist_pkgdata_DATA = \
     plasma/geometry-bridge/ensure-geometry-bridge.js

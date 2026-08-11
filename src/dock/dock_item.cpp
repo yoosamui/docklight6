@@ -333,6 +333,10 @@ DockItem::DockItem(
 
     m_attach_item.set_active(
         m_attached);
+    m_attach_item.set_sensitive(
+        !LauncherManager::
+            is_transient_window_id(
+                m_desktop_id));
     initialize_context_menu();
     set_icon_size(icon_size);
     refresh_indicator();

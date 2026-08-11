@@ -183,6 +183,7 @@ const source = fs.readFileSync(helperPath, "utf8")
     "\nthis.testApi = {calculateDockRevealRect, calculateDockStrut, " +
     "clampAuxiliaryToWorkArea, inferDockEdge, " +
     "isDockPlacementCommitted, isPointerInsideDockInterior, " +
+    "isSyntheticApplicationId, " +
     "parseAuxiliaryPosition, placeDockInWorkArea};";
 const context = {};
 vm.createContext(context);
@@ -195,6 +196,7 @@ const {
     inferDockEdge,
     isDockPlacementCommitted,
     isPointerInsideDockInterior,
+    isSyntheticApplicationId,
     parseAuxiliaryPosition,
     placeDockInWorkArea,
 } = context.testApi;
@@ -343,12 +345,26 @@ const pointerFixtures = [
 ];
 for (const fixture of pointerFixtures) {
     assert.strictEqual(isPointerInsideDockInterior(
-        fixture.placement, ...fixture.edge), false);
+        fixture.placement, ...fixture.edge), true);
     assert.strictEqual(isPointerInsideDockInterior(
         fixture.placement, ...fixture.interior), true);
 }
 assert.strictEqual(isPointerInsideDockInterior(
     pointerFixtures[1].placement, 299, 1070), false);
+
+assert.strictEqual(isSyntheticApplicationId("window:218"), true);
+assert.strictEqual(isSyntheticApplicationId(" WINDOW:42 "), true);
+assert.strictEqual(isSyntheticApplicationId("window:editor"), false);
+assert.strictEqual(isSyntheticApplicationId("org.example.Editor"), false);
+
+assert.match(
+    extensionSource,
+    /_applicationId\(window\)[\s\S]*?isSyntheticApplicationId\(trackedId\)[\s\S]*?get_gtk_application_id\(\)[\s\S]*?get_wm_class_instance\(\)[\s\S]*?return ''/,
+    "GNOME must ignore Shell window IDs when no persistent identity exists");
+assert.match(
+    extensionSource,
+    /_enforceDockWindowLayer\(\)[\s\S]*?make_above\(\)[\s\S]*?stick\(\)/,
+    "GNOME must keep the dock above ordinary windows on every workspace");
 
 assert.deepStrictEqual(
     {...calculateDockRevealRect(pointerFixtures[0].placement)},

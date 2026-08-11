@@ -59,6 +59,8 @@ public:
     static std::string
     normalize_desktop_id(
         const std::string &desktop_id);
+    static bool is_transient_window_id(
+        const std::string &desktop_id);
     std::string normalize_resolved_id(
         const std::string &desktop_id) const;
 

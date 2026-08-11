@@ -269,6 +269,31 @@ void verifies_snapshot_and_grouping()
                "window-6"}));
 }
 
+void verifies_synthetic_shell_identity_is_not_an_application()
+{
+    FakeWindowBackend backend;
+
+    backend.set_snapshot(
+        {
+            window(
+                "302",
+                "window:302")
+        },
+        {"302"},
+        WindowId{"302"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    assert(registry.windows().size() == 1);
+    assert(registry.windows()[0]
+               .desktop_file_name.empty());
+    assert(registry.running_applications()
+               .empty());
+    assert(!registry.find_application(
+        "window:302"));
+}
+
 void verifies_incremental_updates()
 {
     FakeWindowBackend backend;
@@ -642,6 +667,7 @@ int main()
 
     verifies_process_executable_fallback();
     verifies_snapshot_and_grouping();
+    verifies_synthetic_shell_identity_is_not_an_application();
     verifies_incremental_updates();
     verifies_skip_taskbar_auxiliary_grouping();
     verifies_group_lifetime();

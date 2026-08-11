@@ -13,10 +13,11 @@ From the source directory, install the extension as the logged-in desktop
 user (without `sudo`):
 
 ```sh
-./gnome/install-window-integration.sh
+./setup_backend.sh gnome
 ```
 
-The equivalent Autotools target is available from a configured build
+The backend dispatcher calls `gnome/install-window-integration.sh`. The
+equivalent Autotools target is also available from a configured build
 directory, for example `make -C build install-gnome-integration`.
 
 GNOME Shell does not discover a brand-new local extension or reload an updated

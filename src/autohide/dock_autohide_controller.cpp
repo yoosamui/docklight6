@@ -670,6 +670,17 @@ void DockAutohideController::reveal_immediately()
         return;
     }
 
+    if (has_shell_reveal_trigger())
+    {
+        // A Shell extension can disappear while its actor is transparent and
+        // its input region is empty. Restore the GTK surface locally before
+        // falling back to the always-visible safety state.
+        set_shell_input_passthrough(false);
+        if (m_window.m_window_registry)
+            m_window.m_window_registry->set_dock_hidden(false);
+        m_shell_state = ShellDockState::visible;
+    }
+
     m_window.set_opacity(1.0);
 
     if (m_hidden)
@@ -733,6 +744,14 @@ void DockAutohideController::reveal()
             return;
         }
 
+        if (has_shell_reveal_trigger())
+        {
+            set_shell_input_passthrough(false);
+            if (m_window.m_window_registry)
+                m_window.m_window_registry->set_dock_hidden(false);
+            m_shell_state = ShellDockState::visible;
+        }
+
         if (!m_window.get_mapped())
         {
             m_suppress_next_map_hide = true;
@@ -768,15 +787,33 @@ void DockAutohideController::reveal()
 
 bool DockAutohideController::can_hide() const
 {
-    return m_mode == DockAutohide::autohide ||
-           (m_mode == DockAutohide::intellihide &&
-            m_intellihide_overlap);
+    const bool hiding_requested =
+        m_mode == DockAutohide::autohide ||
+        (m_mode == DockAutohide::intellihide &&
+         m_intellihide_overlap);
+
+    // GNOME's ordinary Wayland surface has no independent edge window. If
+    // the Shell integration is disconnected, hiding would leave no component
+    // capable of revealing the dock again.
+    return hiding_requested &&
+           (!has_shell_reveal_trigger() ||
+            uses_shell_reveal_trigger());
 }
 
-bool DockAutohideController::uses_shell_reveal_trigger() const
+bool DockAutohideController::
+    has_shell_reveal_trigger() const
 {
     return m_window.m_window_registry &&
            m_window.m_window_registry
                ->capabilities()
                .provides_dock_reveal_trigger;
+}
+
+bool DockAutohideController::uses_shell_reveal_trigger() const
+{
+    return has_shell_reveal_trigger() &&
+           m_window.m_window_registry->connected() &&
+           m_window.m_window_registry
+               ->dock_surface_geometry()
+               .has_value();
 }
