@@ -1,5 +1,6 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
@@ -10,6 +11,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {
     calculateDockStrut,
     isDockPlacementCommitted,
+    isPointerInsideDockInterior,
     parseAuxiliaryPosition,
     placeDockInWorkArea,
 } from './placement.js';
@@ -79,8 +81,7 @@ export default class DocklightWindowIntegration extends Extension {
                     this._setDockPlacement(parameters.deepUnpack());
                 else if (signalName === 'DockHiddenChanged') {
                     this._dockHidden = Boolean(parameters.deepUnpack()?.[0]);
-                    this._animateDockVisibility(this._dockHidden);
-                    this._updateDockRevealActor();
+                    this._startDockVisibilityTransition(this._dockHidden);
                 }
             });
         this._revision = 0;
@@ -103,7 +104,12 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockActor = null;
         this._dockActorOpacity = 255;
         this._dockActorBaseTranslation = {x: 0, y: 0};
-        this._dockVisibilityAnimationSource = 0;
+        this._dockVisibilityAnimationSerial = 0;
+        this._dockVisibilityState = 'visible';
+        this._dockPointerInside = null;
+        this._pointerPosition = null;
+        this._cursorTracker = global.backend.get_cursor_tracker();
+        this._pointerPollSource = 0;
         this._auxiliaryWindowSignals = new Map();
         this._auxiliaryTransitions = new Map();
         this._dialogWindowSignals = new Map();
@@ -118,6 +124,15 @@ export default class DocklightWindowIntegration extends Extension {
         this._watchDockConfiguration();
         this._ensureDockRevealActor();
         this._updateDockRevealActor();
+        this._pointerPollSource = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            25,
+            () => {
+                const [position] = this._cursorTracker.get_pointer();
+                this._pointerPosition = {x: position.x, y: position.y};
+                this._publishDockPointerInside();
+                return GLib.SOURCE_CONTINUE;
+            });
 
         this._connect(global.display, 'window-created', (_display, window) => {
             this._onWindowAdded(window);
@@ -197,10 +212,11 @@ export default class DocklightWindowIntegration extends Extension {
             GLib.source_remove(this._dockPlacementSource);
             this._dockPlacementSource = 0;
         }
-        if (this._dockVisibilityAnimationSource) {
-            GLib.source_remove(this._dockVisibilityAnimationSource);
-            this._dockVisibilityAnimationSource = 0;
+        if (this._pointerPollSource) {
+            GLib.source_remove(this._pointerPollSource);
+            this._pointerPollSource = 0;
         }
+        this._dockVisibilityAnimationSerial++;
         if (this._configurationReloadSource) {
             GLib.source_remove(this._configurationReloadSource);
             this._configurationReloadSource = 0;
@@ -241,6 +257,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._windows = null;
         this._windowSignals = null;
         this._tracker = null;
+        this._cursorTracker = null;
     }
 
     _loadDockPlacement() {
@@ -705,7 +722,7 @@ export default class DocklightWindowIntegration extends Extension {
                 // Autohide can change state while asynchronous Wayland
                 // placement is settling. Finish at the current state instead
                 // of replaying a reveal over a hide that already completed.
-                this._animateDockVisibility(
+                this._startDockVisibilityTransition(
                     this._dockHidden, this._dockActor);
             } catch (_error) {
                 // The actor can disappear while the window is being closed.
@@ -718,12 +735,16 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockActorOpacity = 255;
     }
 
-    _animateDockVisibility(hidden, requestedActor = null) {
+    _startDockVisibilityTransition(hidden, requestedActor = null) {
         const actor = requestedActor ??
             this._dockWindow?.get_compositor_private?.();
         const placement = this._dockPlacement;
-        if (!actor || !placement)
+        if (!actor || !placement) {
+            this._dockVisibilityState = hidden ? 'hidden' : 'visible';
+            this._updateDockRevealActor();
+            this._call('PublishDockAnimationCompleted', '(b)', [hidden]);
             return;
+        }
 
         const base = this._dockActorBaseTranslation ?? {x: 0, y: 0};
         const positioned = placeDockInWorkArea(
@@ -740,52 +761,115 @@ export default class DocklightWindowIntegration extends Extension {
         else
             offset.x = positioned.width;
 
-        if (this._dockVisibilityAnimationSource) {
-            GLib.source_remove(this._dockVisibilityAnimationSource);
-            this._dockVisibilityAnimationSource = 0;
-        }
+        const serial = ++this._dockVisibilityAnimationSerial;
         actor.remove_all_transitions();
-        if (!hidden) {
+        if (!hidden && actor.get_opacity() === 0 &&
+            actor.translation_x === base.x &&
+            actor.translation_y === base.y) {
             actor.translation_x = base.x + offset.x;
             actor.translation_y = base.y + offset.y;
-            actor.set_opacity(0);
         }
-
         const startX = actor.translation_x;
         const startY = actor.translation_y;
-        const startOpacity = actor.get_opacity();
         const targetX = hidden ? base.x + offset.x : base.x;
         const targetY = hidden ? base.y + offset.y : base.y;
-        const targetOpacity = hidden ? 0 : this._dockActorOpacity;
-        const duration = hidden
+        const fullDistance = Math.max(1, Math.hypot(offset.x, offset.y));
+        const remainingFraction = Math.min(1,
+            Math.hypot(targetX - startX, targetY - startY) / fullDistance);
+        const fullDuration = hidden
             ? DOCK_HIDE_ANIMATION_MS
             : DOCK_REVEAL_ANIMATION_MS;
-        const startedAt = GLib.get_monotonic_time();
+        const remainingDistance = Math.hypot(
+            targetX - startX, targetY - startY);
+        const duration = Math.max(60,
+            Math.round(fullDuration * remainingFraction));
 
-        this._dockVisibilityAnimationSource = GLib.timeout_add(
-            GLib.PRIORITY_DEFAULT, 16, () => {
-                if (!this._enabled || !actor) {
-                    this._dockVisibilityAnimationSource = 0;
-                    return GLib.SOURCE_REMOVE;
-                }
+        this._dockVisibilityState = hidden ? 'hiding' : 'revealing';
+        actor.set_opacity(this._dockActorOpacity);
+        this._updateDockRevealActor();
+        this._publishDockPointerInside(true);
 
-                const progress = Math.min(1,
-                    (GLib.get_monotonic_time() - startedAt) /
-                        (duration * 1000));
-                const eased = hidden
-                    ? progress * progress * progress
-                    : 1 - Math.pow(1 - progress, 3);
-                actor.translation_x = startX + (targetX - startX) * eased;
-                actor.translation_y = startY + (targetY - startY) * eased;
-                actor.set_opacity(Math.round(startOpacity +
-                    (targetOpacity - startOpacity) * eased));
+        let completed = false;
+        let completionSource = 0;
+        const completeTransition = () => {
+            if (completed || serial !== this._dockVisibilityAnimationSerial)
+                return;
 
-                if (progress < 1)
-                    return GLib.SOURCE_CONTINUE;
+            completed = true;
+            if (completionSource) {
+                GLib.source_remove(completionSource);
+                completionSource = 0;
+            }
+            this._dockVisibilityState = hidden ? 'hidden' : 'visible';
+            actor.translation_x = targetX;
+            actor.translation_y = targetY;
+            actor.set_opacity(hidden ? 0 : this._dockActorOpacity);
+            this._updateDockRevealActor();
+            this._publishDockPointerInside(true);
+            this._call(
+                'PublishDockAnimationCompleted', '(b)', [hidden]);
+        };
 
-                this._dockVisibilityAnimationSource = 0;
+        // Clutter does not guarantee an onComplete callback when every
+        // animated property already equals its target. Complete that state
+        // change here so the C++ controller never waits forever for an
+        // animation that was not created.
+        if (remainingDistance < 0.5) {
+            completeTransition();
+            return;
+        }
+
+        completionSource = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            duration + 32,
+            () => {
+                completionSource = 0;
+                completeTransition();
                 return GLib.SOURCE_REMOVE;
             });
+        actor.ease({
+            translation_x: targetX,
+            translation_y: targetY,
+            duration,
+            mode: hidden
+                ? Clutter.AnimationMode.EASE_IN_QUAD
+                : Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: completeTransition,
+        });
+    }
+
+    _dockPointerIsInside() {
+        if (!this._dockPlacement || this._dockVisibilityState === 'hidden')
+            return false;
+
+        const monitorIndex = this._dockMonitorIndex();
+        const monitor = Main.layoutManager.monitors[monitorIndex];
+        if (!monitor)
+            return false;
+
+        const placement = placeDockInWorkArea(
+            monitor,
+            this._workAreaForMonitor(monitorIndex),
+            this._dockPlacement);
+        if (!this._pointerPosition)
+            return false;
+
+        return isPointerInsideDockInterior(
+            placement,
+            this._pointerPosition.x,
+            this._pointerPosition.y);
+    }
+
+    _publishDockPointerInside(force = false) {
+        if (!this._connected)
+            return;
+
+        const inside = this._dockPointerIsInside();
+        if (!force && inside === this._dockPointerInside)
+            return;
+
+        this._dockPointerInside = inside;
+        this._call('PublishDockPointerInside', '(b)', [inside]);
     }
 
     _scheduleDockPlacement(restart = false, requestedDelay = null) {
@@ -868,7 +952,8 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockRevealSignal = this._dockRevealActor.connect(
             'notify::hover', actor => {
                 if (!actor.hover || !this._enabled ||
-                    this._dockAutohide === 'none' || !this._dockHidden)
+                    this._dockAutohide === 'none' ||
+                    this._dockVisibilityState !== 'hidden')
                     return;
 
                 // The GTK surface stays mapped at its committed edge. Reveal
@@ -893,7 +978,7 @@ export default class DocklightWindowIntegration extends Extension {
             return;
 
         if (!this._enabled || this._dockAutohide === 'none' ||
-            !this._dockHidden || !this._dockPlacement) {
+            this._dockVisibilityState !== 'hidden' || !this._dockPlacement) {
             actor.hide();
             return;
         }
@@ -1096,14 +1181,17 @@ export default class DocklightWindowIntegration extends Extension {
         // restores actor opacity before our guarded transition completes.
         const actor = window.get_compositor_private?.();
         if (actor) {
-            actor.translation_x = committed
-                ? actorOffset.x
-                : x - rect.x;
-            actor.translation_y = committed
-                ? actorOffset.y
-                : y - rect.y;
-            if (committed)
+            if (committed) {
                 this._dockActorBaseTranslation = {...actorOffset};
+                if (!['revealing', 'hiding'].includes(
+                    this._dockVisibilityState)) {
+                    actor.translation_x = actorOffset.x;
+                    actor.translation_y = actorOffset.y;
+                }
+            } else {
+                actor.translation_x = x - rect.x;
+                actor.translation_y = y - rect.y;
+            }
         }
 
         // Publish the C++ layout result after resolving it against Shell's
@@ -1176,7 +1264,11 @@ export default class DocklightWindowIntegration extends Extension {
             this._requestDockPlacement();
             this._call('GetDockHidden', null, null, reply => {
                 this._dockHidden = Boolean(reply?.[0]);
+                this._dockVisibilityState = this._dockHidden
+                    ? 'hidden'
+                    : 'visible';
                 this._updateDockRevealActor();
+                this._publishDockPointerInside(true);
             });
 
             // The initial actor scan can run before Mutter has populated the

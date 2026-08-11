@@ -76,6 +76,14 @@ constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "    <method name='RequestDockReveal'>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
+    "    <method name='PublishDockPointerInside'>"
+    "      <arg type='b' direction='in' name='inside'/>"
+    "      <arg type='b' direction='out' name='accepted'/>"
+    "    </method>"
+    "    <method name='PublishDockAnimationCompleted'>"
+    "      <arg type='b' direction='in' name='hidden'/>"
+    "      <arg type='b' direction='out' name='accepted'/>"
+    "    </method>"
     "    <method name='GetDockHidden'>"
     "      <arg type='b' direction='out' name='hidden'/>"
     "    </method>"
@@ -1467,6 +1475,36 @@ void KWinIntegrationService::
         m_backend
             .signal_dock_reveal_requested()
             .emit();
+        g_dbus_method_invocation_return_value(
+            invocation,
+            g_variant_new("(b)", true));
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "PublishDockPointerInside") == 0)
+    {
+        gboolean inside = false;
+        g_variant_get(parameters, "(b)", &inside);
+        m_backend
+            .signal_dock_pointer_inside_changed()
+            .emit(inside);
+        g_dbus_method_invocation_return_value(
+            invocation,
+            g_variant_new("(b)", true));
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "PublishDockAnimationCompleted") == 0)
+    {
+        gboolean hidden = false;
+        g_variant_get(parameters, "(b)", &hidden);
+        m_backend
+            .signal_dock_animation_completed()
+            .emit(hidden);
         g_dbus_method_invocation_return_value(
             invocation,
             g_variant_new("(b)", true));

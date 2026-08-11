@@ -143,6 +143,10 @@ public:
     signal_dock_reveal_requested();
     sigc::signal<void, bool> &
     signal_dock_hidden_changed();
+    sigc::signal<void, bool> &
+    signal_dock_pointer_inside_changed();
+    sigc::signal<void, bool> &
+    signal_dock_animation_completed();
 
 protected:
     void notify_window_added(
@@ -198,6 +202,10 @@ private:
         m_signal_dock_reveal_requested;
     sigc::signal<void, bool>
         m_signal_dock_hidden_changed;
+    sigc::signal<void, bool>
+        m_signal_dock_pointer_inside_changed;
+    sigc::signal<void, bool>
+        m_signal_dock_animation_completed;
     std::optional<WindowIconGeometry>
         m_dock_placement_geometry;
     bool m_dock_hidden = false;

@@ -36,32 +36,52 @@ const autohideControllerSource = fs.readFileSync(
     autohideControllerPath, "utf8");
 assert.match(
     autohideControllerSource,
-    /hide_now\([\s\S]*?\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?set_shell_dock_hidden\(true\);\s*return;/,
+    /hide_now\([\s\S]*?\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(true\);\s*return;/,
     "GNOME autohide must keep the placed dock mapped instead of remapping at the centre");
 assert.match(
     autohideControllerSource,
-    /set_shell_dock_hidden\(bool hidden\)[\s\S]*?set_pass_through\(hidden\)[\s\S]*?input_shape_combine_region[\s\S]*?set_dock_hidden\(hidden\)/,
-    "the persistent hidden dock must be input-pass-through and published to Shell");
+    /finish_shell_animation\([\s\S]*?hidden[\s\S]*?ShellDockState::hidden[\s\S]*?set_shell_input_passthrough\(true\)/,
+    "input pass-through must begin only after Shell completes the hide animation");
 assert.match(
     extensionSource,
-    /_animateDockVisibility\(hidden[\s\S]*?GLib\.timeout_add\([\s\S]*?progress \* progress \* progress[\s\S]*?Math\.pow\(1 - progress, 3\)/,
-    "GNOME must animate the already-placed compositor actor at the screen edge");
+    /_startDockVisibilityTransition\(hidden[\s\S]*?actor\.ease\([\s\S]*?EASE_IN_QUAD[\s\S]*?EASE_OUT_QUAD/,
+    "GNOME must use a native compositor transition at the screen edge");
 assert.match(
     extensionSource,
-    /_finishDockTransition\(\)[\s\S]*?_animateDockVisibility\(\s*this\._dockHidden, this\._dockActor\)/,
+    /remainingDistance < 0\.5[\s\S]*?completeTransition\(\)[\s\S]*?return;[\s\S]*?actor\.ease/,
+    "an already-positioned actor must still complete the visibility state change");
+assert.match(
+    extensionSource,
+    /completionSource = GLib\.timeout_add\([\s\S]*?duration \+ 32[\s\S]*?completeTransition\(\)[\s\S]*?actor\.ease/,
+    "a compositor callback omission must not strand the visibility state machine");
+assert.match(
+    extensionSource,
+    /_finishDockTransition\(\)[\s\S]*?_startDockVisibilityTransition\(\s*this\._dockHidden, this\._dockActor\)/,
     "placement completion must not reveal a dock that autohid while placement settled");
 assert.match(
     autohideControllerSource,
-    /request_reveal\(\)[\s\S]*?m_shell_edge_reveal = true[\s\S]*?schedule_hide\(false\)/,
-    "an edge-only reveal must auto-hide unless the pointer moves into the dock");
+    /set_shell_pointer_inside\([\s\S]*?m_pointer_inside = inside[\s\S]*?ShellDockState::hiding[\s\S]*?reveal\(\)/,
+    "authoritative Shell pointer entry must reverse an in-progress hide");
 assert.match(
     autohideControllerSource,
-    /reveal\(\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?set_shell_dock_hidden\(false\);/,
+    /reveal\(\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(false\);/,
     "a Shell reveal must restore the existing mapped dock surface");
 assert.match(
     extensionSource,
-    /signalName === 'DockHiddenChanged'[\s\S]*?this\._dockHidden = Boolean[\s\S]*?this\._updateDockRevealActor\(\)/,
+    /signalName === 'DockHiddenChanged'[\s\S]*?this\._dockHidden = Boolean[\s\S]*?this\._startDockVisibilityTransition/,
     "Shell must drive its reveal strip from the application's hidden state");
+assert.match(
+    extensionSource,
+    /global\.backend\.get_cursor_tracker\(\)[\s\S]*?_cursorTracker\.get_pointer\(\)[\s\S]*?_pointerPosition[\s\S]*?_publishDockPointerInside[\s\S]*?PublishDockPointerInside/,
+    "Shell must publish compositor-global pointer presence instead of relying on GTK crossing events");
+assert.doesNotMatch(
+    extensionSource,
+    /global\.get_pointer/,
+    "pointer tracking must not use the removed GNOME Shell global pointer API");
+assert.doesNotMatch(
+    autohideControllerSource,
+    /animate_shell_opacity/,
+    "GNOME visibility must have only one animation owner");
 assert.match(
     extensionSource,
     /_placeAuxiliaryWindow[\s\S]*?move_frame\(false, target\.x, target\.y\)/,
@@ -110,11 +130,11 @@ assert.match(
     "GNOME autohide must use a Shell-owned reactive edge strip");
 assert.match(
     extensionSource,
-    /this\._dockAutohide === 'none' \|\| !this\._dockHidden[\s\S]*?this\._call\('RequestDockReveal'/,
+    /this\._dockAutohide === 'none'[\s\S]*?this\._dockVisibilityState !== 'hidden'[\s\S]*?this\._call\('RequestDockReveal'/,
     "the Shell edge strip must request reveal only while the persistent dock is hidden");
 assert.match(
     extensionSource,
-    /const committed = isDockPlacementCommitted\([\s\S]*?actor\.translation_x = committed[\s\S]*?x - rect\.x[\s\S]*?actor\.translation_y = committed[\s\S]*?y - rect\.y/,
+    /const committed = isDockPlacementCommitted\([\s\S]*?if \(committed\)[\s\S]*?actor\.translation_x = actorOffset\.x[\s\S]*?actor\.translation_y = actorOffset\.y[\s\S]*?actor\.translation_x = x - rect\.x[\s\S]*?actor\.translation_y = y - rect\.y/,
     "an asynchronously remapped dock must be painted at its edge, never at Mutter's provisional centre");
 assert.match(
     extensionSource,
@@ -124,7 +144,8 @@ assert.match(
 const source = fs.readFileSync(helperPath, "utf8")
     .replaceAll("export function ", "function ") +
     "\nthis.testApi = {calculateDockStrut, inferDockEdge, " +
-    "isDockPlacementCommitted, parseAuxiliaryPosition, placeDockInWorkArea};";
+    "isDockPlacementCommitted, isPointerInsideDockInterior, " +
+    "parseAuxiliaryPosition, placeDockInWorkArea};";
 const context = {};
 vm.createContext(context);
 vm.runInContext(source, context, {filename: helperPath});
@@ -133,6 +154,7 @@ const {
     calculateDockStrut,
     inferDockEdge,
     isDockPlacementCommitted,
+    isPointerInsideDockInterior,
     parseAuxiliaryPosition,
     placeDockInWorkArea,
 } = context.testApi;
@@ -221,5 +243,36 @@ assert.deepStrictEqual(
         primaryWorkArea,
         {x: 385, y: 1016, width: 400, height: 64})},
     {x: 385, y: 1016, width: 400, height: 64, edge: "bottom"});
+
+const pointerFixtures = [
+    {
+        placement: {x: 300, y: 32, width: 400, height: 64, edge: "top"},
+        edge: [500, 32],
+        interior: [500, 40],
+    },
+    {
+        placement: {x: 300, y: 1016, width: 400, height: 64, edge: "bottom"},
+        edge: [500, 1079],
+        interior: [500, 1070],
+    },
+    {
+        placement: {x: 0, y: 340, width: 64, height: 400, edge: "left"},
+        edge: [0, 500],
+        interior: [8, 500],
+    },
+    {
+        placement: {x: 1106, y: 340, width: 64, height: 400, edge: "right"},
+        edge: [1169, 500],
+        interior: [1160, 500],
+    },
+];
+for (const fixture of pointerFixtures) {
+    assert.strictEqual(isPointerInsideDockInterior(
+        fixture.placement, ...fixture.edge), false);
+    assert.strictEqual(isPointerInsideDockInterior(
+        fixture.placement, ...fixture.interior), true);
+}
+assert.strictEqual(isPointerInsideDockInterior(
+    pointerFixtures[1].placement, 299, 1070), false);
 
 console.log("GNOME placement tests passed");

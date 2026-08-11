@@ -202,6 +202,24 @@ void WindowRegistry::start()
                     m_signal_dock_reveal_requested.emit();
                 }));
 
+    m_connections.push_back(
+        m_backend
+            .signal_dock_pointer_inside_changed()
+            .connect(
+                [this](bool inside)
+                {
+                    m_signal_dock_pointer_inside_changed.emit(inside);
+                }));
+
+    m_connections.push_back(
+        m_backend
+            .signal_dock_animation_completed()
+            .connect(
+                [this](bool hidden)
+                {
+                    m_signal_dock_animation_completed.emit(hidden);
+                }));
+
     m_backend.start();
 
     if (!m_connected)
@@ -212,6 +230,18 @@ sigc::signal<void> &
 WindowRegistry::signal_dock_reveal_requested()
 {
     return m_signal_dock_reveal_requested;
+}
+
+sigc::signal<void, bool> &
+WindowRegistry::signal_dock_pointer_inside_changed()
+{
+    return m_signal_dock_pointer_inside_changed;
+}
+
+sigc::signal<void, bool> &
+WindowRegistry::signal_dock_animation_completed()
+{
+    return m_signal_dock_animation_completed;
 }
 
 void WindowRegistry::stop()

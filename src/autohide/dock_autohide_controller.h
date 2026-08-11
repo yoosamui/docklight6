@@ -54,6 +54,8 @@ public:
     void finish_drag(bool pointer_inside);
     void refresh_mapped_surface();
     void request_reveal();
+    void set_shell_pointer_inside(bool inside);
+    void finish_shell_animation(bool hidden);
 
 private:
     void pointer_entered();
@@ -61,8 +63,8 @@ private:
     void schedule_hide(bool refresh_pointer = true);
     void cancel_hide();
     void cancel_animation();
-    void set_shell_dock_hidden(bool hidden);
-    void animate_shell_opacity(bool hiding);
+    void request_shell_visibility(bool hidden);
+    void set_shell_input_passthrough(bool passthrough);
     bool can_animate_x11() const;
     ScreenPosition hidden_x11_position() const;
     void animate_x11(
@@ -81,13 +83,19 @@ private:
 
     sigc::connection m_pointer_enter;
     sigc::connection m_pointer_leave;
-    sigc::connection m_pointer_motion;
     sigc::connection m_window_map;
     sigc::connection m_reveal_requested;
     sigc::connection m_hide_timer;
     sigc::connection m_animation_timer;
     sigc::connection m_x11_reveal_start_timer;
-    sigc::connection m_shell_opacity_animation_timer;
+
+    enum class ShellDockState
+    {
+        visible,
+        revealing,
+        hiding,
+        hidden
+    };
 
     DockAutohide m_mode = DockAutohide::none;
     int m_inhibit_count = 0;
@@ -109,8 +117,5 @@ private:
     bool m_pointer_inside = false;
     bool m_suppress_next_map_hide = false;
     bool m_pending_x11_reveal_animation = false;
-    bool m_shell_edge_reveal = false;
-    double m_shell_opacity_start = 1.0;
-    double m_shell_opacity_target = 1.0;
-    gint64 m_shell_opacity_start_time_us = 0;
+    ShellDockState m_shell_state = ShellDockState::visible;
 };

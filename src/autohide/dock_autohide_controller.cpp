@@ -66,10 +66,8 @@ DockAutohideController::~DockAutohideController()
     cancel_animation();
     m_pointer_enter.disconnect();
     m_pointer_leave.disconnect();
-    m_pointer_motion.disconnect();
     m_window_map.disconnect();
     m_reveal_requested.disconnect();
-    m_shell_opacity_animation_timer.disconnect();
     m_reveal_window.hide();
 }
 
@@ -82,14 +80,13 @@ void DockAutohideController::initialize()
 
     m_window.add_events(
         Gdk::ENTER_NOTIFY_MASK |
-        Gdk::LEAVE_NOTIFY_MASK |
-        Gdk::POINTER_MOTION_MASK);
+        Gdk::LEAVE_NOTIFY_MASK);
 
     m_pointer_enter =
         m_window.signal_enter_notify_event().connect(
             [this](GdkEventCrossing *event)
             {
-                if (m_shell_edge_reveal)
+                if (uses_shell_reveal_trigger())
                     return false;
 
                 if (!event ||
@@ -101,45 +98,13 @@ void DockAutohideController::initialize()
 
                 return false;
             });
-
-
-    m_pointer_motion =
-        m_window.signal_motion_notify_event().connect(
-            [this](GdkEventMotion *event)
-            {
-                if (!m_shell_edge_reveal || !event)
-                    return false;
-
-                constexpr double EDGE_MARGIN = 4.0;
-                const double width = std::max(
-                    1,
-                    m_window.get_allocated_width());
-                const double height = std::max(
-                    1,
-                    m_window.get_allocated_height());
-                const bool moved_inward =
-                    (m_placement.anchor_top &&
-                     event->y > EDGE_MARGIN) ||
-                    (m_placement.anchor_bottom &&
-                     event->y < height - EDGE_MARGIN) ||
-                    (m_placement.anchor_left &&
-                     event->x > EDGE_MARGIN) ||
-                    (m_placement.anchor_right &&
-                     event->x < width - EDGE_MARGIN);
-
-                if (moved_inward)
-                {
-                    m_shell_edge_reveal = false;
-                    pointer_entered();
-                }
-
-                return false;
-            });
-
     m_pointer_leave =
         m_window.signal_leave_notify_event().connect(
             [this](GdkEventCrossing *event)
             {
+                if (uses_shell_reveal_trigger())
+                    return false;
+
                 if (!event ||
                     (event->mode == GDK_CROSSING_NORMAL &&
                      event->detail != GDK_NOTIFY_INFERIOR))
@@ -354,11 +319,59 @@ void DockAutohideController::refresh_mapped_surface()
 
 void DockAutohideController::request_reveal()
 {
+    if (!uses_shell_reveal_trigger())
+    {
+        pointer_entered();
+        return;
+    }
+
     cancel_hide();
-    m_shell_edge_reveal = true;
     m_pointer_inside = false;
     reveal();
-    schedule_hide(false);
+}
+
+void DockAutohideController::set_shell_pointer_inside(
+    bool inside)
+{
+    if (!uses_shell_reveal_trigger())
+        return;
+
+    m_pointer_inside = inside;
+    if (inside)
+    {
+        cancel_hide();
+        if (m_shell_state == ShellDockState::hiding)
+            reveal();
+        return;
+    }
+
+    if (m_shell_state == ShellDockState::visible)
+        schedule_hide(false);
+}
+
+void DockAutohideController::finish_shell_animation(
+    bool hidden)
+{
+    if (!uses_shell_reveal_trigger())
+        return;
+
+    if (hidden)
+    {
+        if (!m_hidden || m_shell_state != ShellDockState::hiding)
+            return;
+
+        m_shell_state = ShellDockState::hidden;
+        set_shell_input_passthrough(true);
+        return;
+    }
+
+    if (m_hidden || m_shell_state != ShellDockState::revealing)
+        return;
+
+    m_shell_state = ShellDockState::visible;
+    set_shell_input_passthrough(false);
+    if (!m_pointer_inside)
+        schedule_hide(false);
 }
 
 void DockAutohideController::pointer_entered()
@@ -372,7 +385,6 @@ void DockAutohideController::pointer_entered()
 
 void DockAutohideController::pointer_left()
 {
-    m_shell_edge_reveal = false;
     m_pointer_inside = false;
     schedule_hide();
 }
@@ -384,7 +396,9 @@ void DockAutohideController::schedule_hide(
     // replaced by the dock or while a GTK grab owns the pointer. Always
     // refresh from the real device position before pointer state can veto an
     // intellihide transition.
-    if (refresh_pointer && m_window.get_mapped())
+    if (refresh_pointer &&
+        !uses_shell_reveal_trigger() &&
+        m_window.get_mapped())
     {
         m_pointer_inside =
             m_window.pointer_is_inside();
@@ -405,7 +419,7 @@ void DockAutohideController::schedule_hide(
         Glib::signal_timeout().connect(
             [this]()
             {
-                hide_now(!m_shell_edge_reveal);
+                hide_now(true);
                 return false;
             },
             DockConstants::AUTOHIDE_HIDE_DELAY_MS);
@@ -422,14 +436,15 @@ void DockAutohideController::cancel_animation()
     m_animation_timer.disconnect();
 }
 
-void DockAutohideController::set_shell_dock_hidden(bool hidden)
+void DockAutohideController::set_shell_input_passthrough(
+    bool passthrough)
 {
     auto gdk_window = m_window.get_window();
     if (gdk_window)
     {
-        gdk_window->set_pass_through(hidden);
+        gdk_window->set_pass_through(passthrough);
         Cairo::RefPtr<Cairo::Region> input_region;
-        if (hidden)
+        if (passthrough)
             input_region = Cairo::Region::create();
         gdk_window->input_shape_combine_region(
             input_region,
@@ -437,46 +452,19 @@ void DockAutohideController::set_shell_dock_hidden(bool hidden)
             0);
     }
 
-    if (m_window.m_window_registry)
-        m_window.m_window_registry->set_dock_hidden(hidden);
-
-    animate_shell_opacity(hidden);
 }
 
-void DockAutohideController::animate_shell_opacity(
-    bool hiding)
+void DockAutohideController::request_shell_visibility(
+    bool hidden)
 {
-    m_shell_opacity_animation_timer.disconnect();
-    m_shell_opacity_start = m_window.get_opacity();
-    m_shell_opacity_target = hiding ? 0.0 : 1.0;
-    m_shell_opacity_start_time_us = g_get_monotonic_time();
+    if (!hidden)
+        set_shell_input_passthrough(false);
 
-    m_shell_opacity_animation_timer =
-        Glib::signal_timeout().connect(
-            [this, hiding]()
-            {
-                const double progress = std::clamp(
-                    static_cast<double>(g_get_monotonic_time() -
-                        m_shell_opacity_start_time_us) /
-                        (DockConstants::AUTOHIDE_ANIMATION_DURATION_MS *
-                         1000.0),
-                    0.0,
-                    1.0);
-                const double eased = hiding
-                    ? progress * progress * progress
-                    : 1.0 - std::pow(1.0 - progress, 3.0);
-                m_window.set_opacity(
-                    m_shell_opacity_start +
-                    (m_shell_opacity_target - m_shell_opacity_start) *
-                        eased);
-
-                if (progress < 1.0)
-                    return true;
-
-                m_shell_opacity_animation_timer.disconnect();
-                return false;
-            },
-            DockConstants::AUTOHIDE_ANIMATION_FRAME_MS);
+    m_shell_state = hidden
+        ? ShellDockState::hiding
+        : ShellDockState::revealing;
+    if (m_window.m_window_registry)
+        m_window.m_window_registry->set_dock_hidden(hidden);
 }
 
 bool DockAutohideController::can_animate_x11() const
@@ -676,7 +664,7 @@ void DockAutohideController::reveal_immediately()
 
     if (uses_shell_reveal_trigger())
     {
-        set_shell_dock_hidden(false);
+        request_shell_visibility(false);
         m_hidden = false;
         m_reveal_window.hide();
         return;
@@ -697,7 +685,9 @@ void DockAutohideController::reveal_immediately()
 void DockAutohideController::hide_now(
     bool refresh_pointer)
 {
-    if (refresh_pointer && m_window.get_mapped())
+    if (refresh_pointer &&
+        !uses_shell_reveal_trigger() &&
+        m_window.get_mapped())
     {
         m_pointer_inside =
             m_window.pointer_is_inside();
@@ -712,7 +702,6 @@ void DockAutohideController::hide_now(
     }
 
     m_window.hide_tooltip_immediately();
-    m_shell_edge_reveal = false;
     m_hidden = true;
 
     if (uses_shell_reveal_trigger())
@@ -721,7 +710,7 @@ void DockAutohideController::hide_now(
         // Keep the already-placed Wayland surface mapped. Unmapping it makes
         // Mutter create the next surface at the screen centre and was also
         // the source of the repeated hide/reveal cycle.
-        set_shell_dock_hidden(true);
+        request_shell_visibility(true);
         return;
     }
 
@@ -739,7 +728,7 @@ void DockAutohideController::reveal()
 
         if (uses_shell_reveal_trigger())
         {
-            set_shell_dock_hidden(false);
+            request_shell_visibility(false);
             m_reveal_window.hide();
             return;
         }

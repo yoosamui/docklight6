@@ -63,6 +63,25 @@ export function isDockPlacementCommitted(frameRect, placement, actorOffset) {
         Math.round(frameRect.y + offset.y) === Math.round(placement.y);
 }
 
+export function isPointerInsideDockInterior(
+    placement, pointerX, pointerY, edgeMargin = 4) {
+    const insideRect =
+        pointerX >= placement.x &&
+        pointerX < placement.x + placement.width &&
+        pointerY >= placement.y &&
+        pointerY < placement.y + placement.height;
+    if (!insideRect)
+        return false;
+
+    if (placement.edge === 'top')
+        return pointerY >= placement.y + edgeMargin;
+    if (placement.edge === 'bottom')
+        return pointerY < placement.y + placement.height - edgeMargin;
+    if (placement.edge === 'left')
+        return pointerX >= placement.x + edgeMargin;
+    return pointerX < placement.x + placement.width - edgeMargin;
+}
+
 export function calculateDockStrut(monitor, dockRect) {
     const edge = inferDockEdge(monitor, dockRect);
     let x = monitor.x;

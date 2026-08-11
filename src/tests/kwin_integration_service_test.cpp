@@ -317,6 +317,43 @@ void verifies_dbus_state_transport()
     assert(reveal_requested);
     reveal_connection.disconnect();
 
+    bool pointer_inside = false;
+    sigc::connection pointer_connection =
+        backend
+            .signal_dock_pointer_inside_changed()
+            .connect(
+                [&pointer_inside](bool inside)
+                {
+                    pointer_inside = inside;
+                });
+    assert(accepted(
+        call_method(
+            client,
+            "PublishDockPointerInside",
+            g_variant_new("(b)", true))));
+    assert(pointer_inside);
+    pointer_connection.disconnect();
+
+    bool animation_completed = false;
+    bool animation_hidden = true;
+    sigc::connection animation_connection =
+        backend
+            .signal_dock_animation_completed()
+            .connect(
+                [&animation_completed, &animation_hidden](bool hidden)
+                {
+                    animation_completed = true;
+                    animation_hidden = hidden;
+                });
+    assert(accepted(
+        call_method(
+            client,
+            "PublishDockAnimationCompleted",
+            g_variant_new("(b)", false))));
+    assert(animation_completed);
+    assert(!animation_hidden);
+    animation_connection.disconnect();
+
     backend.set_dock_hidden(true);
     result = call_method(
         client,

@@ -185,3 +185,15 @@ WindowBackend::signal_dock_hidden_changed()
 {
     return m_signal_dock_hidden_changed;
 }
+
+sigc::signal<void, bool> &
+WindowBackend::signal_dock_pointer_inside_changed()
+{
+    return m_signal_dock_pointer_inside_changed;
+}
+
+sigc::signal<void, bool> &
+WindowBackend::signal_dock_animation_completed()
+{
+    return m_signal_dock_animation_completed;
+}

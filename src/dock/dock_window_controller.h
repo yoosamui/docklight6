@@ -189,6 +189,10 @@ private:
         m_dock_surface_geometry_changed;
     sigc::connection
         m_dock_reveal_requested;
+    sigc::connection
+        m_dock_pointer_inside_changed;
+    sigc::connection
+        m_dock_animation_completed;
     sigc::connection m_dock_add;
     sigc::connection m_dock_remove;
 

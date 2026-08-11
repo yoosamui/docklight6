@@ -140,6 +140,8 @@ DockWindowController::~DockWindowController()
     m_window_geometry_changed.disconnect();
     m_dock_surface_geometry_changed.disconnect();
     m_dock_reveal_requested.disconnect();
+    m_dock_pointer_inside_changed.disconnect();
+    m_dock_animation_completed.disconnect();
     m_dock_add.disconnect();
     m_dock_remove.disconnect();
 }
@@ -289,6 +291,28 @@ void DockWindowController::initialize()
                     {
                         m_autohide_controller
                             ->request_reveal();
+                    });
+
+        m_dock_pointer_inside_changed =
+            m_window
+                .m_window_registry
+                ->signal_dock_pointer_inside_changed()
+                .connect(
+                    [this](bool inside)
+                    {
+                        m_autohide_controller
+                            ->set_shell_pointer_inside(inside);
+                    });
+
+        m_dock_animation_completed =
+            m_window
+                .m_window_registry
+                ->signal_dock_animation_completed()
+                .connect(
+                    [this](bool hidden)
+                    {
+                        m_autohide_controller
+                            ->finish_shell_animation(hidden);
                     });
     }
 
