@@ -19,6 +19,9 @@ const extensionPath = path.resolve(
 const autohideControllerPath = path.resolve(
     __dirname,
     "../autohide/dock_autohide_controller.cpp");
+const dockWindowControllerPath = path.resolve(
+    __dirname,
+    "../dock/dock_window_controller.cpp");
 
 // gnome-extensions pack only bundles its conventional entry points unless
 // imported modules are explicitly listed as extra sources. Keep the package
@@ -34,6 +37,8 @@ assert.match(
 const extensionSource = fs.readFileSync(extensionPath, "utf8");
 const autohideControllerSource = fs.readFileSync(
     autohideControllerPath, "utf8");
+const dockWindowControllerSource = fs.readFileSync(
+    dockWindowControllerPath, "utf8");
 assert.match(
     autohideControllerSource,
     /hide_now\([\s\S]*?\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(true\);\s*return;/,
@@ -90,6 +95,14 @@ assert.match(
     extensionSource,
     /target\.type === 'reveal'[\s\S]*?clampAuxiliaryToWorkArea\([\s\S]*?_workAreaForMonitor/,
     "GNOME previews and tooltips must clamp to the Shell work area without moving the reveal strip");
+assert.match(
+    dockWindowControllerSource,
+    /show_tooltip\([\s\S]*?dock_screen_position\(true\)[\s\S]*?show_tooltip\(/,
+    "GNOME tooltips must follow the compositor-confirmed dock surface origin");
+assert.match(
+    dockWindowControllerSource,
+    /show_preview\([\s\S]*?dock_screen_position\(true\)[\s\S]*?show_preview\(/,
+    "GNOME previews must centre on the compositor-confirmed dock surface origin");
 assert.match(
     extensionSource,
     /\['size-changed', \(\) => this\._placeAuxiliaryWindow\(window\)\]/,
@@ -248,7 +261,29 @@ assert.deepStrictEqual(
         primary,
         primaryWorkArea,
         {x: 1106, y: 340, width: 64, height: 400})},
-    {x: 1106, y: 340, width: 64, height: 400, edge: "right"});
+    {x: 1106, y: 356, width: 64, height: 400, edge: "right"});
+
+assert.deepStrictEqual(
+    {...placeDockInWorkArea(
+        primary,
+        primaryWorkArea,
+        {x: 0, y: 61, width: 62, height: 958},
+        "center")},
+    {x: 0, y: 77, width: 62, height: 958, edge: "left"});
+assert.deepStrictEqual(
+    {...placeDockInWorkArea(
+        primary,
+        primaryWorkArea,
+        {x: 0, y: 61, width: 62, height: 958},
+        "start")},
+    {x: 0, y: 32, width: 62, height: 958, edge: "left"});
+assert.deepStrictEqual(
+    {...placeDockInWorkArea(
+        primary,
+        primaryWorkArea,
+        {x: 0, y: 61, width: 62, height: 958},
+        "end")},
+    {x: 0, y: 122, width: 62, height: 958, edge: "left"});
 
 const rightDockWorkArea = {x: 0, y: 32, width: 1106, height: 1048};
 assert.deepStrictEqual(
@@ -256,7 +291,7 @@ assert.deepStrictEqual(
         primary,
         rightDockWorkArea,
         {x: 1106, y: 340, width: 64, height: 400})},
-    {x: 1042, y: 340, width: 64, height: 400, edge: "right"});
+    {x: 1042, y: 356, width: 64, height: 400, edge: "right"});
 assert.deepStrictEqual(
     JSON.parse(JSON.stringify(calculateDockStrut(
         primary,

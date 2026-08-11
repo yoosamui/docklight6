@@ -1359,7 +1359,10 @@ void DockWindowController::show_tooltip(
     // Use the synchronous layout placement for tooltips so adding or
     // removing a dock item cannot shift them to a stale surface origin.
     const auto dock_position =
-        dock_screen_position(false);
+        // GNOME moves the ordinary Wayland dock surface into Shell's real
+        // work area after GTK has calculated its full-output placement.
+        // Tooltips must follow that compositor-confirmed origin.
+        dock_screen_position(true);
 
     // The calculated dock position is global, while tooltip layer-shell
     // margins are relative to the selected output.
@@ -1484,7 +1487,9 @@ void DockWindowController::show_preview(
         m_layout_geometry.dock_geometry(
             m_window);
     const auto dock_position =
-        dock_screen_position(false);
+        // Keep the preview centred on the icon's actual Shell-positioned
+        // surface, not GTK's provisional full-output dock origin.
+        dock_screen_position(true);
 
     dock_geometry.x =
         dock_position.x -

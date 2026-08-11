@@ -271,6 +271,7 @@ export default class DocklightWindowIntegration extends Extension {
 
     _loadDockPlacement() {
         let autohide = 'none';
+        let alignment = 'center';
 
         const path = GLib.build_filenamev([
             GLib.get_user_config_dir(), 'docklight6', 'docklight.conf',
@@ -286,12 +287,21 @@ export default class DocklightWindowIntegration extends Extension {
             } catch (_error) {
                 // Older configuration files use the non-hiding default.
             }
+            try {
+                const configuredAlignment = keyFile.get_string('dock', 'alignment').trim();
+                if (['start', 'center', 'end', 'fill'].includes(configuredAlignment))
+                    alignment = configuredAlignment;
+            } catch (_error) {
+                // Missing and empty alignment values use the centred default.
+            }
         } catch (_error) {
             // Missing keys and a missing first-run file both mean defaults.
         }
 
-        const changed = this._dockAutohide !== autohide;
+        const changed = this._dockAutohide !== autohide ||
+            this._dockAlignment !== alignment;
         this._dockAutohide = autohide;
+        this._dockAlignment = alignment;
         return changed;
     }
 
@@ -790,7 +800,8 @@ export default class DocklightWindowIntegration extends Extension {
         const positioned = placeDockInWorkArea(
             Main.layoutManager.monitors[this._dockMonitorIndex()],
             this._workAreaForMonitor(this._dockMonitorIndex()),
-            placement);
+            placement,
+            this._dockAlignment);
         const offset = {x: 0, y: 0};
         if (positioned.edge === 'top')
             offset.y = -positioned.height;
@@ -890,7 +901,8 @@ export default class DocklightWindowIntegration extends Extension {
         const placement = placeDockInWorkArea(
             monitor,
             this._workAreaForMonitor(monitorIndex),
-            this._dockPlacement);
+            this._dockPlacement,
+            this._dockAlignment);
         if (!this._pointerPosition)
             return false;
 
@@ -1033,7 +1045,8 @@ export default class DocklightWindowIntegration extends Extension {
         const placement = placeDockInWorkArea(
             monitor,
             this._workAreaForMonitor(monitorIndex),
-            this._dockPlacement);
+            this._dockPlacement,
+            this._dockAlignment);
         const reveal = calculateDockRevealRect(placement);
 
         actor.set_position(reveal.x, reveal.y);
@@ -1179,7 +1192,8 @@ export default class DocklightWindowIntegration extends Extension {
         const positionedPlacement = placeDockInWorkArea(
             monitor,
             this._workAreaForMonitor(monitorIndex),
-            placement);
+            placement,
+            this._dockAlignment);
         const x = positionedPlacement.x;
         const y = positionedPlacement.y;
         if (rect.x !== x || rect.y !== y)

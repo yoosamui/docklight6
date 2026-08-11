@@ -77,14 +77,26 @@ export function calculateDockRevealRect(placement, revealSize = 6) {
     return rect;
 }
 
-export function placeDockInWorkArea(monitor, workArea, rect) {
+export function placeDockInWorkArea(
+    monitor,
+    workArea,
+    rect,
+    alignment = 'center') {
     const area = workArea || monitor;
     const edge = inferDockEdge(monitor, rect);
     let x = rect.x;
     let y = rect.y;
 
+    const alignMainAxis = (areaStart, areaLength, surfaceLength) => {
+        if (alignment === 'start' || alignment === 'fill')
+            return areaStart;
+        if (alignment === 'end')
+            return areaStart + areaLength - surfaceLength;
+        return areaStart + (areaLength - surfaceLength) / 2;
+    };
+
     if (edge === 'top' || edge === 'bottom') {
-        x = clamp(rect.x, area.x, area.x + area.width - rect.width);
+        x = alignMainAxis(area.x, area.width, rect.width);
         y = edge === 'top'
             ? area.y
             : area.y + area.height - rect.height;
@@ -92,8 +104,11 @@ export function placeDockInWorkArea(monitor, workArea, rect) {
         x = edge === 'left'
             ? area.x
             : area.x + area.width - rect.width;
-        y = clamp(rect.y, area.y, area.y + area.height - rect.height);
+        y = alignMainAxis(area.y, area.height, rect.height);
     }
+
+    x = clamp(x, area.x, area.x + area.width - rect.width);
+    y = clamp(y, area.y, area.y + area.height - rect.height);
 
     return {
         x: Math.round(x),
