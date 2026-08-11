@@ -268,6 +268,15 @@ void DockWindowController::initialize()
                 .connect(
                     [this]()
                     {
+                        // GNOME starts this ordinary Wayland window at zero
+                        // opacity until Shell confirms its first committed
+                        // edge placement. Later geometry publications must
+                        // not overwrite Shell's reveal/hide animation frames.
+                        if (m_window.m_initial_gnome_placement_pending)
+                        {
+                            m_window.m_initial_gnome_placement_pending = false;
+                            m_window.set_opacity(1.0);
+                        }
                         schedule_icon_geometry_update();
                     });
 

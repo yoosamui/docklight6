@@ -165,3 +165,23 @@ void WindowBackend::
 {
     m_signal_dock_surface_geometry_changed.emit();
 }
+
+bool WindowBackend::dock_hidden() const
+{
+    return m_dock_hidden;
+}
+
+void WindowBackend::set_dock_hidden(bool hidden)
+{
+    if (m_dock_hidden == hidden)
+        return;
+
+    m_dock_hidden = hidden;
+    m_signal_dock_hidden_changed.emit(hidden);
+}
+
+sigc::signal<void, bool> &
+WindowBackend::signal_dock_hidden_changed()
+{
+    return m_signal_dock_hidden_changed;
+}

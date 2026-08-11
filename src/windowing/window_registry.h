@@ -66,6 +66,7 @@ public:
     void set_dock_placement_geometry(
         const std::optional<WindowIconGeometry>
             &geometry);
+    void set_dock_hidden(bool hidden);
 
     const ManagedWindow *find_window(
         const WindowId &window_id) const;

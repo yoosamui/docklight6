@@ -24,9 +24,10 @@ const DOCK_PLACEMENT_DELAY_MS = 30;
 // the old orientation before GTK supplies the final allocation.
 const DOCK_TRANSITION_DELAY_MS = 300;
 const DOCK_PLACEMENT_MAX_ATTEMPTS = 40;
-const DOCK_REVEAL_EXPECTATION_MS = 2000;
 const REGISTRATION_RETRY_MS = 250;
 const CONFIGURATION_SETTLE_MS = 50;
+const DOCK_HIDE_ANIMATION_MS = 180;
+const DOCK_REVEAL_ANIMATION_MS = 220;
 
 const TRACKABLE_TYPES = new Set([
     Meta.WindowType.NORMAL,
@@ -70,11 +71,17 @@ export default class DocklightWindowIntegration extends Extension {
         this._tracker = Shell.WindowTracker.get_default();
         this._windows = new Map();
         this._windowSignals = new Map();
+        this._dockHidden = false;
         this._signals = [];
         this._connect(this._proxy, 'g-signal',
             (_proxy, _sender, signalName, parameters) => {
                 if (signalName === 'DockPlacementGeometryChanged')
                     this._setDockPlacement(parameters.deepUnpack());
+                else if (signalName === 'DockHiddenChanged') {
+                    this._dockHidden = Boolean(parameters.deepUnpack()?.[0]);
+                    this._animateDockVisibility(this._dockHidden);
+                    this._updateDockRevealActor();
+                }
             });
         this._revision = 0;
         this._connected = false;
@@ -83,13 +90,10 @@ export default class DocklightWindowIntegration extends Extension {
         this._pendingWaits = 0;
         this._registrationRetrySource = 0;
         this._dockWindow = null;
-        // The application-id fallback is safe for the initial dock and for a
-        // remap explicitly requested by the Shell edge strip. At other times
-        // an autohide reveal window can be the only mapped Docklight surface
-        // and must not be mistaken for the dock while its title propagates.
+        // The application-id fallback is safe for the initial dock only.
+        // GNOME autohide keeps that surface mapped, so later Docklight
+        // toplevels must wait for their explicit title or role metadata.
         this._dockDiscoveredOnce = false;
-        this._dockRevealPending = false;
-        this._dockRevealPendingSource = 0;
         this._dockPlacement = null;
         this._dockWindowSignals = [];
         this._dockPlacementSource = 0;
@@ -98,6 +102,8 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockTransitioning = false;
         this._dockActor = null;
         this._dockActorOpacity = 255;
+        this._dockActorBaseTranslation = {x: 0, y: 0};
+        this._dockVisibilityAnimationSource = 0;
         this._auxiliaryWindowSignals = new Map();
         this._auxiliaryTransitions = new Map();
         this._dialogWindowSignals = new Map();
@@ -191,11 +197,14 @@ export default class DocklightWindowIntegration extends Extension {
             GLib.source_remove(this._dockPlacementSource);
             this._dockPlacementSource = 0;
         }
+        if (this._dockVisibilityAnimationSource) {
+            GLib.source_remove(this._dockVisibilityAnimationSource);
+            this._dockVisibilityAnimationSource = 0;
+        }
         if (this._configurationReloadSource) {
             GLib.source_remove(this._configurationReloadSource);
             this._configurationReloadSource = 0;
         }
-        this._clearDockRevealExpectation();
         for (const source of this._dockDiscoverySources)
             GLib.source_remove(source);
         this._dockDiscoverySources.clear();
@@ -326,7 +335,7 @@ export default class DocklightWindowIntegration extends Extension {
             return false;
         }
         return !this._dockWindow &&
-            (!this._dockDiscoveredOnce || this._dockRevealPending) &&
+            !this._dockDiscoveredOnce &&
             applicationId === 'org.docklight6' &&
             (type === Meta.WindowType.NORMAL ||
                 type === Meta.WindowType.DOCK) &&
@@ -602,7 +611,6 @@ export default class DocklightWindowIntegration extends Extension {
         this._clearDockWindow();
         this._dockWindow = window;
         this._dockDiscoveredOnce = true;
-        this._clearDockRevealExpectation();
         this._updateDockRevealActor();
         this._beginDockTransition();
 
@@ -682,13 +690,23 @@ export default class DocklightWindowIntegration extends Extension {
         // Mutter initially places an ordinary Wayland toplevel at the screen
         // centre. Keep that provisional frame (and an old-axis frame during
         // an edge change) out of the scene until its final size is available.
+        // GNOME's normal-window map animation is already attached when this
+        // extension receives the map signal; cancel it so it cannot restore
+        // opacity or scale the provisional centred actor into view.
+        actor.remove_all_transitions();
+        actor.scale_x = 1;
+        actor.scale_y = 1;
         actor.set_opacity(0);
     }
 
     _finishDockTransition() {
         if (this._dockTransitioning && this._dockActor) {
             try {
-                this._dockActor.set_opacity(this._dockActorOpacity);
+                // Autohide can change state while asynchronous Wayland
+                // placement is settling. Finish at the current state instead
+                // of replaying a reveal over a hide that already completed.
+                this._animateDockVisibility(
+                    this._dockHidden, this._dockActor);
             } catch (_error) {
                 // The actor can disappear while the window is being closed.
             }
@@ -698,6 +716,76 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockPlacementAttempts = 0;
         this._dockActor = null;
         this._dockActorOpacity = 255;
+    }
+
+    _animateDockVisibility(hidden, requestedActor = null) {
+        const actor = requestedActor ??
+            this._dockWindow?.get_compositor_private?.();
+        const placement = this._dockPlacement;
+        if (!actor || !placement)
+            return;
+
+        const base = this._dockActorBaseTranslation ?? {x: 0, y: 0};
+        const positioned = placeDockInWorkArea(
+            Main.layoutManager.monitors[this._dockMonitorIndex()],
+            this._workAreaForMonitor(this._dockMonitorIndex()),
+            placement);
+        const offset = {x: 0, y: 0};
+        if (positioned.edge === 'top')
+            offset.y = -positioned.height;
+        else if (positioned.edge === 'bottom')
+            offset.y = positioned.height;
+        else if (positioned.edge === 'left')
+            offset.x = -positioned.width;
+        else
+            offset.x = positioned.width;
+
+        if (this._dockVisibilityAnimationSource) {
+            GLib.source_remove(this._dockVisibilityAnimationSource);
+            this._dockVisibilityAnimationSource = 0;
+        }
+        actor.remove_all_transitions();
+        if (!hidden) {
+            actor.translation_x = base.x + offset.x;
+            actor.translation_y = base.y + offset.y;
+            actor.set_opacity(0);
+        }
+
+        const startX = actor.translation_x;
+        const startY = actor.translation_y;
+        const startOpacity = actor.get_opacity();
+        const targetX = hidden ? base.x + offset.x : base.x;
+        const targetY = hidden ? base.y + offset.y : base.y;
+        const targetOpacity = hidden ? 0 : this._dockActorOpacity;
+        const duration = hidden
+            ? DOCK_HIDE_ANIMATION_MS
+            : DOCK_REVEAL_ANIMATION_MS;
+        const startedAt = GLib.get_monotonic_time();
+
+        this._dockVisibilityAnimationSource = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT, 16, () => {
+                if (!this._enabled || !actor) {
+                    this._dockVisibilityAnimationSource = 0;
+                    return GLib.SOURCE_REMOVE;
+                }
+
+                const progress = Math.min(1,
+                    (GLib.get_monotonic_time() - startedAt) /
+                        (duration * 1000));
+                const eased = hidden
+                    ? progress * progress * progress
+                    : 1 - Math.pow(1 - progress, 3);
+                actor.translation_x = startX + (targetX - startX) * eased;
+                actor.translation_y = startY + (targetY - startY) * eased;
+                actor.set_opacity(Math.round(startOpacity +
+                    (targetOpacity - startOpacity) * eased));
+
+                if (progress < 1)
+                    return GLib.SOURCE_CONTINUE;
+
+                this._dockVisibilityAnimationSource = 0;
+                return GLib.SOURCE_REMOVE;
+            });
     }
 
     _scheduleDockPlacement(restart = false, requestedDelay = null) {
@@ -780,16 +868,16 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockRevealSignal = this._dockRevealActor.connect(
             'notify::hover', actor => {
                 if (!actor.hover || !this._enabled ||
-                    this._dockAutohide === 'none' || this._dockWindow)
+                    this._dockAutohide === 'none' || !this._dockHidden)
                     return;
 
-                // Hide before asking GTK to remap the dock so the Shell input
-                // strip cannot consume the dock's first pointer-enter event.
-                actor.hide();
-                this._expectDockRemap();
+                // The GTK surface stays mapped at its committed edge. Reveal
+                // only restores its content and input region, so Mutter never
+                // gets a new provisional centred surface to place.
                 this._call('RequestDockReveal', null, null, (reply, error) => {
-                    if (error || reply?.[0] !== true)
-                        this._clearDockRevealExpectation();
+                    if (!error && reply?.[0] === true)
+                        this._dockHidden = false;
+                    this._updateDockRevealActor();
                 });
             });
         Main.layoutManager.addChrome(this._dockRevealActor, {
@@ -805,7 +893,7 @@ export default class DocklightWindowIntegration extends Extension {
             return;
 
         if (!this._enabled || this._dockAutohide === 'none' ||
-            this._dockWindow || !this._dockPlacement) {
+            !this._dockHidden || !this._dockPlacement) {
             actor.hide();
             return;
         }
@@ -845,27 +933,6 @@ export default class DocklightWindowIntegration extends Extension {
         actor.set_size(Math.max(1, Math.round(width)),
             Math.max(1, Math.round(height)));
         actor.show();
-    }
-
-    _expectDockRemap() {
-        this._clearDockRevealExpectation();
-        this._dockRevealPending = true;
-        this._dockRevealPendingSource = GLib.timeout_add(
-            GLib.PRIORITY_DEFAULT,
-            DOCK_REVEAL_EXPECTATION_MS,
-            () => {
-                this._dockRevealPending = false;
-                this._dockRevealPendingSource = 0;
-                return GLib.SOURCE_REMOVE;
-            });
-    }
-
-    _clearDockRevealExpectation() {
-        this._dockRevealPending = false;
-        if (this._dockRevealPendingSource) {
-            GLib.source_remove(this._dockRevealPendingSource);
-            this._dockRevealPendingSource = 0;
-        }
     }
 
     _destroyDockRevealActor() {
@@ -1018,23 +1085,32 @@ export default class DocklightWindowIntegration extends Extension {
 
         const actorOffset = this._updateDockStrut(monitor, positionedPlacement);
 
-        // Mutter constrains an ordinary Wayland toplevel against Shell's
-        // synthetic strut, so Autohide::none can displace the compositor
-        // actor inward by the dock's own thickness. Align the painted actor
-        // with the work-area-corrected placement using the opposite of only
-        // DockLight's thickness; the strut can also include a native panel.
-        // Non-reserving modes return a zero offset.
+        const committed = isDockPlacementCommitted(
+            rect, positionedPlacement, actorOffset);
+
+        // move_frame() is asynchronous on Wayland. Until Mutter commits it,
+        // keep the compositor actor painted at the requested edge instead of
+        // at Mutter's provisional centred frame. Once the frame arrives the
+        // correction becomes zero, leaving only the deliberate strut offset.
+        // This also makes the reveal robust if another Shell component
+        // restores actor opacity before our guarded transition completes.
         const actor = window.get_compositor_private?.();
         if (actor) {
-            actor.translation_x = actorOffset.x;
-            actor.translation_y = actorOffset.y;
+            actor.translation_x = committed
+                ? actorOffset.x
+                : x - rect.x;
+            actor.translation_y = committed
+                ? actorOffset.y
+                : y - rect.y;
+            if (committed)
+                this._dockActorBaseTranslation = {...actorOffset};
         }
 
         // Publish the C++ layout result after resolving it against Shell's
         // native work area; never derive geometry from the displaced frame.
-        this._publishDockSurfaceGeometry(positionedPlacement);
-        return isDockPlacementCommitted(
-            rect, positionedPlacement, actorOffset);
+        if (committed)
+            this._publishDockSurfaceGeometry(positionedPlacement);
+        return committed;
     }
 
     _publishDockSurfaceGeometry(rect) {
@@ -1098,6 +1174,10 @@ export default class DocklightWindowIntegration extends Extension {
             this._revision = 0;
             this._pendingWaits = 0;
             this._requestDockPlacement();
+            this._call('GetDockHidden', null, null, reply => {
+                this._dockHidden = Boolean(reply?.[0]);
+                this._updateDockRevealActor();
+            });
 
             // The initial actor scan can run before Mutter has populated the
             // dock's application identity and final window metadata. Repeat

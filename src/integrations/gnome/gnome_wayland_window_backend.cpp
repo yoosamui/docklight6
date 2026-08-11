@@ -20,6 +20,7 @@ GnomeWaylandWindowBackend::capabilities() const
     capabilities.provides_virtual_desktops = true;
     capabilities.provides_frame_geometry = true;
     capabilities.provides_icons = true;
+    capabilities.provides_dock_reveal_trigger = true;
 
     return capabilities;
 }

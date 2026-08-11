@@ -91,6 +91,7 @@ private:
     void return_dock_placement_geometry(
         GDBusMethodInvocation *invocation) const;
     void emit_dock_placement_geometry();
+    void emit_dock_hidden(bool hidden);
     void deliver_next_command();
     void cancel_command_keepalive();
     void clear_commands();
@@ -145,6 +146,8 @@ private:
         m_dock_surface_geometry_changed;
     sigc::connection
         m_dock_placement_geometry_changed;
+    sigc::connection
+        m_dock_hidden_changed;
 
     std::deque<GDBusMethodInvocation *>
         m_command_invocations;

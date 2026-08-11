@@ -76,6 +76,9 @@ constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "    <method name='RequestDockReveal'>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
+    "    <method name='GetDockHidden'>"
+    "      <arg type='b' direction='out' name='hidden'/>"
+    "    </method>"
     "    <method name='BeginSnapshot'>"
     "      <arg type='s' direction='in' name='revision'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
@@ -148,6 +151,9 @@ constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "      <arg type='i' name='y'/>"
     "      <arg type='i' name='width'/>"
     "      <arg type='i' name='height'/>"
+    "    </signal>"
+    "    <signal name='DockHiddenChanged'>"
+    "      <arg type='b' name='hidden'/>"
     "    </signal>"
     "  </interface>"
     "</node>";
@@ -278,6 +284,15 @@ KWinIntegrationService::
                     *this,
                     &KWinIntegrationService::
                         emit_dock_placement_geometry));
+
+    m_dock_hidden_changed =
+        m_backend
+            .signal_dock_hidden_changed()
+            .connect(
+                sigc::mem_fun(
+                    *this,
+                    &KWinIntegrationService::
+                        emit_dock_hidden));
 }
 
 KWinIntegrationService::
@@ -294,6 +309,7 @@ KWinIntegrationService::
         .disconnect();
     m_dock_placement_geometry_changed
         .disconnect();
+    m_dock_hidden_changed.disconnect();
 }
 
 bool KWinIntegrationService::start()
@@ -1164,6 +1180,27 @@ void KWinIntegrationService::
     g_clear_error(&error);
 }
 
+void KWinIntegrationService::emit_dock_hidden(bool hidden)
+{
+    if (!m_available || !m_connection)
+        return;
+
+    GError *error = nullptr;
+    g_dbus_connection_emit_signal(
+        m_connection,
+        nullptr,
+        KWinIntegrationProtocol::OBJECT_PATH,
+        KWinIntegrationProtocol::INTERFACE_NAME,
+        "DockHiddenChanged",
+        g_variant_new("(b)", hidden),
+        &error);
+
+    if (error)
+        g_warning("Cannot publish Docklight hidden state: %s", error->message);
+
+    g_clear_error(&error);
+}
+
 void KWinIntegrationService::
     deliver_next_command()
 {
@@ -1354,6 +1391,14 @@ void KWinIntegrationService::
     {
         return_dock_placement_geometry(
             invocation);
+        return;
+    }
+
+    if (std::strcmp(method_name, "GetDockHidden") == 0)
+    {
+        g_dbus_method_invocation_return_value(
+            invocation,
+            g_variant_new("(b)", m_backend.dock_hidden()));
         return;
     }
 

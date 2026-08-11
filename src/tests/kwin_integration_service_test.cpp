@@ -317,6 +317,20 @@ void verifies_dbus_state_transport()
     assert(reveal_requested);
     reveal_connection.disconnect();
 
+    backend.set_dock_hidden(true);
+    result = call_method(
+        client,
+        "GetDockHidden",
+        nullptr);
+    gboolean dock_hidden = false;
+    g_variant_get(
+        result,
+        "(b)",
+        &dock_hidden);
+    g_variant_unref(result);
+    assert(dock_hidden);
+    backend.set_dock_hidden(false);
+
     const WindowIconGeometry
         requested_dock_geometry{
             760,

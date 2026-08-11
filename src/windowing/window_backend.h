@@ -48,6 +48,7 @@ struct WindowBackendCapabilities
     bool provides_frame_geometry = false;
     bool provides_icons = false;
     bool accepts_icon_geometry = false;
+    bool provides_dock_reveal_trigger = false;
 };
 
 class WindowBackend
@@ -77,6 +78,8 @@ public:
     void set_dock_placement_geometry(
         const std::optional<WindowIconGeometry>
             &geometry);
+    bool dock_hidden() const;
+    void set_dock_hidden(bool hidden);
 
     virtual bool activate_window(
         const WindowId &window_id) = 0;
@@ -138,6 +141,8 @@ public:
     signal_dock_placement_geometry_changed();
     sigc::signal<void> &
     signal_dock_reveal_requested();
+    sigc::signal<void, bool> &
+    signal_dock_hidden_changed();
 
 protected:
     void notify_window_added(
@@ -191,6 +196,9 @@ private:
         m_signal_dock_placement_geometry_changed;
     sigc::signal<void>
         m_signal_dock_reveal_requested;
+    sigc::signal<void, bool>
+        m_signal_dock_hidden_changed;
     std::optional<WindowIconGeometry>
         m_dock_placement_geometry;
+    bool m_dock_hidden = false;
 };

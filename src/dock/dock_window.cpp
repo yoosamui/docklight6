@@ -191,6 +191,16 @@ DockWindow::DockWindow(
         set_position(Gtk::WIN_POS_NONE);
     }
 
+    // Mutter may paint an ordinary Wayland toplevel once at its provisional
+    // centred position before the Shell integration can move its actor. The
+    // integration publishes geometry only after placement is committed; the
+    // controller restores opacity when that notification arrives.
+    if (is_gnome_wayland_session() && !m_uses_layer_shell)
+    {
+        m_initial_gnome_placement_pending = true;
+        set_opacity(0.0);
+    }
+
     m_overlay_window.set_monitor(
         monitor);
 

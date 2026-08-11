@@ -176,6 +176,7 @@ private:
 
     bool m_has_synchronized_items = false;
     bool m_uses_layer_shell = false;
+    bool m_initial_gnome_placement_pending = false;
     bool m_has_x11_base_workarea = false;
     MonitorGeometry m_x11_base_workarea;
 };

@@ -16,6 +16,9 @@ const installerPath = path.resolve(
 const extensionPath = path.resolve(
     __dirname,
     "../../gnome/docklight-window-integration@docklight6/extension.js");
+const autohideControllerPath = path.resolve(
+    __dirname,
+    "../autohide/dock_autohide_controller.cpp");
 
 // gnome-extensions pack only bundles its conventional entry points unless
 // imported modules are explicitly listed as extra sources. Keep the package
@@ -29,6 +32,36 @@ assert.match(
     /--extra-source=placement\.js/);
 
 const extensionSource = fs.readFileSync(extensionPath, "utf8");
+const autohideControllerSource = fs.readFileSync(
+    autohideControllerPath, "utf8");
+assert.match(
+    autohideControllerSource,
+    /hide_now\([\s\S]*?\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?set_shell_dock_hidden\(true\);\s*return;/,
+    "GNOME autohide must keep the placed dock mapped instead of remapping at the centre");
+assert.match(
+    autohideControllerSource,
+    /set_shell_dock_hidden\(bool hidden\)[\s\S]*?set_pass_through\(hidden\)[\s\S]*?input_shape_combine_region[\s\S]*?set_dock_hidden\(hidden\)/,
+    "the persistent hidden dock must be input-pass-through and published to Shell");
+assert.match(
+    extensionSource,
+    /_animateDockVisibility\(hidden[\s\S]*?GLib\.timeout_add\([\s\S]*?progress \* progress \* progress[\s\S]*?Math\.pow\(1 - progress, 3\)/,
+    "GNOME must animate the already-placed compositor actor at the screen edge");
+assert.match(
+    extensionSource,
+    /_finishDockTransition\(\)[\s\S]*?_animateDockVisibility\(\s*this\._dockHidden, this\._dockActor\)/,
+    "placement completion must not reveal a dock that autohid while placement settled");
+assert.match(
+    autohideControllerSource,
+    /request_reveal\(\)[\s\S]*?m_shell_edge_reveal = true[\s\S]*?schedule_hide\(false\)/,
+    "an edge-only reveal must auto-hide unless the pointer moves into the dock");
+assert.match(
+    autohideControllerSource,
+    /reveal\(\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?set_shell_dock_hidden\(false\);/,
+    "a Shell reveal must restore the existing mapped dock surface");
+assert.match(
+    extensionSource,
+    /signalName === 'DockHiddenChanged'[\s\S]*?this\._dockHidden = Boolean[\s\S]*?this\._updateDockRevealActor\(\)/,
+    "Shell must drive its reveal strip from the application's hidden state");
 assert.match(
     extensionSource,
     /_placeAuxiliaryWindow[\s\S]*?move_frame\(false, target\.x, target\.y\)/,
@@ -49,6 +82,10 @@ assert.match(
     extensionSource,
     /_beginAuxiliaryTransition\(window, actor = null\)[\s\S]*?compositorActor\.set_opacity\(0\)/,
     "a provisional centred auxiliary frame must not enter the scene");
+assert.match(
+    extensionSource,
+    /_beginDockTransition\(\)[\s\S]*?actor\.remove_all_transitions\(\)[\s\S]*?actor\.scale_x = 1[\s\S]*?actor\.scale_y = 1[\s\S]*?actor\.set_opacity\(0\)/,
+    "GNOME's normal-window map animation must not expose the centred dock actor");
 assert.match(
     extensionSource,
     /rect\.x === target\.x && rect\.y === target\.y[\s\S]*?_finishAuxiliaryTransition\(window\)/,
@@ -73,16 +110,12 @@ assert.match(
     "GNOME autohide must use a Shell-owned reactive edge strip");
 assert.match(
     extensionSource,
-    /actor\.hide\(\);\s*this\._expectDockRemap\(\);\s*this\._call\('RequestDockReveal'/,
-    "the Shell edge strip must identify the expected dock before it remaps");
+    /this\._dockAutohide === 'none' \|\| !this\._dockHidden[\s\S]*?this\._call\('RequestDockReveal'/,
+    "the Shell edge strip must request reveal only while the persistent dock is hidden");
 assert.match(
     extensionSource,
-    /\(!this\._dockDiscoveredOnce \|\| this\._dockRevealPending\)/,
-    "an expected autohide remap must use early application-id recognition");
-assert.match(
-    extensionSource,
-    /this\._dockWindow = window;[\s\S]*?this\._clearDockRevealExpectation\(\)/,
-    "dock discovery must consume the short-lived remap expectation");
+    /const committed = isDockPlacementCommitted\([\s\S]*?actor\.translation_x = committed[\s\S]*?x - rect\.x[\s\S]*?actor\.translation_y = committed[\s\S]*?y - rect\.y/,
+    "an asynchronously remapped dock must be painted at its edge, never at Mutter's provisional centre");
 assert.match(
     extensionSource,
     /placement\.edge === 'bottom'[\s\S]*?monitor\.y \+ monitor\.height - revealSize/,

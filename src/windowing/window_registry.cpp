@@ -520,6 +520,11 @@ bool WindowRegistry::set_window_icon_geometry(
             geometry);
 }
 
+void WindowRegistry::set_dock_hidden(bool hidden)
+{
+    m_backend.set_dock_hidden(hidden);
+}
+
 sigc::signal<void> &
 WindowRegistry::signal_changed()
 {

@@ -30,6 +30,7 @@
 #include <X11/extensions/Xrender.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cerrno>
 #include <cmath>
 #include <cstdint>
@@ -950,6 +951,27 @@ DockWindowThumbnailProvider::
     auto display = gdk_display_get_default();
     m_state->x11 =
         display && GDK_IS_X11_DISPLAY(display);
+
+    const char *desktop = std::getenv("XDG_CURRENT_DESKTOP");
+    std::string normalized_desktop = desktop ? desktop : "";
+    std::transform(
+        normalized_desktop.begin(),
+        normalized_desktop.end(),
+        normalized_desktop.begin(),
+        [](unsigned char character)
+        {
+            return static_cast<char>(std::tolower(character));
+        });
+
+    // ScreenShot2 is a KWin-only API. On GNOME Wayland, attempting it for
+    // every preview produces ServiceUnknown warnings and can repeatedly
+    // retry a capture that can never succeed.
+    const bool kwin_wayland =
+        !m_state->x11 &&
+        (normalized_desktop.find("kde") != std::string::npos ||
+         normalized_desktop.find("plasma") != std::string::npos);
+    if (!m_state->x11 && !kwin_wayland)
+        return;
 
     GError *error = nullptr;
     m_state->connection = g_bus_get_sync(
