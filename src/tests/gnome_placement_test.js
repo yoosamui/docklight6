@@ -112,6 +112,10 @@ assert.match(
     "an app-only restart must rearm early GNOME dock discovery");
 assert.match(
     extensionSource,
+    /_placeDialogWindow\(window\) \{[\s\S]*?if \(!window\?\.get_compositor_private\?\.\(\)\)\s*return;[\s\S]*?window\.move_frame/,
+    "GNOME dialogs must not move before their Wayland actor is mapped");
+assert.match(
+    extensionSource,
     /rect\.x === target\.x && rect\.y === target\.y[\s\S]*?_finishAuxiliaryTransition\(window\)/,
     "auxiliary opacity must be restored only after placement is committed");
 assert.match(

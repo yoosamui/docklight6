@@ -442,6 +442,13 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _placeDialogWindow(window) {
+        // window-created precedes the compositor actor on Wayland. Calling
+        // move_frame() in that interval can make Mutter inspect an
+        // incomplete MetaWaylandSurface and crash GNOME Shell. The existing
+        // map callback reconsiders the dialog as soon as its actor is valid.
+        if (!window?.get_compositor_private?.())
+            return;
+
         const monitorIndex = this._dockMonitorIndex();
         const area = this._workAreaForMonitor(monitorIndex);
         if (!area)
