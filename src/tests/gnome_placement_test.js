@@ -84,8 +84,8 @@ assert.doesNotMatch(
     "GNOME visibility must have only one animation owner");
 assert.match(
     extensionSource,
-    /_placeAuxiliaryWindow[\s\S]*?move_frame\(false, target\.x, target\.y\)/,
-    "private reveal surfaces must not receive Mutter's interactive edge inset");
+    /_placeAuxiliaryWindow[\s\S]*?actor\.translation_x = target\.x - rect\.x[\s\S]*?actor\.translation_y = target\.y - rect\.y/,
+    "private surfaces must use compositor translation instead of unsafe Mutter moves");
 assert.match(
     extensionSource,
     /\['size-changed', \(\) => this\._placeAuxiliaryWindow\(window\)\]/,
@@ -112,12 +112,12 @@ assert.match(
     "an app-only restart must rearm early GNOME dock discovery");
 assert.match(
     extensionSource,
-    /_placeDialogWindow\(window\) \{[\s\S]*?if \(!window\?\.get_compositor_private\?\.\(\)\)\s*return;[\s\S]*?window\.move_frame/,
-    "GNOME dialogs must not move before their Wayland actor is mapped");
+    /_placeDialogWindow\(window\) \{[\s\S]*?const actor = window\?\.get_compositor_private\?\.\(\)[\s\S]*?actor\.translation_x = x - rect\.x[\s\S]*?actor\.translation_y = y - rect\.y/,
+    "GNOME dialogs must use safe compositor placement after mapping");
 assert.match(
     extensionSource,
-    /rect\.x === target\.x && rect\.y === target\.y[\s\S]*?_finishAuxiliaryTransition\(window\)/,
-    "auxiliary opacity must be restored only after placement is committed");
+    /_placeAuxiliaryWindow[\s\S]*?actor\.translation_y = target\.y - rect\.y;\s*this\._finishAuxiliaryTransition\(window\)/,
+    "auxiliary opacity must be restored after compositor placement");
 assert.match(
     extensionSource,
     /_considerAuxiliaryWindow\(window\)[\s\S]*?if \(this\._dockWindow === window\)\s*this\._clearDockWindow\(\)/,
@@ -128,6 +128,10 @@ assert.doesNotMatch(
     auxiliaryPlacementSource,
     /placeDockInWorkArea/,
     "private reveal coordinates are already resolved by the application");
+assert.doesNotMatch(
+    auxiliaryPlacementSource,
+    /window\.move_frame/,
+    "short-lived private Wayland surfaces must never call Meta.Window.move_frame");
 assert.match(
     extensionSource,
     /const dockStrut = this\._dockStrut;\s*this\._dockStrut = null;\s*try \{/,

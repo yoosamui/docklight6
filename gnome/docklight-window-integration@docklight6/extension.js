@@ -426,6 +426,7 @@ export default class DocklightWindowIntegration extends Extension {
             const signals = [];
             for (const [signal, callback] of [
                 ['size-changed', () => this._placeDialogWindow(window)],
+                ['position-changed', () => this._placeDialogWindow(window)],
                 ['notify::monitor', () => this._placeDialogWindow(window)],
                 ['unmanaged', () => this._clearDialogWindow(window)],
             ]) {
@@ -442,11 +443,13 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _placeDialogWindow(window) {
-        // window-created precedes the compositor actor on Wayland. Calling
-        // move_frame() in that interval can make Mutter inspect an
-        // incomplete MetaWaylandSurface and crash GNOME Shell. The existing
-        // map callback reconsiders the dialog as soon as its actor is valid.
-        if (!window?.get_compositor_private?.())
+        // Do not call Meta.Window.move_frame() for a GTK Wayland dialog.
+        // Mutter 16 can follow the surface's transient/subsurface parent to
+        // a null Meta.Window and crash the whole Shell. Moving the compositor
+        // actor keeps painting and picking at the requested coordinates
+        // without mutating Mutter's native window geometry.
+        const actor = window?.get_compositor_private?.();
+        if (!actor)
             return;
 
         const monitorIndex = this._dockMonitorIndex();
@@ -456,8 +459,11 @@ export default class DocklightWindowIntegration extends Extension {
         const rect = window.get_frame_rect();
         const x = Math.round(area.x + (area.width - rect.width) / 2);
         const y = Math.round(area.y + (area.height - rect.height) / 2);
-        if (rect.x !== x || rect.y !== y)
-            window.move_frame(true, x, y);
+        actor.remove_all_transitions();
+        actor.scale_x = 1;
+        actor.scale_y = 1;
+        actor.translation_x = x - rect.x;
+        actor.translation_y = y - rect.y;
     }
 
     _clearDialogWindow(window) {
@@ -535,16 +541,21 @@ export default class DocklightWindowIntegration extends Extension {
         if (!target)
             return;
 
-        const rect = window.get_frame_rect();
-        if (rect.x !== target.x || rect.y !== target.y)
-            // Auxiliary surfaces carry application-computed coordinates.
-            // Treating this as an interactive move makes Mutter inset a
-            // reveal surface from the monitor edge, leaving no surface under
-            // the pointer when it is pushed against that edge.
-            window.move_frame(false, target.x, target.y);
+        const actor = window?.get_compositor_private?.();
+        if (!actor)
+            return;
 
-        if (this._auxiliaryTransitions.has(window))
-            this._scheduleAuxiliaryPlacement(window);
+        // Tooltips, previews, and the GTK reveal surface are short-lived
+        // Wayland toplevels. Meta.Window.move_frame() is unsafe for these
+        // surfaces on Mutter 16 and delayed retries can outlive the native
+        // window. Translate the compositor actor synchronously instead.
+        const rect = window.get_frame_rect();
+        actor.remove_all_transitions();
+        actor.scale_x = 1;
+        actor.scale_y = 1;
+        actor.translation_x = target.x - rect.x;
+        actor.translation_y = target.y - rect.y;
+        this._finishAuxiliaryTransition(window);
     }
 
     _beginAuxiliaryTransition(window, actor = null) {
@@ -560,44 +571,11 @@ export default class DocklightWindowIntegration extends Extension {
         this._auxiliaryTransitions.set(window, {
             actor: compositorActor,
             opacity: opacity > 0 ? opacity : 255,
-            attempts: 0,
-            source: 0,
         });
+        compositorActor.remove_all_transitions();
+        compositorActor.scale_x = 1;
+        compositorActor.scale_y = 1;
         compositorActor.set_opacity(0);
-    }
-
-    _scheduleAuxiliaryPlacement(window) {
-        const transition = this._auxiliaryTransitions.get(window);
-        if (!transition || transition.source)
-            return;
-
-        transition.source = GLib.timeout_add(
-            GLib.PRIORITY_DEFAULT,
-            DOCK_PLACEMENT_DELAY_MS,
-            () => {
-                transition.source = 0;
-                const target = this._auxiliaryPosition(window);
-                if (!target) {
-                    this._finishAuxiliaryTransition(window);
-                    return GLib.SOURCE_REMOVE;
-                }
-
-                const rect = window.get_frame_rect();
-                if (rect.x === target.x && rect.y === target.y) {
-                    this._finishAuxiliaryTransition(window);
-                    return GLib.SOURCE_REMOVE;
-                }
-
-                window.move_frame(false, target.x, target.y);
-                if (++transition.attempts >= DOCK_PLACEMENT_MAX_ATTEMPTS) {
-                    // Avoid leaving a client invisible if this Mutter
-                    // version refuses the requested auxiliary coordinates.
-                    this._finishAuxiliaryTransition(window);
-                } else {
-                    this._scheduleAuxiliaryPlacement(window);
-                }
-                return GLib.SOURCE_REMOVE;
-            });
     }
 
     _finishAuxiliaryTransition(window) {
@@ -605,8 +583,6 @@ export default class DocklightWindowIntegration extends Extension {
         if (!transition)
             return;
 
-        if (transition.source)
-            GLib.source_remove(transition.source);
         try {
             transition.actor.set_opacity(transition.opacity);
         } catch (_error) {
