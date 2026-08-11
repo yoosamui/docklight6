@@ -108,6 +108,10 @@ assert.match(
     "GNOME's normal-window map animation must not expose the centred dock actor");
 assert.match(
     extensionSource,
+    /_disconnectBackend\(\) \{[\s\S]*?this\._dockDiscoveredOnce = false/,
+    "an app-only restart must rearm early GNOME dock discovery");
+assert.match(
+    extensionSource,
     /rect\.x === target\.x && rect\.y === target\.y[\s\S]*?_finishAuxiliaryTransition\(window\)/,
     "auxiliary opacity must be restored only after placement is committed");
 assert.match(

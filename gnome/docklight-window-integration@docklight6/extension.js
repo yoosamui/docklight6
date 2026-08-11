@@ -91,9 +91,10 @@ export default class DocklightWindowIntegration extends Extension {
         this._pendingWaits = 0;
         this._registrationRetrySource = 0;
         this._dockWindow = null;
-        // The application-id fallback is safe for the initial dock only.
-        // GNOME autohide keeps that surface mapped, so later Docklight
-        // toplevels must wait for their explicit title or role metadata.
+        // The application-id fallback is safe for the first dock surface in
+        // one application lifetime. It is rearmed when the application's
+        // D-Bus name vanishes so an app-only restart gets the same guarded
+        // early placement as the original launch.
         this._dockDiscoveredOnce = false;
         this._dockPlacement = null;
         this._dockWindowSignals = [];
@@ -1303,6 +1304,13 @@ export default class DocklightWindowIntegration extends Extension {
         this._connected = false;
         this._registering = false;
         this._pendingWaits = 0;
+
+        // GNOME Shell and this extension outlive an app-only Docklight
+        // restart. The replacement Wayland surface initially has only its
+        // shared application id, so allow the early dock fallback again for
+        // the new service lifetime. _isDockWindow() still requires that the
+        // previous dock has been unmanaged before this fallback can win.
+        this._dockDiscoveredOnce = false;
 
         if (this._registrationRetrySource) {
             GLib.source_remove(this._registrationRetrySource);
