@@ -9,7 +9,9 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {
+    calculateDockRevealRect,
     calculateDockStrut,
+    clampAuxiliaryToWorkArea,
     isDockPlacementCommitted,
     isPointerInsideDockInterior,
     parseAuxiliaryPosition,
@@ -26,6 +28,7 @@ const DOCK_PLACEMENT_DELAY_MS = 30;
 // the old orientation before GTK supplies the final allocation.
 const DOCK_TRANSITION_DELAY_MS = 300;
 const DOCK_PLACEMENT_MAX_ATTEMPTS = 40;
+const DOCK_DISCOVERY_MAX_ATTEMPTS = 30;
 const REGISTRATION_RETRY_MS = 250;
 const CONFIGURATION_SETTLE_MS = 50;
 const DOCK_HIDE_ANIMATION_MS = 180;
@@ -101,6 +104,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockPlacementSource = 0;
         this._dockPlacementAttempts = 0;
         this._dockDiscoverySources = new Set();
+        this._dockDiscoveryScanSource = 0;
         this._dockTransitioning = false;
         this._dockActor = null;
         this._dockActorOpacity = 255;
@@ -225,6 +229,10 @@ export default class DocklightWindowIntegration extends Extension {
         for (const source of this._dockDiscoverySources)
             GLib.source_remove(source);
         this._dockDiscoverySources.clear();
+        if (this._dockDiscoveryScanSource) {
+            GLib.source_remove(this._dockDiscoveryScanSource);
+            this._dockDiscoveryScanSource = 0;
+        }
         this._clearDockWindow();
         this._removeDockStrut();
         this._destroyDockRevealActor();
@@ -360,7 +368,7 @@ export default class DocklightWindowIntegration extends Extension {
             !window.get_transient_for?.();
     }
 
-    _considerDockWindow(window) {
+    _considerDockWindow(window, allowRetry = true) {
         if (this._considerDialogWindow(window))
             return;
         if (this._considerAuxiliaryWindow(window))
@@ -374,6 +382,9 @@ export default class DocklightWindowIntegration extends Extension {
         // Mutter can emit window-created before GTK's title and role have
         // propagated. Retry briefly after mapping, but never infer the dock
         // from the shared application identity: dialogs use that identity too.
+        if (!allowRetry)
+            return;
+
         let attempts = 0;
         const source = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
             const isDock = this._isDockWindow(window);
@@ -387,6 +398,33 @@ export default class DocklightWindowIntegration extends Extension {
             return GLib.SOURCE_CONTINUE;
         });
         this._dockDiscoverySources.add(source);
+    }
+
+    _scheduleDockDiscoveryScan() {
+        if (this._dockWindow || this._dockDiscoveryScanSource)
+            return;
+
+        let attempts = 0;
+        this._dockDiscoveryScanSource = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            100,
+            () => {
+                for (const actor of global.get_window_actors()) {
+                    this._considerDockWindow(
+                        actor.meta_window,
+                        false);
+                    if (this._dockWindow)
+                        break;
+                }
+
+                if (this._dockWindow ||
+                    ++attempts >= DOCK_DISCOVERY_MAX_ATTEMPTS) {
+                    this._dockDiscoveryScanSource = 0;
+                    return GLib.SOURCE_REMOVE;
+                }
+
+                return GLib.SOURCE_CONTINUE;
+            });
     }
 
     _isDockDialog(window) {
@@ -550,11 +588,29 @@ export default class DocklightWindowIntegration extends Extension {
         // surfaces on Mutter 16 and delayed retries can outlive the native
         // window. Translate the compositor actor synchronously instead.
         const rect = window.get_frame_rect();
+        const resolvedTarget = target.type === 'reveal'
+            ? target
+            : clampAuxiliaryToWorkArea(
+                target,
+                rect,
+                this._workAreaForMonitor(this._dockMonitorIndex()));
         actor.remove_all_transitions();
         actor.scale_x = 1;
         actor.scale_y = 1;
-        actor.translation_x = target.x - rect.x;
-        actor.translation_y = target.y - rect.y;
+        actor.translation_x = resolvedTarget.x - rect.x;
+        actor.translation_y = resolvedTarget.y - rect.y;
+
+        // KDE's layer-shell backend places private surfaces on OVERLAY and
+        // the dock on TOP.  GNOME has no layer-shell, so both keep-above
+        // windows enter Mutter's TOP stack layer.  Raise the later private
+        // surface through Meta.Window so Mutter preserves the same ordering;
+        // changing WindowActor sibling order is only temporary and is undone
+        // by the compositor's next restack.
+        try {
+            window.raise();
+        } catch (_error) {
+            // The Meta.Window can disappear while a preview is closing.
+        }
         this._finishAuxiliaryTransition(window);
     }
 
@@ -978,29 +1034,10 @@ export default class DocklightWindowIntegration extends Extension {
             monitor,
             this._workAreaForMonitor(monitorIndex),
             this._dockPlacement);
-        const revealSize = 2;
-        let x = placement.x;
-        let y = placement.y;
-        let width = placement.width;
-        let height = placement.height;
+        const reveal = calculateDockRevealRect(placement);
 
-        if (placement.edge === 'top') {
-            y = monitor.y;
-            height = revealSize;
-        } else if (placement.edge === 'bottom') {
-            y = monitor.y + monitor.height - revealSize;
-            height = revealSize;
-        } else if (placement.edge === 'left') {
-            x = monitor.x;
-            width = revealSize;
-        } else {
-            x = monitor.x + monitor.width - revealSize;
-            width = revealSize;
-        }
-
-        actor.set_position(Math.round(x), Math.round(y));
-        actor.set_size(Math.max(1, Math.round(width)),
-            Math.max(1, Math.round(height)));
+        actor.set_position(reveal.x, reveal.y);
+        actor.set_size(reveal.width, reveal.height);
         actor.show();
     }
 
@@ -1261,6 +1298,7 @@ export default class DocklightWindowIntegration extends Extension {
             // discovered and placed.
             for (const actor of global.get_window_actors())
                 this._considerDockWindow(actor.meta_window);
+            this._scheduleDockDiscoveryScan();
 
             this._publishSnapshot();
             this._publishCurrentDesktop();

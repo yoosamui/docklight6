@@ -84,8 +84,12 @@ assert.doesNotMatch(
     "GNOME visibility must have only one animation owner");
 assert.match(
     extensionSource,
-    /_placeAuxiliaryWindow[\s\S]*?actor\.translation_x = target\.x - rect\.x[\s\S]*?actor\.translation_y = target\.y - rect\.y/,
+    /_placeAuxiliaryWindow[\s\S]*?actor\.translation_x = resolvedTarget\.x - rect\.x[\s\S]*?actor\.translation_y = resolvedTarget\.y - rect\.y/,
     "private surfaces must use compositor translation instead of unsafe Mutter moves");
+assert.match(
+    extensionSource,
+    /target\.type === 'reveal'[\s\S]*?clampAuxiliaryToWorkArea\([\s\S]*?_workAreaForMonitor/,
+    "GNOME previews and tooltips must clamp to the Shell work area without moving the reveal strip");
 assert.match(
     extensionSource,
     /\['size-changed', \(\) => this\._placeAuxiliaryWindow\(window\)\]/,
@@ -112,12 +116,20 @@ assert.match(
     "an app-only restart must rearm early GNOME dock discovery");
 assert.match(
     extensionSource,
+    /_scheduleDockDiscoveryScan\(\)[\s\S]*?global\.get_window_actors\(\)[\s\S]*?_considerDockWindow\([\s\S]*?false\)/,
+    "registration must rescan mapped actors until delayed dock metadata is available");
+assert.match(
+    extensionSource,
     /_placeDialogWindow\(window\) \{[\s\S]*?const actor = window\?\.get_compositor_private\?\.\(\)[\s\S]*?actor\.translation_x = x - rect\.x[\s\S]*?actor\.translation_y = y - rect\.y/,
     "GNOME dialogs must use safe compositor placement after mapping");
 assert.match(
     extensionSource,
-    /_placeAuxiliaryWindow[\s\S]*?actor\.translation_y = target\.y - rect\.y;\s*this\._finishAuxiliaryTransition\(window\)/,
+    /_placeAuxiliaryWindow[\s\S]*?actor\.translation_y = resolvedTarget\.y - rect\.y;[\s\S]*?this\._finishAuxiliaryTransition\(window\)/,
     "auxiliary opacity must be restored after compositor placement");
+assert.match(
+    extensionSource,
+    /_placeAuxiliaryWindow[\s\S]*?window\.raise\(\)[\s\S]*?_finishAuxiliaryTransition\(window\)/,
+    "GNOME must preserve layer-shell overlay ordering through Mutter's window stack");
 assert.match(
     extensionSource,
     /_considerAuxiliaryWindow\(window\)[\s\S]*?if \(this\._dockWindow === window\)\s*this\._clearDockWindow\(\)/,
@@ -150,12 +162,13 @@ assert.match(
     "an asynchronously remapped dock must be painted at its edge, never at Mutter's provisional centre");
 assert.match(
     extensionSource,
-    /placement\.edge === 'bottom'[\s\S]*?monitor\.y \+ monitor\.height - revealSize/,
-    "the bottom reveal strip must touch the physical monitor edge");
+    /calculateDockRevealRect\(placement\)/,
+    "the reveal strip must follow the dock's resolved work-area edge");
 
 const source = fs.readFileSync(helperPath, "utf8")
     .replaceAll("export function ", "function ") +
-    "\nthis.testApi = {calculateDockStrut, inferDockEdge, " +
+    "\nthis.testApi = {calculateDockRevealRect, calculateDockStrut, " +
+    "clampAuxiliaryToWorkArea, inferDockEdge, " +
     "isDockPlacementCommitted, isPointerInsideDockInterior, " +
     "parseAuxiliaryPosition, placeDockInWorkArea};";
 const context = {};
@@ -163,7 +176,9 @@ vm.createContext(context);
 vm.runInContext(source, context, {filename: helperPath});
 
 const {
+    calculateDockRevealRect,
     calculateDockStrut,
+    clampAuxiliaryToWorkArea,
     inferDockEdge,
     isDockPlacementCommitted,
     isPointerInsideDockInterior,
@@ -182,11 +197,24 @@ assert.strictEqual(isDockPlacementCommitted(
 
 assert.deepStrictEqual(
     {...parseAuxiliaryPosition("Docklight 6 Reveal@1168,340")},
-    {x: 1168, y: 340});
+    {type: "reveal", x: 1168, y: 340});
 assert.deepStrictEqual(
     {...parseAuxiliaryPosition("Docklight 6 Reveal@-2,-64")},
-    {x: -2, y: -64});
+    {type: "reveal", x: -2, y: -64});
 assert.strictEqual(parseAuxiliaryPosition("Docklight 6 Dock"), null);
+
+assert.deepStrictEqual(
+    {...clampAuxiliaryToWorkArea(
+        {x: 76, y: 8},
+        {width: 512, height: 512},
+        {x: 0, y: 32, width: 1200, height: 1048})},
+    {x: 76, y: 40});
+assert.deepStrictEqual(
+    {...clampAuxiliaryToWorkArea(
+        {x: 76, y: 75},
+        {width: 512, height: 512},
+        {x: 0, y: 32, width: 1200, height: 1048})},
+    {x: 76, y: 75});
 
 assert.strictEqual(
     inferDockEdge(primary, {x: 385, y: 0, width: 400, height: 64}),
@@ -286,5 +314,18 @@ for (const fixture of pointerFixtures) {
 }
 assert.strictEqual(isPointerInsideDockInterior(
     pointerFixtures[1].placement, 299, 1070), false);
+
+assert.deepStrictEqual(
+    {...calculateDockRevealRect(pointerFixtures[0].placement)},
+    {x: 300, y: 32, width: 400, height: 6});
+assert.deepStrictEqual(
+    {...calculateDockRevealRect(pointerFixtures[1].placement)},
+    {x: 300, y: 1074, width: 400, height: 6});
+assert.deepStrictEqual(
+    {...calculateDockRevealRect(pointerFixtures[2].placement)},
+    {x: 0, y: 340, width: 6, height: 400});
+assert.deepStrictEqual(
+    {...calculateDockRevealRect(pointerFixtures[3].placement)},
+    {x: 1164, y: 340, width: 6, height: 400});
 
 console.log("GNOME placement tests passed");

@@ -21,6 +21,7 @@ export function parseAuxiliaryPosition(title) {
         return null;
 
     return {
+        type: match[1].toLowerCase(),
         x: Number.parseInt(match[2], 10),
         y: Number.parseInt(match[3], 10),
     };
@@ -28,6 +29,52 @@ export function parseAuxiliaryPosition(title) {
 
 function clamp(value, minimum, maximum) {
     return Math.min(Math.max(value, minimum), Math.max(minimum, maximum));
+}
+
+export function clampAuxiliaryToWorkArea(
+    position,
+    size,
+    workArea,
+    edgeMargin = 8) {
+    if (!workArea || workArea.width <= 0 || workArea.height <= 0)
+        return {x: Math.round(position.x), y: Math.round(position.y)};
+
+    const margin = Math.max(0, Math.round(edgeMargin));
+    const width = Math.max(1, Math.round(size.width));
+    const height = Math.max(1, Math.round(size.height));
+    const minimumX = Math.round(workArea.x) + margin;
+    const minimumY = Math.round(workArea.y) + margin;
+    const maximumX = Math.round(workArea.x + workArea.width) - width - margin;
+    const maximumY = Math.round(workArea.y + workArea.height) - height - margin;
+
+    return {
+        x: clamp(Math.round(position.x), minimumX, maximumX),
+        y: clamp(Math.round(position.y), minimumY, maximumY),
+    };
+}
+
+export function calculateDockRevealRect(placement, revealSize = 6) {
+    const size = Math.max(1, Math.round(revealSize));
+    const rect = {
+        x: Math.round(placement.x),
+        y: Math.round(placement.y),
+        width: Math.round(placement.width),
+        height: Math.round(placement.height),
+    };
+
+    if (placement.edge === 'top')
+        rect.height = size;
+    else if (placement.edge === 'bottom') {
+        rect.y += Math.max(0, rect.height - size);
+        rect.height = size;
+    } else if (placement.edge === 'left')
+        rect.width = size;
+    else {
+        rect.x += Math.max(0, rect.width - size);
+        rect.width = size;
+    }
+
+    return rect;
 }
 
 export function placeDockInWorkArea(monitor, workArea, rect) {
