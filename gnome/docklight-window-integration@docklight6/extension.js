@@ -1006,7 +1006,24 @@ export default class DocklightWindowIntegration extends Extension {
             this._pointerPosition.y < rect.y + rect.height);
     }
 
+    _updateLivePreviewSelectors() {
+        for (const rect of this._livePreviewRects) {
+            const selected = Boolean(this._pointerPosition &&
+                this._pointerPosition.x >= rect.x &&
+                this._pointerPosition.x < rect.x + rect.width &&
+                this._pointerPosition.y >= rect.y &&
+                this._pointerPosition.y < rect.y + rect.height);
+            if (selected === rect.selected)
+                continue;
+
+            rect.selected = selected;
+            rect.selector.opacity = selected ? 255 : 0;
+        }
+    }
+
     _publishPreviewPointerInside(force = false) {
+        this._updateLivePreviewSelectors();
+
         if (!this._connected)
             return;
 
@@ -1627,6 +1644,22 @@ export default class DocklightWindowIntegration extends Extension {
             preview.layout_manager = layout;
             overlay.add_child(preview);
             layout.add_window(window);
+            // The compositor clone owns pointer input, so the GTK card below
+            // cannot paint its normal mouse-over selection. Keep a separate,
+            // non-reactive sibling above the clone and drive it from Shell's
+            // authoritative pointer position.
+            const selector = new St.Widget({
+                reactive: false,
+                opacity: 0,
+                x: preview.x,
+                y: preview.y,
+                width: preview.width,
+                height: preview.height,
+                style: 'background-color: rgba(105, 170, 255, 0.32); ' +
+                    'border: 1px solid rgba(105, 170, 255, 0.85); ' +
+                    'border-radius: 6px;',
+            });
+            overlay.add_child(selector);
             let primaryButtonPressed = false;
             preview.connect('button-press-event', (_actor, event) => {
                 if (event.get_button() !== 1)
@@ -1669,6 +1702,8 @@ export default class DocklightWindowIntegration extends Extension {
                 y: preview.y,
                 width: preview.width,
                 height: preview.height,
+                selector,
+                selected: false,
             });
             previewActors.push(preview);
             previewCount++;
