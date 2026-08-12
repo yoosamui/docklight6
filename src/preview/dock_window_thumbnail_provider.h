@@ -7,8 +7,8 @@
 // dock_window_thumbnail_provider.h
 //
 // Purpose:
-// Declares asynchronous static window capture through native X11 or KWin's
-// screenshot interface.
+// Declares asynchronous static window capture through native X11, KWin's
+// screenshot interface, or Docklight's GNOME Shell integration.
 //
 // Responsibilities:
 // - Request a thumbnail for a managed window.
@@ -34,6 +34,16 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <vector>
+
+struct GnomeLivePreviewRect
+{
+    WindowId window_id;
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+};
 
 class DockWindowThumbnailProvider
 {
@@ -49,6 +59,7 @@ public:
         std::atomic<bool> alive{true};
         GDBusConnection *connection = nullptr;
         bool x11 = false;
+        bool gnome_shell_capture = false;
     };
 
     using Callback = std::function<
@@ -67,6 +78,12 @@ public:
         double x11_oversample = 2.0,
         bool x11_native_capture = false,
         bool x11_xfwm_mode = false);
+
+    bool supports_gnome_live_previews() const;
+    void show_gnome_live_previews(
+        const std::vector<GnomeLivePreviewRect>
+            &previews);
+    void hide_gnome_live_previews();
 
 private:
     std::shared_ptr<State> m_state;

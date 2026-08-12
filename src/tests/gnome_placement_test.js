@@ -22,6 +22,12 @@ const autohideControllerPath = path.resolve(
 const dockWindowControllerPath = path.resolve(
     __dirname,
     "../dock/dock_window_controller.cpp");
+const previewWindowPath = path.resolve(
+    __dirname,
+    "../preview/dock_preview_window.cpp");
+const thumbnailProviderPath = path.resolve(
+    __dirname,
+    "../preview/dock_window_thumbnail_provider.cpp");
 
 // gnome-extensions pack only bundles its conventional entry points unless
 // imported modules are explicitly listed as extra sources. Keep the package
@@ -39,6 +45,35 @@ const autohideControllerSource = fs.readFileSync(
     autohideControllerPath, "utf8");
 const dockWindowControllerSource = fs.readFileSync(
     dockWindowControllerPath, "utf8");
+const previewWindowSource = fs.readFileSync(
+    previewWindowPath, "utf8");
+const thumbnailProviderSource = fs.readFileSync(
+    thumbnailProviderPath, "utf8");
+
+assert.match(
+    extensionSource,
+    /<method name="ShowLivePreviews">[\s\S]*?a\(siiii\)[\s\S]*?<method name="HideLivePreviews"/,
+    "the GNOME thumbnail service must expose the compositor overlay lifecycle");
+assert.match(
+    extensionSource,
+    /ShowLivePreviewsAsync[\s\S]*?new Shell\.WindowPreviewLayout\(\)[\s\S]*?layout\.add_window\(window\)/,
+    "premium GNOME previews must clone live compositor actors instead of polling screenshots");
+assert.match(
+    extensionSource,
+    /const overlay = new Clutter\.Actor\(\{[\s\S]*?reactive: false[\s\S]*?Main\.uiGroup\.add_child\(overlay\)/,
+    "the Shell overlay must paint above GTK without stealing its pointer interaction");
+assert.match(
+    extensionSource,
+    /disable\(\)[\s\S]*?_destroyLivePreviews\(\)[\s\S]*?_destroyLivePreviews\(\) \{[\s\S]*?\.destroy\(\)/,
+    "disabling the extension must destroy every compositor preview clone");
+assert.match(
+    thumbnailProviderSource,
+    /ShowLivePreviews[\s\S]*?g_variant_new\("\(a\(siiii\)\)"/,
+    "Docklight must publish live preview rectangles through the GNOME service");
+assert.match(
+    previewWindowSource,
+    /supports_gnome_live_previews\(\)[\s\S]*?global_x \+ m_size\.padding[\s\S]*?global_y \+ WINDOW_PADDING[\s\S]*?show_gnome_live_previews/,
+    "GNOME compositor actors must align with the existing GTK card bodies");
 assert.match(
     dockWindowControllerSource,
     /set_dock_placement_geometry[\s\S]*?calculated_dock_screen_position|calculated_dock_screen_position[\s\S]*?set_dock_placement_geometry/,

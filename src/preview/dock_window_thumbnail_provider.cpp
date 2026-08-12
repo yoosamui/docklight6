@@ -7,8 +7,8 @@
 // dock_window_thumbnail_provider.cpp
 //
 // Implementation overview:
-// Implements asynchronous static thumbnail capture through native X11 or
-// KWin's ScreenShot2 interface.
+// Implements asynchronous static thumbnail capture through native X11,
+// KWin's ScreenShot2 interface, or a GNOME Shell compositor snapshot.
 //
 // Important implementation decisions:
 // - D-Bus requests do not block the GTK main loop.
@@ -22,6 +22,7 @@
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
+#include <gdkmm/pixbufloader.h>
 #include <gio/gio.h>
 #include <glib.h>
 #include <X11/Xlib.h>
@@ -53,6 +54,12 @@ constexpr char SCREENSHOT_PATH[] =
     "/org/kde/KWin/ScreenShot2";
 constexpr char SCREENSHOT_INTERFACE[] =
     "org.kde.KWin.ScreenShot2";
+constexpr char GNOME_THUMBNAIL_SERVICE[] =
+    "org.docklight6.GnomeThumbnailer";
+constexpr char GNOME_THUMBNAIL_PATH[] =
+    "/org/docklight6/GnomeThumbnailer";
+constexpr char GNOME_THUMBNAIL_INTERFACE[] =
+    "org.docklight6.GnomeThumbnailer1";
 
 struct Completion
 {
@@ -66,6 +73,7 @@ struct Completion
     bool x11_native_capture = false;
     bool x11_xfwm_mode = false;
     std::vector<unsigned char> rgba;
+    std::vector<unsigned char> encoded_image;
     DockWindowThumbnailProvider::Callback callback;
 };
 
@@ -616,7 +624,50 @@ gboolean deliver_thumbnail(gpointer data)
 
     Glib::RefPtr<Gdk::Pixbuf> thumbnail;
 
-    if (!completion->rgba.empty() &&
+    if (!completion->encoded_image.empty())
+    {
+        try
+        {
+            auto loader = Gdk::PixbufLoader::create();
+            loader->write(
+                completion->encoded_image.data(),
+                completion->encoded_image.size());
+            loader->close();
+            auto source = loader->get_pixbuf();
+
+            if (source &&
+                source->get_width() > 0 &&
+                source->get_height() > 0)
+            {
+                const double scale = std::min({
+                    1.0,
+                    static_cast<double>(
+                        completion->target_width) /
+                        source->get_width(),
+                    static_cast<double>(
+                        completion->target_height) /
+                        source->get_height()});
+                const int scaled_width = std::max(
+                    1,
+                    static_cast<int>(std::lround(
+                        source->get_width() * scale)));
+                const int scaled_height = std::max(
+                    1,
+                    static_cast<int>(std::lround(
+                        source->get_height() * scale)));
+
+                thumbnail = source->scale_simple(
+                    scaled_width,
+                    scaled_height,
+                    Gdk::INTERP_BILINEAR);
+            }
+        }
+        catch (const Glib::Error &)
+        {
+            thumbnail.reset();
+        }
+    }
+    else if (!completion->rgba.empty() &&
         completion->source_width > 0 &&
         completion->source_height > 0)
     {
@@ -718,6 +769,65 @@ void capture(
     if (!active_state ||
         !active_state->alive)
     {
+        schedule_delivery(std::move(completion));
+        return;
+    }
+
+    if (active_state->gnome_shell_capture &&
+        active_state->connection)
+    {
+        GError *error = nullptr;
+        auto *reply = g_dbus_connection_call_sync(
+            active_state->connection,
+            GNOME_THUMBNAIL_SERVICE,
+            GNOME_THUMBNAIL_PATH,
+            GNOME_THUMBNAIL_INTERFACE,
+            "CaptureWindow",
+            g_variant_new(
+                "(sii)",
+                completion->window_id.c_str(),
+                completion->target_width,
+                completion->target_height),
+            G_VARIANT_TYPE("(ay)"),
+            G_DBUS_CALL_FLAGS_NONE,
+            5000,
+            nullptr,
+            &error);
+
+        if (reply)
+        {
+            GVariant *encoded = nullptr;
+            g_variant_get(reply, "(@ay)", &encoded);
+            gsize size = 0;
+            const auto *bytes =
+                static_cast<const unsigned char *>(
+                    g_variant_get_fixed_array(
+                        encoded,
+                        &size,
+                        sizeof(unsigned char)));
+
+            if (bytes && size > 0)
+            {
+                completion->encoded_image.assign(
+                    bytes,
+                    bytes + size);
+            }
+
+            g_variant_unref(encoded);
+            g_variant_unref(reply);
+        }
+        else if (error &&
+                 !g_error_matches(
+                     error,
+                     G_DBUS_ERROR,
+                     G_DBUS_ERROR_SERVICE_UNKNOWN))
+        {
+            g_warning(
+                "Cannot capture GNOME window thumbnail: %s",
+                error->message);
+        }
+
+        g_clear_error(&error);
         schedule_delivery(std::move(completion));
         return;
     }
@@ -963,14 +1073,36 @@ DockWindowThumbnailProvider::
             return static_cast<char>(std::tolower(character));
         });
 
-    // ScreenShot2 is a KWin-only API. On GNOME Wayland, attempting it for
-    // every preview produces ServiceUnknown warnings and can repeatedly
-    // retry a capture that can never succeed.
+    const char *session_type = std::getenv("XDG_SESSION_TYPE");
+    std::string normalized_session =
+        session_type ? session_type : "";
+    std::transform(
+        normalized_session.begin(),
+        normalized_session.end(),
+        normalized_session.begin(),
+        [](unsigned char character)
+        {
+            return static_cast<char>(std::tolower(character));
+        });
+
+    // Docklight uses XWayland for its dock surface on GNOME, but GNOME's
+    // window registry publishes Mutter stable-sequence ids rather than X11
+    // window ids. Route those requests back through the Shell extension so
+    // native Wayland and XWayland client windows use the same compositor
+    // capture path.
+    m_state->gnome_shell_capture =
+        normalized_session == "wayland" &&
+        normalized_desktop.find("gnome") != std::string::npos;
+
+    // ScreenShot2 is a KWin-only API. On other Wayland compositors, avoid
+    // connecting unless their own capture transport is active.
     const bool kwin_wayland =
         !m_state->x11 &&
         (normalized_desktop.find("kde") != std::string::npos ||
          normalized_desktop.find("plasma") != std::string::npos);
-    if (!m_state->x11 && !kwin_wayland)
+    if (!m_state->gnome_shell_capture &&
+        !m_state->x11 &&
+        !kwin_wayland)
         return;
 
     GError *error = nullptr;
@@ -992,7 +1124,88 @@ DockWindowThumbnailProvider::
 DockWindowThumbnailProvider::
     ~DockWindowThumbnailProvider()
 {
+    hide_gnome_live_previews();
     m_state->alive = false;
+}
+
+bool DockWindowThumbnailProvider::
+    supports_gnome_live_previews() const
+{
+    return m_state &&
+           m_state->alive &&
+           m_state->gnome_shell_capture &&
+           m_state->connection;
+}
+
+void DockWindowThumbnailProvider::
+    show_gnome_live_previews(
+        const std::vector<GnomeLivePreviewRect>
+            &previews)
+{
+    if (!supports_gnome_live_previews() ||
+        previews.empty())
+    {
+        return;
+    }
+
+    GVariantBuilder builder;
+    g_variant_builder_init(
+        &builder,
+        G_VARIANT_TYPE("a(siiii)"));
+
+    for (const auto &preview : previews)
+    {
+        if (preview.window_id.empty() ||
+            preview.width <= 0 ||
+            preview.height <= 0)
+        {
+            continue;
+        }
+
+        g_variant_builder_add(
+            &builder,
+            "(siiii)",
+            preview.window_id.c_str(),
+            preview.x,
+            preview.y,
+            preview.width,
+            preview.height);
+    }
+
+    g_dbus_connection_call(
+        m_state->connection,
+        GNOME_THUMBNAIL_SERVICE,
+        GNOME_THUMBNAIL_PATH,
+        GNOME_THUMBNAIL_INTERFACE,
+        "ShowLivePreviews",
+        g_variant_new("(a(siiii))", &builder),
+        nullptr,
+        G_DBUS_CALL_FLAGS_NONE,
+        1000,
+        nullptr,
+        nullptr,
+        nullptr);
+}
+
+void DockWindowThumbnailProvider::
+    hide_gnome_live_previews()
+{
+    if (!supports_gnome_live_previews())
+        return;
+
+    g_dbus_connection_call(
+        m_state->connection,
+        GNOME_THUMBNAIL_SERVICE,
+        GNOME_THUMBNAIL_PATH,
+        GNOME_THUMBNAIL_INTERFACE,
+        "HideLivePreviews",
+        nullptr,
+        nullptr,
+        G_DBUS_CALL_FLAGS_NONE,
+        1000,
+        nullptr,
+        nullptr,
+        nullptr);
 }
 
 void DockWindowThumbnailProvider::request(

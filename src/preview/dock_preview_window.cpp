@@ -308,6 +308,29 @@ namespace
         return result;
     }
 
+    bool uses_gnome_wayland_session()
+    {
+        const char *desktop =
+            g_getenv("XDG_CURRENT_DESKTOP");
+        const char *session_type =
+            g_getenv("XDG_SESSION_TYPE");
+        if (!desktop || !session_type ||
+            g_ascii_strcasecmp(
+                session_type,
+                "wayland") != 0)
+        {
+            return false;
+        }
+
+        auto *normalized = g_ascii_strdown(desktop, -1);
+        const bool result =
+            normalized &&
+            std::string(normalized).find("gnome") !=
+                std::string::npos;
+        g_free(normalized);
+        return result;
+    }
+
     void append_rounded_rectangle(
         const Cairo::RefPtr<Cairo::Context>
             &context,
@@ -906,6 +929,13 @@ void DockPreviewWindow::prime_thumbnail_cache(
     const std::vector<ApplicationWindowEntry>
         &entries)
 {
+    // GNOME's Shell capture produces a complete offscreen actor snapshot on
+    // demand, including for minimized or obscured windows. Avoid eagerly
+    // transferring every application's full-size PNG when the preview is
+    // closed; request only the cards the user actually opens.
+    if (uses_gnome_wayland_session())
+        return;
+
     if (!m_uses_layer_shell)
     {
         const bool xfwm_session =
@@ -1520,6 +1550,14 @@ void DockPreviewWindow::show_preview(
 
     show_all();
     queue_resize();
+
+    // GNOME Shell can render the compositor's live window textures directly
+    // over these non-reactive image rectangles. Start that zero-copy path for
+    // every visible GNOME preview; it is cheap at idle and avoids treating
+    // smoothness as a media-player-only feature.
+    if (m_thumbnail_provider.supports_gnome_live_previews())
+        start_live_streams();
+
     start_opacity_animation(false);
 }
 
@@ -1768,7 +1806,13 @@ void DockPreviewWindow::set_dynamic_refresh(
     if (!enabled)
         m_media_title.clear();
 
-    if (m_dynamic_refresh &&
+    if (m_thumbnail_provider.supports_gnome_live_previews() &&
+        get_visible() &&
+        !m_thumbnail_targets.empty())
+    {
+        start_live_streams();
+    }
+    else if (m_dynamic_refresh &&
         get_visible() &&
         !m_thumbnail_targets.empty())
     {
@@ -2507,6 +2551,47 @@ void DockPreviewWindow::start_live_streams()
 
     stop_live_streams();
 
+    if (m_thumbnail_provider.supports_gnome_live_previews())
+    {
+        std::vector<GnomeLivePreviewRect> previews;
+        previews.reserve(m_window_ids.size());
+
+        const int global_x =
+            m_monitor_geometry.x + m_position.x;
+        const int global_y =
+            m_monitor_geometry.y + m_position.y;
+
+        for (std::size_t index = 0;
+             index < m_window_ids.size();
+             ++index)
+        {
+            const auto target =
+                m_thumbnail_targets.find(
+                    m_window_ids[index]);
+            if (target == m_thumbnail_targets.end())
+                continue;
+
+            previews.push_back({
+                target->first,
+                global_x + m_size.padding +
+                    static_cast<int>(index) *
+                        (m_size.card_width + m_size.gap),
+                global_y + WINDOW_PADDING +
+                    m_size.header_height,
+                target->second.target_width,
+                target->second.target_height});
+        }
+
+        m_thumbnail_provider.show_gnome_live_previews(
+            previews);
+        m_live_window_ids = desired_windows;
+
+        g_message(
+            "GNOME compositor-native live previews started: windows=%zu",
+            m_live_window_ids.size());
+        return;
+    }
+
     if (!m_uses_layer_shell)
     {
         m_live_window_ids = desired_windows;
@@ -2659,6 +2744,7 @@ void DockPreviewWindow::start_live_streams()
 
 void DockPreviewWindow::stop_live_streams()
 {
+    m_thumbnail_provider.hide_gnome_live_previews();
     m_x11_live_refresh.disconnect();
     m_x11_probe_refresh.disconnect();
     m_stream_provider.stop_all();

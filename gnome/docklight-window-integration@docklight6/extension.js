@@ -8,6 +8,8 @@ import St from 'gi://St';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
+Gio._promisify(Shell.Screenshot, 'composite_to_stream');
+
 import {
     calculateDockRevealRect,
     calculateDockStrut,
@@ -22,6 +24,23 @@ import {
 const SERVICE = 'org.docklight6.WindowIntegration';
 const PATH = '/org/docklight6/WindowIntegration';
 const IFACE = 'org.docklight6.WindowIntegration1';
+const THUMBNAIL_SERVICE = 'org.docklight6.GnomeThumbnailer';
+const THUMBNAIL_PATH = '/org/docklight6/GnomeThumbnailer';
+const THUMBNAIL_IFACE = `
+<node>
+  <interface name="org.docklight6.GnomeThumbnailer1">
+    <method name="CaptureWindow">
+      <arg type="s" direction="in" name="window_id"/>
+      <arg type="i" direction="in" name="target_width"/>
+      <arg type="i" direction="in" name="target_height"/>
+      <arg type="ay" direction="out" name="png"/>
+    </method>
+    <method name="ShowLivePreviews">
+      <arg type="a(siiii)" direction="in" name="previews"/>
+    </method>
+    <method name="HideLivePreviews"/>
+  </interface>
+</node>`;
 const PROTOCOL_VERSION = '7';
 const DOCK_PLACEMENT_DELAY_MS = 30;
 // Docklight debounces configuration reloads for 200 ms. Keep the ordinary
@@ -124,6 +143,17 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockRevealActor = null;
         this._dockRevealSignal = 0;
         this._nativeWorkAreas = [];
+        this._livePreviewOverlay = null;
+
+        this._thumbnailDbus = Gio.DBusExportedObject.wrapJSObject(
+            THUMBNAIL_IFACE, this);
+        this._thumbnailDbus.export(Gio.DBus.session, THUMBNAIL_PATH);
+        this._thumbnailNameId = Gio.bus_own_name_on_connection(
+            Gio.DBus.session,
+            THUMBNAIL_SERVICE,
+            Gio.BusNameOwnerFlags.NONE,
+            null,
+            null);
 
         this._loadDockPlacement();
         this._refreshNativeWorkAreas();
@@ -210,6 +240,15 @@ export default class DocklightWindowIntegration extends Extension {
         this._enabled = false;
         this._connected = false;
 
+        if (this._thumbnailNameId) {
+            Gio.bus_unown_name(this._thumbnailNameId);
+            this._thumbnailNameId = 0;
+        }
+        if (this._thumbnailDbus) {
+            this._thumbnailDbus.unexport();
+            this._thumbnailDbus = null;
+        }
+
         if (this._registrationRetrySource) {
             GLib.source_remove(this._registrationRetrySource);
             this._registrationRetrySource = 0;
@@ -236,6 +275,7 @@ export default class DocklightWindowIntegration extends Extension {
             this._dockDiscoveryScanSource = 0;
         }
         this._clearDockWindow();
+        this._destroyLivePreviews();
         this._removeDockStrut();
         this._destroyDockRevealActor();
         for (const window of [...this._auxiliaryWindowSignals.keys()])
@@ -1418,6 +1458,145 @@ export default class DocklightWindowIntegration extends Extension {
 
     _windowId(window) {
         return window ? String(window.get_stable_sequence()) : '';
+    }
+
+    async CaptureWindowAsync(params, invocation) {
+        const [windowId, targetWidth, targetHeight] = params;
+        const emptyReply = () => invocation.return_value(
+            new GLib.Variant('(ay)', [new Uint8Array()]));
+
+        if (!this._enabled || targetWidth <= 0 || targetHeight <= 0) {
+            emptyReply();
+            return;
+        }
+
+        const window = this._windows.get(windowId);
+        const actor = window?.get_compositor_private?.();
+        if (!actor || actor.is_destroyed?.()) {
+            emptyReply();
+            return;
+        }
+
+        try {
+            // Mutter paints the window actor offscreen, so the result is not
+            // affected by overlapping windows and works for both native
+            // Wayland and XWayland clients. Scale in Shell before the GPU
+            // readback and PNG encoding: transferring a full browser-sized
+            // frame only for GTK to shrink it made live video previews
+            // needlessly expensive and visibly stuttered.
+            const content = actor.paint_to_content(null);
+            const texture = content?.get_texture?.();
+            if (!texture) {
+                emptyReply();
+                return;
+            }
+
+            const sourceWidth = texture.get_width?.() || 0;
+            const sourceHeight = texture.get_height?.() || 0;
+            if (sourceWidth <= 0 || sourceHeight <= 0) {
+                emptyReply();
+                return;
+            }
+
+            const scale = Math.min(
+                1,
+                targetWidth / sourceWidth,
+                targetHeight / sourceHeight);
+
+            const stream = Gio.MemoryOutputStream.new_resizable();
+            await Shell.Screenshot.composite_to_stream(
+                texture,
+                0, 0, -1, -1,
+                scale,
+                null, 0, 0, 1,
+                stream);
+            stream.close(null);
+            const png = stream.steal_as_bytes().get_data();
+            invocation.return_value(new GLib.Variant('(ay)', [png]));
+        } catch (error) {
+            logError(error, `Failed to capture Docklight thumbnail for ${windowId}`);
+            emptyReply();
+        }
+    }
+
+    ShowLivePreviewsAsync(params, invocation) {
+        const [previews] = params;
+        this._destroyLivePreviews();
+
+        const overlay = new Clutter.Actor({
+            reactive: false,
+            x: 0,
+            y: 0,
+            width: global.stage.width,
+            height: global.stage.height,
+            opacity: 0,
+        });
+
+        let previewCount = 0;
+        for (const [windowId, x, y, width, height] of previews) {
+            if (width <= 0 || height <= 0)
+                continue;
+
+            const window = this._windows.get(windowId);
+            const windowActor = window?.get_compositor_private?.();
+            if (!window || !windowActor || windowActor.is_destroyed?.())
+                continue;
+
+            const frame = window.get_frame_rect();
+            if (frame.width <= 0 || frame.height <= 0)
+                continue;
+
+            const scale = Math.min(
+                width / frame.width,
+                height / frame.height);
+            const previewWidth = Math.max(1, Math.round(frame.width * scale));
+            const previewHeight = Math.max(1, Math.round(frame.height * scale));
+            const layout = new Shell.WindowPreviewLayout();
+            const preview = new Clutter.Actor({
+                reactive: false,
+                clip_to_allocation: true,
+                x: x + Math.floor((width - previewWidth) / 2),
+                y: y + Math.floor((height - previewHeight) / 2),
+                width: previewWidth,
+                height: previewHeight,
+            });
+
+            // WindowPreviewLayout tracks its container during assignment, so
+            // match GNOME Shell's own construction order instead of passing
+            // it as a construct property.
+            preview.layout_manager = layout;
+            overlay.add_child(preview);
+            layout.add_window(window);
+            previewCount++;
+        }
+
+        if (previewCount > 0) {
+            Main.uiGroup.add_child(overlay);
+            this._livePreviewOverlay = overlay;
+            overlay.ease({
+                opacity: 255,
+                duration: 140,
+                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            });
+        } else {
+            overlay.destroy();
+        }
+
+        invocation.return_value(null);
+    }
+
+    HideLivePreviewsAsync(_params, invocation) {
+        this._destroyLivePreviews();
+        invocation.return_value(null);
+    }
+
+    _destroyLivePreviews() {
+        if (!this._livePreviewOverlay)
+            return;
+
+        this._livePreviewOverlay.remove_all_transitions();
+        this._livePreviewOverlay.destroy();
+        this._livePreviewOverlay = null;
     }
 
     _isTrackable(window) {
