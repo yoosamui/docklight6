@@ -64,11 +64,43 @@ assert.match(
     "always-on-top application auxiliaries such as Firefox PiP must remain in preview groups");
 assert.match(
     extensionSource,
-    /const overlay = new Clutter\.Actor\(\{[\s\S]*?reactive: false[\s\S]*?Main\.uiGroup\.add_child\(overlay\)/,
-    "the Shell overlay must paint above GTK without stealing its pointer interaction");
+    /const overlay = new Clutter\.Actor\(\{[\s\S]*?reactive: false[\s\S]*?const preview = new Clutter\.Actor\(\{[\s\S]*?reactive: false[\s\S]*?Main\.uiGroup\.add_child\(overlay\)/,
+    "neither the overlay nor any live preview may accept Shell input");
 assert.match(
     extensionSource,
-    /disable\(\)[\s\S]*?_destroyLivePreviews\(\)[\s\S]*?_destroyLivePreviews\(\) \{[\s\S]*?\.destroy\(\)/,
+    /const disableDescendantInput = actor => \{[\s\S]*?actor\.get_children\(\)[\s\S]*?child\.reactive = false[\s\S]*?disableDescendantInput\(preview\)/,
+    "compositor clone descendants must leave input handling to their preview container");
+assert.doesNotMatch(
+    extensionSource,
+    /overlay\.connect\('captured-event'/,
+    "the Shell overlay must not capture GTK preview-card input");
+assert.match(
+    extensionSource,
+    /_pointerPosition = \{x: position\.x, y: position\.y\};[\s\S]*?_publishPreviewPointerInside\(\)[\s\S]*?_previewPointerIsInside\(\)[\s\S]*?_livePreviewRects\.some/,
+    "live preview hover must be reconciled from the compositor pointer instead of relying only on crossing events");
+assert.match(
+    extensionSource,
+    /_destroyLivePreviews\(false\)[\s\S]*?const previewRects = \[\][\s\S]*?this\._livePreviewRects = previewRects[\s\S]*?_publishPreviewPointerInside\(true\)/,
+    "replacing live previews must atomically install and publish their pointer hitboxes");
+assert.match(
+    extensionSource,
+    /const previewActors = \[\][\s\S]*?previewActors\.push\(preview\)[\s\S]*?for \(const preview of previewActors\)[\s\S]*?preview\.ease/,
+    "only thumbnail-sized actors may be animated when live previews appear");
+assert.doesNotMatch(
+    extensionSource,
+    /overlay\.ease\(/,
+    "the full-stage live-preview container must not be opacity animated");
+assert.doesNotMatch(
+    extensionSource,
+    /preview\.connect\(['"](?:button|touch|motion|scroll|enter|leave)[^'"]*-event['"]/,
+    "live previews must not attach mouse or touch event handlers");
+assert.doesNotMatch(
+    extensionSource,
+    /hostActor\.add_child\(overlay\)/,
+    "live-preview actors must not be parented into a real window actor");
+assert.match(
+    extensionSource,
+    /disable\(\)[\s\S]*?_destroyLivePreviews\(\)[\s\S]*?_destroyLivePreviews\([^)]*\) \{[\s\S]*?\.destroy\(\)/,
     "disabling the extension must destroy every compositor preview clone");
 assert.match(
     extensionSource,

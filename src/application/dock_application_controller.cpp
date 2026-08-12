@@ -806,6 +806,42 @@ bool DockApplicationController::close_window(
            m_registry->close_window(window_id);
 }
 
+bool DockApplicationController::toggle_window(
+    const WindowId &window_id)
+{
+    const auto running_application =
+        application();
+    const auto window =
+        m_registry
+            ? m_registry->find_window(window_id)
+            : nullptr;
+
+    if (!running_application ||
+        !window ||
+        std::find(
+            running_application->window_ids.begin(),
+            running_application->window_ids.end(),
+            window_id) ==
+            running_application->window_ids.end())
+    {
+        return false;
+    }
+
+    // PiP and similar skip-taskbar auxiliaries normally cannot take focus,
+    // so active_window_id can never identify their visible state. Treat an
+    // unminimized auxiliary as the selected preview and preserve the same
+    // show/minimize toggle users get for an ordinary active window.
+    const bool selected =
+        running_application->active_window_id ==
+            std::optional<WindowId>{window_id} ||
+        (window->skip_taskbar &&
+         window->include_when_skip_taskbar);
+
+    return selected && !window->minimized
+               ? minimize_window(window_id)
+               : show_window(window_id);
+}
+
 std::vector<ApplicationWindowEntry>
 DockApplicationController::
     window_entries() const

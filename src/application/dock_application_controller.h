@@ -83,6 +83,8 @@ public:
         const WindowId &window_id);
     bool close_window(
         const WindowId &window_id);
+    bool toggle_window(
+        const WindowId &window_id);
     bool show_window(
         const WindowId &window_id);
     bool set_icon_geometry(

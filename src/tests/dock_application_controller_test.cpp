@@ -1106,6 +1106,50 @@ void verifies_grouped_window_entries()
     assert(!registry.find_window("window-2"));
 }
 
+void verifies_unfocusable_auxiliary_preview_toggles()
+{
+    FakeWindowBackend backend;
+
+    auto browser = window(
+        "browser-window",
+        false,
+        "org.mozilla.firefox");
+    auto picture_in_picture = window(
+        "picture-in-picture",
+        false,
+        "org.mozilla.firefox");
+    picture_in_picture.skip_taskbar = true;
+    picture_in_picture.include_when_skip_taskbar = true;
+
+    backend.set_snapshot(
+        {browser, picture_in_picture},
+        {"browser-window", "picture-in-picture"},
+        WindowId{"browser-window"});
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {"org.mozilla.firefox.desktop"});
+
+    // PiP remains non-active while visible, but clicking its preview must
+    // still perform the default toggle instead of sending another activate.
+    assert(controller.toggle_window(
+        "picture-in-picture"));
+    assert(registry
+               .find_window("picture-in-picture")
+               ->minimized);
+    assert(registry.active_window() ==
+           std::optional<WindowId>{"browser-window"});
+
+    assert(controller.toggle_window(
+        "picture-in-picture"));
+    assert(!registry
+                .find_window("picture-in-picture")
+                ->minimized);
+}
+
 }
 
 int main()
@@ -1127,6 +1171,7 @@ int main()
     verifies_window_cycle_stays_on_current_desktop();
     verifies_window_cycle_uses_all_desktops_when_enabled();
     verifies_grouped_window_entries();
+    verifies_unfocusable_auxiliary_preview_toggles();
 
     return 0;
 }

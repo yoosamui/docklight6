@@ -863,6 +863,13 @@ bool DockItem::close_window(
         .close_window(window_id);
 }
 
+bool DockItem::toggle_window(
+    const WindowId &window_id)
+{
+    return m_application_controller
+        .toggle_window(window_id);
+}
+
 bool DockItem::on_enter_notify_event(
     GdkEventCrossing *event)
 {

@@ -131,6 +131,7 @@ private:
         bool cancel_pending_show = true);
     void preview_pointer_entered();
     void preview_pointer_left();
+    void shell_preview_pointer_changed(bool inside);
     void activate_preview_window(
         const WindowId &window_id);
     void reload_preview_thumbnail(
@@ -196,6 +197,10 @@ private:
     sigc::connection
         m_dock_pointer_inside_changed;
     sigc::connection
+        m_preview_pointer_inside_changed;
+    sigc::connection
+        m_preview_window_activated;
+    sigc::connection
         m_dock_animation_completed;
     sigc::connection
         m_gnome_placement_fallback;
@@ -210,6 +215,7 @@ private:
     bool m_preview_inhibits_autohide = false;
     bool m_dock_item_pointer_inside = false;
     bool m_preview_pointer_inside = false;
+    bool m_shell_preview_pointer_inside = false;
 
     bool m_has_applied_layout = false;
 };

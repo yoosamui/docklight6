@@ -280,7 +280,7 @@ void verifies_dbus_state_transport()
 
     assert(!registered);
     assert(supported_version_text ==
-           "8");
+           "9");
 
     result =
         call_method(
@@ -333,6 +333,40 @@ void verifies_dbus_state_transport()
             g_variant_new("(b)", true))));
     assert(pointer_inside);
     pointer_connection.disconnect();
+
+    bool preview_pointer_inside = false;
+    sigc::connection preview_pointer_connection =
+        backend
+            .signal_preview_pointer_inside_changed()
+            .connect(
+                [&preview_pointer_inside](bool inside)
+                {
+                    preview_pointer_inside = inside;
+                });
+    assert(accepted(
+        call_method(
+            client,
+            "PublishPreviewPointerInside",
+            g_variant_new("(b)", true))));
+    assert(preview_pointer_inside);
+    preview_pointer_connection.disconnect();
+
+    WindowId activated_preview;
+    sigc::connection preview_activation_connection =
+        backend
+            .signal_preview_window_activated()
+            .connect(
+                [&activated_preview](const WindowId &window_id)
+                {
+                    activated_preview = window_id;
+                });
+    assert(accepted(
+        call_method(
+            client,
+            "ActivatePreviewWindow",
+            g_variant_new("(s)", "preview-window"))));
+    assert(activated_preview == "preview-window");
+    preview_activation_connection.disconnect();
 
     bool animation_completed = false;
     bool animation_hidden = true;

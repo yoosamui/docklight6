@@ -41,7 +41,7 @@ const THUMBNAIL_IFACE = `
     <method name="HideLivePreviews"/>
   </interface>
 </node>`;
-const PROTOCOL_VERSION = '8';
+const PROTOCOL_VERSION = '9';
 const DOCK_PLACEMENT_DELAY_MS = 30;
 // Docklight debounces configuration reloads for 200 ms. Keep the ordinary
 // Wayland toplevel hidden past that boundary so an edge change cannot expose
@@ -144,6 +144,8 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockRevealSignal = 0;
         this._nativeWorkAreas = [];
         this._livePreviewOverlay = null;
+        this._livePreviewRects = [];
+        this._previewPointerInside = null;
 
         this._thumbnailDbus = Gio.DBusExportedObject.wrapJSObject(
             THUMBNAIL_IFACE, this);
@@ -167,6 +169,7 @@ export default class DocklightWindowIntegration extends Extension {
                 const [position] = this._cursorTracker.get_pointer();
                 this._pointerPosition = {x: position.x, y: position.y};
                 this._publishDockPointerInside();
+                this._publishPreviewPointerInside();
                 return GLib.SOURCE_CONTINUE;
             });
 
@@ -988,6 +991,29 @@ export default class DocklightWindowIntegration extends Extension {
         this._call('PublishDockPointerInside', '(b)', [inside]);
     }
 
+    _previewPointerIsInside() {
+        if (!this._livePreviewOverlay || !this._pointerPosition)
+            return false;
+
+        return this._livePreviewRects.some(rect =>
+            this._pointerPosition.x >= rect.x &&
+            this._pointerPosition.x < rect.x + rect.width &&
+            this._pointerPosition.y >= rect.y &&
+            this._pointerPosition.y < rect.y + rect.height);
+    }
+
+    _publishPreviewPointerInside(force = false) {
+        if (!this._connected)
+            return;
+
+        const inside = this._previewPointerIsInside();
+        if (!force && inside === this._previewPointerInside)
+            return;
+
+        this._previewPointerInside = inside;
+        this._call('PublishPreviewPointerInside', '(b)', [inside]);
+    }
+
     _scheduleDockPlacement(restart = false, requestedDelay = null) {
         if (!this._enabled || !this._dockWindow)
             return;
@@ -1540,18 +1566,28 @@ export default class DocklightWindowIntegration extends Extension {
             return;
         }
 
-        this._destroyLivePreviews();
+        // Do not publish a transient outside state while replacing one set of
+        // previews with another. The new rectangles are installed below and
+        // immediately reconciled against Shell's compositor pointer.
+        this._destroyLivePreviews(false);
 
+        // WindowPreviewLayout actors must remain in Shell's UI layer. Making
+        // them children of a real MetaWindowActor creates an unsupported
+        // paint dependency and can stop live video damage from reaching the
+        // clones. Keep both the full-stage container and every live preview
+        // actor non-reactive so compositor previews never consume mouse input
+        // intended for the GTK preview surface underneath.
         const overlay = new Clutter.Actor({
             reactive: false,
             x: 0,
             y: 0,
             width: global.stage.width,
             height: global.stage.height,
-            opacity: 0,
         });
 
         let previewCount = 0;
+        const previewRects = [];
+        const previewActors = [];
         for (const [windowId, x, y, width, height] of previews) {
             if (width <= 0 || height <= 0)
                 continue;
@@ -1574,6 +1610,7 @@ export default class DocklightWindowIntegration extends Extension {
             const preview = new Clutter.Actor({
                 reactive: false,
                 clip_to_allocation: true,
+                opacity: 0,
                 x: x + Math.floor((width - previewWidth) / 2),
                 y: y + Math.floor((height - previewHeight) / 2),
                 width: previewWidth,
@@ -1586,19 +1623,47 @@ export default class DocklightWindowIntegration extends Extension {
             preview.layout_manager = layout;
             overlay.add_child(preview);
             layout.add_window(window);
+            // WindowPreviewLayout owns the compositor clone actors it creates.
+            // Keep those descendants non-reactive as well: preview layouts
+            // may add clone actors after constructing the container.
+            const disableDescendantInput = actor => {
+                for (const child of actor.get_children()) {
+                    child.reactive = false;
+                    disableDescendantInput(child);
+                }
+            };
+            disableDescendantInput(preview);
+            previewRects.push({
+                windowId,
+                x: preview.x,
+                y: preview.y,
+                width: preview.width,
+                height: preview.height,
+            });
+            previewActors.push(preview);
             previewCount++;
         }
 
         if (previewCount > 0) {
             Main.uiGroup.add_child(overlay);
             this._livePreviewOverlay = overlay;
-            overlay.ease({
-                opacity: 255,
-                duration: 140,
-                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
-            });
+            this._livePreviewRects = previewRects;
+            this._publishPreviewPointerInside(true);
+            // Fading the full-stage overlay makes Mutter allocate and blend
+            // a screen-sized offscreen surface just to reveal thumbnail-sized
+            // clones. Animate each small clone instead so video keeps the
+            // compositor's normal frame cadence while the preview appears.
+            for (const preview of previewActors) {
+                preview.ease({
+                    opacity: 255,
+                    duration: 100,
+                    mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                });
+            }
         } else {
             overlay.destroy();
+            this._livePreviewRects = [];
+            this._publishPreviewPointerInside(true);
         }
 
         invocation.return_value(null);
@@ -1610,13 +1675,16 @@ export default class DocklightWindowIntegration extends Extension {
         invocation.return_value(null);
     }
 
-    _destroyLivePreviews() {
-        if (!this._livePreviewOverlay)
-            return;
+    _destroyLivePreviews(publishPointerOutside = true) {
+        if (this._livePreviewOverlay) {
+            this._livePreviewOverlay.remove_all_transitions();
+            this._livePreviewOverlay.destroy();
+            this._livePreviewOverlay = null;
+        }
 
-        this._livePreviewOverlay.remove_all_transitions();
-        this._livePreviewOverlay.destroy();
-        this._livePreviewOverlay = null;
+        this._livePreviewRects = [];
+        if (publishPointerOutside)
+            this._publishPreviewPointerInside(true);
     }
 
     _isTrackable(window) {

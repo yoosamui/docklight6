@@ -246,6 +246,24 @@ void WindowRegistry::start()
 
     m_connections.push_back(
         m_backend
+            .signal_preview_pointer_inside_changed()
+            .connect(
+                [this](bool inside)
+                {
+                    m_signal_preview_pointer_inside_changed.emit(inside);
+                }));
+
+    m_connections.push_back(
+        m_backend
+            .signal_preview_window_activated()
+            .connect(
+                [this](const WindowId &window_id)
+                {
+                    m_signal_preview_window_activated.emit(window_id);
+                }));
+
+    m_connections.push_back(
+        m_backend
             .signal_dock_animation_completed()
             .connect(
                 [this](bool hidden)
@@ -269,6 +287,18 @@ sigc::signal<void, bool> &
 WindowRegistry::signal_dock_pointer_inside_changed()
 {
     return m_signal_dock_pointer_inside_changed;
+}
+
+sigc::signal<void, bool> &
+WindowRegistry::signal_preview_pointer_inside_changed()
+{
+    return m_signal_preview_pointer_inside_changed;
+}
+
+sigc::signal<void, const WindowId &> &
+WindowRegistry::signal_preview_window_activated()
+{
+    return m_signal_preview_window_activated;
 }
 
 sigc::signal<void, bool> &

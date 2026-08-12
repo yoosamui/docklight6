@@ -80,6 +80,14 @@ constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "      <arg type='b' direction='in' name='inside'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
+    "    <method name='PublishPreviewPointerInside'>"
+    "      <arg type='b' direction='in' name='inside'/>"
+    "      <arg type='b' direction='out' name='accepted'/>"
+    "    </method>"
+    "    <method name='ActivatePreviewWindow'>"
+    "      <arg type='s' direction='in' name='internal_id'/>"
+    "      <arg type='b' direction='out' name='accepted'/>"
+    "    </method>"
     "    <method name='PublishDockAnimationCompleted'>"
     "      <arg type='b' direction='in' name='hidden'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
@@ -1508,6 +1516,41 @@ void KWinIntegrationService::
         g_dbus_method_invocation_return_value(
             invocation,
             g_variant_new("(b)", true));
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "PublishPreviewPointerInside") == 0)
+    {
+        gboolean inside = false;
+        g_variant_get(parameters, "(b)", &inside);
+        m_backend
+            .signal_preview_pointer_inside_changed()
+            .emit(inside);
+        g_dbus_method_invocation_return_value(
+            invocation,
+            g_variant_new("(b)", true));
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "ActivatePreviewWindow") == 0)
+    {
+        const char *window_id = nullptr;
+        g_variant_get(parameters, "(&s)", &window_id);
+        const bool accepted =
+            window_id && *window_id;
+        if (accepted)
+        {
+            m_backend
+                .signal_preview_window_activated()
+                .emit(window_id);
+        }
+        g_dbus_method_invocation_return_value(
+            invocation,
+            g_variant_new("(b)", accepted));
         return;
     }
 

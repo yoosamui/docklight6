@@ -193,6 +193,18 @@ WindowBackend::signal_dock_pointer_inside_changed()
 }
 
 sigc::signal<void, bool> &
+WindowBackend::signal_preview_pointer_inside_changed()
+{
+    return m_signal_preview_pointer_inside_changed;
+}
+
+sigc::signal<void, const WindowId &> &
+WindowBackend::signal_preview_window_activated()
+{
+    return m_signal_preview_window_activated;
+}
+
+sigc::signal<void, bool> &
 WindowBackend::signal_dock_animation_completed()
 {
     return m_signal_dock_animation_completed;

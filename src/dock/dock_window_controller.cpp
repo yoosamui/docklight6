@@ -142,6 +142,8 @@ DockWindowController::~DockWindowController()
     m_dock_surface_geometry_changed.disconnect();
     m_dock_reveal_requested.disconnect();
     m_dock_pointer_inside_changed.disconnect();
+    m_preview_pointer_inside_changed.disconnect();
+    m_preview_window_activated.disconnect();
     m_dock_animation_completed.disconnect();
     m_gnome_placement_fallback.disconnect();
     m_dock_add.disconnect();
@@ -314,6 +316,27 @@ void DockWindowController::initialize()
                         m_autohide_controller
                             ->set_shell_pointer_inside(inside);
                     });
+
+        m_preview_pointer_inside_changed =
+            m_window
+                .m_window_registry
+                ->signal_preview_pointer_inside_changed()
+                .connect(
+                    [this](bool inside)
+                    {
+                        shell_preview_pointer_changed(
+                            inside);
+                    });
+
+        m_preview_window_activated =
+            m_window
+                .m_window_registry
+                ->signal_preview_window_activated()
+                .connect(
+                    sigc::mem_fun(
+                        *this,
+                        &DockWindowController::
+                            activate_preview_window));
 
         m_dock_animation_completed =
             m_window
@@ -1667,6 +1690,7 @@ void DockWindowController::hide_preview(
 
     m_preview_desktop_id.clear();
     m_preview_pointer_inside = false;
+    m_shell_preview_pointer_inside = false;
 
     if (m_preview_window)
         m_preview_window->hide_preview();
@@ -1690,6 +1714,17 @@ void DockWindowController::preview_pointer_left()
 {
     m_preview_pointer_inside = false;
     start_hide_timer();
+}
+
+void DockWindowController::shell_preview_pointer_changed(
+    bool inside)
+{
+    m_shell_preview_pointer_inside = inside;
+
+    if (inside)
+        cancel_hide_timer();
+    else
+        start_hide_timer();
 }
 
 void DockWindowController::activate_preview_window(
@@ -1716,19 +1751,12 @@ void DockWindowController::activate_preview_window(
                         return entry.id == window_id;
                     });
 
-            // Run the window action while GTK still exposes the button
-            // event timestamp. Muffin rejects delayed X11 activation and
-            // unminimize requests as untrusted focus-stealing attempts.
-            if (selected != entries.end() &&
-                selected->active &&
-                !selected->minimized)
-            {
-                item->minimize_window(window_id);
-            }
-            else
-            {
-                item->show_window(window_id);
-            }
+            // Run the window action while GTK still exposes the button event
+            // timestamp. The application controller also treats an open PiP
+            // as selected because skip-taskbar auxiliaries cannot reliably
+            // become the compositor's active window.
+            if (selected != entries.end())
+                item->toggle_window(window_id);
 
             break;
         }
@@ -1802,7 +1830,8 @@ void DockWindowController::start_hide_timer()
             {
                 if (m_dock_item_pointer_inside ||
                     m_window.pointer_is_inside() ||
-                    m_preview_pointer_inside)
+                    m_preview_pointer_inside ||
+                    m_shell_preview_pointer_inside)
                 {
                     return false;
                 }

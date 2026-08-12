@@ -80,6 +80,7 @@ public:
     bool show_window(const WindowId &window_id);
     bool minimize_window(const WindowId &window_id);
     bool close_window(const WindowId &window_id);
+    bool toggle_window(const WindowId &window_id);
     const std::string &desktop_id() const
     {
         return m_desktop_id;
