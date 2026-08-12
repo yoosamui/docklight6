@@ -2166,13 +2166,59 @@ void DockPreviewWindow::rebuild(
             size.card_width,
             image_height);
         image_event->add_events(
+            Gdk::BUTTON_PRESS_MASK |
             Gdk::BUTTON_RELEASE_MASK);
+        const bool forwards_live_preview_click =
+            entry.application_auxiliary &&
+            m_thumbnail_provider
+                .supports_gnome_live_previews();
+        image_event->signal_button_press_event().connect(
+            [this,
+             image_event,
+             window_id = entry.id,
+             forwards_live_preview_click](
+                GdkEventButton *event)
+            {
+                if (!event ||
+                    event->button != 1 ||
+                    !forwards_live_preview_click)
+                {
+                    return false;
+                }
+
+                // GTK is mapped before GNOME Shell commits the live clone's
+                // input region. Forward on press so a clone appearing before
+                // release cannot split and lose the first PiP click.
+                const auto allocation =
+                    image_event->get_allocation();
+                const double width = std::max(
+                    1,
+                    allocation.get_width());
+                const double height = std::max(
+                    1,
+                    allocation.get_height());
+                m_thumbnail_provider
+                    .forward_gnome_preview_primary_click(
+                        window_id,
+                        event->x / width,
+                        event->y / height);
+                return true;
+            });
         image_event->signal_button_release_event().connect(
-            [this, window_id = entry.id](
+            [this,
+             window_id = entry.id,
+             forwards_live_preview_click](
                 GdkEventButton *event)
             {
                 if (event && event->button == 1)
                 {
+                    // An auxiliary press was already forwarded above. Consume
+                    // its release even if Shell's clone appeared between the
+                    // two halves of the physical click; PiP must never fall
+                    // through to the normal show/raise action.
+                    if (forwards_live_preview_click)
+                        return true;
+
                     m_activate_window.emit(window_id);
                     return true;
                 }

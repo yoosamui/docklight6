@@ -38,6 +38,11 @@ const THUMBNAIL_IFACE = `
     <method name="ShowLivePreviews">
       <arg type="a(siiii)" direction="in" name="previews"/>
     </method>
+    <method name="ForwardPreviewPrimaryClick">
+      <arg type="s" direction="in" name="window_id"/>
+      <arg type="d" direction="in" name="normalized_x"/>
+      <arg type="d" direction="in" name="normalized_y"/>
+    </method>
     <method name="HideLivePreviews"/>
   </interface>
 </node>`;
@@ -147,8 +152,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._livePreviewActors = [];
         this._livePreviewRects = [];
         this._previewPointerInside = null;
-        this._previewTouchDevice = null;
-        this._previewTouchSlot = 0;
+        this._previewPointerDevice = null;
 
         this._thumbnailDbus = Gio.DBusExportedObject.wrapJSObject(
             THUMBNAIL_IFACE, this);
@@ -282,7 +286,7 @@ export default class DocklightWindowIntegration extends Extension {
         }
         this._clearDockWindow();
         this._destroyLivePreviews();
-        this._previewTouchDevice = null;
+        this._previewPointerDevice = null;
         this._removeDockStrut();
         this._destroyDockRevealActor();
         for (const window of [...this._auxiliaryWindowSignals.keys()])
@@ -1710,8 +1714,15 @@ export default class DocklightWindowIntegration extends Extension {
                 return Clutter.EVENT_STOP;
             });
             preview.connect('button-release-event', (_actor, event) => {
-                if (event.get_button() !== 1 || !primaryButtonPressed)
+                if (event.get_button() !== 1)
                     return Clutter.EVENT_PROPAGATE;
+
+                // The GTK preview is mapped before this compositor clone's
+                // input region is committed. A press can therefore reach GTK
+                // while its release reaches Shell. Never let that orphaned
+                // release fall through and become a second GTK action.
+                if (!primaryButtonPressed)
+                    return Clutter.EVENT_STOP;
 
                 primaryButtonPressed = false;
                 if (this._isApplicationAuxiliary(window))
@@ -1787,34 +1798,71 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _forwardPreviewPrimaryClick(window, preview, event) {
-        const frame = window?.get_frame_rect?.();
         const [stageX, stageY] = event.get_coords();
         const [previewX, previewY] = preview.get_transformed_position();
         const [previewWidth, previewHeight] = preview.get_transformed_size();
-        if (!frame || previewWidth <= 0 || previewHeight <= 0)
+        if (previewWidth <= 0 || previewHeight <= 0)
+            return;
+
+        this._forwardPreviewPrimaryClickAt(
+            window,
+            (stageX - previewX) / previewWidth,
+            (stageY - previewY) / previewHeight);
+    }
+
+    ForwardPreviewPrimaryClickAsync(params, invocation) {
+        const [windowId, normalizedX, normalizedY] = params;
+        if (this._isThumbnailCallerAuthorized(invocation)) {
+            const window = this._windows.get(windowId);
+            if (this._isApplicationAuxiliary(window))
+                this._forwardPreviewPrimaryClickAt(
+                    window, normalizedX, normalizedY);
+        }
+        invocation.return_value(null);
+    }
+
+    _forwardPreviewPrimaryClickAt(window, normalizedX, normalizedY) {
+        const frame = window?.get_frame_rect?.();
+        if (!frame || frame.width <= 0 || frame.height <= 0 ||
+            !Number.isFinite(normalizedX) || !Number.isFinite(normalizedY))
             return;
 
         // WindowPreviewLayout preserves the source aspect ratio. Translate
         // the point on its compositor clone back into the real client frame.
-        // A virtual touch device targets that point without moving the user's
-        // physical pointer away from the dock preview.
+        // The GTK card uses this same normalized path during the first frame,
+        // before Shell has committed the new thumbnail input region. Thus an
+        // early PiP click cannot fall through to GTK's show/raise action.
         const sourceX = frame.x + Math.min(frame.width - 1, Math.max(0,
-            (stageX - previewX) * frame.width / previewWidth));
+            normalizedX * frame.width));
         const sourceY = frame.y + Math.min(frame.height - 1, Math.max(0,
-            (stageY - previewY) * frame.height / previewHeight));
+            normalizedY * frame.height));
 
-        if (!this._previewTouchDevice) {
+        if (!this._previewPointerDevice) {
             const seat = Clutter.get_default_backend().get_default_seat();
-            this._previewTouchDevice = seat.create_virtual_device(
-                Clutter.InputDeviceType.TOUCHSCREEN_DEVICE);
+            this._previewPointerDevice = seat.create_virtual_device(
+                Clutter.InputDeviceType.POINTER_DEVICE);
         }
 
-        const slot = this._previewTouchSlot++ % 10;
-        const downTime = GLib.get_monotonic_time();
-        this._previewTouchDevice.notify_touch_down(
-            downTime, slot, sourceX, sourceY);
-        this._previewTouchDevice.notify_touch_up(
-            downTime + 1000, slot);
+        // PiP controls in browsers are mouse controls rather than touch
+        // targets. A virtual touchscreen also makes Shell draw its touch
+        // feedback circle. Send a real pointer click, then immediately put
+        // the pointer back over the dock preview so this forwarding remains
+        // visually transparent and does not dismiss the preview.
+        const restoreX = this._pointerPosition?.x ?? sourceX;
+        const restoreY = this._pointerPosition?.y ?? sourceY;
+        const motionTime = GLib.get_monotonic_time();
+        this._previewPointerDevice.notify_absolute_motion(
+            motionTime, sourceX, sourceY);
+        this._previewPointerDevice.notify_button(
+            motionTime + 1000,
+            Clutter.BUTTON_PRIMARY,
+            Clutter.ButtonState.PRESSED);
+        this._previewPointerDevice.notify_button(
+            motionTime + 2000,
+            Clutter.BUTTON_PRIMARY,
+            Clutter.ButtonState.RELEASED);
+        this._previewPointerDevice.notify_absolute_motion(
+            motionTime + 3000, restoreX, restoreY);
     }
 
     HideLivePreviewsAsync(_params, invocation) {

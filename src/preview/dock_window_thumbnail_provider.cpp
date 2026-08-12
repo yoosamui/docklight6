@@ -1188,6 +1188,37 @@ void DockWindowThumbnailProvider::
 }
 
 void DockWindowThumbnailProvider::
+    forward_gnome_preview_primary_click(
+        const WindowId &window_id,
+        double normalized_x,
+        double normalized_y)
+{
+    if (!supports_gnome_live_previews() ||
+        window_id.empty())
+    {
+        return;
+    }
+
+    g_dbus_connection_call(
+        m_state->connection,
+        GNOME_THUMBNAIL_SERVICE,
+        GNOME_THUMBNAIL_PATH,
+        GNOME_THUMBNAIL_INTERFACE,
+        "ForwardPreviewPrimaryClick",
+        g_variant_new(
+            "(sdd)",
+            window_id.c_str(),
+            std::clamp(normalized_x, 0.0, 1.0),
+            std::clamp(normalized_y, 0.0, 1.0)),
+        nullptr,
+        G_DBUS_CALL_FLAGS_NONE,
+        1000,
+        nullptr,
+        nullptr,
+        nullptr);
+}
+
+void DockWindowThumbnailProvider::
     hide_gnome_live_previews()
 {
     if (!supports_gnome_live_previews())

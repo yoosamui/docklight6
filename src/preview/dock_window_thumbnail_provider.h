@@ -83,6 +83,10 @@ public:
     void show_gnome_live_previews(
         const std::vector<GnomeLivePreviewRect>
             &previews);
+    void forward_gnome_preview_primary_click(
+        const WindowId &window_id,
+        double normalized_x,
+        double normalized_y);
     void hide_gnome_live_previews();
 
 private:

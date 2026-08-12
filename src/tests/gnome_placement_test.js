@@ -116,12 +116,28 @@ assert.match(
     "a compositor preview must consume a complete primary click before activating its GTK preview card action through the integration service");
 assert.match(
     extensionSource,
-    /_isApplicationAuxiliary\(window\)[\s\S]*?_forwardPreviewPrimaryClick\(window, preview, event\)[\s\S]*?_forwardPreviewPrimaryClick\(window, preview, event\) \{[\s\S]*?get_frame_rect[\s\S]*?get_coords[\s\S]*?get_transformed_position[\s\S]*?get_transformed_size/,
+    /_isApplicationAuxiliary\(window\)[\s\S]*?_forwardPreviewPrimaryClick\(window, preview, event\)[\s\S]*?_forwardPreviewPrimaryClick\(window, preview, event\) \{[\s\S]*?get_coords[\s\S]*?get_transformed_position[\s\S]*?get_transformed_size[\s\S]*?_forwardPreviewPrimaryClickAt[\s\S]*?get_frame_rect/,
     "PiP preview clicks must map clone coordinates back to the real client frame");
 assert.match(
     extensionSource,
-    /create_virtual_device\([\s\S]*?Clutter\.InputDeviceType\.TOUCHSCREEN_DEVICE[\s\S]*?notify_touch_down\([\s\S]*?notify_touch_up\(/,
-    "PiP preview clicks must reach the real Wayland client through compositor virtual touch input");
+    /create_virtual_device\([\s\S]*?Clutter\.InputDeviceType\.POINTER_DEVICE[\s\S]*?notify_absolute_motion\([\s\S]*?notify_button\([\s\S]*?Clutter\.ButtonState\.PRESSED[\s\S]*?notify_button\([\s\S]*?Clutter\.ButtonState\.RELEASED[\s\S]*?notify_absolute_motion\(/,
+    "PiP preview clicks must reach mouse-only controls and restore the compositor pointer");
+assert.doesNotMatch(
+    extensionSource,
+    /notify_touch_(?:down|up)\(/,
+    "PiP input forwarding must not display Shell's synthetic-touch circle");
+assert.match(
+    extensionSource,
+    /<method name="ForwardPreviewPrimaryClick">[\s\S]*?ForwardPreviewPrimaryClickAsync[\s\S]*?_isThumbnailCallerAuthorized\(invocation\)[\s\S]*?_forwardPreviewPrimaryClickAt/,
+    "an early GTK PiP click must use the same authorized compositor input path");
+assert.match(
+    previewWindowSource,
+    /BUTTON_PRESS_MASK[\s\S]*?forwards_live_preview_click[\s\S]*?application_auxiliary[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?signal_button_press_event[\s\S]*?forward_gnome_preview_primary_click[\s\S]*?signal_button_release_event[\s\S]*?forwards_live_preview_click[\s\S]*?return true;[\s\S]*?m_activate_window\.emit/,
+    "the GTK fallback must forward PiP on press and consume release instead of raising the client window");
+assert.match(
+    extensionSource,
+    /button-release-event[\s\S]*?event\.get_button\(\) !== 1[\s\S]*?!primaryButtonPressed[\s\S]*?Clutter\.EVENT_STOP/,
+    "the compositor preview must consume a release whose press landed on GTK during startup");
 assert.doesNotMatch(
     extensionSource,
     /hostActor\.add_child\(overlay\)/,
