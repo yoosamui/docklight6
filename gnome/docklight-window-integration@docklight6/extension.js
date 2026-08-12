@@ -147,6 +147,8 @@ export default class DocklightWindowIntegration extends Extension {
         this._livePreviewActors = [];
         this._livePreviewRects = [];
         this._previewPointerInside = null;
+        this._previewTouchDevice = null;
+        this._previewTouchSlot = 0;
 
         this._thumbnailDbus = Gio.DBusExportedObject.wrapJSObject(
             THUMBNAIL_IFACE, this);
@@ -280,6 +282,7 @@ export default class DocklightWindowIntegration extends Extension {
         }
         this._clearDockWindow();
         this._destroyLivePreviews();
+        this._previewTouchDevice = null;
         this._removeDockStrut();
         this._destroyDockRevealActor();
         for (const window of [...this._auxiliaryWindowSignals.keys()])
@@ -1641,10 +1644,13 @@ export default class DocklightWindowIntegration extends Extension {
                     return Clutter.EVENT_PROPAGATE;
 
                 primaryButtonPressed = false;
-                this._call(
-                    'ActivatePreviewWindow',
-                    '(s)',
-                    [windowId]);
+                if (this._isApplicationAuxiliary(window))
+                    this._forwardPreviewPrimaryClick(window, preview, event);
+                else
+                    this._call(
+                        'ActivatePreviewWindow',
+                        '(s)',
+                        [windowId]);
                 return Clutter.EVENT_STOP;
             });
             // WindowPreviewLayout owns the compositor clone actors it creates.
@@ -1705,6 +1711,37 @@ export default class DocklightWindowIntegration extends Extension {
         }
 
         invocation.return_value(null);
+    }
+
+    _forwardPreviewPrimaryClick(window, preview, event) {
+        const frame = window?.get_frame_rect?.();
+        const [stageX, stageY] = event.get_coords();
+        const [previewX, previewY] = preview.get_transformed_position();
+        const [previewWidth, previewHeight] = preview.get_transformed_size();
+        if (!frame || previewWidth <= 0 || previewHeight <= 0)
+            return;
+
+        // WindowPreviewLayout preserves the source aspect ratio. Translate
+        // the point on its compositor clone back into the real client frame.
+        // A virtual touch device targets that point without moving the user's
+        // physical pointer away from the dock preview.
+        const sourceX = frame.x + Math.min(frame.width - 1, Math.max(0,
+            (stageX - previewX) * frame.width / previewWidth));
+        const sourceY = frame.y + Math.min(frame.height - 1, Math.max(0,
+            (stageY - previewY) * frame.height / previewHeight));
+
+        if (!this._previewTouchDevice) {
+            const seat = Clutter.get_default_backend().get_default_seat();
+            this._previewTouchDevice = seat.create_virtual_device(
+                Clutter.InputDeviceType.TOUCHSCREEN_DEVICE);
+        }
+
+        const slot = this._previewTouchSlot++ % 10;
+        const downTime = GLib.get_monotonic_time();
+        this._previewTouchDevice.notify_touch_down(
+            downTime, slot, sourceX, sourceY);
+        this._previewTouchDevice.notify_touch_up(
+            downTime + 1000, slot);
     }
 
     HideLivePreviewsAsync(_params, invocation) {

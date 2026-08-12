@@ -1133,16 +1133,22 @@ void verifies_unfocusable_auxiliary_preview_toggles()
         &registry,
         {"org.mozilla.firefox.desktop"});
 
-    // PiP remains non-active while visible, but clicking its preview must
-    // still perform the default toggle instead of sending another activate.
+    // Mutter can ignore minimize for an unfocusable PiP and keep reporting it
+    // as unminimized. Its preview action must therefore show/raise the real
+    // client instead of entering a repeated set-minimized loop.
     assert(controller.toggle_window(
         "picture-in-picture"));
-    assert(registry
-               .find_window("picture-in-picture")
-               ->minimized);
+    assert(!registry
+                .find_window("picture-in-picture")
+                ->minimized);
     assert(registry.active_window() ==
-           std::optional<WindowId>{"browser-window"});
+           std::optional<WindowId>{
+               "picture-in-picture"});
 
+    picture_in_picture = *registry.find_window(
+        "picture-in-picture");
+    picture_in_picture.minimized = true;
+    backend.update_window(picture_in_picture);
     assert(controller.toggle_window(
         "picture-in-picture"));
     assert(!registry

@@ -827,15 +827,22 @@ bool DockApplicationController::toggle_window(
         return false;
     }
 
-    // PiP and similar skip-taskbar auxiliaries normally cannot take focus,
-    // so active_window_id can never identify their visible state. Treat an
-    // unminimized auxiliary as the selected preview and preserve the same
-    // show/minimize toggle users get for an ordinary active window.
+    // PiP and similar skip-taskbar auxiliaries normally cannot take focus.
+    // Mutter also ignores minimize requests for Firefox PiP while continuing
+    // to report the window as unminimized, which otherwise traps every click
+    // in an ineffective set-minimized loop. A preview click must instead
+    // expose the real client surface: unminimize it if necessary, raise it,
+    // and request activation. The raise remains useful even when the client
+    // deliberately refuses keyboard focus.
+    if (window->skip_taskbar &&
+        window->include_when_skip_taskbar)
+    {
+        return show_window(window_id);
+    }
+
     const bool selected =
         running_application->active_window_id ==
-            std::optional<WindowId>{window_id} ||
-        (window->skip_taskbar &&
-         window->include_when_skip_taskbar);
+            std::optional<WindowId>{window_id};
 
     return selected && !window->minimized
                ? minimize_window(window_id)

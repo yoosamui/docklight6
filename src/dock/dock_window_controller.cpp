@@ -1752,18 +1752,20 @@ void DockWindowController::activate_preview_window(
                     });
 
             // Run the window action while GTK still exposes the button event
-            // timestamp. The application controller also treats an open PiP
-            // as selected because skip-taskbar auxiliaries cannot reliably
-            // become the compositor's active window.
+            // timestamp. PiP uses show/raise semantics because Mutter can
+            // ignore minimize for an unfocusable utility window.
             if (selected != entries.end())
+            {
                 item->toggle_window(window_id);
+            }
 
             break;
         }
     }
 
     // Destroying preview-card widgets from their own release handler is
-    // unsafe, so only the optional teardown remains deferred.
+    // unsafe, so only the optional teardown remains deferred. PiP previews
+    // follow the same configured lifetime as ordinary window previews.
     if (m_settings.close_preview_after_activation())
     {
         Glib::signal_idle().connect_once(

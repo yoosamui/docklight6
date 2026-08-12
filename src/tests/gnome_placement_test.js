@@ -102,6 +102,14 @@ assert.match(
     extensionSource,
     /preview\.connect\('button-press-event'[\s\S]*?primaryButtonPressed = true[\s\S]*?Clutter\.EVENT_STOP[\s\S]*?preview\.connect\('button-release-event'[\s\S]*?!primaryButtonPressed[\s\S]*?ActivatePreviewWindow[\s\S]*?Clutter\.EVENT_STOP/,
     "a compositor preview must consume a complete primary click before activating its GTK preview card action through the integration service");
+assert.match(
+    extensionSource,
+    /_isApplicationAuxiliary\(window\)[\s\S]*?_forwardPreviewPrimaryClick\(window, preview, event\)[\s\S]*?_forwardPreviewPrimaryClick\(window, preview, event\) \{[\s\S]*?get_frame_rect[\s\S]*?get_coords[\s\S]*?get_transformed_position[\s\S]*?get_transformed_size/,
+    "PiP preview clicks must map clone coordinates back to the real client frame");
+assert.match(
+    extensionSource,
+    /create_virtual_device\([\s\S]*?Clutter\.InputDeviceType\.TOUCHSCREEN_DEVICE[\s\S]*?notify_touch_down\([\s\S]*?notify_touch_up\(/,
+    "PiP preview clicks must reach the real Wayland client through compositor virtual touch input");
 assert.doesNotMatch(
     extensionSource,
     /hostActor\.add_child\(overlay\)/,
