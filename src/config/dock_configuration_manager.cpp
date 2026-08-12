@@ -80,6 +80,13 @@ indicator_color = #69aaff
 
 )";
 
+// Configuration block added when the preview-color setting is missing.
+const char *PREVIEW_COLOR_SETTING_TEMPLATE = R"(# Window-preview selector color.
+# Accepts GTK colors such as #rrggbb, rgb(), rgba(), or a named color
+preview_color = #69aaff
+
+)";
+
 // Configuration block added when the home-icon visibility setting is missing.
 const char *HOME_ICON_ENABLED_SETTING_TEMPLATE = R"(# Display the static DockLight home icon.
 # Valid values: true, false
@@ -169,6 +176,10 @@ indicator = lines
 # Running-window indicator fill color.
 # Accepts GTK colors such as #rrggbb, rgb(), rgba(), or a named color
 indicator_color = #69aaff
+
+# Window-preview selector color.
+# Accepts GTK colors such as #rrggbb, rgb(), rgba(), or a named color
+preview_color = #69aaff
 
 # Display the static DockLight home icon.
 # Valid values: true, false
@@ -380,6 +391,8 @@ bool same_configuration(
                right.settings.indicator() &&
            left.settings.indicator_color() ==
                right.settings.indicator_color() &&
+           left.settings.preview_color() ==
+               right.settings.preview_color() &&
            left.settings.home_icon_enabled() ==
                right.settings.home_icon_enabled() &&
            left.settings.home_icon_path() ==
@@ -443,6 +456,9 @@ DockConfigurationManager::DockConfigurationManager(
     ensure_setting(
         "indicator_color",
         INDICATOR_COLOR_SETTING_TEMPLATE);
+    ensure_setting(
+        "preview_color",
+        PREVIEW_COLOR_SETTING_TEMPLATE);
     ensure_setting(
         "home_icon_enabled",
         HOME_ICON_ENABLED_SETTING_TEMPLATE);
@@ -872,6 +888,40 @@ void DockConfigurationManager::reload()
                     indicator_color.c_str(),
                     candidate.settings
                         .indicator_color()
+                        .c_str());
+            }
+        }
+
+        const auto preview_color =
+            text_value_for(
+                key_file,
+                "preview_color");
+
+        if (preview_color.empty())
+        {
+            candidate.settings
+                .set_preview_color(
+                    defaults.settings
+                        .preview_color());
+        }
+        else
+        {
+            Gdk::RGBA color;
+
+            if (color.set(preview_color))
+            {
+                candidate.settings
+                    .set_preview_color(
+                        preview_color);
+            }
+            else
+            {
+                g_warning(
+                    "Invalid [dock] preview_color '%s'; "
+                    "keeping '%s'",
+                    preview_color.c_str(),
+                    candidate.settings
+                        .preview_color()
                         .c_str());
             }
         }

@@ -105,6 +105,18 @@ void DockSettings::set_indicator_color(
     m_indicator_color = color;
 }
 
+const std::string &
+DockSettings::preview_color() const
+{
+    return m_preview_color;
+}
+
+void DockSettings::set_preview_color(
+    const std::string &color)
+{
+    m_preview_color = color;
+}
+
 int DockSettings::minimum_bottom_workarea_inset() const
 {
     return m_minimum_bottom_workarea_inset;

@@ -58,6 +58,8 @@ int main()
                     .close_preview_after_activation());
         assert(initial_configuration.current().settings
                    .gradient_background());
+        assert(initial_configuration.current().settings
+                   .preview_color() == "#69aaff");
 
         config_path =
             initial_configuration.config_path();
@@ -128,6 +130,9 @@ int main()
         "indicator_color",
         "#112233"));
     assert(configuration.save_setting(
+        "preview_color",
+        "#445566"));
+    assert(configuration.save_setting(
         "home_icon_enabled",
         "false"));
     assert(configuration.save_setting(
@@ -187,6 +192,9 @@ int main()
                "preview_show_delay=5000") !=
            std::string::npos);
     assert(contents.find(
+               "preview_color=#445566") !=
+           std::string::npos);
+    assert(contents.find(
                "home_icon_enabled=false") !=
            std::string::npos);
     assert(contents.find(
@@ -221,6 +229,8 @@ int main()
            DockIndicator::dots);
     assert(current.settings.indicator_color() ==
            "#112233");
+    assert(current.settings.preview_color() ==
+           "#445566");
     assert(!current.settings
                 .home_icon_enabled());
     assert(current.settings.home_icon_path() ==

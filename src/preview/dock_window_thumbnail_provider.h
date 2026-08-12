@@ -80,6 +80,11 @@ public:
         bool x11_xfwm_mode = false);
 
     bool supports_gnome_live_previews() const;
+    void set_gnome_preview_color(
+        double red,
+        double green,
+        double blue,
+        double alpha);
     void show_gnome_live_previews(
         const std::vector<GnomeLivePreviewRect>
             &previews);

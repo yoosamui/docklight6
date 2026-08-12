@@ -80,12 +80,16 @@ assert.match(
     "live preview hover must be reconciled from the compositor pointer instead of relying only on crossing events");
 assert.match(
     extensionSource,
-    /const selector = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?const thumbnailBacking = new St\.Widget\(\{[\s\S]*?rgb\(28, 28, 32\)[\s\S]*?const selectionOutline = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?selector\.add_child\(thumbnailBacking\)[\s\S]*?selector\.add_child\(preview\)[\s\S]*?selector\.add_child\(selectionOutline\)[\s\S]*?set_child_above_sibling\(preview, thumbnailBacking\)[\s\S]*?set_child_above_sibling\(selectionOutline, preview\)[\s\S]*?overlay\.add_child\(selector\)[\s\S]*?selector,[\s\S]*?selectionOutline,/,
-    "live compositor previews must paint an opaque thumbnail below the clone and a non-reactive selection outline above it");
+    /const selector = new St\.Widget\(\{[\s\S]*?reactive: true[\s\S]*?const thumbnailBacking = new St\.Widget\(\{[\s\S]*?rgb\(28, 28, 32\)[\s\S]*?const selectionOutline = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?selector\.add_child\(thumbnailBacking\)[\s\S]*?selector\.add_child\(preview\)[\s\S]*?selector\.add_child\(selectionOutline\)[\s\S]*?set_child_above_sibling\(preview, thumbnailBacking\)[\s\S]*?set_child_above_sibling\(selectionOutline, preview\)[\s\S]*?overlay\.add_child\(selector\)[\s\S]*?selector,[\s\S]*?selectionOutline,/,
+    "live compositor previews must use a reactive selector while painting an opaque thumbnail below the clone and a non-reactive outline above it");
 assert.match(
     extensionSource,
-    /_updateLivePreviewSelectors\(\)[\s\S]*?selected === rect\.selected[\s\S]*?rect\.selector\.set_style\(selected[\s\S]*?rect\.selectionOutline\.set_style\(selected[\s\S]*?_publishPreviewPointerInside\([^)]*\) \{[\s\S]*?_updateLivePreviewSelectors\(\)/,
+    /_updateLivePreviewSelectors\([^)]*\)[\s\S]*?selected === rect\.selected[\s\S]*?rect\.selector\.set_style\(selected[\s\S]*?rect\.selectionOutline\.set_style\(selected[\s\S]*?_publishPreviewPointerInside\([^)]*\) \{[\s\S]*?_updateLivePreviewSelectors\(\)/,
     "live preview selectors must follow the compositor pointer even while it remains inside the preview surface");
+assert.match(
+    extensionSource,
+    /<method name="ShowLivePreviews">\s*<arg type="a\(siiii\)"[^>]*\/>\s*<\/method>[\s\S]*?<method name="SetPreviewColor">[\s\S]*?SetPreviewColorAsync[\s\S]*?_isThumbnailCallerAuthorized\(invocation\)[\s\S]*?_previewSelectorFill[\s\S]*?_previewSelectorOutline/,
+    "preview color must use a separate authorized method without changing the established live-preview signature");
 assert.doesNotMatch(
     extensionSource,
     /overlay\.add_child\(preview\)/,
@@ -96,12 +100,16 @@ assert.match(
     "replacing live previews must atomically install and publish their pointer hitboxes");
 assert.match(
     extensionSource,
-    /const previewActors = \[\][\s\S]*?previewActors\.push\(preview\)[\s\S]*?for \(const preview of previewActors\)[\s\S]*?preview\.ease/,
+    /const previewActors = \[\][\s\S]*?previewActors\.push\(selector\)[\s\S]*?for \(const preview of previewActors\)[\s\S]*?preview\.ease/,
     "only thumbnail-sized actors may be animated when live previews appear");
 assert.match(
     extensionSource,
     /Main\.uiGroup\.add_child\(overlay\)[\s\S]*?for \(const preview of previewActors\)[\s\S]*?Main\.layoutManager\.trackChrome\(preview, \{[\s\S]*?affectsInputRegion: true/,
     "each live thumbnail must be included in Shell's stage input region");
+assert.match(
+    extensionSource,
+    /const preview = new Clutter\.Actor\(\{[\s\S]*?reactive: false,[\s\S]*?opacity: 0,[\s\S]*?const selector = new St\.Widget\(\{[\s\S]*?reactive: true,[\s\S]*?previewActors\.push\(selector\)[\s\S]*?previewFadeActors\.push\(preview\)[\s\S]*?Main\.layoutManager\.trackChrome\(preview,[\s\S]*?for \(const preview of previewFadeActors\)[\s\S]*?preview\.ease\(\{[\s\S]*?opacity: 255/,
+    "a paint-visible selector must own input while only the live image fades in");
 assert.match(
     extensionSource,
     /_destroyLivePreviews\([^)]*\) \{[\s\S]*?for \(const preview of this\._livePreviewActors\)[\s\S]*?Main\.layoutManager\.untrackChrome\(preview\)/,
@@ -112,16 +120,36 @@ assert.doesNotMatch(
     "the full-stage live-preview container must not be opacity animated");
 assert.match(
     extensionSource,
-    /preview\.connect\('button-press-event'[\s\S]*?primaryButtonPressed = true[\s\S]*?Clutter\.EVENT_STOP[\s\S]*?preview\.connect\('button-release-event'[\s\S]*?!primaryButtonPressed[\s\S]*?ActivatePreviewWindow[\s\S]*?Clutter\.EVENT_STOP/,
-    "a compositor preview must consume a complete primary click before activating its GTK preview card action through the integration service");
+    /selector\.connect\('button-press-event'[\s\S]*?primaryButtonPressed = true[\s\S]*?Clutter\.EVENT_STOP[\s\S]*?selector\.connect\('button-release-event'[\s\S]*?!primaryButtonPressed[\s\S]*?_isApplicationAuxiliary\(window\)[\s\S]*?_forwardPreviewPrimaryClick\(window, preview, event\)[\s\S]*?primaryButtonPressed = false[\s\S]*?_isApplicationAuxiliary\(window\)[\s\S]*?_forwardPreviewPrimaryClick\(window, preview, event\)[\s\S]*?ActivatePreviewWindow/,
+    "a compositor preview must wait for physical release before forwarding PiP input and handle a startup-split click");
 assert.match(
     extensionSource,
     /_isApplicationAuxiliary\(window\)[\s\S]*?_forwardPreviewPrimaryClick\(window, preview, event\)[\s\S]*?_forwardPreviewPrimaryClick\(window, preview, event\) \{[\s\S]*?get_coords[\s\S]*?get_transformed_position[\s\S]*?get_transformed_size[\s\S]*?_forwardPreviewPrimaryClickAt[\s\S]*?get_frame_rect/,
     "PiP preview clicks must map clone coordinates back to the real client frame");
 assert.match(
     extensionSource,
-    /create_virtual_device\([\s\S]*?Clutter\.InputDeviceType\.POINTER_DEVICE[\s\S]*?notify_absolute_motion\([\s\S]*?notify_button\([\s\S]*?Clutter\.ButtonState\.PRESSED[\s\S]*?notify_button\([\s\S]*?Clutter\.ButtonState\.RELEASED[\s\S]*?notify_absolute_motion\(/,
-    "PiP preview clicks must reach mouse-only controls and restore the compositor pointer");
+    /PREVIEW_DOUBLE_CLICK_GUARD_US[\s\S]*?PREVIEW_DOUBLE_CLICK_DISTANCE_PX[\s\S]*?_previewPointerLastClick[\s\S]*?previousClick\.window === window[\s\S]*?clickTime - previousClick\.time < PREVIEW_DOUBLE_CLICK_GUARD_US[\s\S]*?Math\.abs\(sourceX - previousClick\.x\)[\s\S]*?Math\.abs\(sourceY - previousClick\.y\)[\s\S]*?return;/,
+    "rapid clicks at one PiP location must not become a browser maximize double-click");
+assert.match(
+    extensionSource,
+    /Clutter\.ButtonState\.RELEASED[\s\S]*?_schedulePreviewPointerStep\(100,[\s\S]*?window\.get_maximized[\s\S]*?Meta\.MaximizeFlags\.NONE[\s\S]*?window\.unmaximize\(Meta\.MaximizeFlags\.BOTH\)/,
+    "a delayed browser PiP maximize must be reverted before it changes preview targeting");
+assert.match(
+    extensionSource,
+    /_suppressPreviewInput\(\)[\s\S]*?_schedulePreviewPointerStep\(16,[\s\S]*?create_virtual_device\([\s\S]*?Clutter\.InputDeviceType\.POINTER_DEVICE[\s\S]*?notify_absolute_motion\([\s\S]*?_schedulePreviewPointerStep\(16,[\s\S]*?notify_button\([\s\S]*?Clutter\.ButtonState\.PRESSED[\s\S]*?_schedulePreviewPointerStep\(24,[\s\S]*?notify_button\([\s\S]*?Clutter\.ButtonState\.RELEASED[\s\S]*?_schedulePreviewPointerStep\(16,[\s\S]*?notify_absolute_motion\([\s\S]*?_restorePreviewInput\(\)/,
+    "PiP mouse motion, press, release, and restoration must run after the physical grab in separate main-loop turns");
+assert.match(
+    extensionSource,
+    /_suppressPreviewInput\(\) \{[\s\S]*?_livePreviewOverlay[\s\S]*?_auxiliaryPosition\(window\)\?\.type !== 'preview'[\s\S]*?actor\.hide\(\)[\s\S]*?_restorePreviewInput\(\) \{[\s\S]*?actor\.show\(\)/,
+    "PiP forwarding must temporarily remove overlapping Shell and GTK preview layers from input picking");
+assert.match(
+    extensionSource,
+    /_previewPointerRestorePosition[\s\S]*?get_pointer\(\)[\s\S]*?const restore = this\._previewPointerRestorePosition[\s\S]*?restored \|\| expired[\s\S]*?_forwardPreviewPrimaryClickAt[\s\S]*?_cancelPreviewPointerInput\(\)[\s\S]*?this\._previewPointerRestorePosition = \{[\s\S]*?_cancelPreviewPointerInput\(disposeDevice = false\) \{[\s\S]*?notify_absolute_motion/,
+    "temporary PiP pointer injection must not leak into hover state and cancellation must restore the pointer");
+assert.match(
+    extensionSource,
+    /_cancelPreviewPointerInput\(true\)[\s\S]*?_schedulePreviewPointerStep\(delay, callback\)[\s\S]*?catch \(error\)[\s\S]*?_cancelPreviewPointerInput\(true\)[\s\S]*?_cancelPreviewPointerInput\(disposeDevice = false\)[\s\S]*?if \(disposeDevice\)[\s\S]*?run_dispose/,
+    "the virtual PiP pointer must remain alive for queued delivery and be disposed on teardown or failure");
 assert.doesNotMatch(
     extensionSource,
     /notify_touch_(?:down|up)\(/,
@@ -132,8 +160,8 @@ assert.match(
     "an early GTK PiP click must use the same authorized compositor input path");
 assert.match(
     previewWindowSource,
-    /BUTTON_PRESS_MASK[\s\S]*?forwards_live_preview_click[\s\S]*?application_auxiliary[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?signal_button_press_event[\s\S]*?forward_gnome_preview_primary_click[\s\S]*?signal_button_release_event[\s\S]*?forwards_live_preview_click[\s\S]*?return true;[\s\S]*?m_activate_window\.emit/,
-    "the GTK fallback must forward PiP on press and consume release instead of raising the client window");
+    /BUTTON_PRESS_MASK[\s\S]*?forwards_live_preview_click[\s\S]*?application_auxiliary[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?signal_button_press_event[\s\S]*?return true;[\s\S]*?signal_button_release_event[\s\S]*?forwards_live_preview_click[\s\S]*?forward_gnome_preview_primary_click[\s\S]*?return true;[\s\S]*?m_activate_window\.emit/,
+    "the GTK fallback must consume the PiP press and forward only after physical release");
 assert.match(
     extensionSource,
     /button-release-event[\s\S]*?event\.get_button\(\) !== 1[\s\S]*?!primaryButtonPressed[\s\S]*?Clutter\.EVENT_STOP/,
@@ -159,9 +187,29 @@ assert.match(
     /ShowLivePreviews[\s\S]*?g_variant_new\("\(a\(siiii\)\)"/,
     "Docklight must publish live preview rectangles through the GNOME service");
 assert.match(
+    thumbnailProviderSource,
+    /set_gnome_preview_color[\s\S]*?SetPreviewColor[\s\S]*?\(dddd\)/,
+    "Docklight must publish preview color independently of live preview rectangles");
+assert.match(
     previewWindowSource,
-    /supports_gnome_live_previews\(\)[\s\S]*?global_x \+ m_size\.padding[\s\S]*?global_y \+ WINDOW_PADDING[\s\S]*?show_gnome_live_previews/,
+    /supports_gnome_live_previews\(\)[\s\S]*?set_gnome_preview_color[\s\S]*?global_x \+ m_size\.padding[\s\S]*?global_y \+ WINDOW_PADDING[\s\S]*?show_gnome_live_previews/,
     "GNOME compositor actors must align with the existing GTK card bodies");
+assert.match(
+    previewWindowSource,
+    /DockPreviewCardCanvas\([\s\S]*?preview_color[\s\S]*?m_preview_color\.get_red\(\)[\s\S]*?set_preview_color[\s\S]*?new DockPreviewCardCanvas\([\s\S]*?m_preview_color/,
+    "GTK preview cards must render their selector with the configured preview color");
+assert.match(
+    previewWindowSource,
+    /set_preview_color\([\s\S]*?m_thumbnail_targets[\s\S]*?target\.image->set_preview_color\([\s\S]*?set_gnome_preview_color/,
+    "changing preview color must repaint existing GTK and GNOME previews");
+assert.match(
+    previewWindowSource,
+    /start_live_streams\(\)[\s\S]*?set_gnome_preview_color[\s\S]*?desired_windows == m_live_window_ids/,
+    "GNOME preview color updates must not be skipped when the window set is unchanged");
+assert.match(
+    dockWindowControllerSource,
+    /set_preview_color\([\s\S]*?m_settings\.preview_color\(\)/,
+    "preview rendering must receive the configured preview color");
 assert.match(
     dockWindowControllerSource,
     /set_dock_placement_geometry[\s\S]*?calculated_dock_screen_position|calculated_dock_screen_position[\s\S]*?set_dock_placement_geometry/,

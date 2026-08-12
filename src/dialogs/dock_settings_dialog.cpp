@@ -207,6 +207,8 @@ void DockSettingsDialog::show(
         _("Indicator"));
     Gtk::Label indicator_color_label(
         _("Indicator Color"));
+    Gtk::Label preview_color_label(
+        _("Preview Color"));
     Gtk::Label home_icon_enabled_label(
         _("Display Home Icon"));
     Gtk::Label home_icon_path_label(
@@ -244,6 +246,7 @@ void DockSettingsDialog::show(
             &hover_label,
             &indicator_label,
             &indicator_color_label,
+            &preview_color_label,
             &home_icon_enabled_label,
             &home_icon_path_label,
             &display_tooltips_label,
@@ -430,8 +433,7 @@ void DockSettingsDialog::show(
         indicator_lines.set_active(true);
     }
 
-    Gtk::Button indicator_color;
-    Gtk::DrawingArea indicator_color_preview;
+    Gtk::ColorButton indicator_color;
     Gdk::RGBA parsed_indicator_color;
 
     if (!parsed_indicator_color.set(
@@ -442,34 +444,32 @@ void DockSettingsDialog::show(
             "#69aaff");
     }
 
-    indicator_color_preview.set_size_request(
-        96,
-        24);
-    indicator_color_preview
-        .signal_draw()
-        .connect(
-            [&parsed_indicator_color](
-                const Cairo::RefPtr<
-                    Cairo::Context> &context)
-            {
-                context->set_source_rgba(
-                    parsed_indicator_color
-                        .get_red(),
-                    parsed_indicator_color
-                        .get_green(),
-                    parsed_indicator_color
-                        .get_blue(),
-                    parsed_indicator_color
-                        .get_alpha());
-                context->paint();
-
-                return true;
-            });
-
-    indicator_color.add(
-        indicator_color_preview);
+    indicator_color.set_rgba(
+        parsed_indicator_color);
+    indicator_color.set_use_alpha(true);
+    indicator_color.set_title(
+        _("Indicator Color"));
     indicator_color.set_tooltip_text(
         _("Choose the indicator color"));
+
+    Gtk::ColorButton preview_color;
+    Gdk::RGBA parsed_preview_color;
+
+    if (!parsed_preview_color.set(
+            current.settings
+                .preview_color()))
+    {
+        parsed_preview_color.set(
+            "#69aaff");
+    }
+
+    preview_color.set_rgba(
+        parsed_preview_color);
+    preview_color.set_use_alpha(true);
+    preview_color.set_title(
+        _("Preview Color"));
+    preview_color.set_tooltip_text(
+        _("Choose the preview color"));
 
     Gtk::CheckButton home_icon_enabled;
     home_icon_enabled.set_active(
@@ -765,6 +765,7 @@ void DockSettingsDialog::show(
             &hover_choices,
             &indicator_choices,
             &indicator_color,
+            &preview_color,
             &home_icon_enabled,
             &home_icon_controls,
             &display_tooltips,
@@ -854,183 +855,195 @@ void DockSettingsDialog::show(
         1,
         1);
     grid.attach(
-        home_icon_enabled_label,
+        preview_color_label,
         0,
         4,
+        1,
+        1);
+    grid.attach(
+        preview_color,
+        1,
+        4,
+        1,
+        1);
+    grid.attach(
+        home_icon_enabled_label,
+        0,
+        5,
         1,
         1);
     grid.attach(
         home_icon_enabled,
         1,
-        4,
+        5,
         1,
         1);
     grid.attach(
         home_icon_path_label,
         0,
-        5,
+        6,
         1,
         1);
     grid.attach(
         home_icon_controls,
         1,
-        5,
+        6,
         1,
         1);
     grid.attach(
         display_tooltips_label,
         0,
-        6,
+        7,
         1,
         1);
     grid.attach(
         display_tooltips,
         1,
-        6,
+        7,
         1,
         1);
     grid.attach(
         display_preview_label,
         0,
-        7,
+        8,
         1,
         1);
     grid.attach(
         display_preview,
         1,
-        7,
+        8,
         1,
         1);
     grid.attach(
         close_preview_after_activation_label,
         0,
-        8,
+        9,
         1,
         1);
     grid.attach(
         close_preview_after_activation,
         1,
-        8,
+        9,
         1,
         1);
     grid.attach(
         manage_all_workspaces_label,
         0,
-        9,
+        10,
         1,
         1);
     grid.attach(
         manage_all_workspaces,
         1,
-        9,
+        10,
         1,
         1);
     grid.attach(
         icon_size_label,
         0,
-        10,
+        11,
         1,
         1);
     grid.attach(
         icon_size_spin,
         1,
-        10,
+        11,
         1,
         1);
     grid.attach(
         preview_card_height_label,
         0,
-        11,
+        12,
         1,
         1);
     grid.attach(
         preview_card_height_spin,
         1,
-        11,
+        12,
         1,
         1);
     grid.attach(
         preview_show_delay_label,
         0,
-        12,
+        13,
         1,
         1);
     grid.attach(
         preview_show_delay_spin,
         1,
-        12,
+        13,
         1,
         1);
     grid.attach(
         location_label,
         0,
-        13,
+        14,
         1,
         1);
     grid.attach(
         location_choices,
         1,
-        13,
+        14,
         1,
         1);
     grid.attach(
         gradient_background_label,
         0,
-        14,
+        15,
         1,
         1);
     grid.attach(
         gradient_background,
         1,
-        14,
+        15,
         1,
         1);
     grid.attach(
         rounded_corners_label,
         0,
-        15,
+        16,
         1,
         1);
     grid.attach(
         rounded_corners,
         1,
-        15,
+        16,
         1,
         1);
     grid.attach(
         corner_radius_label,
         0,
-        16,
+        17,
         1,
         1);
     grid.attach(
         corner_radius_spin,
         1,
-        16,
+        17,
         1,
         1);
     grid.attach(
         alignment_label,
         0,
-        17,
+        18,
         1,
         1);
     grid.attach(
         alignment_choices,
         1,
-        17,
+        18,
         1,
         1);
     grid.attach(
         autohide_label,
         0,
-        18,
+        19,
         1,
         1);
     grid.attach(
         autohide_choices,
         1,
-        18,
+        19,
         1,
         1);
 
@@ -1382,93 +1395,28 @@ void DockSettingsDialog::show(
 
     settings_connections.push_back(
         indicator_color
-            .signal_clicked()
+            .signal_color_set()
             .connect(
             [&configuration,
-             &dialog,
-             &indicator_color_preview,
-             &parsed_indicator_color,
-             &icon]()
+             &indicator_color]()
             {
-                Gtk::ColorChooserDialog
-                    color_dialog(
-                        _("Indicator Color"),
-                        dialog);
-
-                color_dialog.set_modal(true);
-                color_dialog.set_type_hint(
-                    Gdk::WINDOW_TYPE_HINT_DIALOG);
-                keep_dialog_above(
-                    color_dialog,
-                    dialog,
-                    "docklight6-color-chooser");
-                color_dialog.set_decorated(true);
-                color_dialog
-                    .property_destroy_with_parent() =
-                    true;
-                color_dialog
-                    .set_skip_taskbar_hint(true);
-                color_dialog
-                    .set_skip_pager_hint(true);
-                color_dialog.set_position(
-                    Gtk::WIN_POS_CENTER_ON_PARENT);
-                color_dialog.set_use_alpha(true);
-                color_dialog.set_rgba(
-                    parsed_indicator_color);
-
-                Gtk::HeaderBar color_header;
-                Gtk::Image color_header_icon;
-
-                color_header.set_title(
-                    _("Indicator Color"));
-                color_header
-                    .set_show_close_button(true);
-                color_header.set_decoration_layout(
-                    ":close");
-
-                if (icon)
-                {
-                    color_dialog.set_icon(
-                        icon);
-
-                    const auto small_home_icon =
-                        icon->scale_simple(
-                            20,
-                            20,
-                            Gdk::INTERP_BILINEAR);
-
-                    if (small_home_icon)
-                    {
-                        color_header_icon.set(
-                            small_home_icon);
-                        color_header.pack_start(
-                            color_header_icon);
-                    }
-                }
-
-                color_dialog.set_titlebar(
-                    color_header);
-                color_dialog.show_all_children();
-                color_dialog.present();
-
-                if (color_dialog.run() !=
-                    Gtk::RESPONSE_OK)
-                {
-                    color_dialog.hide();
-                    return;
-                }
-
-                parsed_indicator_color =
-                    color_dialog.get_rgba();
-                indicator_color_preview
-                    .queue_draw();
-
                 configuration.save_setting(
                     "indicator_color",
-                    parsed_indicator_color
+                    indicator_color.get_rgba()
                         .to_string());
+            }));
 
-                color_dialog.hide();
+    settings_connections.push_back(
+        preview_color
+            .signal_color_set()
+            .connect(
+            [&configuration,
+             &preview_color]()
+            {
+                configuration.save_setting(
+                    "preview_color",
+                    preview_color.get_rgba()
+                        .to_string());
             }));
 
     settings_connections.push_back(

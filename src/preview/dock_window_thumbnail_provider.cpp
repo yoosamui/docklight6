@@ -1138,6 +1138,38 @@ bool DockWindowThumbnailProvider::
 }
 
 void DockWindowThumbnailProvider::
+    set_gnome_preview_color(
+        double red,
+        double green,
+        double blue,
+        double alpha)
+{
+    if (!supports_gnome_live_previews())
+        return;
+
+    // Keep this separate from ShowLivePreviews so either side can be upgraded
+    // independently without breaking the established preview request.
+    g_dbus_connection_call(
+        m_state->connection,
+        GNOME_THUMBNAIL_SERVICE,
+        GNOME_THUMBNAIL_PATH,
+        GNOME_THUMBNAIL_INTERFACE,
+        "SetPreviewColor",
+        g_variant_new(
+            "(dddd)",
+            std::clamp(red, 0.0, 1.0),
+            std::clamp(green, 0.0, 1.0),
+            std::clamp(blue, 0.0, 1.0),
+            std::clamp(alpha, 0.0, 1.0)),
+        nullptr,
+        G_DBUS_CALL_FLAGS_NONE,
+        1000,
+        nullptr,
+        nullptr,
+        nullptr);
+}
+
+void DockWindowThumbnailProvider::
     show_gnome_live_previews(
         const std::vector<GnomeLivePreviewRect>
             &previews)

@@ -755,9 +755,11 @@ public:
     DockPreviewCardCanvas(
         int width,
         int header_height,
-        int image_height)
+        int image_height,
+        const Gdk::RGBA &preview_color)
         : m_header_height(header_height),
-          m_image_height(image_height)
+          m_image_height(image_height),
+          m_preview_color(preview_color)
     {
         set_size_request(
             width,
@@ -770,6 +772,13 @@ public:
             return;
 
         m_selected = selected;
+        queue_draw();
+    }
+
+    void set_preview_color(
+        const Gdk::RGBA &preview_color)
+    {
+        m_preview_color = preview_color;
         queue_draw();
     }
 
@@ -815,10 +824,18 @@ protected:
         const int height = allocation.get_height();
 
         context->set_source_rgba(
-            m_selected ? 105.0 / 255.0 : 1.0,
-            m_selected ? 170.0 / 255.0 : 1.0,
-            m_selected ? 1.0 : 1.0,
-            m_selected ? 0.32 : 0.06);
+            m_selected
+                ? m_preview_color.get_red()
+                : 1.0,
+            m_selected
+                ? m_preview_color.get_green()
+                : 1.0,
+            m_selected
+                ? m_preview_color.get_blue()
+                : 1.0,
+            m_selected
+                ? 0.32 * m_preview_color.get_alpha()
+                : 0.06);
         append_rounded_rectangle(
             context,
             width,
@@ -866,11 +883,14 @@ private:
     int m_header_height = 0;
     int m_image_height = 0;
     int m_fallback_size = 1;
+    Gdk::RGBA m_preview_color;
     bool m_selected = false;
 };
 
 DockPreviewWindow::DockPreviewWindow()
 {
+    m_preview_color.set("#69aaff");
+
     set_decorated(false);
     set_resizable(false);
     set_app_paintable(true);
@@ -1076,6 +1096,34 @@ void DockPreviewWindow::set_card_user_height(
                  height <= MAX_HEIGHT)
             ? height
             : CARD_USER_HEIGHT;
+}
+
+void DockPreviewWindow::set_preview_color(
+    const std::string &color)
+{
+    Gdk::RGBA parsed;
+    if (!parsed.set(color))
+        parsed.set("#69aaff");
+
+    m_preview_color = parsed;
+
+    for (auto &entry : m_thumbnail_targets)
+    {
+        auto &target = entry.second;
+        if (target.image)
+            target.image->set_preview_color(
+                m_preview_color);
+    }
+
+    if (m_thumbnail_provider
+            .supports_gnome_live_previews())
+    {
+        m_thumbnail_provider.set_gnome_preview_color(
+            m_preview_color.get_red(),
+            m_preview_color.get_green(),
+            m_preview_color.get_blue(),
+            m_preview_color.get_alpha());
+    }
 }
 
 void DockPreviewWindow::set_rounded_corners(
@@ -2050,7 +2098,8 @@ void DockPreviewWindow::rebuild(
             new DockPreviewCardCanvas(
                 size.card_width,
                 size.header_height,
-                image_height));
+                image_height,
+                m_preview_color));
 
         auto body = Gtk::manage(
             new Gtk::Box(
@@ -2173,10 +2222,7 @@ void DockPreviewWindow::rebuild(
             m_thumbnail_provider
                 .supports_gnome_live_previews();
         image_event->signal_button_press_event().connect(
-            [this,
-             image_event,
-             window_id = entry.id,
-             forwards_live_preview_click](
+            [forwards_live_preview_click](
                 GdkEventButton *event)
             {
                 if (!event ||
@@ -2186,38 +2232,37 @@ void DockPreviewWindow::rebuild(
                     return false;
                 }
 
-                // GTK is mapped before GNOME Shell commits the live clone's
-                // input region. Forward on press so a clone appearing before
-                // release cannot split and lose the first PiP click.
-                const auto allocation =
-                    image_event->get_allocation();
-                const double width = std::max(
-                    1,
-                    allocation.get_width());
-                const double height = std::max(
-                    1,
-                    allocation.get_height());
-                m_thumbnail_provider
-                    .forward_gnome_preview_primary_click(
-                        window_id,
-                        event->x / width,
-                        event->y / height);
+                // Consume the press, but wait for release before asking Shell
+                // to inject the PiP click. Mutter retains an implicit pointer
+                // grab for the duration of the physical press.
                 return true;
             });
         image_event->signal_button_release_event().connect(
             [this,
+             image_event,
              window_id = entry.id,
              forwards_live_preview_click](
                 GdkEventButton *event)
             {
                 if (event && event->button == 1)
                 {
-                    // An auxiliary press was already forwarded above. Consume
-                    // its release even if Shell's clone appeared between the
-                    // two halves of the physical click; PiP must never fall
-                    // through to the normal show/raise action.
                     if (forwards_live_preview_click)
+                    {
+                        const auto allocation =
+                            image_event->get_allocation();
+                        const double width = std::max(
+                            1,
+                            allocation.get_width());
+                        const double height = std::max(
+                            1,
+                            allocation.get_height());
+                        m_thumbnail_provider
+                            .forward_gnome_preview_primary_click(
+                                window_id,
+                                event->x / width,
+                                event->y / height);
                         return true;
+                    }
 
                     m_activate_window.emit(window_id);
                     return true;
@@ -2752,6 +2797,17 @@ void DockPreviewWindow::start_live_streams()
 {
     const auto generation = m_generation;
     std::set<WindowId> desired_windows;
+
+    if (m_thumbnail_provider.supports_gnome_live_previews())
+    {
+        // Color is independent of the visible-window set. Publish it even
+        // when the existing compositor previews can otherwise be reused.
+        m_thumbnail_provider.set_gnome_preview_color(
+            m_preview_color.get_red(),
+            m_preview_color.get_green(),
+            m_preview_color.get_blue(),
+            m_preview_color.get_alpha());
+    }
 
     for (const auto &entry : m_thumbnail_targets)
     {

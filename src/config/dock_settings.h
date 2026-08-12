@@ -44,6 +44,8 @@ public:
         DockIndicator indicator);
     void set_indicator_color(
         const std::string &color);
+    void set_preview_color(
+        const std::string &color);
     void set_minimum_bottom_workarea_inset(int inset);
     void set_home_icon_enabled(bool enabled);
     void set_home_icon_path(
@@ -61,6 +63,8 @@ public:
     DockIndicator indicator() const;
     const std::string &
     indicator_color() const;
+    const std::string &
+    preview_color() const;
 
     int icon_size() const;
     int preview_card_height() const;
@@ -96,6 +100,8 @@ private:
         DockIndicator::lines;
 
     std::string m_indicator_color =
+        "#69aaff";
+    std::string m_preview_color =
         "#69aaff";
 
     bool m_home_icon_enabled = true;

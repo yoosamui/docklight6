@@ -1156,6 +1156,53 @@ void verifies_unfocusable_auxiliary_preview_toggles()
                 ->minimized);
 }
 
+void verifies_launcher_click_ignores_unminimizable_auxiliary()
+{
+    FakeWindowBackend backend;
+
+    auto browser = window(
+        "browser-window",
+        true,
+        "org.mozilla.firefox");
+    auto picture_in_picture = window(
+        "picture-in-picture",
+        false,
+        "org.mozilla.firefox");
+    picture_in_picture.skip_taskbar = true;
+    picture_in_picture.include_when_skip_taskbar = true;
+
+    backend.set_snapshot(
+        {browser, picture_in_picture},
+        {"browser-window", "picture-in-picture"},
+        "picture-in-picture");
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {"org.mozilla.firefox.desktop"});
+
+    assert(controller.toggle_minimized());
+    assert(!registry
+                .find_window("browser-window")
+                ->minimized);
+    assert(!registry
+                .find_window("picture-in-picture")
+                ->minimized);
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "browser-window"});
+
+    assert(controller.toggle_minimized());
+    assert(registry
+               .find_window("browser-window")
+               ->minimized);
+    assert(!registry
+                .find_window("picture-in-picture")
+                ->minimized);
+}
+
 }
 
 int main()
@@ -1178,6 +1225,7 @@ int main()
     verifies_window_cycle_uses_all_desktops_when_enabled();
     verifies_grouped_window_entries();
     verifies_unfocusable_auxiliary_preview_toggles();
+    verifies_launcher_click_ignores_unminimizable_auxiliary();
 
     return 0;
 }

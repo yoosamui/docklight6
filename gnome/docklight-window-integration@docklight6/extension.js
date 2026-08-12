@@ -38,6 +38,12 @@ const THUMBNAIL_IFACE = `
     <method name="ShowLivePreviews">
       <arg type="a(siiii)" direction="in" name="previews"/>
     </method>
+    <method name="SetPreviewColor">
+      <arg type="d" direction="in" name="red"/>
+      <arg type="d" direction="in" name="green"/>
+      <arg type="d" direction="in" name="blue"/>
+      <arg type="d" direction="in" name="alpha"/>
+    </method>
     <method name="ForwardPreviewPrimaryClick">
       <arg type="s" direction="in" name="window_id"/>
       <arg type="d" direction="in" name="normalized_x"/>
@@ -58,6 +64,11 @@ const REGISTRATION_RETRY_MS = 250;
 const CONFIGURATION_SETTLE_MS = 50;
 const DOCK_HIDE_ANIMATION_MS = 180;
 const DOCK_REVEAL_ANIMATION_MS = 220;
+// Browser PiP surfaces commonly reserve a double-click for maximizing the
+// player. The preview bridge must not turn a stress-click burst into that
+// window-management gesture.
+const PREVIEW_DOUBLE_CLICK_GUARD_US = 500000;
+const PREVIEW_DOUBLE_CLICK_DISTANCE_PX = 12;
 
 const TRACKABLE_TYPES = new Set([
     Meta.WindowType.NORMAL,
@@ -153,6 +164,15 @@ export default class DocklightWindowIntegration extends Extension {
         this._livePreviewRects = [];
         this._previewPointerInside = null;
         this._previewPointerDevice = null;
+        this._previewPointerSources = new Set();
+        this._previewPointerPressed = false;
+        this._previewPointerRestorePosition = null;
+        this._previewPointerLastClick = null;
+        this._previewInputSuppressedActors = [];
+        this._previewSelectorFill =
+            'rgba(105, 170, 255, 0.32)';
+        this._previewSelectorOutline =
+            'rgba(105, 170, 255, 0.95)';
 
         this._thumbnailDbus = Gio.DBusExportedObject.wrapJSObject(
             THUMBNAIL_IFACE, this);
@@ -174,7 +194,25 @@ export default class DocklightWindowIntegration extends Extension {
             25,
             () => {
                 const [position] = this._cursorTracker.get_pointer();
-                this._pointerPosition = {x: position.x, y: position.y};
+                const restore = this._previewPointerRestorePosition;
+                if (restore) {
+                    if (restore.restoring) {
+                        const restored =
+                            Math.abs(position.x - restore.x) <= 1 &&
+                            Math.abs(position.y - restore.y) <= 1;
+                        const expired = GLib.get_monotonic_time() >=
+                            restore.deadline;
+                        if (restored || expired) {
+                            this._previewPointerRestorePosition = null;
+                            this._pointerPosition = {
+                                x: position.x,
+                                y: position.y,
+                            };
+                        }
+                    }
+                } else {
+                    this._pointerPosition = {x: position.x, y: position.y};
+                }
                 this._publishDockPointerInside();
                 this._publishPreviewPointerInside();
                 return GLib.SOURCE_CONTINUE;
@@ -286,7 +324,7 @@ export default class DocklightWindowIntegration extends Extension {
         }
         this._clearDockWindow();
         this._destroyLivePreviews();
-        this._previewPointerDevice = null;
+        this._cancelPreviewPointerInput(true);
         this._removeDockStrut();
         this._destroyDockRevealActor();
         for (const window of [...this._auxiliaryWindowSignals.keys()])
@@ -1010,24 +1048,24 @@ export default class DocklightWindowIntegration extends Extension {
             this._pointerPosition.y < rect.y + rect.height);
     }
 
-    _updateLivePreviewSelectors() {
+    _updateLivePreviewSelectors(force = false) {
         for (const rect of this._livePreviewRects) {
             const selected = Boolean(this._pointerPosition &&
                 this._pointerPosition.x >= rect.x &&
                 this._pointerPosition.x < rect.x + rect.width &&
                 this._pointerPosition.y >= rect.y &&
                 this._pointerPosition.y < rect.y + rect.height);
-            if (selected === rect.selected)
+            if (!force && selected === rect.selected)
                 continue;
 
             rect.selected = selected;
             rect.selector.set_style(selected
-                ? 'background-color: rgba(105, 170, 255, 0.32); ' +
+                ? `background-color: ${this._previewSelectorFill}; ` +
                     'border-radius: 6px;'
                 : 'background-color: transparent; ' +
                     'border-radius: 6px;');
             rect.selectionOutline.set_style(selected
-                ? 'border: 2px solid rgba(105, 170, 255, 0.95); ' +
+                ? `border: 2px solid ${this._previewSelectorOutline}; ` +
                     'border-radius: 6px;'
                 : 'border: 2px solid transparent; ' +
                     'border-radius: 6px;');
@@ -1622,6 +1660,7 @@ export default class DocklightWindowIntegration extends Extension {
         let previewCount = 0;
         const previewRects = [];
         const previewActors = [];
+        const previewFadeActors = [];
         for (const [windowId, x, y, width, height] of previews) {
             if (width <= 0 || height <= 0)
                 continue;
@@ -1644,7 +1683,7 @@ export default class DocklightWindowIntegration extends Extension {
             const previewOffsetY = Math.floor((height - previewHeight) / 2);
             const layout = new Shell.WindowPreviewLayout();
             const preview = new Clutter.Actor({
-                reactive: true,
+                reactive: false,
                 clip_to_allocation: true,
                 opacity: 0,
                 x: previewOffsetX,
@@ -1664,7 +1703,7 @@ export default class DocklightWindowIntegration extends Extension {
             // between the selector and the alpha-bearing window clone, so the
             // selector can show in card margins but never tint image pixels.
             const selector = new St.Widget({
-                reactive: false,
+                reactive: true,
                 x,
                 y,
                 width,
@@ -1702,7 +1741,7 @@ export default class DocklightWindowIntegration extends Extension {
             overlay.add_child(selector);
             layout.add_window(window);
             let primaryButtonPressed = false;
-            preview.connect('button-press-event', (_actor, event) => {
+            selector.connect('button-press-event', (_actor, event) => {
                 if (event.get_button() !== 1)
                     return Clutter.EVENT_PROPAGATE;
 
@@ -1713,7 +1752,7 @@ export default class DocklightWindowIntegration extends Extension {
                 primaryButtonPressed = true;
                 return Clutter.EVENT_STOP;
             });
-            preview.connect('button-release-event', (_actor, event) => {
+            selector.connect('button-release-event', (_actor, event) => {
                 if (event.get_button() !== 1)
                     return Clutter.EVENT_PROPAGATE;
 
@@ -1721,8 +1760,15 @@ export default class DocklightWindowIntegration extends Extension {
                 // input region is committed. A press can therefore reach GTK
                 // while its release reaches Shell. Never let that orphaned
                 // release fall through and become a second GTK action.
-                if (!primaryButtonPressed)
+                if (!primaryButtonPressed) {
+                    // The press reached the GTK card before this actor entered
+                    // Shell's input region. The release is nevertheless the
+                    // first safe point at which Mutter's implicit pointer grab
+                    // has ended, so use it to complete an auxiliary/PiP click.
+                    if (this._isApplicationAuxiliary(window))
+                        this._forwardPreviewPrimaryClick(window, preview, event);
                     return Clutter.EVENT_STOP;
+                }
 
                 primaryButtonPressed = false;
                 if (this._isApplicationAuxiliary(window))
@@ -1754,7 +1800,8 @@ export default class DocklightWindowIntegration extends Extension {
                 selectionOutline,
                 selected: false,
             });
-            previewActors.push(preview);
+            previewActors.push(selector);
+            previewFadeActors.push(preview);
             previewCount++;
         }
 
@@ -1780,7 +1827,7 @@ export default class DocklightWindowIntegration extends Extension {
             // a screen-sized offscreen surface just to reveal thumbnail-sized
             // clones. Animate each small clone instead so video keeps the
             // compositor's normal frame cadence while the preview appears.
-            for (const preview of previewActors) {
+            for (const preview of previewFadeActors) {
                 preview.ease({
                     opacity: 255,
                     duration: 100,
@@ -1794,6 +1841,24 @@ export default class DocklightWindowIntegration extends Extension {
             this._publishPreviewPointerInside(true);
         }
 
+        invocation.return_value(null);
+    }
+
+    SetPreviewColorAsync(params, invocation) {
+        if (this._isThumbnailCallerAuthorized(invocation)) {
+            const fallback = [105 / 255, 170 / 255, 1, 1];
+            const channels = params.map((value, index) =>
+                Number.isFinite(value)
+                    ? Math.min(1, Math.max(0, value))
+                    : fallback[index]);
+            const rgb = channels.slice(0, 3).map(value =>
+                Math.round(value * 255));
+            this._previewSelectorFill =
+                `rgba(${rgb.join(', ')}, ${0.32 * channels[3]})`;
+            this._previewSelectorOutline =
+                `rgba(${rgb.join(', ')}, ${0.95 * channels[3]})`;
+            this._updateLivePreviewSelectors(true);
+        }
         invocation.return_value(null);
     }
 
@@ -1837,32 +1902,181 @@ export default class DocklightWindowIntegration extends Extension {
         const sourceY = frame.y + Math.min(frame.height - 1, Math.max(0,
             normalizedY * frame.height));
 
-        if (!this._previewPointerDevice) {
-            const seat = Clutter.get_default_backend().get_default_seat();
-            this._previewPointerDevice = seat.create_virtual_device(
-                Clutter.InputDeviceType.POINTER_DEVICE);
+        const clickTime = GLib.get_monotonic_time();
+        const previousClick = this._previewPointerLastClick;
+        if (previousClick && previousClick.window === window &&
+            clickTime - previousClick.time < PREVIEW_DOUBLE_CLICK_GUARD_US &&
+            Math.abs(sourceX - previousClick.x) <=
+                PREVIEW_DOUBLE_CLICK_DISTANCE_PX &&
+            Math.abs(sourceY - previousClick.y) <=
+                PREVIEW_DOUBLE_CLICK_DISTANCE_PX) {
+            return;
         }
+        this._previewPointerLastClick = {
+            window,
+            x: sourceX,
+            y: sourceY,
+            time: clickTime,
+        };
 
         // PiP controls in browsers are mouse controls rather than touch
         // targets. A virtual touchscreen also makes Shell draw its touch
-        // feedback circle. Send a real pointer click, then immediately put
-        // the pointer back over the dock preview so this forwarding remains
-        // visually transparent and does not dismiss the preview.
+        // feedback circle. Defer the virtual pointer sequence until after the
+        // physical release handler returns: while that handler is running,
+        // Mutter's implicit grab still routes injected events back to Shell.
+        // Separate motion, press, release, and restoration as well so the
+        // Wayland client observes focus/motion before its button event.
         const restoreX = this._pointerPosition?.x ?? sourceX;
         const restoreY = this._pointerPosition?.y ?? sourceY;
-        const motionTime = GLib.get_monotonic_time();
-        this._previewPointerDevice.notify_absolute_motion(
-            motionTime, sourceX, sourceY);
-        this._previewPointerDevice.notify_button(
-            motionTime + 1000,
-            Clutter.BUTTON_PRIMARY,
-            Clutter.ButtonState.PRESSED);
-        this._previewPointerDevice.notify_button(
-            motionTime + 2000,
-            Clutter.BUTTON_PRIMARY,
-            Clutter.ButtonState.RELEASED);
-        this._previewPointerDevice.notify_absolute_motion(
-            motionTime + 3000, restoreX, restoreY);
+        this._cancelPreviewPointerInput();
+        // The compositor clone and its GTK backing window can overlap the
+        // real PiP surface (especially for a bottom dock and Firefox's
+        // bottom-right PiP placement). Temporarily remove both preview layers
+        // from picking; otherwise the virtual pointer click is delivered back
+        // to Docklight instead of to the source window beneath it.
+        this._suppressPreviewInput();
+        this._schedulePreviewPointerStep(16, () => {
+            if (!this._previewPointerDevice) {
+                const seat = Clutter.get_default_backend().get_default_seat();
+                this._previewPointerDevice = seat.create_virtual_device(
+                    Clutter.InputDeviceType.POINTER_DEVICE);
+            }
+            this._previewPointerRestorePosition = {
+                x: restoreX,
+                y: restoreY,
+                deadline: GLib.get_monotonic_time() + 250000,
+                restoring: false,
+            };
+            this._previewPointerDevice.notify_absolute_motion(
+                GLib.get_monotonic_time(), sourceX, sourceY);
+            this._schedulePreviewPointerStep(16, () => {
+                this._previewPointerDevice.notify_button(
+                    GLib.get_monotonic_time(),
+                    Clutter.BUTTON_PRIMARY,
+                    Clutter.ButtonState.PRESSED);
+                this._previewPointerPressed = true;
+                this._schedulePreviewPointerStep(24, () => {
+                    this._previewPointerDevice.notify_button(
+                        GLib.get_monotonic_time(),
+                        Clutter.BUTTON_PRIMARY,
+                        Clutter.ButtonState.RELEASED);
+                    this._previewPointerPressed = false;
+                    // Firefox may apply its PiP double-click maximize after
+                    // the release has returned to Shell. Undo only a
+                    // maximize caused during this forwarded preview click;
+                    // otherwise the resized source invalidates the remaining
+                    // coordinate/restore sequence and destabilizes input.
+                    this._schedulePreviewPointerStep(100, () => {
+                        const maximized = window.get_maximized?.();
+                        if (maximized !== undefined &&
+                            maximized !== Meta.MaximizeFlags.NONE) {
+                            window.unmaximize(Meta.MaximizeFlags.BOTH);
+                        }
+                    });
+                    this._schedulePreviewPointerStep(16, () => {
+                        if (this._previewPointerRestorePosition)
+                            this._previewPointerRestorePosition.restoring = true;
+                        this._previewPointerDevice.notify_absolute_motion(
+                            GLib.get_monotonic_time(), restoreX, restoreY);
+                        this._schedulePreviewPointerStep(16, () => {
+                            this._restorePreviewInput();
+                        });
+                    });
+                });
+            });
+        });
+    }
+
+    _schedulePreviewPointerStep(delay, callback) {
+        const source = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            delay,
+            () => {
+                this._previewPointerSources.delete(source);
+                if (!this._enabled)
+                    return GLib.SOURCE_REMOVE;
+                try {
+                    callback();
+                } catch (error) {
+                    logError(error, 'Failed to forward Docklight PiP input');
+                    this._cancelPreviewPointerInput(true);
+                }
+                return GLib.SOURCE_REMOVE;
+            });
+        this._previewPointerSources.add(source);
+    }
+
+    _suppressPreviewInput() {
+        this._restorePreviewInput();
+
+        const actors = [];
+        if (this._livePreviewOverlay)
+            actors.push(this._livePreviewOverlay);
+
+        for (const window of this._auxiliaryWindowSignals.keys()) {
+            if (this._auxiliaryPosition(window)?.type !== 'preview')
+                continue;
+            const actor = window.get_compositor_private?.();
+            if (actor && !actor.is_destroyed?.())
+                actors.push(actor);
+        }
+
+        this._previewInputSuppressedActors = actors;
+        for (const actor of actors)
+            actor.hide();
+    }
+
+    _restorePreviewInput() {
+        for (const actor of this._previewInputSuppressedActors) {
+            try {
+                if (!actor.is_destroyed?.())
+                    actor.show();
+            } catch (_error) {
+                // A preview can be closed while input is being forwarded.
+            }
+        }
+        this._previewInputSuppressedActors = [];
+    }
+
+    _cancelPreviewPointerInput(disposeDevice = false) {
+        for (const source of this._previewPointerSources)
+            GLib.source_remove(source);
+        this._previewPointerSources.clear();
+
+        const device = this._previewPointerDevice;
+        if (device && this._previewPointerPressed) {
+            try {
+                device.notify_button(
+                    GLib.get_monotonic_time(),
+                    Clutter.BUTTON_PRIMARY,
+                    Clutter.ButtonState.RELEASED);
+            } catch (_error) {
+                // Disposing the device below also clears its button state.
+            }
+        }
+        this._previewPointerPressed = false;
+        this._restorePreviewInput();
+
+        const restore = this._previewPointerRestorePosition;
+        if (device && restore) {
+            restore.restoring = true;
+            restore.deadline = GLib.get_monotonic_time() + 250000;
+            try {
+                device.notify_absolute_motion(
+                    GLib.get_monotonic_time(), restore.x, restore.y);
+            } catch (_error) {
+                // The logical-pointer deadline still releases hover state.
+            }
+        }
+        // Clutter queues virtual input for delivery after this main-loop
+        // callback. Disposing the device after the apparent final motion can
+        // discard the queued button sequence before the Wayland client sees
+        // it. Reuse the device between preview clicks and dispose it only on
+        // teardown or after an injection error.
+        if (disposeDevice) {
+            this._previewPointerDevice = null;
+            device?.run_dispose?.();
+        }
     }
 
     HideLivePreviewsAsync(_params, invocation) {

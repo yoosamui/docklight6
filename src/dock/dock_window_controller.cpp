@@ -63,6 +63,8 @@ DockWindowController::DockWindowController(
     m_preview_window->set_monitor(monitor);
     m_preview_window->set_card_user_height(
         m_settings.preview_card_height());
+    m_preview_window->set_preview_color(
+        m_settings.preview_color());
 
     m_preview_window
         ->signal_pointer_entered()
@@ -465,6 +467,8 @@ void DockWindowController::apply_configuration(
     hide_preview();
     m_preview_window->set_card_user_height(
         m_settings.preview_card_height());
+    m_preview_window->set_preview_color(
+        m_settings.preview_color());
 
     if (m_window.m_home_item)
     {

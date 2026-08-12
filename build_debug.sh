@@ -24,6 +24,6 @@ sudo install -m 0755 \
     "$DOCKLIGHT_BUILD_DIR/src/docklight6" \
     /usr/local/bin/docklight6
 pkill docklight6 || true
-exec gdb /usr/local/bin/docklight6
+exec /usr/local/bin/docklight6
 
 printf 'Debug build created at %s/src/docklight6\n' "$DOCKLIGHT_BUILD_DIR"

@@ -70,6 +70,13 @@ bool belongs_to_activation_desktop(
     return window.id == target.id;
 }
 
+bool is_application_auxiliary(
+    const ManagedWindow &window)
+{
+    return window.skip_taskbar &&
+           window.include_when_skip_taskbar;
+}
+
 }
 
 DockApplicationController::
@@ -161,7 +168,9 @@ bool DockApplicationController::
             if (active_window &&
                 !active_window->minimized &&
                 active_window
-                    ->on_current_desktop)
+                    ->on_current_desktop &&
+                !is_application_auxiliary(
+                    *active_window))
             {
                 return minimize_windows(
                     current_windows);
@@ -192,7 +201,9 @@ bool DockApplicationController::
         if (active_window &&
             !active_window->minimized &&
             active_window
-                ->on_current_desktop)
+                ->on_current_desktop &&
+            !is_application_auxiliary(
+                *active_window))
         {
             return minimize();
         }
@@ -256,6 +267,7 @@ DockApplicationController::
             &running_application) const
 {
     std::vector<WindowId> window_ids;
+    std::vector<WindowId> auxiliary_window_ids;
 
     for (const auto &window_id :
          running_application.window_ids)
@@ -267,12 +279,21 @@ DockApplicationController::
         if (window &&
             window->on_current_desktop)
         {
-            window_ids.push_back(
-                window_id);
+            (is_application_auxiliary(*window)
+                 ? auxiliary_window_ids
+                 : window_ids)
+                .push_back(window_id);
         }
     }
 
-    return window_ids;
+    // A launcher click represents the application's ordinary windows. PiP
+    // remains part of the preview group, but must not replace a minimized
+    // browser as the click target merely because the always-on-top player is
+    // the only visible member. Retain auxiliary-only applications as a
+    // useful fallback.
+    return window_ids.empty()
+               ? auxiliary_window_ids
+               : window_ids;
 }
 
 std::vector<WindowId>
@@ -410,7 +431,8 @@ bool DockApplicationController::minimize_windows(
                 window_id);
 
         if (!window ||
-            window->minimized)
+            window->minimized ||
+            is_application_auxiliary(*window))
         {
             continue;
         }
@@ -435,7 +457,8 @@ bool DockApplicationController::
          ++window)
     {
         if (window->minimized ||
-            !window->on_current_desktop)
+            !window->on_current_desktop ||
+            is_application_auxiliary(*window))
         {
             continue;
         }

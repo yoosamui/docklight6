@@ -70,6 +70,8 @@ public:
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor> &monitor);
     void set_card_user_height(int height);
+    void set_preview_color(
+        const std::string &color);
     void set_rounded_corners(
         bool enabled,
         int radius);
@@ -239,6 +241,7 @@ private:
 
     unsigned int m_generation = 0;
     int m_card_user_height = CARD_USER_HEIGHT;
+    Gdk::RGBA m_preview_color;
     gint64 m_opacity_animation_start_us = 0;
     double m_opacity_animation_start = 1.0;
     double m_opacity_animation_target = 1.0;
