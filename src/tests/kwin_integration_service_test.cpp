@@ -280,7 +280,7 @@ void verifies_dbus_state_transport()
 
     assert(!registered);
     assert(supported_version_text ==
-           "7");
+           "8");
 
     result =
         call_method(
@@ -288,7 +288,7 @@ void verifies_dbus_state_transport()
             "Register",
             g_variant_new(
                 "(s)",
-                "7"));
+                "8"));
 
     g_variant_get(
         result,

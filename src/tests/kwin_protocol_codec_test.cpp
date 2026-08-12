@@ -57,7 +57,7 @@ void verifies_scalar_and_array_parsing()
 
 void verifies_window_payload_validation()
 {
-    const std::vector<std::string> fields{
+    std::vector<std::string> fields{
         "window-1",
         "org.example.App.desktop",
         "Example",
@@ -73,6 +73,7 @@ void verifies_window_payload_validation()
         KWinProtocolCodec::encode_string_array({"activity-1"}),
         KWinProtocolCodec::encode_string_array({"desktop-uuid"}),
         KWinProtocolCodec::encode_string_array({"2"}),
+        "1",
         "1"};
     const auto payload =
         KWinProtocolCodec::encode_string_array(fields);
@@ -89,8 +90,21 @@ void verifies_window_payload_validation()
     assert(window.id == "window-1");
     assert(window.process_id == 1234);
     assert(window.maximized);
+    assert(window.include_when_skip_taskbar);
     assert(window.desktop_numbers ==
            std::vector<unsigned int>{2});
+    g_variant_unref(parameters);
+
+    fields.pop_back();
+    const auto legacy_payload =
+        KWinProtocolCodec::encode_string_array(fields);
+    parameters = g_variant_ref_sink(
+        g_variant_new("(ss)", "43", legacy_payload.c_str()));
+    assert(KWinProtocolCodec::parse_window(
+        parameters,
+        revision,
+        window));
+    assert(!window.include_when_skip_taskbar);
     g_variant_unref(parameters);
 
     parameters = g_variant_ref_sink(

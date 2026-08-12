@@ -30,9 +30,9 @@
 namespace KWinIntegrationProtocol
 {
 
-constexpr std::uint32_t VERSION = 7; // Window-integration protocol version
+constexpr std::uint32_t VERSION = 8; // Window-integration protocol version
 constexpr std::uint32_t LEGACY_VERSION =
-    6; // Previous version accepted during script upgrades
+    7; // Previous version accepted during script upgrades
 
 constexpr char SERVICE_NAME[] =
     "org.docklight6.WindowIntegration"; // Window-integration D-Bus service

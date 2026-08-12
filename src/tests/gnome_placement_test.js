@@ -60,12 +60,24 @@ assert.match(
     "premium GNOME previews must clone live compositor actors instead of polling screenshots");
 assert.match(
     extensionSource,
+    /_isApplicationAuxiliary\(window\)[\s\S]*?skip_taskbar[\s\S]*?is_above[\s\S]*?sameApplication[\s\S]*?_windowPayload\(window\)[\s\S]*?_isApplicationAuxiliary\(window\)/,
+    "always-on-top application auxiliaries such as Firefox PiP must remain in preview groups");
+assert.match(
+    extensionSource,
     /const overlay = new Clutter\.Actor\(\{[\s\S]*?reactive: false[\s\S]*?Main\.uiGroup\.add_child\(overlay\)/,
     "the Shell overlay must paint above GTK without stealing its pointer interaction");
 assert.match(
     extensionSource,
     /disable\(\)[\s\S]*?_destroyLivePreviews\(\)[\s\S]*?_destroyLivePreviews\(\) \{[\s\S]*?\.destroy\(\)/,
     "disabling the extension must destroy every compositor preview clone");
+assert.match(
+    extensionSource,
+    /_disconnectBackend\(\) \{[\s\S]*?_destroyLivePreviews\(\)/,
+    "losing the Docklight service must destroy every compositor preview clone");
+assert.match(
+    extensionSource,
+    /_isThumbnailCallerAuthorized\(invocation\)[\s\S]*?get_name_owner[\s\S]*?get_sender[\s\S]*?CaptureWindowAsync[\s\S]*?_isThumbnailCallerAuthorized\(invocation\)[\s\S]*?ShowLivePreviewsAsync[\s\S]*?_isThumbnailCallerAuthorized\(invocation\)/,
+    "only the registered Docklight service owner may access compositor window textures");
 assert.match(
     thumbnailProviderSource,
     /ShowLivePreviews[\s\S]*?g_variant_new\("\(a\(siiii\)\)"/,

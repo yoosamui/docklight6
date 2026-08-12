@@ -41,7 +41,7 @@ const THUMBNAIL_IFACE = `
     <method name="HideLivePreviews"/>
   </interface>
 </node>`;
-const PROTOCOL_VERSION = '7';
+const PROTOCOL_VERSION = '8';
 const DOCK_PLACEMENT_DELAY_MS = 30;
 // Docklight debounces configuration reloads for 200 ms. Keep the ordinary
 // Wayland toplevel hidden past that boundary so an edge change cannot expose
@@ -1423,6 +1423,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._connected = false;
         this._registering = false;
         this._pendingWaits = 0;
+        this._destroyLivePreviews();
 
         // GNOME Shell and this extension outlive an app-only Docklight
         // restart. The replacement Wayland surface initially has only its
@@ -1460,12 +1461,25 @@ export default class DocklightWindowIntegration extends Extension {
         return window ? String(window.get_stable_sequence()) : '';
     }
 
+    _isThumbnailCallerAuthorized(invocation) {
+        // Window textures are compositor-private data. Only the Docklight
+        // process that owns the integration service may request captures or
+        // place clones; stable sequence ids alone must not become a window
+        // screenshot capability for every process on the session bus.
+        const owner = this._proxy?.get_name_owner?.();
+        return this._enabled &&
+            this._connected &&
+            Boolean(owner) &&
+            invocation?.get_sender?.() === owner;
+    }
+
     async CaptureWindowAsync(params, invocation) {
         const [windowId, targetWidth, targetHeight] = params;
         const emptyReply = () => invocation.return_value(
             new GLib.Variant('(ay)', [new Uint8Array()]));
 
-        if (!this._enabled || targetWidth <= 0 || targetHeight <= 0) {
+        if (!this._isThumbnailCallerAuthorized(invocation) ||
+            targetWidth <= 0 || targetHeight <= 0) {
             emptyReply();
             return;
         }
@@ -1521,6 +1535,11 @@ export default class DocklightWindowIntegration extends Extension {
 
     ShowLivePreviewsAsync(params, invocation) {
         const [previews] = params;
+        if (!this._isThumbnailCallerAuthorized(invocation)) {
+            invocation.return_value(null);
+            return;
+        }
+
         this._destroyLivePreviews();
 
         const overlay = new Clutter.Actor({
@@ -1586,7 +1605,8 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     HideLivePreviewsAsync(_params, invocation) {
-        this._destroyLivePreviews();
+        if (this._isThumbnailCallerAuthorized(invocation))
+            this._destroyLivePreviews();
         invocation.return_value(null);
     }
 
@@ -1635,6 +1655,28 @@ export default class DocklightWindowIntegration extends Extension {
         return window.get_workspace()?.index() + 1 || null;
     }
 
+    _isApplicationAuxiliary(window) {
+        if (!window?.skip_taskbar || window.is_above?.() !== true)
+            return false;
+
+        const applicationId = this._applicationId(window);
+        const processId = Number(window.get_pid?.()) || 0;
+
+        return global.get_window_actors().some(actor => {
+            const candidate = actor.meta_window;
+            if (candidate === window ||
+                !this._isTrackable(candidate) ||
+                candidate.skip_taskbar)
+                return false;
+
+            const sameApplication = applicationId &&
+                this._applicationId(candidate) === applicationId;
+            const sameProcess = processId > 0 &&
+                Number(candidate.get_pid?.()) === processId;
+            return sameApplication || sameProcess;
+        });
+    }
+
     _windowPayload(window) {
         const rect = window.get_frame_rect();
         const workspace = this._workspaceNumber(window);
@@ -1659,6 +1701,7 @@ export default class DocklightWindowIntegration extends Extension {
             workspace === null ? '' : encodeList([String(workspace)]),
             workspace === null ? '' : encodeList([workspace]),
             booleanText(onCurrentDesktop),
+            booleanText(this._isApplicationAuxiliary(window)),
         ]);
     }
 
@@ -1694,6 +1737,7 @@ export default class DocklightWindowIntegration extends Extension {
             ['notify::title', publish],
             ['notify::minimized', publish],
             ['notify::skip-taskbar', publish],
+            ['notify::above', publish],
             ['notify::maximized-horizontally', publish],
             ['notify::maximized-vertically', publish],
             ['notify::wm-class', publish],

@@ -201,7 +201,8 @@ bool decode_window(
     if (!decode_string_array(
             window_payload,
             fields) ||
-        fields.size() != 16)
+        (fields.size() != 16 &&
+         fields.size() != 17))
     {
         return false;
     }
@@ -244,7 +245,11 @@ bool decode_window(
             window.desktop_numbers) ||
         !parse_boolean(
             fields[15].c_str(),
-            window.on_current_desktop))
+            window.on_current_desktop) ||
+        (fields.size() == 17 &&
+         !parse_boolean(
+             fields[16].c_str(),
+             window.include_when_skip_taskbar)))
     {
         return false;
     }
@@ -254,6 +259,8 @@ bool decode_window(
         fields[1];
     window.caption = fields[2];
     window.icon_name = fields[3];
+    if (fields.size() == 16)
+        window.include_when_skip_taskbar = false;
 
     return !window.id.empty();
 }

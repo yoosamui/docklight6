@@ -276,11 +276,11 @@ assert.strictEqual(
     "Register");
 assert.deepStrictEqual(
     calls[0].arguments,
-    ["7"]);
+    ["8"]);
 
 calls[0].callback(
     true,
-    "7");
+    "8");
 
 const beginSnapshot =
     calls.find(
@@ -350,12 +350,40 @@ assert.strictEqual(
         .map(decodeURIComponent)[1],
     "vlc");
 
+const pictureInPictureWindow =
+    createWindow(
+        "picture-in-picture",
+        "org.kde.dolphin");
+pictureInPictureWindow.skipTaskbar = true;
+pictureInPictureWindow.keepAbove = true;
+workspace.stackingOrder.push(
+    pictureInPictureWindow);
+workspace.windowAdded.emit(
+    pictureInPictureWindow);
+
+const pictureInPictureUpdate = calls
+    .filter(call => call.methodName === "PublishWindow")
+    .at(-1)
+    .arguments[1]
+    .split(",")
+    .map(decodeURIComponent);
+
+assert.strictEqual(
+    pictureInPictureUpdate[7],
+    "1");
+assert.strictEqual(
+    pictureInPictureUpdate[16],
+    "1");
+
 workspace.stackingOrder =
     workspace.stackingOrder.filter(
         window =>
-            window !== vlcWindow);
+            window !== vlcWindow &&
+            window !== pictureInPictureWindow);
 workspace.windowRemoved.emit(
     vlcWindow);
+workspace.windowRemoved.emit(
+    pictureInPictureWindow);
 
 const dockGeometryCount =
     calls.filter(
@@ -627,6 +655,9 @@ assert.strictEqual(
     "2");
 assert.strictEqual(
     stagedWindowPayload[15],
+    "0");
+assert.strictEqual(
+    stagedWindowPayload[16],
     "0");
 assert.deepStrictEqual(
     commitSnapshot.arguments,

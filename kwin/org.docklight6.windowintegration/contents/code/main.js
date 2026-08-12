@@ -7,7 +7,7 @@
         "/org/docklight6/WindowIntegration";
     const INTERFACE_NAME =
         "org.docklight6.WindowIntegration1";
-    const PROTOCOL_VERSION = "7";
+    const PROTOCOL_VERSION = "8";
 
     let connected = false;
     let registering = false;
@@ -211,6 +211,27 @@
         return false;
     }
 
+    function isApplicationAuxiliary(window) {
+        if (!window || !window.skipTaskbar || !window.keepAbove)
+            return false;
+
+        const candidateApplicationId = applicationId(window);
+        const candidatePid = Number(window.pid) || 0;
+
+        return (workspace.stackingOrder || []).some(candidate => {
+            if (candidate === window ||
+                !isTrackable(candidate) ||
+                candidate.skipTaskbar)
+                return false;
+
+            const sameApplication = candidateApplicationId &&
+                applicationId(candidate) === candidateApplicationId;
+            const sameProcess = candidatePid > 0 &&
+                Number(candidate.pid) === candidatePid;
+            return sameApplication || sameProcess;
+        });
+    }
+
     function nextRevision() {
         ++revision;
         return String(revision);
@@ -255,7 +276,9 @@
                 booleanText(
                     windowOnDesktop(
                         window,
-                        workspace.currentDesktop))
+                        workspace.currentDesktop)),
+                booleanText(
+                    isApplicationAuxiliary(window))
             ]);
 
         callDBus(
@@ -680,6 +703,9 @@
             publish);
         connectSignal(
             window.skipTaskbarChanged,
+            publish);
+        connectSignal(
+            window.keepAboveChanged,
             publish);
         connectSignal(
             window.iconChanged,

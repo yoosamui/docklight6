@@ -46,6 +46,7 @@ fi
 if gnome-extensions info "${EXTENSION_ID}" >/dev/null 2>&1; then
     gnome-extensions enable "${EXTENSION_ID}"
     echo "Docklight GNOME Wayland window integration is installed and enabled"
+    echo "Log out and back in to load this extension version"
 else
     echo "Docklight GNOME Wayland window integration is installed."
     echo "Log out and back in once, then run:"
