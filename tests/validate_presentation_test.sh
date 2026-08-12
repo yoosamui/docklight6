@@ -39,6 +39,16 @@ _NET_WM_PID(CARDINAL) = 1234
 PROPERTIES
 EOF
 
+cat >"${TEST_BIN}/xwininfo" <<'EOF'
+#!/usr/bin/env bash
+cat <<'WINDOW_INFO'
+  Absolute upper-left X:  590
+  Absolute upper-left Y:  1378
+  Width: 1380
+  Height: 62
+WINDOW_INFO
+EOF
+
 cat >"${TEST_BIN}/gdbus" <<'EOF'
 #!/usr/bin/env bash
 case "$*" in
@@ -55,4 +65,5 @@ output="$(PATH="${TEST_BIN}:${PATH}" \
 
 grep -Fq 'PASS  Docklight is presented through XWayland' <<<"${output}"
 grep -Fq 'PASS  GNOME integration reports dock geometry' <<<"${output}"
+grep -Fq 'PASS  GNOME and X11 dock geometry agree' <<<"${output}"
 grep -Fq 'Presentation validation: 0 failure(s), 0 warning(s)' <<<"${output}"

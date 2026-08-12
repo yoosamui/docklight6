@@ -44,6 +44,14 @@ assert.match(
     /set_dock_placement_geometry[\s\S]*?calculated_dock_screen_position|calculated_dock_screen_position[\s\S]*?set_dock_placement_geometry/,
     "XWayland monitor changes must publish calculated target geometry, not a stale mapped origin");
 assert.match(
+    dockWindowControllerSource,
+    /GDK_IS_X11_DISPLAY[\s\S]*?capture_x11_base_workarea[\s\S]*?m_x11_base_workarea/,
+    "X11 layout must not feed Docklight's own strut back into its edge margin");
+assert.match(
+    extensionSource,
+    /_isX11DockWindow\(window\)[\s\S]*?_removeDockStrut\(\)[\s\S]*?_publishDockSurfaceGeometry\(rect\)/,
+    "GNOME must leave XWayland dock placement and reservation to EWMH");
+assert.match(
     autohideControllerSource,
     /hide_now\([\s\S]*?\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(true\);\s*return;/,
     "GNOME autohide must keep the placed dock mapped instead of remapping at the centre");

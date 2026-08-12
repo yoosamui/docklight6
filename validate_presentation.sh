@@ -51,6 +51,7 @@ property_contains()
 require_command pgrep || true
 require_command wmctrl || true
 require_command xprop || true
+require_command xwininfo || true
 require_command gdbus || true
 
 process_id="$(pgrep -u "$(id -u)" -x docklight6 | head -n 1 || true)"
@@ -116,6 +117,31 @@ geometry="$(gdbus call --session \
 
 if [[ ${geometry} == \(true,* ]]; then
     pass "GNOME integration reports dock geometry: ${geometry}"
+
+    if [[ -n ${window_id} &&
+          ${geometry} =~ ^\(true,[[:space:]]*(-?[0-9]+),[[:space:]]*(-?[0-9]+),[[:space:]]*([0-9]+),[[:space:]]*([0-9]+)\)$ ]]
+    then
+        shell_x="${BASH_REMATCH[1]}"
+        shell_y="${BASH_REMATCH[2]}"
+        shell_width="${BASH_REMATCH[3]}"
+        shell_height="${BASH_REMATCH[4]}"
+        window_info="$(xwininfo -id "${window_id}" 2>/dev/null || true)"
+        x11_x="$(sed -n 's/^[[:space:]]*Absolute upper-left X:[[:space:]]*//p' <<<"${window_info}")"
+        x11_y="$(sed -n 's/^[[:space:]]*Absolute upper-left Y:[[:space:]]*//p' <<<"${window_info}")"
+        x11_width="$(sed -n 's/^[[:space:]]*Width:[[:space:]]*//p' <<<"${window_info}")"
+        x11_height="$(sed -n 's/^[[:space:]]*Height:[[:space:]]*//p' <<<"${window_info}")"
+
+        shell_geometry="${shell_x},${shell_y},${shell_width},${shell_height}"
+        x11_geometry="${x11_x},${x11_y},${x11_width},${x11_height}"
+        if [[ ${shell_geometry} == "${x11_geometry}" ]]
+        then
+            pass "GNOME and X11 dock geometry agree"
+        else
+            fail "GNOME/X11 geometry mismatch: Shell ${shell_x},${shell_y} ${shell_width}x${shell_height}; X11 ${x11_x},${x11_y} ${x11_width}x${x11_height}"
+        fi
+    else
+        fail "cannot compare GNOME and X11 dock geometry"
+    fi
 else
     fail "GNOME integration does not report valid dock geometry"
 fi

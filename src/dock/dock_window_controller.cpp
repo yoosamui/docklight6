@@ -34,6 +34,7 @@
 #include "windowing/window_registry.h"
 
 #include <gdk/gdkwayland.h>
+#include <gdk/gdkx.h>
 #include <gtk-layer-shell.h>
 #include <gtkmm/settings.h>
 
@@ -568,6 +569,27 @@ void DockWindowController::update_dock_layout()
     {
         workarea_geometry =
             output_geometry;
+    }
+
+    // An X11 dock changes _NET_WORKAREA as soon as it publishes its strut.
+    // Keep using the panel-only area captured before that first publication;
+    // otherwise every work-area notification feeds Docklight's own thickness
+    // back into its edge margin and walks the requested position inward.
+    auto display = m_window.get_display();
+    const bool x11_dock =
+        !m_window.m_uses_layer_shell &&
+        display &&
+        GDK_IS_X11_DISPLAY(display->gobj());
+    if (x11_dock)
+    {
+        m_window.capture_x11_base_workarea(
+            output_geometry,
+            workarea_geometry);
+        if (m_window.m_has_x11_base_workarea)
+        {
+            workarea_geometry =
+                m_window.m_x11_base_workarea;
+        }
     }
 
     // Preserve the compositor's native EWMH work area for X11 placement.

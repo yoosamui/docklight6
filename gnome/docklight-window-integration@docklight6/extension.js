@@ -727,6 +727,15 @@ export default class DocklightWindowIntegration extends Extension {
         }
     }
 
+    _isX11DockWindow(window = this._dockWindow) {
+        try {
+            return window?.get_client_type?.() ===
+                Meta.WindowClientType.X11;
+        } catch (_error) {
+            return false;
+        }
+    }
+
     _clearDockWindow() {
         this._finishDockTransition();
         this._removeDockStrut();
@@ -1198,6 +1207,26 @@ export default class DocklightWindowIntegration extends Extension {
         const placement = this._dockPlacement;
         if (!window || !placement)
             return false;
+
+        // XWayland docks already own their position and reservation through
+        // GTK/X11 and _NET_WM_STRUT_PARTIAL. Adding a Shell chrome strut and
+        // moving the Meta.Window as well makes Docklight consume its own work
+        // area on every monitor notification. Keep the GNOME integration for
+        // window discovery and compositor autohide animation, but publish the
+        // real X11 frame without applying a second placement policy.
+        if (this._isX11DockWindow(window)) {
+            this._removeDockStrut();
+            const rect = window.get_frame_rect();
+            this._dockActorBaseTranslation = {x: 0, y: 0};
+            const actor = window.get_compositor_private?.();
+            if (actor && !['revealing', 'hiding'].includes(
+                this._dockVisibilityState)) {
+                actor.translation_x = 0;
+                actor.translation_y = 0;
+            }
+            this._publishDockSurfaceGeometry(rect);
+            return true;
+        }
 
         const monitorIndex = this._dockMonitorIndex();
         const monitor = Main.layoutManager.monitors[monitorIndex];
