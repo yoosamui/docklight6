@@ -45,6 +45,9 @@ namespace
     constexpr int X11_PROBE_WIDTH = 96;
     constexpr int X11_PROBE_HEIGHT = 54;
     constexpr double X11_LIVE_OVERSAMPLE = 1.5;
+    constexpr double CARD_CORNER_RADIUS = 7.0;
+    constexpr double PREVIEW_PI =
+        3.14159265358979323846;
     // Temporary test: keep preview transitions as a pure fade, without the
     // directional slide used by the normal overlay animation.
     constexpr bool TEST_PREVIEW_FADE_ONLY = true;
@@ -326,6 +329,49 @@ namespace
                 std::string::npos;
         g_free(normalized);
         return result;
+    }
+
+    void append_rounded_rectangle(
+        const Cairo::RefPtr<Cairo::Context>
+            &context,
+        double width,
+        double height,
+        double radius)
+    {
+        const double effective_radius =
+            std::max(
+                0.0,
+                std::min(
+                    radius,
+                    std::min(width, height) /
+                        2.0));
+
+        context->begin_new_sub_path();
+        context->arc(
+            width - effective_radius,
+            effective_radius,
+            effective_radius,
+            -PREVIEW_PI / 2.0,
+            0.0);
+        context->arc(
+            width - effective_radius,
+            height - effective_radius,
+            effective_radius,
+            0.0,
+            PREVIEW_PI / 2.0);
+        context->arc(
+            effective_radius,
+            height - effective_radius,
+            effective_radius,
+            PREVIEW_PI / 2.0,
+            PREVIEW_PI);
+        context->arc(
+            effective_radius,
+            effective_radius,
+            effective_radius,
+            PREVIEW_PI,
+            3.0 * PREVIEW_PI / 2.0);
+        context->close_path();
     }
 
     struct PreviewMetrics
@@ -725,12 +771,11 @@ DockPreviewWindow::DockPreviewWindow()
         " border: 1px solid rgba(255,255,255,0.28);"
         "}"
         ".dock-preview-card {"
-        " background-color: rgba(255,255,255,0.06);"
+        " background: transparent;"
         " border: 1px solid rgba(255,255,255,0.25);"
         " border-radius: 7px;"
         "}"
         ".dock-preview-card.dock-preview-card-selected {"
-        " background-color: rgba(105,170,255,0.32);"
         " border-color: rgba(105,170,255,0.85);"
         "}"
         ".dock-preview-header {"
@@ -1825,6 +1870,54 @@ void DockPreviewWindow::rebuild(
 
         auto selected =
             std::make_shared<bool>(false);
+        auto background = Gtk::manage(
+            new Gtk::DrawingArea());
+        // GtkDrawingArea normally owns a GdkWindow. A native child window can
+        // be raised above GtkOverlay children independently of GTK's draw
+        // order, which puts this translucent selector over the thumbnail.
+        // Make it windowless so it is painted into the overlay's backing
+        // surface before the thumbnail body.
+        gtk_widget_set_has_window(
+            GTK_WIDGET(background->gobj()),
+            FALSE);
+        background->set_size_request(
+            size.card_width,
+            size.header_height + image_height);
+        background->set_hexpand(true);
+        background->set_vexpand(true);
+        background->signal_draw().connect(
+            [background, selected](
+                const Cairo::RefPtr<Cairo::Context>
+                    &context)
+            {
+                const auto allocation =
+                    background->get_allocation();
+
+                if (*selected)
+                {
+                    context->set_source_rgba(
+                        105.0 / 255.0,
+                        170.0 / 255.0,
+                        1.0,
+                        0.32);
+                }
+                else
+                {
+                    context->set_source_rgba(
+                        1.0,
+                        1.0,
+                        1.0,
+                        0.06);
+                }
+
+                append_rounded_rectangle(
+                    context,
+                    allocation.get_width(),
+                    allocation.get_height(),
+                    CARD_CORNER_RADIUS);
+                context->fill();
+                return true;
+            });
 
         auto body = Gtk::manage(
             new Gtk::Box(
@@ -1964,6 +2057,7 @@ void DockPreviewWindow::rebuild(
 
         card->signal_enter_notify_event().connect(
             [card,
+             background,
              selected](GdkEventCrossing *event)
             {
                 if (!event ||
@@ -1974,12 +2068,14 @@ void DockPreviewWindow::rebuild(
                     card->get_style_context()
                         ->add_class(
                             "dock-preview-card-selected");
+                    background->queue_draw();
                 }
 
                 return false;
             });
         card->signal_motion_notify_event().connect(
             [card,
+             background,
              selected](GdkEventMotion *)
             {
                 if (!*selected)
@@ -1988,12 +2084,14 @@ void DockPreviewWindow::rebuild(
                     card->get_style_context()
                         ->add_class(
                             "dock-preview-card-selected");
+                    background->queue_draw();
                 }
 
                 return false;
             });
         card->signal_leave_notify_event().connect(
             [card,
+             background,
              selected](GdkEventCrossing *event)
             {
                 if (!event ||
@@ -2004,6 +2102,7 @@ void DockPreviewWindow::rebuild(
                     card->get_style_context()
                         ->remove_class(
                             "dock-preview-card-selected");
+                    background->queue_draw();
                 }
 
                 return false;
@@ -2012,11 +2111,17 @@ void DockPreviewWindow::rebuild(
         body->pack_start(*header, false, false);
         body->pack_start(*image_event, true, true);
 
-        // Paint the selection on the card's own CSS background. This keeps
-        // it below both static Gtk::Image thumbnails and compositor-backed
-        // live preview children, whose native windows can otherwise upset
-        // Gtk::Overlay stacking order.
-        card->add(*body);
+        auto card_overlay = Gtk::manage(
+            new Gtk::Overlay());
+        card_overlay->set_size_request(
+            size.card_width,
+            size.header_height + image_height);
+        card_overlay->add(*background);
+        card_overlay->add_overlay(*body);
+        card_overlay->set_overlay_pass_through(
+            *body,
+            false);
+        card->add(*card_overlay);
 
         m_row.pack_start(*card, false, false);
         m_cards.push_back(card);
