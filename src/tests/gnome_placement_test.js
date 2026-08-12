@@ -64,8 +64,8 @@ assert.match(
     "always-on-top application auxiliaries such as Firefox PiP must remain in preview groups");
 assert.match(
     extensionSource,
-    /const overlay = new Clutter\.Actor\(\{[\s\S]*?reactive: false[\s\S]*?const preview = new Clutter\.Actor\(\{[\s\S]*?reactive: false[\s\S]*?Main\.uiGroup\.add_child\(overlay\)/,
-    "neither the overlay nor any live preview may accept Shell input");
+    /const overlay = new Clutter\.Actor\(\{[\s\S]*?reactive: false[\s\S]*?const preview = new Clutter\.Actor\(\{[\s\S]*?reactive: true[\s\S]*?Main\.uiGroup\.add_child\(overlay\)/,
+    "only the thumbnail-sized preview actors may accept Shell input");
 assert.match(
     extensionSource,
     /const disableDescendantInput = actor => \{[\s\S]*?actor\.get_children\(\)[\s\S]*?child\.reactive = false[\s\S]*?disableDescendantInput\(preview\)/,
@@ -90,10 +90,10 @@ assert.doesNotMatch(
     extensionSource,
     /overlay\.ease\(/,
     "the full-stage live-preview container must not be opacity animated");
-assert.doesNotMatch(
+assert.match(
     extensionSource,
-    /preview\.connect\(['"](?:button|touch|motion|scroll|enter|leave)[^'"]*-event['"]/,
-    "live previews must not attach mouse or touch event handlers");
+    /preview\.connect\('button-release-event'[\s\S]*?event\.get_button\(\) !== 1[\s\S]*?ActivatePreviewWindow[\s\S]*?Clutter\.EVENT_STOP/,
+    "a primary click on a compositor preview must activate its GTK preview card action through the integration service");
 assert.doesNotMatch(
     extensionSource,
     /hostActor\.add_child\(overlay\)/,

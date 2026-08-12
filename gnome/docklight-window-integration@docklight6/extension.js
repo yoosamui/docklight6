@@ -1574,9 +1574,9 @@ export default class DocklightWindowIntegration extends Extension {
         // WindowPreviewLayout actors must remain in Shell's UI layer. Making
         // them children of a real MetaWindowActor creates an unsupported
         // paint dependency and can stop live video damage from reaching the
-        // clones. Keep both the full-stage container and every live preview
-        // actor non-reactive so compositor previews never consume mouse input
-        // intended for the GTK preview surface underneath.
+        // clones. The full-stage container and layout-created descendants
+        // remain non-reactive; each thumbnail container handles its own click
+        // and forwards the selected window id through the integration service.
         const overlay = new Clutter.Actor({
             reactive: false,
             x: 0,
@@ -1608,7 +1608,7 @@ export default class DocklightWindowIntegration extends Extension {
             const previewHeight = Math.max(1, Math.round(frame.height * scale));
             const layout = new Shell.WindowPreviewLayout();
             const preview = new Clutter.Actor({
-                reactive: false,
+                reactive: true,
                 clip_to_allocation: true,
                 opacity: 0,
                 x: x + Math.floor((width - previewWidth) / 2),
@@ -1623,6 +1623,16 @@ export default class DocklightWindowIntegration extends Extension {
             preview.layout_manager = layout;
             overlay.add_child(preview);
             layout.add_window(window);
+            preview.connect('button-release-event', (_actor, event) => {
+                if (event.get_button() !== 1)
+                    return Clutter.EVENT_PROPAGATE;
+
+                this._call(
+                    'ActivatePreviewWindow',
+                    '(s)',
+                    [windowId]);
+                return Clutter.EVENT_STOP;
+            });
             // WindowPreviewLayout owns the compositor clone actors it creates.
             // Keep those descendants non-reactive as well: preview layouts
             // may add clone actors after constructing the container.
