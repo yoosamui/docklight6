@@ -144,6 +144,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockRevealSignal = 0;
         this._nativeWorkAreas = [];
         this._livePreviewOverlay = null;
+        this._livePreviewActors = [];
         this._livePreviewRects = [];
         this._previewPointerInside = null;
 
@@ -1670,7 +1671,20 @@ export default class DocklightWindowIntegration extends Extension {
         if (previewCount > 0) {
             Main.uiGroup.add_child(overlay);
             this._livePreviewOverlay = overlay;
+            this._livePreviewActors = previewActors;
             this._livePreviewRects = previewRects;
+            // Adding an actor to uiGroup is sufficient for painting, but it
+            // does not add that actor to Mutter's stage input region. Track
+            // each thumbnail (rather than the full-stage overlay) so Shell
+            // receives its button events without intercepting input anywhere
+            // outside the visible previews.
+            for (const preview of previewActors) {
+                Main.layoutManager.trackChrome(preview, {
+                    affectsStruts: false,
+                    affectsInputRegion: true,
+                    trackFullscreen: true,
+                });
+            }
             this._publishPreviewPointerInside(true);
             // Fading the full-stage overlay makes Mutter allocate and blend
             // a screen-sized offscreen surface just to reveal thumbnail-sized
@@ -1685,6 +1699,7 @@ export default class DocklightWindowIntegration extends Extension {
             }
         } else {
             overlay.destroy();
+            this._livePreviewActors = [];
             this._livePreviewRects = [];
             this._publishPreviewPointerInside(true);
         }
@@ -1699,6 +1714,15 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _destroyLivePreviews(publishPointerOutside = true) {
+        for (const preview of this._livePreviewActors) {
+            try {
+                Main.layoutManager.untrackChrome(preview);
+            } catch (_error) {
+                // Shell teardown may already have dropped tracked actors.
+            }
+        }
+        this._livePreviewActors = [];
+
         if (this._livePreviewOverlay) {
             this._livePreviewOverlay.remove_all_transitions();
             this._livePreviewOverlay.destroy();

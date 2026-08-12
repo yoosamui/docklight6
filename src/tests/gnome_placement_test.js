@@ -86,6 +86,14 @@ assert.match(
     extensionSource,
     /const previewActors = \[\][\s\S]*?previewActors\.push\(preview\)[\s\S]*?for \(const preview of previewActors\)[\s\S]*?preview\.ease/,
     "only thumbnail-sized actors may be animated when live previews appear");
+assert.match(
+    extensionSource,
+    /Main\.uiGroup\.add_child\(overlay\)[\s\S]*?for \(const preview of previewActors\)[\s\S]*?Main\.layoutManager\.trackChrome\(preview, \{[\s\S]*?affectsInputRegion: true/,
+    "each live thumbnail must be included in Shell's stage input region");
+assert.match(
+    extensionSource,
+    /_destroyLivePreviews\([^)]*\) \{[\s\S]*?for \(const preview of this\._livePreviewActors\)[\s\S]*?Main\.layoutManager\.untrackChrome\(preview\)/,
+    "destroying live previews must remove their Shell input-region tracking");
 assert.doesNotMatch(
     extensionSource,
     /overlay\.ease\(/,
