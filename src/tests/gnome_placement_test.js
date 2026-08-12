@@ -40,6 +40,10 @@ const autohideControllerSource = fs.readFileSync(
 const dockWindowControllerSource = fs.readFileSync(
     dockWindowControllerPath, "utf8");
 assert.match(
+    dockWindowControllerSource,
+    /set_dock_placement_geometry[\s\S]*?calculated_dock_screen_position|calculated_dock_screen_position[\s\S]*?set_dock_placement_geometry/,
+    "XWayland monitor changes must publish calculated target geometry, not a stale mapped origin");
+assert.match(
     autohideControllerSource,
     /hide_now\([\s\S]*?\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(true\);\s*return;/,
     "GNOME autohide must keep the placed dock mapped instead of remapping at the centre");

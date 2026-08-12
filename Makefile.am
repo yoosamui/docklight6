@@ -1,8 +1,14 @@
 SUBDIRS = src po
 
 EXTRA_DIST = \
+    run_xwayland_prototype.sh \
     setup_backend.sh \
+    setup_presentation.sh \
+    validate_presentation.sh \
     tests/setup_backend_test.sh \
+    tests/setup_presentation_test.sh \
+    tests/validate_presentation_test.sh \
+    tests/xwayland_prototype_test.sh \
     gnome/README.md \
     gnome/install-window-integration.sh \
     gnome/docklight-window-integration@docklight6/metadata.json \
@@ -27,7 +33,11 @@ EXTRA_DIST = \
     plasma/geometry-bridge/package/contents/ui/bridge/qmldir \
     protocols/zkde-screencast-unstable-v1.xml
 
-TESTS = tests/setup_backend_test.sh
+TESTS = \
+    tests/setup_backend_test.sh \
+    tests/setup_presentation_test.sh \
+    tests/validate_presentation_test.sh \
+    tests/xwayland_prototype_test.sh
 
 dist_pkgdata_DATA = \
     plasma/geometry-bridge/ensure-geometry-bridge.js

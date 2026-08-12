@@ -525,6 +525,11 @@ void DockWindowController::set_monitor(
     schedule_layout_update();
 }
 
+void DockWindowController::request_reveal()
+{
+    m_autohide_controller->request_reveal();
+}
+
 void DockWindowController::set_preview_rounded_corners(
     bool enabled,
     int radius)
@@ -688,9 +693,12 @@ void DockWindowController::update_dock_layout()
                       output_geometry.height -
                           placement.margin_top -
                           placement.margin_bottom);
+        // X11 moves are asynchronous. Reading the mapped root origin here
+        // can return the previous monitor and make the GNOME integration
+        // move the XWayland dock back there. Publish the synchronous layout
+        // target; mapped coordinates remain authoritative for overlays.
         const auto position =
-            dock_screen_position(
-                false,
+            calculated_dock_screen_position(
                 requested_width,
                 requested_height);
 
@@ -1057,6 +1065,17 @@ DockWindowController::dock_screen_position(
         }
     }
 
+    return calculated_dock_screen_position(
+        width,
+        height);
+}
+
+ScreenPosition
+DockWindowController::
+    calculated_dock_screen_position(
+        int width,
+        int height) const
+{
     ScreenPosition position;
 
     if (m_placement.anchor_left)

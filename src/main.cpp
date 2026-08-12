@@ -42,12 +42,14 @@
 #include "dock/dock_window.h"
 #include "docklight_log.h"
 #include "integrations/window_system_controller.h"
+#include "presentation/presentation_selector.h"
 #include "config.h"
 
 #include <gtkmm.h>
 
 #include <clocale>
 #include <libintl.h>
+#include <optional>
 #include <string>
 
 namespace
@@ -105,6 +107,36 @@ int main(int argc, char *argv[])
             argc,
             argv);
 
+    std::optional<PresentationMode>
+        requested_presentation;
+    std::string presentation_error;
+
+    if (!take_presentation_option(
+            argc,
+            argv,
+            requested_presentation,
+            presentation_error))
+    {
+        g_printerr(
+            "docklight6: %s\n",
+            presentation_error.c_str());
+        return 2;
+    }
+
+    const auto presentation =
+        select_presentation(
+            requested_presentation);
+
+    if (!prepare_presentation(
+            presentation,
+            presentation_error))
+    {
+        g_printerr(
+            "docklight6: %s\n",
+            presentation_error.c_str());
+        return 2;
+    }
+
     auto app = Gtk::Application::create(
         argc,
         argv,
@@ -141,6 +173,21 @@ int main(int argc, char *argv[])
     DocklightLog::startup(
         "%s starting",
         PACKAGE_STRING);
+
+    const std::string presentation_source_suffix =
+        presentation.source == "default"
+            ? ""
+            : " (" + presentation.source + ")";
+
+    DocklightLog::startup(
+        "Presentation backend: %s%s",
+        actual_presentation_backend_name(),
+        presentation_source_suffix.c_str());
+
+    DocklightLog::startup(
+        "Presentation mode: %s",
+        presentation_mode_name(
+            presentation.mode));
 
     DocklightLog::startup(
         "Dock configuration loaded: %s",
@@ -184,6 +231,15 @@ int main(int argc, char *argv[])
         configuration.current(),
         monitors.selected_monitor(),
         window_system.registry());
+
+    // A second invocation is delivered to this primary process as an
+    // application activation. Treat it as an explicit request to reveal the
+    // existing dock instead of silently exiting while the dock is hidden.
+    app->signal_activate().connect(
+        [&window]()
+        {
+            window.request_reveal();
+        });
 
     configuration.signal_changed().connect(
         [&window, &monitors](

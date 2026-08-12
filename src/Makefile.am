@@ -7,6 +7,7 @@ check_PROGRAMS = \
     dock_icon_renderer_test \
     gnome_wayland_window_backend_test \
     launcher_manager_test \
+    presentation_selector_test \
     window_registry_test \
     kwin_window_backend_test \
     kwin_protocol_codec_test \
@@ -45,6 +46,8 @@ docklight6_SOURCES = \
     main.cpp \
     docklight_log.h \
     docklight_log.cpp \
+    presentation/presentation_selector.h \
+    presentation/presentation_selector.cpp \
     windowing/managed_window.h \
     windowing/running_application.h \
     windowing/window_icon_geometry.h \
@@ -322,6 +325,17 @@ x11_backend_selection_test_SOURCES = \
     tests/x11_backend_selection_test.cpp \
     integrations/x11/x11_backend_selection.h \
     integrations/x11/x11_backend_selection.cpp
+
+presentation_selector_test_SOURCES = \
+    tests/presentation_selector_test.cpp \
+    presentation/presentation_selector.h \
+    presentation/presentation_selector.cpp
+
+presentation_selector_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+presentation_selector_test_LDADD = \
+    $(GTKMM_LIBS)
 
 EXTRA_DIST = \
     tests/gnome_placement_test.js \

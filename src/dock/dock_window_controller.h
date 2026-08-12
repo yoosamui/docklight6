@@ -68,6 +68,7 @@ public:
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor>
             &monitor);
+    void request_reveal();
     void schedule_show_tooltip(
         Gtk::Widget &item,
         const Glib::ustring &text);
@@ -113,6 +114,9 @@ private:
         bool prefer_surface_geometry,
         int requested_width = -1,
         int requested_height = -1) const;
+    ScreenPosition calculated_dock_screen_position(
+        int width,
+        int height) const;
     void schedule_icon_refresh();
     void reload_icons();
     void show_tooltip(

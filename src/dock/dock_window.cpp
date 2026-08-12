@@ -30,6 +30,7 @@
 #include "windowing/window_registry.h"
 
 #include <gtk-layer-shell.h>
+#include <gdk/gdkwayland.h>
 #include <gdk/gdkx.h>
 #include <X11/Xatom.h>
 
@@ -195,7 +196,14 @@ DockWindow::DockWindow(
     // centred position before the Shell integration can move its actor. The
     // integration publishes geometry only after placement is committed; the
     // controller restores opacity when that notification arrives.
-    if (is_gnome_wayland_session() && !m_uses_layer_shell)
+    auto display = get_display();
+    const bool ordinary_gnome_wayland_window =
+        is_gnome_wayland_session() &&
+        !m_uses_layer_shell &&
+        display &&
+        GDK_IS_WAYLAND_DISPLAY(display->gobj());
+
+    if (ordinary_gnome_wayland_window)
     {
         m_initial_gnome_placement_pending = true;
         set_opacity(0.0);
@@ -266,6 +274,11 @@ void DockWindow::set_monitor(
         &monitor)
 {
     m_controller->set_monitor(monitor);
+}
+
+void DockWindow::request_reveal()
+{
+    m_controller->request_reveal();
 }
 
 void DockWindow::schedule_show_tooltip(

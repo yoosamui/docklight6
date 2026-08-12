@@ -61,6 +61,7 @@ public:
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor>
             &monitor);
+    void request_reveal();
     void schedule_show_tooltip(DockItem &item);
     void schedule_show_tooltip(
         Gtk::Widget &item,
