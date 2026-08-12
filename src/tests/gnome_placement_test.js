@@ -92,8 +92,8 @@ assert.doesNotMatch(
     "the full-stage live-preview container must not be opacity animated");
 assert.match(
     extensionSource,
-    /preview\.connect\('button-release-event'[\s\S]*?event\.get_button\(\) !== 1[\s\S]*?ActivatePreviewWindow[\s\S]*?Clutter\.EVENT_STOP/,
-    "a primary click on a compositor preview must activate its GTK preview card action through the integration service");
+    /preview\.connect\('button-press-event'[\s\S]*?primaryButtonPressed = true[\s\S]*?Clutter\.EVENT_STOP[\s\S]*?preview\.connect\('button-release-event'[\s\S]*?!primaryButtonPressed[\s\S]*?ActivatePreviewWindow[\s\S]*?Clutter\.EVENT_STOP/,
+    "a compositor preview must consume a complete primary click before activating its GTK preview card action through the integration service");
 assert.doesNotMatch(
     extensionSource,
     /hostActor\.add_child\(overlay\)/,

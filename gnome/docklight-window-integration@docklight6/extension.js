@@ -1623,10 +1623,23 @@ export default class DocklightWindowIntegration extends Extension {
             preview.layout_manager = layout;
             overlay.add_child(preview);
             layout.add_window(window);
-            preview.connect('button-release-event', (_actor, event) => {
+            let primaryButtonPressed = false;
+            preview.connect('button-press-event', (_actor, event) => {
                 if (event.get_button() !== 1)
                     return Clutter.EVENT_PROPAGATE;
 
+                // Consume the complete click in Shell. Otherwise the press
+                // can propagate to the GTK preview surface while the release
+                // lands on this compositor clone, so neither side observes a
+                // usable click.
+                primaryButtonPressed = true;
+                return Clutter.EVENT_STOP;
+            });
+            preview.connect('button-release-event', (_actor, event) => {
+                if (event.get_button() !== 1 || !primaryButtonPressed)
+                    return Clutter.EVENT_PROPAGATE;
+
+                primaryButtonPressed = false;
                 this._call(
                     'ActivatePreviewWindow',
                     '(s)',
