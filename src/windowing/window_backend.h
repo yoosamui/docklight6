@@ -147,6 +147,8 @@ public:
     signal_dock_pointer_inside_changed();
     sigc::signal<void, bool> &
     signal_preview_pointer_inside_changed();
+    sigc::signal<void, bool> &
+    signal_preview_input_forwarding_changed();
     sigc::signal<void, const WindowId &> &
     signal_preview_window_activated();
     sigc::signal<void, bool> &
@@ -210,6 +212,8 @@ private:
         m_signal_dock_pointer_inside_changed;
     sigc::signal<void, bool>
         m_signal_preview_pointer_inside_changed;
+    sigc::signal<void, bool>
+        m_signal_preview_input_forwarding_changed;
     sigc::signal<void, const WindowId &>
         m_signal_preview_window_activated;
     sigc::signal<void, bool>

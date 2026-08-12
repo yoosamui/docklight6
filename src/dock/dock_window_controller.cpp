@@ -145,6 +145,8 @@ DockWindowController::~DockWindowController()
     m_dock_reveal_requested.disconnect();
     m_dock_pointer_inside_changed.disconnect();
     m_preview_pointer_inside_changed.disconnect();
+    m_preview_input_forwarding_changed.disconnect();
+    m_preview_input_forwarding_reset.disconnect();
     m_preview_window_activated.disconnect();
     m_dock_animation_completed.disconnect();
     m_gnome_placement_fallback.disconnect();
@@ -328,6 +330,36 @@ void DockWindowController::initialize()
                     {
                         shell_preview_pointer_changed(
                             inside);
+                    });
+
+        m_preview_input_forwarding_changed =
+            m_window
+                .m_window_registry
+                ->signal_preview_input_forwarding_changed()
+                .connect(
+                    [this](bool forwarding)
+                    {
+                        m_preview_input_forwarding_reset.disconnect();
+                        m_preview_input_forwarding = forwarding;
+                        m_preview_window->set_input_forwarding(
+                            forwarding);
+                        if (forwarding)
+                        {
+                            cancel_hide_timer();
+                            // Never leave Docklight's real pointer handling
+                            // frozen if Shell is disabled or restarted in the
+                            // middle of its short virtual-click sequence.
+                            m_preview_input_forwarding_reset =
+                                Glib::signal_timeout().connect(
+                                    [this]()
+                                    {
+                                        m_preview_input_forwarding = false;
+                                        m_preview_window
+                                            ->set_input_forwarding(false);
+                                        return false;
+                                    },
+                                    500);
+                        }
                     });
 
         m_preview_window_activated =

@@ -84,6 +84,10 @@ constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "      <arg type='b' direction='in' name='inside'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
+    "    <method name='PublishPreviewInputForwarding'>"
+    "      <arg type='b' direction='in' name='forwarding'/>"
+    "      <arg type='b' direction='out' name='accepted'/>"
+    "    </method>"
     "    <method name='ActivatePreviewWindow'>"
     "      <arg type='s' direction='in' name='internal_id'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
@@ -1551,6 +1555,21 @@ void KWinIntegrationService::
         g_dbus_method_invocation_return_value(
             invocation,
             g_variant_new("(b)", accepted));
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "PublishPreviewInputForwarding") == 0)
+    {
+        gboolean forwarding = false;
+        g_variant_get(parameters, "(b)", &forwarding);
+        m_backend
+            .signal_preview_input_forwarding_changed()
+            .emit(forwarding);
+        g_dbus_method_invocation_return_value(
+            invocation,
+            g_variant_new("(b)", true));
         return;
     }
 

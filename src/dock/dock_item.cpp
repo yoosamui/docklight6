@@ -873,6 +873,9 @@ bool DockItem::toggle_window(
 bool DockItem::on_enter_notify_event(
     GdkEventCrossing *event)
 {
+    if (m_dock.preview_input_forwarding())
+        return false;
+
     if ((event &&
          event->detail ==
              GDK_NOTIFY_INFERIOR) ||
@@ -896,6 +899,9 @@ bool DockItem::on_enter_notify_event(
 bool DockItem::on_leave_notify_event(
     GdkEventCrossing *event)
 {
+    if (m_dock.preview_input_forwarding())
+        return false;
+
     if ((event &&
          event->detail ==
              GDK_NOTIFY_INFERIOR) ||

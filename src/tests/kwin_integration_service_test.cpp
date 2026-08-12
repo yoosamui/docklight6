@@ -351,6 +351,23 @@ void verifies_dbus_state_transport()
     assert(preview_pointer_inside);
     preview_pointer_connection.disconnect();
 
+    bool preview_input_forwarding = false;
+    sigc::connection preview_input_connection =
+        backend
+            .signal_preview_input_forwarding_changed()
+            .connect(
+                [&preview_input_forwarding](bool forwarding)
+                {
+                    preview_input_forwarding = forwarding;
+                });
+    assert(accepted(
+        call_method(
+            client,
+            "PublishPreviewInputForwarding",
+            g_variant_new("(b)", true))));
+    assert(preview_input_forwarding);
+    preview_input_connection.disconnect();
+
     WindowId activated_preview;
     sigc::connection preview_activation_connection =
         backend

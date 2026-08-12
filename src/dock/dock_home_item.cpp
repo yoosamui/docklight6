@@ -168,6 +168,9 @@ void DockHomeItem::
 bool DockHomeItem::on_enter_notify_event(
     GdkEventCrossing *event)
 {
+    if (m_dock.preview_input_forwarding())
+        return false;
+
     if (event &&
         event->detail ==
             GDK_NOTIFY_INFERIOR)
@@ -185,6 +188,9 @@ bool DockHomeItem::on_enter_notify_event(
 bool DockHomeItem::on_leave_notify_event(
     GdkEventCrossing *event)
 {
+    if (m_dock.preview_input_forwarding())
+        return false;
+
     if (event &&
         event->detail ==
             GDK_NOTIFY_INFERIOR)

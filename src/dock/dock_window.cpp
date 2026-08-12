@@ -690,6 +690,11 @@ DockLocation DockWindow::location() const
     return m_controller->location();
 }
 
+bool DockWindow::preview_input_forwarding() const
+{
+    return m_controller->preview_input_forwarding();
+}
+
 DockWindowGeometry
 DockWindow::content_geometry() const
 {

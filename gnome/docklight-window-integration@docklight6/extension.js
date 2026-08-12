@@ -169,6 +169,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._previewPointerRestorePosition = null;
         this._previewPointerLastClick = null;
         this._previewInputSuppressedActors = [];
+        this._previewInputUntrackedActors = [];
         this._previewSelectorFill =
             'rgba(105, 170, 255, 0.32)';
         this._previewSelectorOutline =
@@ -1928,63 +1929,85 @@ export default class DocklightWindowIntegration extends Extension {
         // Wayland client observes focus/motion before its button event.
         const restoreX = this._pointerPosition?.x ?? sourceX;
         const restoreY = this._pointerPosition?.y ?? sourceY;
-        this._cancelPreviewPointerInput();
-        // The compositor clone and its GTK backing window can overlap the
-        // real PiP surface (especially for a bottom dock and Firefox's
-        // bottom-right PiP placement). Temporarily remove both preview layers
-        // from picking; otherwise the virtual pointer click is delivered back
-        // to Docklight instead of to the source window beneath it.
-        this._suppressPreviewInput();
-        this._schedulePreviewPointerStep(16, () => {
-            if (!this._previewPointerDevice) {
-                const seat = Clutter.get_default_backend().get_default_seat();
-                this._previewPointerDevice = seat.create_virtual_device(
-                    Clutter.InputDeviceType.POINTER_DEVICE);
-            }
-            this._previewPointerRestorePosition = {
-                x: restoreX,
-                y: restoreY,
-                deadline: GLib.get_monotonic_time() + 250000,
-                restoring: false,
-            };
-            this._previewPointerDevice.notify_absolute_motion(
-                GLib.get_monotonic_time(), sourceX, sourceY);
+        this._cancelPreviewPointerInput(false, false);
+        // Tell GTK to preserve its current hover, preview, and autohide state
+        // before moving the compositor's core pointer. The movement generates
+        // ordinary GDK crossing events even though it exists only to forward
+        // one PiP click.
+        this._setPreviewInputForwarding(true, accepted => {
+            if (!this._enabled || !accepted)
+                return;
+
+            // The compositor clone and its GTK backing window can overlap the
+            // real PiP surface (especially for a bottom dock and Firefox's
+            // bottom-right PiP placement). Temporarily remove those surfaces
+            // from picking; otherwise the virtual click returns to Docklight.
+            this._suppressPreviewInput();
             this._schedulePreviewPointerStep(16, () => {
-                this._previewPointerDevice.notify_button(
-                    GLib.get_monotonic_time(),
-                    Clutter.BUTTON_PRIMARY,
-                    Clutter.ButtonState.PRESSED);
-                this._previewPointerPressed = true;
-                this._schedulePreviewPointerStep(24, () => {
+                if (!this._previewPointerDevice) {
+                    const seat = Clutter.get_default_backend().get_default_seat();
+                    this._previewPointerDevice = seat.create_virtual_device(
+                        Clutter.InputDeviceType.POINTER_DEVICE);
+                }
+                this._previewPointerRestorePosition = {
+                    x: restoreX,
+                    y: restoreY,
+                    deadline: GLib.get_monotonic_time() + 250000,
+                    restoring: false,
+                };
+                this._previewPointerDevice.notify_absolute_motion(
+                    GLib.get_monotonic_time(), sourceX, sourceY);
+                this._schedulePreviewPointerStep(16, () => {
                     this._previewPointerDevice.notify_button(
                         GLib.get_monotonic_time(),
                         Clutter.BUTTON_PRIMARY,
-                        Clutter.ButtonState.RELEASED);
-                    this._previewPointerPressed = false;
-                    // Firefox may apply its PiP double-click maximize after
-                    // the release has returned to Shell. Undo only a
-                    // maximize caused during this forwarded preview click;
-                    // otherwise the resized source invalidates the remaining
-                    // coordinate/restore sequence and destabilizes input.
-                    this._schedulePreviewPointerStep(100, () => {
-                        const maximized = window.get_maximized?.();
-                        if (maximized !== undefined &&
-                            maximized !== Meta.MaximizeFlags.NONE) {
-                            window.unmaximize(Meta.MaximizeFlags.BOTH);
-                        }
-                    });
-                    this._schedulePreviewPointerStep(16, () => {
-                        if (this._previewPointerRestorePosition)
-                            this._previewPointerRestorePosition.restoring = true;
-                        this._previewPointerDevice.notify_absolute_motion(
-                            GLib.get_monotonic_time(), restoreX, restoreY);
+                        Clutter.ButtonState.PRESSED);
+                    this._previewPointerPressed = true;
+                    this._schedulePreviewPointerStep(24, () => {
+                        this._previewPointerDevice.notify_button(
+                            GLib.get_monotonic_time(),
+                            Clutter.BUTTON_PRIMARY,
+                            Clutter.ButtonState.RELEASED);
+                        this._previewPointerPressed = false;
+                        // Firefox may apply its PiP double-click maximize after
+                        // the release has returned to Shell. Undo only a
+                        // maximize caused during this forwarded preview click;
+                        // otherwise the resized source invalidates the remaining
+                        // coordinate/restore sequence and destabilizes input.
+                        this._schedulePreviewPointerStep(100, () => {
+                            const maximized = window.get_maximized?.();
+                            if (maximized !== undefined &&
+                                maximized !== Meta.MaximizeFlags.NONE) {
+                                window.unmaximize(Meta.MaximizeFlags.BOTH);
+                            }
+                        });
                         this._schedulePreviewPointerStep(16, () => {
-                            this._restorePreviewInput();
+                            if (this._previewPointerRestorePosition)
+                                this._previewPointerRestorePosition.restoring = true;
+                            this._previewPointerDevice.notify_absolute_motion(
+                                GLib.get_monotonic_time(), restoreX, restoreY);
+                            this._schedulePreviewPointerStep(16, () => {
+                                this._restorePreviewInput();
+                                this._setPreviewInputForwarding(false);
+                            });
                         });
                     });
                 });
             });
         });
+    }
+
+    _setPreviewInputForwarding(forwarding, callback = () => {}) {
+        if (!this._proxy) {
+            callback(false);
+            return;
+        }
+
+        this._call(
+            'PublishPreviewInputForwarding',
+            '(b)',
+            [forwarding],
+            (reply, error) => callback(Boolean(reply?.[0]), error));
     }
 
     _schedulePreviewPointerStep(delay, callback) {
@@ -2009,36 +2032,75 @@ export default class DocklightWindowIntegration extends Extension {
     _suppressPreviewInput() {
         this._restorePreviewInput();
 
+        // Tracked Shell chrome contributes to the stage input region even
+        // when its actor is non-reactive. Remove the thumbnail selectors
+        // from that region for the short virtual-click sequence, but leave
+        // them painted so forwarding a PiP click cannot flash the preview.
+        this._previewInputUntrackedActors = [
+            ...this._livePreviewActors,
+        ];
+        for (const actor of this._previewInputUntrackedActors) {
+            try {
+                Main.layoutManager.untrackChrome(actor);
+            } catch (_error) {
+                // A replacement preview can already have untracked it.
+            }
+        }
+
         const actors = [];
-        if (this._livePreviewOverlay)
-            actors.push(this._livePreviewOverlay);
+        const appendActor = actor => {
+            if (actor && !actor.is_destroyed?.() && !actors.includes(actor))
+                actors.push(actor);
+        };
+
+        appendActor(this._livePreviewOverlay);
+        appendActor(this._dockWindow?.get_compositor_private?.());
 
         for (const window of this._auxiliaryWindowSignals.keys()) {
             if (this._auxiliaryPosition(window)?.type !== 'preview')
                 continue;
-            const actor = window.get_compositor_private?.();
-            if (actor && !actor.is_destroyed?.())
-                actors.push(actor);
+            appendActor(window.get_compositor_private?.());
         }
 
-        this._previewInputSuppressedActors = actors;
-        for (const actor of actors)
-            actor.hide();
+        this._previewInputSuppressedActors = actors.map(actor => ({
+            actor,
+            reactive: actor.get_reactive?.() ?? actor.reactive,
+        }));
+        for (const {actor} of this._previewInputSuppressedActors)
+            actor.set_reactive(false);
     }
 
     _restorePreviewInput() {
-        for (const actor of this._previewInputSuppressedActors) {
+        for (const {actor, reactive} of this._previewInputSuppressedActors) {
             try {
                 if (!actor.is_destroyed?.())
-                    actor.show();
+                    actor.set_reactive(reactive);
             } catch (_error) {
                 // A preview can be closed while input is being forwarded.
             }
         }
         this._previewInputSuppressedActors = [];
+
+        for (const actor of this._previewInputUntrackedActors) {
+            try {
+                if (!actor.is_destroyed?.() &&
+                    this._livePreviewActors.includes(actor)) {
+                    Main.layoutManager.trackChrome(actor, {
+                        affectsStruts: false,
+                        affectsInputRegion: true,
+                        trackFullscreen: true,
+                    });
+                }
+            } catch (_error) {
+                // A preview can be replaced during the injected click.
+            }
+        }
+        this._previewInputUntrackedActors = [];
     }
 
-    _cancelPreviewPointerInput(disposeDevice = false) {
+    _cancelPreviewPointerInput(
+        disposeDevice = false,
+        finishForwarding = true) {
         for (const source of this._previewPointerSources)
             GLib.source_remove(source);
         this._previewPointerSources.clear();
@@ -2056,6 +2118,8 @@ export default class DocklightWindowIntegration extends Extension {
         }
         this._previewPointerPressed = false;
         this._restorePreviewInput();
+        if (finishForwarding)
+            this._setPreviewInputForwarding(false);
 
         const restore = this._previewPointerRestorePosition;
         if (device && restore) {

@@ -255,6 +255,16 @@ void WindowRegistry::start()
 
     m_connections.push_back(
         m_backend
+            .signal_preview_input_forwarding_changed()
+            .connect(
+                [this](bool forwarding)
+                {
+                    m_signal_preview_input_forwarding_changed.emit(
+                        forwarding);
+                }));
+
+    m_connections.push_back(
+        m_backend
             .signal_preview_window_activated()
             .connect(
                 [this](const WindowId &window_id)
@@ -293,6 +303,12 @@ sigc::signal<void, bool> &
 WindowRegistry::signal_preview_pointer_inside_changed()
 {
     return m_signal_preview_pointer_inside_changed;
+}
+
+sigc::signal<void, bool> &
+WindowRegistry::signal_preview_input_forwarding_changed()
+{
+    return m_signal_preview_input_forwarding_changed;
 }
 
 sigc::signal<void, const WindowId &> &

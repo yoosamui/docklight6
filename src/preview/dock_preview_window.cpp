@@ -2050,6 +2050,12 @@ void DockPreviewWindow::set_dynamic_refresh(
     }
 }
 
+void DockPreviewWindow::set_input_forwarding(
+    bool forwarding)
+{
+    m_input_forwarding = forwarding;
+}
+
 bool DockPreviewWindow::visible_for(
     const WindowId &window_id) const
 {
@@ -2274,6 +2280,9 @@ void DockPreviewWindow::rebuild(
         card->signal_enter_notify_event().connect(
             [this, card, image](GdkEventCrossing *)
             {
+                if (m_input_forwarding)
+                    return false;
+
                 if (m_selected_card != card)
                 {
                     auto *previous = m_selected_card;
@@ -2305,6 +2314,9 @@ void DockPreviewWindow::rebuild(
         card->signal_motion_notify_event().connect(
             [this, card, image](GdkEventMotion *)
             {
+                if (m_input_forwarding)
+                    return false;
+
                 if (m_selected_card != card)
                 {
                     auto *previous = m_selected_card;
@@ -2336,6 +2348,9 @@ void DockPreviewWindow::rebuild(
         card->signal_leave_notify_event().connect(
             [this, card, image](GdkEventCrossing *event)
             {
+                if (m_input_forwarding)
+                    return false;
+
                 if (!event ||
                     event->detail !=
                         GDK_NOTIFY_INFERIOR)
@@ -3139,6 +3154,9 @@ void DockPreviewWindow::apply_position(
 bool DockPreviewWindow::on_enter_notify_event(
     GdkEventCrossing *event)
 {
+    if (m_input_forwarding)
+        return false;
+
     if (!event ||
         event->detail != GDK_NOTIFY_INFERIOR)
     {
@@ -3151,6 +3169,9 @@ bool DockPreviewWindow::on_enter_notify_event(
 bool DockPreviewWindow::on_leave_notify_event(
     GdkEventCrossing *event)
 {
+    if (m_input_forwarding)
+        return false;
+
     if (!event ||
         event->detail != GDK_NOTIFY_INFERIOR)
     {

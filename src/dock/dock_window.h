@@ -82,6 +82,7 @@ public:
         int y);
     void end_item_drag(DockItem &item);
     DockLocation location() const;
+    bool preview_input_forwarding() const;
 
 protected:
     bool on_drag_motion(

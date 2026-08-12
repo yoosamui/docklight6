@@ -140,15 +140,27 @@ assert.match(
     "PiP mouse motion, press, release, and restoration must run after the physical grab in separate main-loop turns");
 assert.match(
     extensionSource,
-    /_suppressPreviewInput\(\) \{[\s\S]*?_livePreviewOverlay[\s\S]*?_auxiliaryPosition\(window\)\?\.type !== 'preview'[\s\S]*?actor\.hide\(\)[\s\S]*?_restorePreviewInput\(\) \{[\s\S]*?actor\.show\(\)/,
-    "PiP forwarding must temporarily remove overlapping Shell and GTK preview layers from input picking");
+    /_suppressPreviewInput\(\) \{[\s\S]*?untrackChrome\(actor\)[\s\S]*?_livePreviewOverlay[\s\S]*?_dockWindow\?\.get_compositor_private[\s\S]*?_auxiliaryPosition\(window\)\?\.type !== 'preview'[\s\S]*?actor\.set_reactive\(false\)[\s\S]*?_restorePreviewInput\(\) \{[\s\S]*?actor\.set_reactive\(reactive\)[\s\S]*?trackChrome\(actor/,
+    "PiP forwarding must pass through overlapping preview and dock input layers without hiding their painted actors");
+assert.doesNotMatch(
+    extensionSource,
+    /_suppressPreviewInput\(\) \{[\s\S]*?actor\.hide\(\)/,
+    "PiP input forwarding must not flicker Docklight surfaces");
 assert.match(
     extensionSource,
-    /_previewPointerRestorePosition[\s\S]*?get_pointer\(\)[\s\S]*?const restore = this\._previewPointerRestorePosition[\s\S]*?restored \|\| expired[\s\S]*?_forwardPreviewPrimaryClickAt[\s\S]*?_cancelPreviewPointerInput\(\)[\s\S]*?this\._previewPointerRestorePosition = \{[\s\S]*?_cancelPreviewPointerInput\(disposeDevice = false\) \{[\s\S]*?notify_absolute_motion/,
+    /_setPreviewInputForwarding\(true,[\s\S]*?_suppressPreviewInput\(\)[\s\S]*?notify_absolute_motion[\s\S]*?notify_absolute_motion[\s\S]*?_setPreviewInputForwarding\(false\)/,
+    "Docklight must freeze GTK hover state around the synthetic PiP pointer movement");
+assert.match(
+    previewWindowSource,
+    /set_input_forwarding[\s\S]*?m_input_forwarding[\s\S]*?signal_enter_notify_event[\s\S]*?if \(m_input_forwarding\)[\s\S]*?signal_leave_notify_event[\s\S]*?if \(m_input_forwarding\)/,
+    "the GTK preview must ignore synthetic pointer crossings during PiP forwarding");
+assert.match(
+    extensionSource,
+    /_previewPointerRestorePosition[\s\S]*?get_pointer\(\)[\s\S]*?const restore = this\._previewPointerRestorePosition[\s\S]*?restored \|\| expired[\s\S]*?_forwardPreviewPrimaryClickAt[\s\S]*?_cancelPreviewPointerInput\([^)]*\)[\s\S]*?this\._previewPointerRestorePosition = \{[\s\S]*?_cancelPreviewPointerInput\([\s\S]*?notify_absolute_motion/,
     "temporary PiP pointer injection must not leak into hover state and cancellation must restore the pointer");
 assert.match(
     extensionSource,
-    /_cancelPreviewPointerInput\(true\)[\s\S]*?_schedulePreviewPointerStep\(delay, callback\)[\s\S]*?catch \(error\)[\s\S]*?_cancelPreviewPointerInput\(true\)[\s\S]*?_cancelPreviewPointerInput\(disposeDevice = false\)[\s\S]*?if \(disposeDevice\)[\s\S]*?run_dispose/,
+    /_cancelPreviewPointerInput\(true\)[\s\S]*?_schedulePreviewPointerStep\(delay, callback\)[\s\S]*?catch \(error\)[\s\S]*?_cancelPreviewPointerInput\(true\)[\s\S]*?_cancelPreviewPointerInput\([\s\S]*?if \(disposeDevice\)[\s\S]*?run_dispose/,
     "the virtual PiP pointer must remain alive for queued delivery and be disposed on teardown or failure");
 assert.doesNotMatch(
     extensionSource,

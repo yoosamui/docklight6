@@ -198,6 +198,12 @@ WindowBackend::signal_preview_pointer_inside_changed()
     return m_signal_preview_pointer_inside_changed;
 }
 
+sigc::signal<void, bool> &
+WindowBackend::signal_preview_input_forwarding_changed()
+{
+    return m_signal_preview_input_forwarding_changed;
+}
+
 sigc::signal<void, const WindowId &> &
 WindowBackend::signal_preview_window_activated()
 {

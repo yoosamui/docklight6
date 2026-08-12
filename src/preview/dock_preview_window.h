@@ -96,6 +96,7 @@ public:
     void set_dynamic_refresh(
         bool enabled,
         const std::string &media_title = {});
+    void set_input_forwarding(bool forwarding);
 
     bool visible_for(const WindowId &window_id) const;
 
@@ -242,6 +243,7 @@ private:
     unsigned int m_generation = 0;
     int m_card_user_height = CARD_USER_HEIGHT;
     Gdk::RGBA m_preview_color;
+    bool m_input_forwarding = false;
     gint64 m_opacity_animation_start_us = 0;
     double m_opacity_animation_start = 1.0;
     double m_opacity_animation_target = 1.0;

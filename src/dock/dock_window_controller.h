@@ -100,6 +100,11 @@ public:
         return m_layout_request.location;
     }
 
+    bool preview_input_forwarding() const
+    {
+        return m_preview_input_forwarding;
+    }
+
 private:
     void update_dock_layout();
     void update_effective_icon_size(
@@ -199,6 +204,10 @@ private:
     sigc::connection
         m_preview_pointer_inside_changed;
     sigc::connection
+        m_preview_input_forwarding_changed;
+    sigc::connection
+        m_preview_input_forwarding_reset;
+    sigc::connection
         m_preview_window_activated;
     sigc::connection
         m_dock_animation_completed;
@@ -216,6 +225,7 @@ private:
     bool m_dock_item_pointer_inside = false;
     bool m_preview_pointer_inside = false;
     bool m_shell_preview_pointer_inside = false;
+    bool m_preview_input_forwarding = false;
 
     bool m_has_applied_layout = false;
 };
