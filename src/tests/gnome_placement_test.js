@@ -80,12 +80,16 @@ assert.match(
     "live preview hover must be reconciled from the compositor pointer instead of relying only on crossing events");
 assert.match(
     extensionSource,
-    /const selector = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?overlay\.add_child\(selector\)[\s\S]*?selector,/,
-    "live compositor previews must paint their selector from authoritative pointer motion without intercepting clicks");
+    /const selector = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?const thumbnailBacking = new St\.Widget\(\{[\s\S]*?rgb\(28, 28, 32\)[\s\S]*?const selectionOutline = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?selector\.add_child\(thumbnailBacking\)[\s\S]*?selector\.add_child\(preview\)[\s\S]*?selector\.add_child\(selectionOutline\)[\s\S]*?set_child_above_sibling\(preview, thumbnailBacking\)[\s\S]*?set_child_above_sibling\(selectionOutline, preview\)[\s\S]*?overlay\.add_child\(selector\)[\s\S]*?selector,[\s\S]*?selectionOutline,/,
+    "live compositor previews must paint an opaque thumbnail below the clone and a non-reactive selection outline above it");
 assert.match(
     extensionSource,
-    /_updateLivePreviewSelectors\(\)[\s\S]*?selected === rect\.selected[\s\S]*?rect\.selector\.opacity = selected \? 255 : 0[\s\S]*?_publishPreviewPointerInside\([^)]*\) \{[\s\S]*?_updateLivePreviewSelectors\(\)/,
+    /_updateLivePreviewSelectors\(\)[\s\S]*?selected === rect\.selected[\s\S]*?rect\.selector\.set_style\(selected[\s\S]*?rect\.selectionOutline\.set_style\(selected[\s\S]*?_publishPreviewPointerInside\([^)]*\) \{[\s\S]*?_updateLivePreviewSelectors\(\)/,
     "live preview selectors must follow the compositor pointer even while it remains inside the preview surface");
+assert.doesNotMatch(
+    extensionSource,
+    /overlay\.add_child\(preview\)/,
+    "live thumbnails must not be selector siblings that Mutter can stack underneath the selector");
 assert.match(
     extensionSource,
     /_destroyLivePreviews\(false\)[\s\S]*?const previewRects = \[\][\s\S]*?this\._livePreviewRects = previewRects[\s\S]*?_publishPreviewPointerInside\(true\)/,

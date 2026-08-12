@@ -1017,7 +1017,16 @@ export default class DocklightWindowIntegration extends Extension {
                 continue;
 
             rect.selected = selected;
-            rect.selector.opacity = selected ? 255 : 0;
+            rect.selector.set_style(selected
+                ? 'background-color: rgba(105, 170, 255, 0.32); ' +
+                    'border-radius: 6px;'
+                : 'background-color: transparent; ' +
+                    'border-radius: 6px;');
+            rect.selectionOutline.set_style(selected
+                ? 'border: 2px solid rgba(105, 170, 255, 0.95); ' +
+                    'border-radius: 6px;'
+                : 'border: 2px solid transparent; ' +
+                    'border-radius: 6px;');
         }
     }
 
@@ -1627,13 +1636,15 @@ export default class DocklightWindowIntegration extends Extension {
                 height / frame.height);
             const previewWidth = Math.max(1, Math.round(frame.width * scale));
             const previewHeight = Math.max(1, Math.round(frame.height * scale));
+            const previewOffsetX = Math.floor((width - previewWidth) / 2);
+            const previewOffsetY = Math.floor((height - previewHeight) / 2);
             const layout = new Shell.WindowPreviewLayout();
             const preview = new Clutter.Actor({
                 reactive: true,
                 clip_to_allocation: true,
                 opacity: 0,
-                x: x + Math.floor((width - previewWidth) / 2),
-                y: y + Math.floor((height - previewHeight) / 2),
+                x: previewOffsetX,
+                y: previewOffsetY,
                 width: previewWidth,
                 height: previewHeight,
             });
@@ -1642,24 +1653,50 @@ export default class DocklightWindowIntegration extends Extension {
             // match GNOME Shell's own construction order instead of passing
             // it as a construct property.
             preview.layout_manager = layout;
-            overlay.add_child(preview);
-            layout.add_window(window);
             // The compositor clone owns pointer input, so the GTK card below
-            // cannot paint its normal mouse-over selection. Keep a separate,
-            // non-reactive sibling above the clone and drive it from Shell's
-            // authoritative pointer position.
+            // cannot paint its normal mouse-over selection. Make the selector
+            // the card-sized clone parent/background and drive it from
+            // Shell's authoritative pointer position. An opaque backing sits
+            // between the selector and the alpha-bearing window clone, so the
+            // selector can show in card margins but never tint image pixels.
             const selector = new St.Widget({
                 reactive: false,
-                opacity: 0,
-                x: preview.x,
-                y: preview.y,
-                width: preview.width,
-                height: preview.height,
-                style: 'background-color: rgba(105, 170, 255, 0.32); ' +
-                    'border: 1px solid rgba(105, 170, 255, 0.85); ' +
+                x,
+                y,
+                width,
+                height,
+                style: 'background-color: transparent; ' +
                     'border-radius: 6px;',
             });
+            const thumbnailBacking = new St.Widget({
+                reactive: false,
+                x: previewOffsetX,
+                y: previewOffsetY,
+                width: previewWidth,
+                height: previewHeight,
+                style: 'background-color: rgb(28, 28, 32);',
+            });
+            // Keep a border above the live clone. The selector fill must stay
+            // below the clone so alpha in a PiP surface cannot tint the video,
+            // but a fill alone is then invisible over the image and makes the
+            // old GTK hover look stuck. This non-reactive outline provides an
+            // authoritative, visibly moving selection without taking input.
+            const selectionOutline = new St.Widget({
+                reactive: false,
+                x: 0,
+                y: 0,
+                width,
+                height,
+                style: 'border: 2px solid transparent; ' +
+                    'border-radius: 6px;',
+            });
+            selector.add_child(thumbnailBacking);
+            selector.add_child(preview);
+            selector.add_child(selectionOutline);
+            selector.set_child_above_sibling(preview, thumbnailBacking);
+            selector.set_child_above_sibling(selectionOutline, preview);
             overlay.add_child(selector);
+            layout.add_window(window);
             let primaryButtonPressed = false;
             preview.connect('button-press-event', (_actor, event) => {
                 if (event.get_button() !== 1)
@@ -1698,11 +1735,12 @@ export default class DocklightWindowIntegration extends Extension {
             disableDescendantInput(preview);
             previewRects.push({
                 windowId,
-                x: preview.x,
-                y: preview.y,
-                width: preview.width,
-                height: preview.height,
+                x,
+                y,
+                width,
+                height,
                 selector,
+                selectionOutline,
                 selected: false,
             });
             previewActors.push(preview);

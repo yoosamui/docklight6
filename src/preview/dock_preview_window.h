@@ -42,6 +42,8 @@
 #include <string>
 #include <vector>
 
+class DockPreviewCardCanvas;
+
 struct DockPreviewSize
 {
     int width = 0;
@@ -113,7 +115,7 @@ protected:
 private:
     struct ThumbnailTarget
     {
-        Gtk::Image *image = nullptr;
+        DockPreviewCardCanvas *image = nullptr;
         std::string fallback_icon;
         int fallback_size = 0;
         int target_width = 0;
@@ -188,6 +190,8 @@ private:
         CARD_GAP};
 
     std::vector<Gtk::EventBox *> m_cards;
+    Gtk::EventBox *m_selected_card = nullptr;
+    DockPreviewCardCanvas *m_selected_canvas = nullptr;
     std::map<WindowId, ThumbnailTarget>
         m_thumbnail_targets;
     std::map<WindowId, Glib::RefPtr<Gdk::Pixbuf>>

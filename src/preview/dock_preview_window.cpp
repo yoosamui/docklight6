@@ -452,16 +452,77 @@ namespace
             static_cast<int>(std::lround(
                 source->get_height() * scale)));
 
-        if (width == source->get_width() &&
-            height == source->get_height())
+        auto scaled = source;
+
+        if (width != source->get_width() ||
+            height != source->get_height())
         {
-            return source;
+            scaled = source->scale_simple(
+                width,
+                height,
+                Gdk::INTERP_BILINEAR);
         }
 
-        return source->scale_simple(
-            width,
-            height,
-            Gdk::INTERP_BILINEAR);
+        if (!scaled || !scaled->get_has_alpha())
+            return scaled;
+
+        // Compositor captures commonly expose an alpha channel even for an
+        // ordinary opaque window. If that alpha is passed to Gtk::Image, the
+        // selected-card background shows through and looks as though the
+        // selector was painted over the thumbnail. Flatten the displayed
+        // frame onto the preview surface colour; cached capture data remains
+        // untouched.
+        auto opaque = Gdk::Pixbuf::create(
+            Gdk::COLORSPACE_RGB,
+            false,
+            8,
+            scaled->get_width(),
+            scaled->get_height());
+        if (!opaque)
+            return scaled;
+
+        constexpr unsigned char background[] = {
+            28,
+            28,
+            32};
+        const int source_channels =
+            scaled->get_n_channels();
+        const int destination_channels =
+            opaque->get_n_channels();
+
+        for (int y = 0; y < scaled->get_height(); ++y)
+        {
+            const auto *source_row =
+                scaled->get_pixels() +
+                y * scaled->get_rowstride();
+            auto *destination_row =
+                opaque->get_pixels() +
+                y * opaque->get_rowstride();
+
+            for (int x = 0; x < scaled->get_width(); ++x)
+            {
+                const auto *source_pixel =
+                    source_row + x * source_channels;
+                auto *destination_pixel =
+                    destination_row +
+                    x * destination_channels;
+                const unsigned int alpha =
+                    source_pixel[3];
+
+                for (int channel = 0; channel < 3; ++channel)
+                {
+                    destination_pixel[channel] =
+                        static_cast<unsigned char>(
+                            (source_pixel[channel] * alpha +
+                             background[channel] *
+                                 (255U - alpha) +
+                             127U) /
+                            255U);
+                }
+            }
+        }
+
+        return opaque;
     }
 
     std::uint64_t pixbuf_signature(
@@ -688,6 +749,126 @@ namespace
 
 }
 
+class DockPreviewCardCanvas : public Gtk::DrawingArea
+{
+public:
+    DockPreviewCardCanvas(
+        int width,
+        int header_height,
+        int image_height)
+        : m_header_height(header_height),
+          m_image_height(image_height)
+    {
+        set_size_request(
+            width,
+            header_height + image_height);
+    }
+
+    void set_selected(bool selected)
+    {
+        if (m_selected == selected)
+            return;
+
+        m_selected = selected;
+        queue_draw();
+    }
+
+    void set(
+        const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
+    {
+        m_pixbuf = pixbuf;
+        queue_draw();
+    }
+
+    void set_pixel_size(int size)
+    {
+        m_fallback_size = size;
+    }
+
+    void set_from_icon_name(
+        const std::string &name,
+        Gtk::IconSize)
+    {
+        try
+        {
+            m_pixbuf = Gtk::IconTheme::get_default()
+                           ->load_icon(
+                               name,
+                               std::max(1, m_fallback_size),
+                               Gtk::ICON_LOOKUP_FORCE_SIZE);
+        }
+        catch (const Glib::Error &)
+        {
+            m_pixbuf.reset();
+        }
+
+        queue_draw();
+    }
+
+protected:
+    bool on_draw(
+        const Cairo::RefPtr<Cairo::Context>
+            &context) override
+    {
+        const auto allocation = get_allocation();
+        const int width = allocation.get_width();
+        const int height = allocation.get_height();
+
+        context->set_source_rgba(
+            m_selected ? 105.0 / 255.0 : 1.0,
+            m_selected ? 170.0 / 255.0 : 1.0,
+            m_selected ? 1.0 : 1.0,
+            m_selected ? 0.32 : 0.06);
+        append_rounded_rectangle(
+            context,
+            width,
+            height,
+            CARD_CORNER_RADIUS);
+        context->fill();
+
+        // The thumbnail and selector are deliberately painted in this same
+        // Cairo pass. The opaque image-area base prevents the selector from
+        // showing through capture alpha, and the pixbuf is always painted
+        // after the selector.
+        context->rectangle(
+            0,
+            m_header_height,
+            width,
+            m_image_height);
+        context->set_source_rgb(
+            28.0 / 255.0,
+            28.0 / 255.0,
+            32.0 / 255.0);
+        context->fill();
+
+        if (m_pixbuf)
+        {
+            const double x =
+                (width - m_pixbuf->get_width()) / 2.0;
+            const double y =
+                m_header_height +
+                (m_image_height -
+                 m_pixbuf->get_height()) /
+                    2.0;
+            Gdk::Cairo::set_source_pixbuf(
+                context,
+                m_pixbuf,
+                x,
+                y);
+            context->paint();
+        }
+
+        return true;
+    }
+
+private:
+    Glib::RefPtr<Gdk::Pixbuf> m_pixbuf;
+    int m_header_height = 0;
+    int m_image_height = 0;
+    int m_fallback_size = 1;
+    bool m_selected = false;
+};
+
 DockPreviewWindow::DockPreviewWindow()
 {
     set_decorated(false);
@@ -774,9 +955,6 @@ DockPreviewWindow::DockPreviewWindow()
         " background: transparent;"
         " border: 1px solid rgba(255,255,255,0.25);"
         " border-radius: 7px;"
-        "}"
-        ".dock-preview-card.dock-preview-card-selected {"
-        " border-color: rgba(105,170,255,0.85);"
         "}"
         ".dock-preview-header {"
         " border-bottom: 1px solid rgba(255,255,255,0.18);"
@@ -1868,56 +2046,11 @@ void DockPreviewWindow::rebuild(
         card->get_style_context()->add_class(
             "dock-preview-card");
 
-        auto selected =
-            std::make_shared<bool>(false);
-        auto background = Gtk::manage(
-            new Gtk::DrawingArea());
-        // GtkDrawingArea normally owns a GdkWindow. A native child window can
-        // be raised above GtkOverlay children independently of GTK's draw
-        // order, which puts this translucent selector over the thumbnail.
-        // Make it windowless so it is painted into the overlay's backing
-        // surface before the thumbnail body.
-        gtk_widget_set_has_window(
-            GTK_WIDGET(background->gobj()),
-            FALSE);
-        background->set_size_request(
-            size.card_width,
-            size.header_height + image_height);
-        background->set_hexpand(true);
-        background->set_vexpand(true);
-        background->signal_draw().connect(
-            [background, selected](
-                const Cairo::RefPtr<Cairo::Context>
-                    &context)
-            {
-                const auto allocation =
-                    background->get_allocation();
-
-                if (*selected)
-                {
-                    context->set_source_rgba(
-                        105.0 / 255.0,
-                        170.0 / 255.0,
-                        1.0,
-                        0.32);
-                }
-                else
-                {
-                    context->set_source_rgba(
-                        1.0,
-                        1.0,
-                        1.0,
-                        0.06);
-                }
-
-                append_rounded_rectangle(
-                    context,
-                    allocation.get_width(),
-                    allocation.get_height(),
-                    CARD_CORNER_RADIUS);
-                context->fill();
-                return true;
-            });
+        auto image = Gtk::manage(
+            new DockPreviewCardCanvas(
+                size.card_width,
+                size.header_height,
+                image_height));
 
         auto body = Gtk::manage(
             new Gtk::Box(
@@ -2026,20 +2159,12 @@ void DockPreviewWindow::rebuild(
         header->pack_start(*title, true, true);
         header->pack_end(*close, false, false);
 
-        auto image = Gtk::manage(new Gtk::Image());
-        image->set_size_request(
-            size.card_width,
-            image_height);
-        image->set_halign(Gtk::ALIGN_CENTER);
-        image->set_valign(Gtk::ALIGN_CENTER);
-
         auto image_event = Gtk::manage(
             new Gtk::EventBox());
         image_event->set_visible_window(false);
         image_event->set_size_request(
             size.card_width,
             image_height);
-        image_event->add(*image);
         image_event->add_events(
             Gdk::BUTTON_RELEASE_MASK);
         image_event->signal_button_release_event().connect(
@@ -2056,53 +2181,84 @@ void DockPreviewWindow::rebuild(
             });
 
         card->signal_enter_notify_event().connect(
-            [card,
-             background,
-             selected](GdkEventCrossing *event)
+            [this, card, image](GdkEventCrossing *)
             {
-                if (!event ||
-                    event->detail !=
-                        GDK_NOTIFY_INFERIOR)
+                if (m_selected_card != card)
                 {
-                    *selected = true;
+                    auto *previous = m_selected_card;
+                    auto *previous_canvas =
+                        m_selected_canvas;
+                    m_selected_card = card;
+                    m_selected_canvas = image;
+
+                    if (previous)
+                    {
+                        previous->get_style_context()
+                            ->remove_class(
+                                "dock-preview-card-selected");
+                        previous->queue_draw();
+                    }
+
+                    if (previous_canvas)
+                        previous_canvas->set_selected(false);
+
+                    image->set_selected(true);
                     card->get_style_context()
                         ->add_class(
                             "dock-preview-card-selected");
-                    background->queue_draw();
+                    card->queue_draw();
                 }
 
                 return false;
             });
         card->signal_motion_notify_event().connect(
-            [card,
-             background,
-             selected](GdkEventMotion *)
+            [this, card, image](GdkEventMotion *)
             {
-                if (!*selected)
+                if (m_selected_card != card)
                 {
-                    *selected = true;
+                    auto *previous = m_selected_card;
+                    auto *previous_canvas =
+                        m_selected_canvas;
+                    m_selected_card = card;
+                    m_selected_canvas = image;
+
+                    if (previous)
+                    {
+                        previous->get_style_context()
+                            ->remove_class(
+                                "dock-preview-card-selected");
+                        previous->queue_draw();
+                    }
+
+                    if (previous_canvas)
+                        previous_canvas->set_selected(false);
+
+                    image->set_selected(true);
                     card->get_style_context()
                         ->add_class(
                             "dock-preview-card-selected");
-                    background->queue_draw();
+                    card->queue_draw();
                 }
 
                 return false;
             });
         card->signal_leave_notify_event().connect(
-            [card,
-             background,
-             selected](GdkEventCrossing *event)
+            [this, card, image](GdkEventCrossing *event)
             {
                 if (!event ||
                     event->detail !=
                         GDK_NOTIFY_INFERIOR)
                 {
-                    *selected = false;
-                    card->get_style_context()
-                        ->remove_class(
-                            "dock-preview-card-selected");
-                    background->queue_draw();
+                    if (m_selected_card == card)
+                    {
+                        m_selected_card = nullptr;
+                        m_selected_canvas = nullptr;
+                        image->set_selected(false);
+                        card->get_style_context()
+                            ->remove_class(
+                                "dock-preview-card-selected");
+                        card->queue_draw();
+                    }
                 }
 
                 return false;
@@ -2116,11 +2272,8 @@ void DockPreviewWindow::rebuild(
         card_overlay->set_size_request(
             size.card_width,
             size.header_height + image_height);
-        card_overlay->add(*background);
+        card_overlay->add(*image);
         card_overlay->add_overlay(*body);
-        card_overlay->set_overlay_pass_through(
-            *body,
-            false);
         card->add(*card_overlay);
 
         m_row.pack_start(*card, false, false);
@@ -2252,7 +2405,11 @@ void DockPreviewWindow::request_thumbnail(
                     thumbnail;
                 m_thumbnail_cache_dirty.insert(
                     window_id);
-                target.image->set(thumbnail);
+                target.image->set(
+                    scaled_to_fit(
+                        thumbnail,
+                        target.target_width,
+                        target.target_height));
                 target.image->queue_draw();
                 target.has_thumbnail = true;
                 m_thumbnail_recovery_requested.erase(
@@ -2529,7 +2686,11 @@ void DockPreviewWindow::request_live_x11_thumbnail(
             thumbnail.live_until_us =
                 g_get_monotonic_time() +
                 X11_LIVE_GRACE_US;
-            thumbnail.image->set(frame);
+            thumbnail.image->set(
+                scaled_to_fit(
+                    frame,
+                    thumbnail.target_width,
+                    thumbnail.target_height));
             thumbnail.image->queue_draw();
             m_thumbnail_cache[completed_window_id] = frame;
             m_thumbnail_cache_dirty.insert(
@@ -2735,7 +2896,11 @@ void DockPreviewWindow::start_live_streams()
                         return;
 
                     thumbnail.live_signature = signature;
-                    thumbnail.image->set(frame);
+                    thumbnail.image->set(
+                        scaled_to_fit(
+                            frame,
+                            thumbnail.target_width,
+                            thumbnail.target_height));
                     thumbnail.image->queue_draw();
                     m_thumbnail_cache[completed_window_id] =
                         frame;
@@ -2782,6 +2947,8 @@ void DockPreviewWindow::clear_cards()
     m_thumbnail_recovery_capture_allowed.clear();
     m_thumbnail_recovery_delay.disconnect();
     m_window_ids.clear();
+    m_selected_card = nullptr;
+    m_selected_canvas = nullptr;
 
     for (auto *card : m_cards)
     {
