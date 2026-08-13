@@ -211,6 +211,10 @@ assert.match(
     /start_live_streams\(\)[\s\S]*?set_gnome_preview_color[\s\S]*?desired_windows == m_live_window_ids/,
     "GNOME preview color updates must not be skipped when the window set is unchanged");
 assert.match(
+    previewWindowSource,
+    /if \(uses_gnome_live_previews\)[\s\S]*?desired_windows\.insert\(entry\.first\);[\s\S]*?if \(!entry\.second\.minimized/,
+    "GNOME live previews must include fully minimized window groups");
+assert.match(
     dockWindowControllerSource,
     /set_preview_color\([\s\S]*?m_settings\.preview_color\(\)/,
     "preview rendering must receive the configured preview color");

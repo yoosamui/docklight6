@@ -2829,8 +2829,11 @@ void DockPreviewWindow::start_live_streams()
 {
     const auto generation = m_generation;
     std::set<WindowId> desired_windows;
+    const bool uses_gnome_live_previews =
+        m_thumbnail_provider
+            .supports_gnome_live_previews();
 
-    if (m_thumbnail_provider.supports_gnome_live_previews())
+    if (uses_gnome_live_previews)
     {
         // Color is independent of the visible-window set. Publish it even
         // when the existing compositor previews can otherwise be reused.
@@ -2843,6 +2846,16 @@ void DockPreviewWindow::start_live_streams()
 
     for (const auto &entry : m_thumbnail_targets)
     {
+        // Shell.WindowPreviewLayout can paint minimized windows just as the
+        // overview does. Keep every GNOME card in the requested set; otherwise
+        // a fully minimized group produces an empty set and returns below
+        // before Shell is asked to create any previews.
+        if (uses_gnome_live_previews)
+        {
+            desired_windows.insert(entry.first);
+            continue;
+        }
+
         // Firefox exposes one browser-wide MPRIS player and can leave it
         // associated with an unrelated tab. Refresh the complete visible
         // group on X11 so a playing page cannot be omitted by stale metadata.
@@ -2857,7 +2870,7 @@ void DockPreviewWindow::start_live_streams()
 
     stop_live_streams();
 
-    if (m_thumbnail_provider.supports_gnome_live_previews())
+    if (uses_gnome_live_previews)
     {
         std::vector<GnomeLivePreviewRect> previews;
         previews.reserve(m_window_ids.size());
