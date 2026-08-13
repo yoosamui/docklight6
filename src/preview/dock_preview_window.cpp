@@ -2085,6 +2085,9 @@ void DockPreviewWindow::rebuild(
             1,
             size.height - size.header_height -
                 2 * WINDOW_PADDING);
+    const bool uses_gnome_live_previews =
+        m_thumbnail_provider
+            .supports_gnome_live_previews();
 
     for (const auto &entry : entries)
     {
@@ -2436,9 +2439,23 @@ void DockPreviewWindow::rebuild(
             target->second.has_thumbnail = true;
         }
 
-        request_thumbnail(
-            entry.id,
-            generation);
+        if (uses_gnome_live_previews)
+        {
+            // Shell paints the compositor texture over this card as soon as
+            // ShowLivePreviews is handled. Requesting a PNG of the same
+            // window in parallel is redundant and, when the pointer crosses
+            // several dock items quickly, can queue enough asynchronous
+            // Shell.Screenshot work to make the compositor unresponsive.
+            // Keep a cached frame or cheap icon beneath the short live-preview
+            // fade instead.
+            show_thumbnail_fallback(entry.id);
+        }
+        else
+        {
+            request_thumbnail(
+                entry.id,
+                generation);
+        }
     }
 }
 

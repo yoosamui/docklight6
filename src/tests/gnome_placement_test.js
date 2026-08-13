@@ -208,6 +208,10 @@ assert.match(
     "GNOME compositor actors must align with the existing GTK card bodies");
 assert.match(
     previewWindowSource,
+    /const bool uses_gnome_live_previews\s*=\s*m_thumbnail_provider\s*\.supports_gnome_live_previews\(\);[\s\S]*?if \(uses_gnome_live_previews\)[\s\S]*?show_thumbnail_fallback\(entry\.id\);[\s\S]*?else[\s\S]*?request_thumbnail\(/,
+    "GNOME live previews must not queue redundant compositor screenshot captures");
+assert.match(
+    previewWindowSource,
     /DockPreviewCardCanvas\([\s\S]*?preview_color[\s\S]*?m_preview_color\.get_red\(\)[\s\S]*?set_preview_color[\s\S]*?new DockPreviewCardCanvas\([\s\S]*?m_preview_color/,
     "GTK preview cards must render their selector with the configured preview color");
 assert.match(
