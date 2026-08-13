@@ -101,8 +101,12 @@ assert.match(
     "live preview hover must be reconciled from the compositor pointer instead of relying only on crossing events");
 assert.match(
     extensionSource,
-    /const selector = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?const thumbnailBacking = new St\.Widget\(\{[\s\S]*?rgb\(28, 28, 32\)[\s\S]*?const selectionOutline = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?selector\.add_child\(thumbnailBacking\)[\s\S]*?selector\.add_child\(preview\)[\s\S]*?selector\.add_child\(selectionOutline\)[\s\S]*?set_child_above_sibling\(preview, thumbnailBacking\)[\s\S]*?set_child_above_sibling\(selectionOutline, preview\)[\s\S]*?overlay\.add_child\(selector\)[\s\S]*?selector,[\s\S]*?selectionOutline,/,
-    "live compositor previews must use a paint-only selector with an opaque backing and outline");
+    /const selector = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?const selectionOutline = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?selector\.add_child\(preview\)[\s\S]*?selector\.add_child\(selectionOutline\)[\s\S]*?set_child_above_sibling\(selectionOutline, preview\)[\s\S]*?overlay\.add_child\(selector\)[\s\S]*?selector,[\s\S]*?selectionOutline,/,
+    "live compositor previews must use a transparent paint-only selector and outline");
+assert.doesNotMatch(
+    extensionSource,
+    /thumbnailBacking/,
+    "the Shell overlay must not hide GTK's cached thumbnail fallback");
 assert.match(
     extensionSource,
     /_updateLivePreviewSelectors\([^)]*\)[\s\S]*?selected === rect\.selected[\s\S]*?rect\.selector\.set_style\(selected[\s\S]*?rect\.selectionOutline\.set_style\(selected[\s\S]*?_publishPreviewPointerInside\([^)]*\) \{[\s\S]*?_updateLivePreviewSelectors\(\)/,
@@ -218,7 +222,15 @@ assert.match(
 assert.match(
     previewWindowSource,
     /const bool uses_gnome_live_previews\s*=\s*m_thumbnail_provider\s*\.supports_gnome_live_previews\(\);[\s\S]*?if \(uses_gnome_live_previews\)[\s\S]*?show_thumbnail_fallback\(entry\.id\);[\s\S]*?else[\s\S]*?request_thumbnail\(/,
-    "GNOME live previews must not queue redundant compositor screenshot captures");
+    "GNOME live previews must not queue immediate parallel screenshot captures");
+assert.match(
+    previewWindowSource,
+    /GNOME_FALLBACK_CAPTURE_DELAY_MS[\s\S]*?show_gnome_live_previews[\s\S]*?m_gnome_thumbnail_fallback[\s\S]*?generation != m_generation[\s\S]*?!get_visible\(\)[\s\S]*?!entry\.second\.has_thumbnail[\s\S]*?request_thumbnail\([\s\S]*?GNOME_FALLBACK_CAPTURE_DELAY_MS/,
+    "a stable GNOME preview must cache a delayed fallback without capturing during transient hover");
+assert.match(
+    previewWindowSource,
+    /stop_live_streams\(\)[\s\S]*?hide_gnome_live_previews\(\);[\s\S]*?m_gnome_thumbnail_fallback\.disconnect\(\)/,
+    "hiding a GNOME preview must cancel its delayed fallback capture");
 assert.match(
     previewWindowSource,
     /DockPreviewCardCanvas\([\s\S]*?preview_color[\s\S]*?m_preview_color\.get_red\(\)[\s\S]*?set_preview_color[\s\S]*?new DockPreviewCardCanvas\([\s\S]*?m_preview_color/,

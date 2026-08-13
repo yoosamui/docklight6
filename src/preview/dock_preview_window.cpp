@@ -39,6 +39,7 @@ namespace
     constexpr unsigned int X11_LIVE_REFRESH_MS = 33;
     constexpr unsigned int X11_STATIC_RETRY_MS = 80;
     constexpr unsigned int X11_STATIC_RETRY_COUNT = 8;
+    constexpr unsigned int GNOME_FALLBACK_CAPTURE_DELAY_MS = 180;
     constexpr unsigned int XFWM_RECOVERY_SETTLE_MS = 500;
     constexpr unsigned int X11_CHANGE_PROBE_MS = 200;
     constexpr std::int64_t X11_LIVE_GRACE_US = 750000;
@@ -2905,6 +2906,39 @@ void DockPreviewWindow::start_live_streams()
             previews);
         m_live_window_ids = desired_windows;
 
+        // Most previews are painted directly by Shell. A compositor actor can
+        // nevertheless be temporarily unavailable while a window maps,
+        // minimizes, or changes workspace. After the live-clone fade has had
+        // time to settle, capture one cached frame beneath it. The delay is
+        // cancelled when the pointer merely passes over a dock item, avoiding
+        // the burst of Shell.Screenshot requests that immediate parallel
+        // capture caused.
+        m_gnome_thumbnail_fallback.disconnect();
+        m_gnome_thumbnail_fallback =
+            Glib::signal_timeout().connect(
+                [this, generation]()
+                {
+                    if (generation != m_generation ||
+                        !get_visible())
+                    {
+                        return false;
+                    }
+
+                    for (const auto &entry :
+                         m_thumbnail_targets)
+                    {
+                        if (!entry.second.has_thumbnail)
+                        {
+                            request_thumbnail(
+                                entry.first,
+                                generation);
+                        }
+                    }
+
+                    return false;
+                },
+                GNOME_FALLBACK_CAPTURE_DELAY_MS);
+
         g_message(
             "GNOME compositor-native live previews started: windows=%zu",
             m_live_window_ids.size());
@@ -3068,6 +3102,7 @@ void DockPreviewWindow::start_live_streams()
 void DockPreviewWindow::stop_live_streams()
 {
     m_thumbnail_provider.hide_gnome_live_previews();
+    m_gnome_thumbnail_fallback.disconnect();
     m_x11_live_refresh.disconnect();
     m_x11_probe_refresh.disconnect();
     m_stream_provider.stop_all();

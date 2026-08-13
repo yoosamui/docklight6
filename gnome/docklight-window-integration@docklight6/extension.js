@@ -1763,9 +1763,9 @@ export default class DocklightWindowIntegration extends Extension {
             // previews cannot leave stale Shell chrome in the stage input
             // region. The GTK card underneath remains responsible for mouse
             // input, while Shell's pointer poll drives this visual selector.
-            // An opaque backing sits between the selector and the alpha-bearing
-            // window clone, so the selector can show in card margins but never
-            // tint image pixels.
+            // Keep the area below the clone transparent: GTK maintains a
+            // cached snapshot there for the short periods in which Mutter has
+            // not produced a usable clone frame yet.
             const selector = new St.Widget({
                 reactive: false,
                 x,
@@ -1774,14 +1774,6 @@ export default class DocklightWindowIntegration extends Extension {
                 height,
                 style: 'background-color: transparent; ' +
                     'border-radius: 6px;',
-            });
-            const thumbnailBacking = new St.Widget({
-                reactive: false,
-                x: previewOffsetX,
-                y: previewOffsetY,
-                width: previewWidth,
-                height: previewHeight,
-                style: 'background-color: rgb(28, 28, 32);',
             });
             // Keep a border above the live clone. The selector fill must stay
             // below the clone so alpha in a PiP surface cannot tint the video,
@@ -1797,10 +1789,8 @@ export default class DocklightWindowIntegration extends Extension {
                 style: 'border: 2px solid transparent; ' +
                     'border-radius: 6px;',
             });
-            selector.add_child(thumbnailBacking);
             selector.add_child(preview);
             selector.add_child(selectionOutline);
-            selector.set_child_above_sibling(preview, thumbnailBacking);
             selector.set_child_above_sibling(selectionOutline, preview);
             overlay.add_child(selector);
             layout.add_window(window);

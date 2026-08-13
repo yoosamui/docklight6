@@ -227,6 +227,7 @@ private:
     sigc::connection
         m_thumbnail_recovery_delay;
     std::vector<WindowId> m_window_ids;
+    sigc::connection m_gnome_thumbnail_fallback;
     sigc::connection m_x11_live_refresh;
     sigc::connection m_x11_probe_refresh;
     sigc::connection m_opacity_timer;
