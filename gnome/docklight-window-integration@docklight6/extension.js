@@ -160,7 +160,6 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockRevealSignal = 0;
         this._nativeWorkAreas = [];
         this._livePreviewOverlay = null;
-        this._livePreviewActors = [];
         this._livePreviewRects = [];
         this._previewPointerInside = null;
         this._previewPointerDevice = null;
@@ -169,7 +168,6 @@ export default class DocklightWindowIntegration extends Extension {
         this._previewPointerRestorePosition = null;
         this._previewPointerLastClick = null;
         this._previewInputSuppressedActors = [];
-        this._previewInputUntrackedActors = [];
         this._previewSelectorFill =
             'rgba(105, 170, 255, 0.32)';
         this._previewSelectorOutline =
@@ -1648,8 +1646,8 @@ export default class DocklightWindowIntegration extends Extension {
         // them children of a real MetaWindowActor creates an unsupported
         // paint dependency and can stop live video damage from reaching the
         // clones. The full-stage container and layout-created descendants
-        // remain non-reactive; each thumbnail container handles its own click
-        // and forwards the selected window id through the integration service.
+        // remain non-reactive. The GTK card underneath remains the sole input
+        // owner and forwards PiP clicks through the integration service.
         const overlay = new Clutter.Actor({
             reactive: false,
             x: 0,
@@ -1660,7 +1658,6 @@ export default class DocklightWindowIntegration extends Extension {
 
         let previewCount = 0;
         const previewRects = [];
-        const previewActors = [];
         const previewFadeActors = [];
         for (const [windowId, x, y, width, height] of previews) {
             if (width <= 0 || height <= 0)
@@ -1697,14 +1694,15 @@ export default class DocklightWindowIntegration extends Extension {
             // match GNOME Shell's own construction order instead of passing
             // it as a construct property.
             preview.layout_manager = layout;
-            // The compositor clone owns pointer input, so the GTK card below
-            // cannot paint its normal mouse-over selection. Make the selector
-            // the card-sized clone parent/background and drive it from
-            // Shell's authoritative pointer position. An opaque backing sits
-            // between the selector and the alpha-bearing window clone, so the
-            // selector can show in card margins but never tint image pixels.
+            // Keep the compositor clone paint-only so repeatedly replacing
+            // previews cannot leave stale Shell chrome in the stage input
+            // region. The GTK card underneath remains responsible for mouse
+            // input, while Shell's pointer poll drives this visual selector.
+            // An opaque backing sits between the selector and the alpha-bearing
+            // window clone, so the selector can show in card margins but never
+            // tint image pixels.
             const selector = new St.Widget({
-                reactive: true,
+                reactive: false,
                 x,
                 y,
                 width,
@@ -1741,46 +1739,6 @@ export default class DocklightWindowIntegration extends Extension {
             selector.set_child_above_sibling(selectionOutline, preview);
             overlay.add_child(selector);
             layout.add_window(window);
-            let primaryButtonPressed = false;
-            selector.connect('button-press-event', (_actor, event) => {
-                if (event.get_button() !== 1)
-                    return Clutter.EVENT_PROPAGATE;
-
-                // Consume the complete click in Shell. Otherwise the press
-                // can propagate to the GTK preview surface while the release
-                // lands on this compositor clone, so neither side observes a
-                // usable click.
-                primaryButtonPressed = true;
-                return Clutter.EVENT_STOP;
-            });
-            selector.connect('button-release-event', (_actor, event) => {
-                if (event.get_button() !== 1)
-                    return Clutter.EVENT_PROPAGATE;
-
-                // The GTK preview is mapped before this compositor clone's
-                // input region is committed. A press can therefore reach GTK
-                // while its release reaches Shell. Never let that orphaned
-                // release fall through and become a second GTK action.
-                if (!primaryButtonPressed) {
-                    // The press reached the GTK card before this actor entered
-                    // Shell's input region. The release is nevertheless the
-                    // first safe point at which Mutter's implicit pointer grab
-                    // has ended, so use it to complete an auxiliary/PiP click.
-                    if (this._isApplicationAuxiliary(window))
-                        this._forwardPreviewPrimaryClick(window, preview, event);
-                    return Clutter.EVENT_STOP;
-                }
-
-                primaryButtonPressed = false;
-                if (this._isApplicationAuxiliary(window))
-                    this._forwardPreviewPrimaryClick(window, preview, event);
-                else
-                    this._call(
-                        'ActivatePreviewWindow',
-                        '(s)',
-                        [windowId]);
-                return Clutter.EVENT_STOP;
-            });
             // WindowPreviewLayout owns the compositor clone actors it creates.
             // Keep those descendants non-reactive as well: preview layouts
             // may add clone actors after constructing the container.
@@ -1801,7 +1759,6 @@ export default class DocklightWindowIntegration extends Extension {
                 selectionOutline,
                 selected: false,
             });
-            previewActors.push(selector);
             previewFadeActors.push(preview);
             previewCount++;
         }
@@ -1809,20 +1766,7 @@ export default class DocklightWindowIntegration extends Extension {
         if (previewCount > 0) {
             Main.uiGroup.add_child(overlay);
             this._livePreviewOverlay = overlay;
-            this._livePreviewActors = previewActors;
             this._livePreviewRects = previewRects;
-            // Adding an actor to uiGroup is sufficient for painting, but it
-            // does not add that actor to Mutter's stage input region. Track
-            // each thumbnail (rather than the full-stage overlay) so Shell
-            // receives its button events without intercepting input anywhere
-            // outside the visible previews.
-            for (const preview of previewActors) {
-                Main.layoutManager.trackChrome(preview, {
-                    affectsStruts: false,
-                    affectsInputRegion: true,
-                    trackFullscreen: true,
-                });
-            }
             this._publishPreviewPointerInside(true);
             // Fading the full-stage overlay makes Mutter allocate and blend
             // a screen-sized offscreen surface just to reveal thumbnail-sized
@@ -1837,7 +1781,6 @@ export default class DocklightWindowIntegration extends Extension {
             }
         } else {
             overlay.destroy();
-            this._livePreviewActors = [];
             this._livePreviewRects = [];
             this._publishPreviewPointerInside(true);
         }
@@ -1861,19 +1804,6 @@ export default class DocklightWindowIntegration extends Extension {
             this._updateLivePreviewSelectors(true);
         }
         invocation.return_value(null);
-    }
-
-    _forwardPreviewPrimaryClick(window, preview, event) {
-        const [stageX, stageY] = event.get_coords();
-        const [previewX, previewY] = preview.get_transformed_position();
-        const [previewWidth, previewHeight] = preview.get_transformed_size();
-        if (previewWidth <= 0 || previewHeight <= 0)
-            return;
-
-        this._forwardPreviewPrimaryClickAt(
-            window,
-            (stageX - previewX) / previewWidth,
-            (stageY - previewY) / previewHeight);
     }
 
     ForwardPreviewPrimaryClickAsync(params, invocation) {
@@ -2032,21 +1962,6 @@ export default class DocklightWindowIntegration extends Extension {
     _suppressPreviewInput() {
         this._restorePreviewInput();
 
-        // Tracked Shell chrome contributes to the stage input region even
-        // when its actor is non-reactive. Remove the thumbnail selectors
-        // from that region for the short virtual-click sequence, but leave
-        // them painted so forwarding a PiP click cannot flash the preview.
-        this._previewInputUntrackedActors = [
-            ...this._livePreviewActors,
-        ];
-        for (const actor of this._previewInputUntrackedActors) {
-            try {
-                Main.layoutManager.untrackChrome(actor);
-            } catch (_error) {
-                // A replacement preview can already have untracked it.
-            }
-        }
-
         const actors = [];
         const appendActor = actor => {
             if (actor && !actor.is_destroyed?.() && !actors.includes(actor))
@@ -2080,22 +1995,6 @@ export default class DocklightWindowIntegration extends Extension {
             }
         }
         this._previewInputSuppressedActors = [];
-
-        for (const actor of this._previewInputUntrackedActors) {
-            try {
-                if (!actor.is_destroyed?.() &&
-                    this._livePreviewActors.includes(actor)) {
-                    Main.layoutManager.trackChrome(actor, {
-                        affectsStruts: false,
-                        affectsInputRegion: true,
-                        trackFullscreen: true,
-                    });
-                }
-            } catch (_error) {
-                // A preview can be replaced during the injected click.
-            }
-        }
-        this._previewInputUntrackedActors = [];
     }
 
     _cancelPreviewPointerInput(
@@ -2150,15 +2049,6 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _destroyLivePreviews(publishPointerOutside = true) {
-        for (const preview of this._livePreviewActors) {
-            try {
-                Main.layoutManager.untrackChrome(preview);
-            } catch (_error) {
-                // Shell teardown may already have dropped tracked actors.
-            }
-        }
-        this._livePreviewActors = [];
-
         if (this._livePreviewOverlay) {
             this._livePreviewOverlay.remove_all_transitions();
             this._livePreviewOverlay.destroy();
