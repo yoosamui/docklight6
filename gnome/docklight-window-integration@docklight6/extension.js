@@ -112,11 +112,16 @@ export default class DocklightWindowIntegration extends Extension {
         this._tracker = Shell.WindowTracker.get_default();
         this._windows = new Map();
         this._windowSignals = new Map();
+        this._iconGeometries = new Map();
         this._dockHidden = false;
         this._signals = [];
         this._connect(this._proxy, 'g-signal',
             (_proxy, _sender, signalName, parameters) => {
-                if (signalName === 'DockPlacementGeometryChanged')
+                if (signalName === 'IconGeometryChanged')
+                    this._setIconGeometry(...parameters.deepUnpack());
+                else if (signalName === 'IconGeometryRemoved')
+                    this._removeIconGeometry(parameters.deepUnpack()?.[0]);
+                else if (signalName === 'DockPlacementGeometryChanged')
                     this._setDockPlacement(parameters.deepUnpack());
                 else if (signalName === 'DockHiddenChanged') {
                     this._dockHidden = Boolean(parameters.deepUnpack()?.[0]);
@@ -345,6 +350,8 @@ export default class DocklightWindowIntegration extends Extension {
             object.disconnect(id);
         this._signals = [];
 
+        this._clearIconGeometries();
+
         for (const window of [...this._windowSignals.keys()])
             this._untrackWindow(window);
 
@@ -355,6 +362,7 @@ export default class DocklightWindowIntegration extends Extension {
 
         this._windows = null;
         this._windowSignals = null;
+        this._iconGeometries = null;
         this._tracker = null;
         this._cursorTracker = null;
     }
@@ -1477,6 +1485,12 @@ export default class DocklightWindowIntegration extends Extension {
 
             this._revision = 0;
             this._pendingWaits = 0;
+            this._call('GetIconGeometries', null, null, reply => {
+                if (!this._connected)
+                    return;
+                for (const geometry of reply?.[0] || [])
+                    this._setIconGeometry(...geometry);
+            });
             this._requestDockPlacement();
             this._call('GetDockHidden', null, null, reply => {
                 this._dockHidden = Boolean(reply?.[0]);
@@ -1520,6 +1534,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._connected = false;
         this._registering = false;
         this._pendingWaits = 0;
+        this._clearIconGeometries();
         this._destroyLivePreviews();
 
         // GNOME Shell and this extension outlive an app-only Docklight
@@ -1556,6 +1571,56 @@ export default class DocklightWindowIntegration extends Extension {
 
     _windowId(window) {
         return window ? String(window.get_stable_sequence()) : '';
+    }
+
+    _setIconGeometry(windowId, x, y, width, height) {
+        if (!this._connected || !this._iconGeometries || !this._windows ||
+            !windowId || width <= 0 || height <= 0)
+            return;
+
+        const geometry = {x, y, width, height};
+        this._iconGeometries.set(windowId, geometry);
+
+        const window = this._windows.get(windowId);
+        if (!window)
+            return;
+
+        // get_frame_rect() supplies the correct boxed rectangle type on both
+        // Meta.Rectangle (GNOME 45) and Mtk.Rectangle (GNOME 46+).
+        try {
+            const rect = window.get_frame_rect();
+            Object.assign(rect, geometry);
+            window.set_icon_geometry(rect);
+        } catch (error) {
+            logError(error,
+                `Failed to set Docklight icon geometry for window ${windowId}`);
+        }
+    }
+
+    _removeIconGeometry(windowId) {
+        if (!windowId)
+            return;
+
+        this._iconGeometries?.delete(windowId);
+        try {
+            this._windows?.get(windowId)?.set_icon_geometry(null);
+        } catch (_error) {
+            // The Meta.Window may already be finalizing.
+        }
+    }
+
+    _clearIconGeometries() {
+        if (!this._iconGeometries || !this._windows)
+            return;
+
+        for (const windowId of this._iconGeometries.keys()) {
+            try {
+                this._windows.get(windowId)?.set_icon_geometry(null);
+            } catch (_error) {
+                // The Meta.Window may already be finalizing.
+            }
+        }
+        this._iconGeometries.clear();
     }
 
     _isThumbnailCallerAuthorized(invocation) {
@@ -2170,6 +2235,15 @@ export default class DocklightWindowIntegration extends Extension {
             return true;
 
         this._windows.set(id, window);
+        const iconGeometry = this._iconGeometries.get(id);
+        if (iconGeometry) {
+            this._setIconGeometry(
+                id,
+                iconGeometry.x,
+                iconGeometry.y,
+                iconGeometry.width,
+                iconGeometry.height);
+        }
         const publish = () => this._publishWindow(window);
         const signals = [
             ['position-changed', publish],

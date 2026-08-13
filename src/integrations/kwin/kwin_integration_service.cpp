@@ -1389,7 +1389,7 @@ void KWinIntegrationService::
             "GetIconGeometries") == 0)
     {
         g_message(
-            "Docklight Plasma geometry bridge connected");
+            "Docklight icon geometry consumer connected");
 
         return_icon_geometries(
             invocation);

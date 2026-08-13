@@ -24,7 +24,7 @@ int main()
     assert(capabilities.provides_icons);
     assert(capabilities.provides_dock_reveal_trigger);
     assert(!capabilities.provides_activities);
-    assert(!capabilities.accepts_icon_geometry);
+    assert(capabilities.accepts_icon_geometry);
 
     backend.start();
     assert(backend.register_integration(

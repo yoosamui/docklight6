@@ -52,6 +52,27 @@ const thumbnailProviderSource = fs.readFileSync(
 
 assert.match(
     extensionSource,
+    /signalName === 'IconGeometryChanged'[\s\S]*?_setIconGeometry\(\.\.\.parameters\.deepUnpack\(\)\)[\s\S]*?signalName === 'IconGeometryRemoved'[\s\S]*?_removeIconGeometry/,
+    "GNOME must consume Docklight icon-geometry updates and removals");
+assert.match(
+    extensionSource,
+    /GetIconGeometries[\s\S]*?reply\?\.\[0\][\s\S]*?_setIconGeometry\(\.\.\.geometry\)/,
+    "GNOME must restore cached icon geometry after either side reconnects");
+assert.match(
+    extensionSource,
+    /_setIconGeometry\(windowId, x, y, width, height\)[\s\S]*?get_frame_rect\(\)[\s\S]*?Object\.assign\(rect, geometry\)[\s\S]*?set_icon_geometry\(rect\)[\s\S]*?_removeIconGeometry\(windowId\)[\s\S]*?set_icon_geometry\(null\)/,
+    "GNOME must register and unregister each DockItem rectangle with Mutter");
+assert.match(
+    extensionSource,
+    /_disconnectBackend\(\) \{[\s\S]*?_clearIconGeometries\(\)/,
+    "GNOME must not retain stale icon geometry after Docklight exits");
+assert.match(
+    dockWindowControllerSource,
+    /signal_connection_changed\(\)[\s\S]*?if \(connected\)[\s\S]*?schedule_icon_geometry_update\(\)/,
+    "DockItem geometry must be republished after the Shell backend connects");
+
+assert.match(
+    extensionSource,
     /<method name="ShowLivePreviews">[\s\S]*?a\(siiii\)[\s\S]*?<method name="HideLivePreviews"/,
     "the GNOME thumbnail service must expose the compositor overlay lifecycle");
 assert.match(

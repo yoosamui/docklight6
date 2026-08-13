@@ -202,6 +202,11 @@ void DockWindowController::initialize()
                         {
                             m_autohide_controller
                                 ->refresh_mapped_surface();
+                            // The first allocation normally precedes the
+                            // Shell extension handshake. Republish every
+                            // DockItem now that the backend can accept its
+                            // Mutter/KWin minimize target.
+                            schedule_icon_geometry_update();
                         }
 
                         // Re-evaluate the configured policy on both edges of
