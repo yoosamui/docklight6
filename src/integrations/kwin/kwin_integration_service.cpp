@@ -1278,11 +1278,6 @@ void KWinIntegrationService::
     if (m_command_invocations.empty())
         cancel_command_keepalive();
 
-    g_message(
-        "Window command delivered: %s %s",
-        command_name,
-        identifier.c_str());
-
     g_dbus_method_invocation_return_value(
         invocation,
         g_variant_new(

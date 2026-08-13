@@ -2939,9 +2939,6 @@ void DockPreviewWindow::start_live_streams()
                 },
                 GNOME_FALLBACK_CAPTURE_DELAY_MS);
 
-        g_message(
-            "GNOME compositor-native live previews started: windows=%zu",
-            m_live_window_ids.size());
         return;
     }
 

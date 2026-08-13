@@ -2365,13 +2365,14 @@ export default class DocklightWindowIntegration extends Extension {
                 window.unminimize();
                 window.raise();
             }
-            windows.at(-1).activate(global.get_current_time());
+            Main.activateWindow(
+                windows.at(-1), global.get_current_time());
             return;
         }
 
         const window = windows[0];
         if (command === 'activate') {
-            window.activate(global.get_current_time());
+            Main.activateWindow(window, global.get_current_time());
         } else if (command === 'raise') {
             window.raise();
         } else if (command === 'close') {

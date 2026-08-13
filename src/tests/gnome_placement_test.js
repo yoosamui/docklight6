@@ -60,6 +60,10 @@ assert.match(
     "GNOME must restore cached icon geometry after either side reconnects");
 assert.match(
     extensionSource,
+    /command === 'present'[\s\S]*?Main\.activateWindow\(\s*windows\.at\(-1\), global\.get_current_time\(\)\)[\s\S]*?command === 'activate'[\s\S]*?Main\.activateWindow\(window, global\.get_current_time\(\)\)/,
+    "GNOME window activation must switch to an off-workspace target");
+assert.match(
+    extensionSource,
     /_setIconGeometry\(windowId, x, y, width, height\)[\s\S]*?get_frame_rect\(\)[\s\S]*?Object\.assign\(rect, geometry\)[\s\S]*?set_icon_geometry\(rect\)[\s\S]*?_removeIconGeometry\(windowId\)[\s\S]*?set_icon_geometry\(null\)/,
     "GNOME must register and unregister each DockItem rectangle with Mutter");
 assert.match(

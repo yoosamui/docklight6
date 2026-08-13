@@ -745,29 +745,11 @@ bool DockApplicationController::show_window(
     if (!window)
         return false;
 
-    bool accepted = true;
-
-    if (window->minimized)
-    {
-        accepted =
-            m_registry
-                ->set_window_minimized(
-                    window_id,
-                    false) &&
-            accepted;
-    }
-
-    accepted =
-        m_registry->raise_window(
-            window_id) &&
-        accepted;
-
-    accepted =
-        m_registry->activate_window(
-            window_id) &&
-        accepted;
-
-    return accepted;
+    // Keep restoration, workspace activation, raising, and focus in one
+    // compositor command. Separate asynchronous commands can be consumed out
+    // of order, particularly when the target lives on another workspace.
+    return m_registry->present_windows(
+        {window_id});
 }
 
 bool DockApplicationController::

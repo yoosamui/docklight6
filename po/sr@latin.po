@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-06 23:54+0700\n"
+"POT-Creation-Date: 2026-08-13 08:37+0700\n"
 "PO-Revision-Date: 2026-08-06 14:07+0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -19,324 +19,333 @@ msgstr ""
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: src/dock/dock_item.cpp:269
+#: src/dock/dock_item.cpp:267
 msgid "_Attach"
 msgstr "_Прикачи на Доцк"
 
-#: src/dock/dock_item.cpp:272
+#: src/dock/dock_item.cpp:270
 msgid "_Open New Window"
 msgstr "_Отворите нови прозор"
 
-#: src/dock/dock_item.cpp:275 src/dock/dock_home_item.cpp:55
+#: src/dock/dock_item.cpp:273 src/dock/dock_home_item.cpp:68
 msgid "_Close All"
 msgstr "_Затвори све"
 
-#: src/dock/dock_item.cpp:278
+#: src/dock/dock_item.cpp:276
 msgid "_Minimize"
 msgstr "_Минимизирај"
 
-#: src/dock/dock_item.cpp:281
+#: src/dock/dock_item.cpp:279
 msgid "_Unminimize"
 msgstr "_Ресторе"
 
-#: src/dock/dock_item.cpp:284
+#: src/dock/dock_item.cpp:282
 msgid "_Maximize"
 msgstr "_Максимирај"
 
-#: src/dock/dock_home_item.cpp:43
+#: src/dock/dock_home_item.cpp:56
 msgid "_Settings"
 msgstr "_Подешавања"
 
-#: src/dock/dock_home_item.cpp:46
+#: src/dock/dock_home_item.cpp:59
 msgid "_Minimize All"
 msgstr "_Минимизирај све"
 
-#: src/dock/dock_home_item.cpp:49
+#: src/dock/dock_home_item.cpp:62
 msgid "_Unminimize All"
 msgstr "_Врати све"
 
-#: src/dock/dock_home_item.cpp:52
+#: src/dock/dock_home_item.cpp:65
 msgid "_Maximize All"
 msgstr "_Максимизирај све"
 
-#: src/dock/dock_home_item.cpp:58
+#: src/dock/dock_home_item.cpp:71
 msgid "_About"
 msgstr "_О"
 
-#: src/dock/dock_home_item.cpp:61
+#: src/dock/dock_home_item.cpp:74
 msgid "_Exit"
 msgstr "_Екит"
 
-#: src/dock/dock_home_item.cpp:167
+#: src/dock/dock_home_item.cpp:183
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Хоме"
 
-#: src/dialogs/dock_settings_dialog.cpp:65
-#: src/dialogs/dock_settings_dialog.cpp:90
+#: src/dialogs/dock_settings_dialog.cpp:122
+#: src/dialogs/dock_settings_dialog.cpp:163
 msgid "DockLight Settings"
 msgstr "ДоцкЛигхт Сеттингс"
 
-#: src/dialogs/dock_settings_dialog.cpp:118
-#: src/dialogs/dock_about_dialog.cpp:112
+#: src/dialogs/dock_settings_dialog.cpp:191
+#: src/dialogs/dock_about_dialog.cpp:182
 msgid "_Close"
 msgstr "_Затвори"
 
-#: src/dialogs/dock_settings_dialog.cpp:130
+#: src/dialogs/dock_settings_dialog.cpp:203
 msgid "Monitor"
 msgstr "Монитор"
 
-#: src/dialogs/dock_settings_dialog.cpp:132
+#: src/dialogs/dock_settings_dialog.cpp:205
 msgid "Hover Effect"
 msgstr "Ховер Еффецт"
 
-#: src/dialogs/dock_settings_dialog.cpp:134
+#: src/dialogs/dock_settings_dialog.cpp:207
 msgid "Indicator"
 msgstr "Индикатор"
 
-#: src/dialogs/dock_settings_dialog.cpp:136
-#: src/dialogs/dock_settings_dialog.cpp:1322
-#: src/dialogs/dock_settings_dialog.cpp:1350
+#: src/dialogs/dock_settings_dialog.cpp:209
+#: src/dialogs/dock_settings_dialog.cpp:451
 msgid "Indicator Color"
 msgstr "Боја индикатора"
 
-#: src/dialogs/dock_settings_dialog.cpp:138
+#: src/dialogs/dock_settings_dialog.cpp:211
+#: src/dialogs/dock_settings_dialog.cpp:470
+msgid "Preview Color"
+msgstr "Boja pregleda"
+
+#: src/dialogs/dock_settings_dialog.cpp:213
 msgid "Display Home Icon"
 msgstr "Прикажи почетну икону"
 
-#: src/dialogs/dock_settings_dialog.cpp:140
+#: src/dialogs/dock_settings_dialog.cpp:215
 msgid "Home Icon"
 msgstr "Хоме Ицон"
 
-#: src/dialogs/dock_settings_dialog.cpp:142
+#: src/dialogs/dock_settings_dialog.cpp:217
 msgid "Display Tooltips"
 msgstr "Прикажи савете"
 
-#: src/dialogs/dock_settings_dialog.cpp:144
+#: src/dialogs/dock_settings_dialog.cpp:219
 msgid "Display Preview"
 msgstr "Приказ прегледа"
 
-#: src/dialogs/dock_settings_dialog.cpp:146
+#: src/dialogs/dock_settings_dialog.cpp:221
 msgid "Close Preview After Activation"
 msgstr "Zatvori pregled nakon aktivacije"
 
-#: src/dialogs/dock_settings_dialog.cpp:148
+#: src/dialogs/dock_settings_dialog.cpp:223
 msgid "Manage All Workspaces"
 msgstr "Управљајте свим радним просторима"
 
-#: src/dialogs/dock_settings_dialog.cpp:150
+#: src/dialogs/dock_settings_dialog.cpp:225
 msgid "Icon Size"
 msgstr "Величина иконе"
 
-#: src/dialogs/dock_settings_dialog.cpp:152
+#: src/dialogs/dock_settings_dialog.cpp:227
 msgid "Preview Card Height"
 msgstr "Висина картице за преглед"
 
-#: src/dialogs/dock_settings_dialog.cpp:154
+#: src/dialogs/dock_settings_dialog.cpp:229
 msgid "Preview Show Delay (ms)"
 msgstr "Кашњење приказа приказа (мс)"
 
-#: src/dialogs/dock_settings_dialog.cpp:156
+#: src/dialogs/dock_settings_dialog.cpp:231
 msgid "Location"
 msgstr "Локација"
 
-#: src/dialogs/dock_settings_dialog.cpp:158
+#: src/dialogs/dock_settings_dialog.cpp:233
 msgid "Gradient Background"
 msgstr "Градиент Бацкгроунд"
 
-#: src/dialogs/dock_settings_dialog.cpp:160
+#: src/dialogs/dock_settings_dialog.cpp:235
 msgid "Rounded Corners"
 msgstr "Заобљени углови"
 
-#: src/dialogs/dock_settings_dialog.cpp:162
+#: src/dialogs/dock_settings_dialog.cpp:237
 msgid "Corner Radius"
 msgstr "Цорнер Радиус"
 
-#: src/dialogs/dock_settings_dialog.cpp:164
+#: src/dialogs/dock_settings_dialog.cpp:239
 msgid "Alignment"
 msgstr "Поравнање"
 
-#: src/dialogs/dock_settings_dialog.cpp:166
+#: src/dialogs/dock_settings_dialog.cpp:241
 msgid "Autohide"
 msgstr "Аутохиде"
 
-#: src/dialogs/dock_settings_dialog.cpp:254
+#: src/dialogs/dock_settings_dialog.cpp:330
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Примарни монитор"
 
-#: src/dialogs/dock_settings_dialog.cpp:293
+#: src/dialogs/dock_settings_dialog.cpp:369
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Стандардни ефекат"
 
-#: src/dialogs/dock_settings_dialog.cpp:295
+#: src/dialogs/dock_settings_dialog.cpp:371
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Ефекат зумирања"
 
-#: src/dialogs/dock_settings_dialog.cpp:297
+#: src/dialogs/dock_settings_dialog.cpp:373
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Ефекат замућења"
 
-#: src/dialogs/dock_settings_dialog.cpp:334
+#: src/dialogs/dock_settings_dialog.cpp:410
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Линијски индикатори"
 
-#: src/dialogs/dock_settings_dialog.cpp:336
+#: src/dialogs/dock_settings_dialog.cpp:412
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Тачкасти индикатори"
 
-#: src/dialogs/dock_settings_dialog.cpp:399
+#: src/dialogs/dock_settings_dialog.cpp:453
 msgid "Choose the indicator color"
 msgstr "Изаберите боју индикатора"
 
-#: src/dialogs/dock_settings_dialog.cpp:411
+#: src/dialogs/dock_settings_dialog.cpp:472
+msgid "Choose the preview color"
+msgstr "Izaberite boju pregleda"
+
+#: src/dialogs/dock_settings_dialog.cpp:484
 msgid "Select…"
 msgstr "Изаберите…"
 
-#: src/dialogs/dock_settings_dialog.cpp:413
+#: src/dialogs/dock_settings_dialog.cpp:486
 msgid "Use Default"
 msgstr "Користи подразумевано"
 
-#: src/dialogs/dock_settings_dialog.cpp:421
+#: src/dialogs/dock_settings_dialog.cpp:494
 msgid "Built-in DockLight icon"
 msgstr "Уграђена ДоцкЛигхт икона"
 
-#: src/dialogs/dock_settings_dialog.cpp:455
+#: src/dialogs/dock_settings_dialog.cpp:528
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "U suprotnom drži pregled otvoren dok ga pokazivač ne napusti"
 
-#: src/dialogs/dock_settings_dialog.cpp:462
+#: src/dialogs/dock_settings_dialog.cpp:535
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr ""
 "Примените радње са иконама и окретање точкића миша на свим радним просторима"
 
-#: src/dialogs/dock_settings_dialog.cpp:493
+#: src/dialogs/dock_settings_dialog.cpp:566
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0 бира аутоматско димензионисање; иначе користите 64 до 512 пиксела"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
-msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
+#: src/dialogs/dock_settings_dialog.cpp:583
+#, fuzzy
+msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr ""
 "Кашњење пре него што се појави преглед прозора, од 0 до 1000 милисекунди"
 
-#: src/dialogs/dock_settings_dialog.cpp:517
+#: src/dialogs/dock_settings_dialog.cpp:590
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Доња ивица"
 
-#: src/dialogs/dock_settings_dialog.cpp:519
+#: src/dialogs/dock_settings_dialog.cpp:592
 msgctxt "dock location"
 msgid "Left"
 msgstr "Лева ивица"
 
-#: src/dialogs/dock_settings_dialog.cpp:521
+#: src/dialogs/dock_settings_dialog.cpp:594
 msgctxt "dock location"
 msgid "Top"
 msgstr "Горња ивица"
 
-#: src/dialogs/dock_settings_dialog.cpp:523
+#: src/dialogs/dock_settings_dialog.cpp:596
 msgctxt "dock location"
 msgid "Right"
 msgstr "Десна ивица"
 
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:643
 msgid "Use the black-to-gray dock background gradient"
 msgstr "Користите позадински градијент од црне до сиве"
 
-#: src/dialogs/dock_settings_dialog.cpp:593
+#: src/dialogs/dock_settings_dialog.cpp:666
 msgid "-1 selects the automatic radius"
 msgstr "-1 бира аутоматски радијус"
 
-#: src/dialogs/dock_settings_dialog.cpp:599
+#: src/dialogs/dock_settings_dialog.cpp:672
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Старт-алигнед"
 
-#: src/dialogs/dock_settings_dialog.cpp:601
+#: src/dialogs/dock_settings_dialog.cpp:674
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Центрирано"
 
-#: src/dialogs/dock_settings_dialog.cpp:603
+#: src/dialogs/dock_settings_dialog.cpp:676
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Крајње поравнато"
 
-#: src/dialogs/dock_settings_dialog.cpp:605
+#: src/dialogs/dock_settings_dialog.cpp:678
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Попуните расположиви простор"
 
-#: src/dialogs/dock_settings_dialog.cpp:651
+#: src/dialogs/dock_settings_dialog.cpp:724
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Онемогућено"
 
-#: src/dialogs/dock_settings_dialog.cpp:653
+#: src/dialogs/dock_settings_dialog.cpp:726
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Аутоматски"
 
-#: src/dialogs/dock_settings_dialog.cpp:655
+#: src/dialogs/dock_settings_dialog.cpp:728
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Интелигентан"
 
-#: src/dialogs/dock_settings_dialog.cpp:1174
-#: src/dialogs/dock_settings_dialog.cpp:1209
+#: src/dialogs/dock_settings_dialog.cpp:1260
+#: src/dialogs/dock_settings_dialog.cpp:1295
 msgid "Select Home Icon"
 msgstr "Изаберите икону Почетна"
 
-#: src/dialogs/dock_settings_dialog.cpp:1179
+#: src/dialogs/dock_settings_dialog.cpp:1265
 msgid "_Cancel"
 msgstr "_Откажи"
 
-#: src/dialogs/dock_settings_dialog.cpp:1182
+#: src/dialogs/dock_settings_dialog.cpp:1268
 msgid "_Open"
 msgstr "_Отвори"
 
-#: src/dialogs/dock_settings_dialog.cpp:1246
+#: src/dialogs/dock_settings_dialog.cpp:1332
 msgid "Image Files"
 msgstr "Датотеке слика"
 
-#: src/dialogs/dock_about_dialog.cpp:56 src/dialogs/dock_about_dialog.cpp:85
+#: src/dialogs/dock_about_dialog.cpp:111 src/dialogs/dock_about_dialog.cpp:155
 msgid "About DockLight"
 msgstr "О ДоцкЛигхт-у"
 
-#: src/dialogs/dock_about_dialog.cpp:122
+#: src/dialogs/dock_about_dialog.cpp:192
 msgid "Version %1"
 msgstr "Верзија софтвера %1"
 
-#: src/dialogs/dock_about_dialog.cpp:125
+#: src/dialogs/dock_about_dialog.cpp:195
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui"
 msgstr ""
 "Лагана станица за апликације. ДОЦКЛИГХТЛИНЕБРЕАК Аутор и одржавалац: иоосамуи"
 
-#: src/monitors/dock_monitor_manager.cpp:471
+#: src/monitors/dock_monitor_manager.cpp:505
 msgid "No monitors are available."
 msgstr "Монитори нису доступни."
 
-#: src/monitors/dock_monitor_manager.cpp:477
+#: src/monitors/dock_monitor_manager.cpp:511
 msgid "Available monitors:"
 msgstr "Доступни монитори:"
 
-#: src/monitors/dock_monitor_manager.cpp:493
+#: src/monitors/dock_monitor_manager.cpp:527
 msgid "Scale"
 msgstr "Приказ скале"
 
-#: src/monitors/dock_monitor_manager.cpp:500
+#: src/monitors/dock_monitor_manager.cpp:534
 msgctxt "monitor status"
 msgid "Primary"
 msgstr "Примарни монитор"
 
-#: src/monitors/dock_monitor_manager.cpp:510
+#: src/monitors/dock_monitor_manager.cpp:544
 msgctxt "monitor status"
 msgid "default"
 msgstr "Подразумевани монитор"

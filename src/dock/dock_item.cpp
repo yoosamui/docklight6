@@ -1369,12 +1369,12 @@ void DockItem::initialize_context_menu()
                     m_application_controller
                         .close_all();
 
-                g_message(
-                    "Close all windows for %s: %s",
-                    m_app->get_id().c_str(),
-                    accepted
-                        ? "accepted"
-                        : "rejected");
+                if (!accepted)
+                {
+                    g_warning(
+                        "Close all windows rejected for %s",
+                        m_app->get_id().c_str());
+                }
             });
 
     m_minimize_item
@@ -1386,12 +1386,12 @@ void DockItem::initialize_context_menu()
                     m_application_controller
                         .minimize();
 
-                g_message(
-                    "Minimize windows for %s: %s",
-                    m_app->get_id().c_str(),
-                    accepted
-                        ? "accepted"
-                        : "rejected");
+                if (!accepted)
+                {
+                    g_warning(
+                        "Minimize windows rejected for %s",
+                        m_app->get_id().c_str());
+                }
             });
 
     m_maximize_item
@@ -1403,12 +1403,12 @@ void DockItem::initialize_context_menu()
                     m_application_controller
                         .maximize();
 
-                g_message(
-                    "Maximize window for %s: %s",
-                    m_app->get_id().c_str(),
-                    accepted
-                        ? "accepted"
-                        : "rejected");
+                if (!accepted)
+                {
+                    g_warning(
+                        "Maximize window rejected for %s",
+                        m_app->get_id().c_str());
+                }
             });
 
     m_unminimize_item
@@ -1420,12 +1420,12 @@ void DockItem::initialize_context_menu()
                     m_application_controller
                         .unminimize();
 
-                g_message(
-                    "Unminimize windows for %s: %s",
-                    m_app->get_id().c_str(),
-                    accepted
-                        ? "accepted"
-                        : "rejected");
+                if (!accepted)
+                {
+                    g_warning(
+                        "Unminimize windows rejected for %s",
+                        m_app->get_id().c_str());
+                }
             });
 
     auto context =
@@ -1702,16 +1702,16 @@ void DockItem::schedule_window_action(
                               .show_window(
                                   window_id);
 
-                g_message(
-                    "%s window %s for %s: %s",
-                    minimize
-                        ? "Minimize"
-                        : "Show",
-                    window_id.c_str(),
-                    m_app->get_id().c_str(),
-                    accepted
-                        ? "accepted"
-                        : "rejected");
+                if (!accepted)
+                {
+                    g_warning(
+                        "%s window %s rejected for %s",
+                        minimize
+                            ? "Minimize"
+                            : "Show",
+                        window_id.c_str(),
+                        m_app->get_id().c_str());
+                }
 
                 return false;
             });

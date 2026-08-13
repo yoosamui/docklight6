@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-06 23:54+0700\n"
+"POT-Creation-Date: 2026-08-13 08:37+0700\n"
 "PO-Revision-Date: 2026-08-06 14:07+0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -18,302 +18,311 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: src/dock/dock_item.cpp:269
+#: src/dock/dock_item.cpp:267
 msgid "_Attach"
 msgstr "_پین به داک"
 
-#: src/dock/dock_item.cpp:272
+#: src/dock/dock_item.cpp:270
 msgid "_Open New Window"
 msgstr "_پنجره جدید را باز کنید"
 
-#: src/dock/dock_item.cpp:275 src/dock/dock_home_item.cpp:55
+#: src/dock/dock_item.cpp:273 src/dock/dock_home_item.cpp:68
 msgid "_Close All"
 msgstr "_همه را ببند"
 
-#: src/dock/dock_item.cpp:278
+#: src/dock/dock_item.cpp:276
 msgid "_Minimize"
 msgstr "_به حداقل برسانید"
 
-#: src/dock/dock_item.cpp:281
+#: src/dock/dock_item.cpp:279
 msgid "_Unminimize"
 msgstr "_بازیابی"
 
-#: src/dock/dock_item.cpp:284
+#: src/dock/dock_item.cpp:282
 msgid "_Maximize"
 msgstr "_به حداکثر رساندن"
 
-#: src/dock/dock_home_item.cpp:43
+#: src/dock/dock_home_item.cpp:56
 msgid "_Settings"
 msgstr "_تنظیمات"
 
-#: src/dock/dock_home_item.cpp:46
+#: src/dock/dock_home_item.cpp:59
 msgid "_Minimize All"
 msgstr "_به حداقل رساندن همه"
 
-#: src/dock/dock_home_item.cpp:49
+#: src/dock/dock_home_item.cpp:62
 msgid "_Unminimize All"
 msgstr "_بازیابی همه"
 
-#: src/dock/dock_home_item.cpp:52
+#: src/dock/dock_home_item.cpp:65
 msgid "_Maximize All"
 msgstr "_به حداکثر رساندن همه"
 
-#: src/dock/dock_home_item.cpp:58
+#: src/dock/dock_home_item.cpp:71
 msgid "_About"
 msgstr "_درباره"
 
-#: src/dock/dock_home_item.cpp:61
+#: src/dock/dock_home_item.cpp:74
 msgid "_Exit"
 msgstr "_خروج"
 
-#: src/dock/dock_home_item.cpp:167
+#: src/dock/dock_home_item.cpp:183
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "صفحه اصلی"
 
-#: src/dialogs/dock_settings_dialog.cpp:65
-#: src/dialogs/dock_settings_dialog.cpp:90
+#: src/dialogs/dock_settings_dialog.cpp:122
+#: src/dialogs/dock_settings_dialog.cpp:163
 msgid "DockLight Settings"
 msgstr "تنظیمات DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:118
-#: src/dialogs/dock_about_dialog.cpp:112
+#: src/dialogs/dock_settings_dialog.cpp:191
+#: src/dialogs/dock_about_dialog.cpp:182
 msgid "_Close"
 msgstr "_ببند"
 
-#: src/dialogs/dock_settings_dialog.cpp:130
+#: src/dialogs/dock_settings_dialog.cpp:203
 msgid "Monitor"
 msgstr "نظارت کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:132
+#: src/dialogs/dock_settings_dialog.cpp:205
 msgid "Hover Effect"
 msgstr "اثر شناور"
 
-#: src/dialogs/dock_settings_dialog.cpp:134
+#: src/dialogs/dock_settings_dialog.cpp:207
 msgid "Indicator"
 msgstr "شاخص"
 
-#: src/dialogs/dock_settings_dialog.cpp:136
-#: src/dialogs/dock_settings_dialog.cpp:1322
-#: src/dialogs/dock_settings_dialog.cpp:1350
+#: src/dialogs/dock_settings_dialog.cpp:209
+#: src/dialogs/dock_settings_dialog.cpp:451
 msgid "Indicator Color"
 msgstr "رنگ نشانگر"
 
-#: src/dialogs/dock_settings_dialog.cpp:138
+#: src/dialogs/dock_settings_dialog.cpp:211
+#: src/dialogs/dock_settings_dialog.cpp:470
+msgid "Preview Color"
+msgstr "رنگ پیش‌نمایش"
+
+#: src/dialogs/dock_settings_dialog.cpp:213
 msgid "Display Home Icon"
 msgstr "نمایش نماد صفحه اصلی"
 
-#: src/dialogs/dock_settings_dialog.cpp:140
+#: src/dialogs/dock_settings_dialog.cpp:215
 msgid "Home Icon"
 msgstr "نماد صفحه اصلی"
 
-#: src/dialogs/dock_settings_dialog.cpp:142
+#: src/dialogs/dock_settings_dialog.cpp:217
 msgid "Display Tooltips"
 msgstr "نمایش نکات ابزار"
 
-#: src/dialogs/dock_settings_dialog.cpp:144
+#: src/dialogs/dock_settings_dialog.cpp:219
 msgid "Display Preview"
 msgstr "نمایش پیش نمایش"
 
-#: src/dialogs/dock_settings_dialog.cpp:146
+#: src/dialogs/dock_settings_dialog.cpp:221
 msgid "Close Preview After Activation"
 msgstr "پیش نمایش را بعد از فعال سازی ببندید"
 
-#: src/dialogs/dock_settings_dialog.cpp:148
+#: src/dialogs/dock_settings_dialog.cpp:223
 msgid "Manage All Workspaces"
 msgstr "مدیریت همه فضاهای کاری"
 
-#: src/dialogs/dock_settings_dialog.cpp:150
+#: src/dialogs/dock_settings_dialog.cpp:225
 msgid "Icon Size"
 msgstr "اندازه آیکون"
 
-#: src/dialogs/dock_settings_dialog.cpp:152
+#: src/dialogs/dock_settings_dialog.cpp:227
 msgid "Preview Card Height"
 msgstr "پیش نمایش ارتفاع کارت"
 
-#: src/dialogs/dock_settings_dialog.cpp:154
+#: src/dialogs/dock_settings_dialog.cpp:229
 msgid "Preview Show Delay (ms)"
 msgstr "پیش نمایش نمایش تاخیر (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:156
+#: src/dialogs/dock_settings_dialog.cpp:231
 msgid "Location"
 msgstr "مکان"
 
-#: src/dialogs/dock_settings_dialog.cpp:158
+#: src/dialogs/dock_settings_dialog.cpp:233
 msgid "Gradient Background"
 msgstr "پس زمینه گرادیان"
 
-#: src/dialogs/dock_settings_dialog.cpp:160
+#: src/dialogs/dock_settings_dialog.cpp:235
 msgid "Rounded Corners"
 msgstr "گوشه های گرد"
 
-#: src/dialogs/dock_settings_dialog.cpp:162
+#: src/dialogs/dock_settings_dialog.cpp:237
 msgid "Corner Radius"
 msgstr "شعاع گوشه"
 
-#: src/dialogs/dock_settings_dialog.cpp:164
+#: src/dialogs/dock_settings_dialog.cpp:239
 msgid "Alignment"
 msgstr "تراز"
 
-#: src/dialogs/dock_settings_dialog.cpp:166
+#: src/dialogs/dock_settings_dialog.cpp:241
 msgid "Autohide"
 msgstr "پنهان کردن خودکار"
 
-#: src/dialogs/dock_settings_dialog.cpp:254
+#: src/dialogs/dock_settings_dialog.cpp:330
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "مانیتور اولیه"
 
-#: src/dialogs/dock_settings_dialog.cpp:293
+#: src/dialogs/dock_settings_dialog.cpp:369
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "اثر استاندارد"
 
-#: src/dialogs/dock_settings_dialog.cpp:295
+#: src/dialogs/dock_settings_dialog.cpp:371
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "جلوه زوم"
 
-#: src/dialogs/dock_settings_dialog.cpp:297
+#: src/dialogs/dock_settings_dialog.cpp:373
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "جلوه تاری"
 
-#: src/dialogs/dock_settings_dialog.cpp:334
+#: src/dialogs/dock_settings_dialog.cpp:410
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "نشانگرهای خطی"
 
-#: src/dialogs/dock_settings_dialog.cpp:336
+#: src/dialogs/dock_settings_dialog.cpp:412
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "نشانگرهای نقطه"
 
-#: src/dialogs/dock_settings_dialog.cpp:399
+#: src/dialogs/dock_settings_dialog.cpp:453
 msgid "Choose the indicator color"
 msgstr "رنگ نشانگر را انتخاب کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:411
+#: src/dialogs/dock_settings_dialog.cpp:472
+msgid "Choose the preview color"
+msgstr "رنگ پیش‌نمایش را انتخاب کنید"
+
+#: src/dialogs/dock_settings_dialog.cpp:484
 msgid "Select…"
 msgstr "انتخاب…"
 
-#: src/dialogs/dock_settings_dialog.cpp:413
+#: src/dialogs/dock_settings_dialog.cpp:486
 msgid "Use Default"
 msgstr "از پیش فرض استفاده کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:421
+#: src/dialogs/dock_settings_dialog.cpp:494
 msgid "Built-in DockLight icon"
 msgstr "نماد DockLight داخلی"
 
-#: src/dialogs/dock_settings_dialog.cpp:455
+#: src/dialogs/dock_settings_dialog.cpp:528
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr ""
 "در غیر این صورت پیش نمایش را باز نگه دارید تا زمانی که نشانگر آن را ترک کند"
 
-#: src/dialogs/dock_settings_dialog.cpp:462
+#: src/dialogs/dock_settings_dialog.cpp:535
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr ""
 "اعمال نمادها و دوچرخه‌سواری با چرخ ماوس را در تمام فضاهای کاری اعمال کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:493
+#: src/dialogs/dock_settings_dialog.cpp:566
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr ""
 "0 اندازه خودکار را انتخاب می کند. در غیر این صورت از 64 تا 512 پیکسل استفاده "
 "کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
-msgid "Delay before a window preview appears, from 0 to 1000 milliseconds"
+#: src/dialogs/dock_settings_dialog.cpp:583
+#, fuzzy
+msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr "تاخیر قبل از نمایش پیش نمایش پنجره، از 0 تا 1000 میلی ثانیه"
 
-#: src/dialogs/dock_settings_dialog.cpp:517
+#: src/dialogs/dock_settings_dialog.cpp:590
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "لبه پایین"
 
-#: src/dialogs/dock_settings_dialog.cpp:519
+#: src/dialogs/dock_settings_dialog.cpp:592
 msgctxt "dock location"
 msgid "Left"
 msgstr "لبه سمت چپ"
 
-#: src/dialogs/dock_settings_dialog.cpp:521
+#: src/dialogs/dock_settings_dialog.cpp:594
 msgctxt "dock location"
 msgid "Top"
 msgstr "لبه بالایی"
 
-#: src/dialogs/dock_settings_dialog.cpp:523
+#: src/dialogs/dock_settings_dialog.cpp:596
 msgctxt "dock location"
 msgid "Right"
 msgstr "لبه سمت راست"
 
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:643
 msgid "Use the black-to-gray dock background gradient"
 msgstr "از گرادیان پس‌زمینه داک سیاه به خاکستری استفاده کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:593
+#: src/dialogs/dock_settings_dialog.cpp:666
 msgid "-1 selects the automatic radius"
 msgstr "-1 شعاع خودکار را انتخاب می کند"
 
-#: src/dialogs/dock_settings_dialog.cpp:599
+#: src/dialogs/dock_settings_dialog.cpp:672
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "تراز شروع"
 
-#: src/dialogs/dock_settings_dialog.cpp:601
+#: src/dialogs/dock_settings_dialog.cpp:674
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "متمرکز شده است"
 
-#: src/dialogs/dock_settings_dialog.cpp:603
+#: src/dialogs/dock_settings_dialog.cpp:676
 msgctxt "dock alignment"
 msgid "End"
 msgstr "تراز انتهایی"
 
-#: src/dialogs/dock_settings_dialog.cpp:605
+#: src/dialogs/dock_settings_dialog.cpp:678
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "فضای موجود را پر کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:651
+#: src/dialogs/dock_settings_dialog.cpp:724
 msgctxt "autohide mode"
 msgid "None"
 msgstr "از کار افتاده است"
 
-#: src/dialogs/dock_settings_dialog.cpp:653
+#: src/dialogs/dock_settings_dialog.cpp:726
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "خودکار"
 
-#: src/dialogs/dock_settings_dialog.cpp:655
+#: src/dialogs/dock_settings_dialog.cpp:728
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "باهوش"
 
-#: src/dialogs/dock_settings_dialog.cpp:1174
-#: src/dialogs/dock_settings_dialog.cpp:1209
+#: src/dialogs/dock_settings_dialog.cpp:1260
+#: src/dialogs/dock_settings_dialog.cpp:1295
 msgid "Select Home Icon"
 msgstr "نماد صفحه اصلی را انتخاب کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:1179
+#: src/dialogs/dock_settings_dialog.cpp:1265
 msgid "_Cancel"
 msgstr "_لغو"
 
-#: src/dialogs/dock_settings_dialog.cpp:1182
+#: src/dialogs/dock_settings_dialog.cpp:1268
 msgid "_Open"
 msgstr "_باز کن"
 
-#: src/dialogs/dock_settings_dialog.cpp:1246
+#: src/dialogs/dock_settings_dialog.cpp:1332
 msgid "Image Files"
 msgstr "فایل های تصویری"
 
-#: src/dialogs/dock_about_dialog.cpp:56 src/dialogs/dock_about_dialog.cpp:85
+#: src/dialogs/dock_about_dialog.cpp:111 src/dialogs/dock_about_dialog.cpp:155
 msgid "About DockLight"
 msgstr "درباره DockLight"
 
-#: src/dialogs/dock_about_dialog.cpp:122
+#: src/dialogs/dock_about_dialog.cpp:192
 msgid "Version %1"
 msgstr "نسخه نرم افزار %1"
 
-#: src/dialogs/dock_about_dialog.cpp:125
+#: src/dialogs/dock_about_dialog.cpp:195
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui"
@@ -321,24 +330,24 @@ msgstr ""
 "یک داک کاربردی سبک.\n"
 "نویسنده و نگهدارنده: yoosamui"
 
-#: src/monitors/dock_monitor_manager.cpp:471
+#: src/monitors/dock_monitor_manager.cpp:505
 msgid "No monitors are available."
 msgstr "هیچ مانیتوری در دسترس نیست"
 
-#: src/monitors/dock_monitor_manager.cpp:477
+#: src/monitors/dock_monitor_manager.cpp:511
 msgid "Available monitors:"
 msgstr "مانیتورهای موجود:"
 
-#: src/monitors/dock_monitor_manager.cpp:493
+#: src/monitors/dock_monitor_manager.cpp:527
 msgid "Scale"
 msgstr "مقیاس نمایش"
 
-#: src/monitors/dock_monitor_manager.cpp:500
+#: src/monitors/dock_monitor_manager.cpp:534
 msgctxt "monitor status"
 msgid "Primary"
 msgstr "مانیتور اولیه"
 
-#: src/monitors/dock_monitor_manager.cpp:510
+#: src/monitors/dock_monitor_manager.cpp:544
 msgctxt "monitor status"
 msgid "default"
 msgstr "مانیتور پیش فرض"
