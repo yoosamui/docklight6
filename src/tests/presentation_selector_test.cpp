@@ -97,6 +97,29 @@ void verifies_configuration_and_precedence()
     assert(selection.source ==
            "command line");
 
+    {
+        std::ofstream output(path);
+        output << "mode=xwayland,native\n";
+        assert(output);
+    }
+
+    g_setenv("XDG_SESSION_TYPE", "x11", true);
+    g_unsetenv("WAYLAND_DISPLAY");
+    g_setenv("DISPLAY", ":99", true);
+    selection = select_presentation(
+        std::nullopt,
+        path);
+    assert(selection.mode ==
+           PresentationMode::native);
+
+    g_setenv("XDG_SESSION_TYPE", "wayland", true);
+    g_setenv("WAYLAND_DISPLAY", "wayland-test", true);
+    selection = select_presentation(
+        std::nullopt,
+        path);
+    assert(selection.mode ==
+           PresentationMode::xwayland);
+
     g_remove(path.c_str());
     g_rmdir(directory.c_str());
 }

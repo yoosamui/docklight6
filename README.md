@@ -16,6 +16,8 @@ Here is the current desktop/session compatibility matrix. PASS means confirmed
 in a real desktop session; PENDING means implemented but still needs
 real-session verification.
 
+
+Current test state:
 | Desktop / WM | Session | Selected backend | Result |
 |---|---|---|---|
 | KDE Plasma / KWin | Wayland | KWinWindowBackend | PASS |

@@ -8,13 +8,14 @@ readonly CONFIGURATION_PATH="${CONFIGURATION_ROOT}/presentation.conf"
 usage()
 {
     cat <<'EOF'
-Usage: ./setup_presentation.sh <native|xwayland|status>
+Usage: ./setup_presentation.sh <native|xwayland|auto|status>
 
 Select how Docklight's GTK windows are presented. This is independent from
 the GNOME, Plasma, or X11 window-integration backend.
 
   native     Use the desktop session's native GTK presentation
   xwayland   Use X11 dock windows through XWayland in a Wayland session
+  auto       Prefer XWayland when available, otherwise use native presentation
   status     Report configuration and current-session availability
 
 The setting is stored per user and does not modify Docklight's desktop entry.
@@ -28,25 +29,27 @@ fail()
     exit 1
 }
 
-configured_mode()
+configured_modes()
 {
-    local mode=""
+    local modes=""
 
     if [[ -f ${CONFIGURATION_PATH} ]]; then
-        mode="$(sed -n \
+        modes="$(sed -n \
             's/^[[:space:]]*mode[[:space:]]*=[[:space:]]*\([^[:space:]#]*\).*$/\1/p' \
             "${CONFIGURATION_PATH}" | head -n 1)"
-        mode="${mode,,}"
+        modes="${modes,,}"
     fi
 
-    case "${mode}" in
-    native|xwayland)
-        echo "${mode}"
-        ;;
-    *)
-        echo native
-        ;;
-    esac
+    local mode=""
+    IFS=',' read -r -a configured <<<"${modes}"
+    for mode in "${configured[@]}"; do
+        [[ ${mode} == native || ${mode} == xwayland ]] || {
+            echo native
+            return
+        }
+    done
+
+    [[ -n ${modes} ]] && echo "${modes}" || echo native
 }
 
 write_mode()
@@ -100,7 +103,7 @@ running_mode()
 print_status()
 {
     local mode=""
-    mode="$(configured_mode)"
+    mode="$(configured_modes)"
 
     echo "Docklight presentation"
     echo "  Config path: ${CONFIGURATION_PATH}"
@@ -114,14 +117,15 @@ print_status()
     )"
     echo "  Running mode: $(running_mode)"
 
-    if [[ ${mode} == xwayland && -z ${DISPLAY:-} ]]; then
-        echo "  Configuration usable now: no"
-    elif [[ ${mode} == xwayland &&
-            ${XDG_SESSION_TYPE:-} != wayland &&
-            -z ${WAYLAND_DISPLAY:-} ]]; then
-        echo "  Configuration usable now: no"
-    else
+    if [[ ,${mode}, == *,native,* ]] ||
+        { [[ ,${mode}, == *,xwayland,* ]] &&
+          [[ -n ${DISPLAY:-} ]] &&
+          { [[ ${XDG_SESSION_TYPE:-} == wayland ]] ||
+            [[ -n ${WAYLAND_DISPLAY:-} ]]; }; }
+    then
         echo "  Configuration usable now: yes"
+    else
+        echo "  Configuration usable now: no"
     fi
 }
 
@@ -143,6 +147,11 @@ xwayland)
     write_mode xwayland
     echo "Docklight presentation configured: xwayland"
     echo "Window integration remains: $(session_backend)"
+    echo "Restart Docklight to apply the change."
+    ;;
+auto)
+    write_mode xwayland,native
+    echo "Docklight presentation configured: xwayland,native"
     echo "Restart Docklight to apply the change."
     ;;
 status)

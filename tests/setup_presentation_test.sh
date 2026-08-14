@@ -40,6 +40,21 @@ run_setup native >/dev/null
 grep -Fqx 'mode=native' \
     "${TEST_DIRECTORY}/config/docklight6/presentation.conf"
 
+run_setup auto >/dev/null
+grep -Fqx 'mode=xwayland,native' \
+    "${TEST_DIRECTORY}/config/docklight6/presentation.conf"
+grep -Fq 'Configured mode: xwayland,native' \
+    <<<"$(run_setup status)"
+
+x11_status="$(env \
+    XDG_CONFIG_HOME="${TEST_DIRECTORY}/config" \
+    XDG_SESSION_TYPE=x11 \
+    WAYLAND_DISPLAY= \
+    DISPLAY=:99 \
+    XDG_CURRENT_DESKTOP=KDE \
+    "${SOURCE_DIRECTORY}/setup_presentation.sh" status)"
+grep -Fq 'Configuration usable now: yes' <<<"${x11_status}"
+
 if env \
     XDG_CONFIG_HOME="${TEST_DIRECTORY}/invalid" \
     XDG_SESSION_TYPE=wayland \

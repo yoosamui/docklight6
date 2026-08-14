@@ -15,6 +15,7 @@
 #include <cctype>
 #include <cstdlib>
 #include <fstream>
+#include <vector>
 
 namespace
 {
@@ -55,8 +56,8 @@ std::string normalized(std::string value)
     return value;
 }
 
-std::optional<PresentationMode>
-read_configured_mode(
+std::vector<PresentationMode>
+read_configured_modes(
     const std::string &path)
 {
     std::ifstream input(path);
@@ -74,12 +75,28 @@ read_configured_mode(
                 sizeof(prefix) - 1,
                 prefix) == 0)
         {
-            return parse_presentation_mode(
-                line.substr(sizeof(prefix) - 1));
+            std::vector<PresentationMode> modes;
+            auto values = line.substr(
+                sizeof(prefix) - 1);
+            std::size_t begin = 0;
+
+            while (begin <= values.size())
+            {
+                const auto end = values.find(',', begin);
+                const auto mode = parse_presentation_mode(
+                    values.substr(begin, end - begin));
+                if (mode)
+                    modes.push_back(*mode);
+                if (end == std::string::npos)
+                    break;
+                begin = end + 1;
+            }
+
+            return modes;
         }
     }
 
-    return std::nullopt;
+    return {};
 }
 
 std::string environment_value(
@@ -87,6 +104,20 @@ std::string environment_value(
 {
     const auto value = std::getenv(name);
     return value ? value : "";
+}
+
+bool presentation_mode_available(
+    PresentationMode mode)
+{
+    if (mode == PresentationMode::native)
+        return true;
+
+    const auto session_type = normalized(
+        environment_value("XDG_SESSION_TYPE"));
+
+    return (session_type == "wayland" ||
+            !environment_value("WAYLAND_DISPLAY").empty()) &&
+           !environment_value("DISPLAY").empty();
 }
 
 }
@@ -180,15 +211,19 @@ PresentationSelection select_presentation(
         configuration_path.empty()
             ? presentation_configuration_path()
             : configuration_path;
-    const auto configured_mode =
-        read_configured_mode(path);
+    const auto configured_modes =
+        read_configured_modes(path);
 
-    if (configured_mode)
+    for (const auto mode : configured_modes)
     {
-        return {
-            *configured_mode,
-            "configuration"};
+        if (presentation_mode_available(mode))
+            return {mode, "configuration"};
     }
+
+    // Preserve the useful startup error for a configuration containing only
+    // modes that are unavailable in the current session.
+    if (!configured_modes.empty())
+        return {configured_modes.front(), "configuration"};
 
     return {};
 }
