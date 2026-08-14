@@ -124,6 +124,10 @@ private:
         int height) const;
     void schedule_icon_refresh();
     void reload_icons();
+    void start_tooltip_show_timer(
+        Gtk::Widget &item,
+        const Glib::ustring &text,
+        bool preserve_pending_preview = false);
     void show_tooltip(
         Gtk::Widget &item,
         const Glib::ustring &text,
@@ -218,6 +222,7 @@ private:
 
     Gtk::Widget *m_pending_item = nullptr;
     Gtk::Widget *m_hovered_item = nullptr;
+    Gtk::Widget *m_tooltip_item = nullptr;
     unsigned long long
         m_tooltip_request_generation = 0;
     std::string m_pending_preview_desktop_id;

@@ -22,6 +22,9 @@ const autohideControllerPath = path.resolve(
 const dockWindowControllerPath = path.resolve(
     __dirname,
     "../dock/dock_window_controller.cpp");
+const dockItemPath = path.resolve(
+    __dirname,
+    "../dock/dock_item.cpp");
 const revealWindowPath = path.resolve(
     __dirname,
     "../autohide/dock_reveal_window.cpp");
@@ -48,6 +51,10 @@ const autohideControllerSource = fs.readFileSync(
     autohideControllerPath, "utf8");
 const dockWindowControllerSource = fs.readFileSync(
     dockWindowControllerPath, "utf8");
+const dockItemSource = fs.readFileSync(
+    dockItemPath, "utf8");
+const registryChangedHandler = dockWindowControllerSource.match(
+    /m_window_registry_changed\s*=[\s\S]*?m_window_geometry_changed\s*=/)?.[0];
 const revealWindowSource = fs.readFileSync(
     revealWindowPath, "utf8");
 const previewWindowSource = fs.readFileSync(
@@ -276,6 +283,33 @@ assert.match(
     dockWindowControllerSource,
     /monitor_geometry_changed[\s\S]*?output_changed[\s\S]*?prepare_x11_monitor_change\(\)[\s\S]*?m_autohide_controller->set_monitor/,
     "moving or resizing the selected output must invalidate cached X11 placement state");
+assert.match(
+    dockWindowControllerSource,
+    /requested_item == m_hovered_item/,
+    "a delayed tooltip must still belong to the currently hovered item");
+assert.ok(
+    registryChangedHandler,
+    "the window-registry change handler must remain discoverable");
+assert.doesNotMatch(
+    registryChangedHandler,
+    /cancel_show_timer\(\)/,
+    "mapping an X11 tooltip must not cancel the next item's reveal timer");
+assert.match(
+    dockWindowControllerSource,
+    /m_hovered_item == &item &&[\s\S]*?m_pending_item == &item[\s\S]*?m_tooltip_item == &item/,
+    "a stale hovered-item pointer must not suppress a new tooltip request");
+assert.match(
+    dockItemSource,
+    /DockItem::on_enter_notify_event[\s\S]*?schedule_show_tooltip[\s\S]*?DockItem::on_leave_notify_event[\s\S]*?schedule_hide_tooltip/,
+    "each item must start and cancel tooltip timing from its own crossing events");
+assert.match(
+    dockWindowControllerSource,
+    /DockWindowController::schedule_show_preview[\s\S]*?start_tooltip_show_timer\([\s\S]*?item\.tooltip_text\(\)[\s\S]*?m_preview_show_timer/,
+    "grouped dock items must show a delayed label before their preview");
+assert.match(
+    dockWindowControllerSource,
+    /m_settings\.preview_show_delay\(\) \+[\s\S]*?TOOLTIP_SHOW_DELAY_MS[\s\S]*?TOOLTIP_REMAP_DELAY_MS[\s\S]*?TOOLTIP_FADE_DURATION_MS/,
+    "the preview delay must begin after the grouped-item tooltip is fully visible");
 assert.match(
     revealWindowSource,
     /DockRevealWindow::set_monitor[\s\S]*?m_monitor_geometry[\s\S]*?m_has_placement[\s\S]*?apply_x11_placement\(\)/,

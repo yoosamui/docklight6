@@ -389,19 +389,12 @@ void DockWindow::request_reveal()
 void DockWindow::schedule_show_tooltip(
     DockItem &item)
 {
-    // A DockItem with windows represents a group. Grouped items use only the
-    // preview path; label tooltips are reserved for launchers whose group is
-    // empty.
     if (!item.window_entries().empty())
-    {
         m_controller->schedule_show_preview(item);
-    }
     else
-    {
         m_controller->schedule_show_tooltip(
             item,
             item.tooltip_text());
-    }
 }
 
 void DockWindow::schedule_show_tooltip(

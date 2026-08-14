@@ -876,20 +876,21 @@ bool DockItem::on_enter_notify_event(
     if (m_dock.preview_input_forwarding())
         return false;
 
-    if ((event &&
-         event->detail ==
-             GDK_NOTIFY_INFERIOR) ||
-        m_hovered)
+    if (event &&
+        event->detail ==
+            GDK_NOTIFY_INFERIOR)
     {
         return false;
     }
 
-    m_application_controller
-        .reset_window_cycle();
-    m_scroll_delta_y = 0.0;
-
-    m_hovered = true;
-    apply_hover_effect();
+    if (!m_hovered)
+    {
+        m_application_controller
+            .reset_window_cycle();
+        m_scroll_delta_y = 0.0;
+        m_hovered = true;
+        apply_hover_effect();
+    }
 
     m_dock.schedule_show_tooltip(*this);
 
@@ -902,19 +903,20 @@ bool DockItem::on_leave_notify_event(
     if (m_dock.preview_input_forwarding())
         return false;
 
-    if ((event &&
-         event->detail ==
-             GDK_NOTIFY_INFERIOR) ||
-        !m_hovered)
+    if (event &&
+        event->detail ==
+            GDK_NOTIFY_INFERIOR)
     {
         return false;
     }
 
-    m_hovered = false;
-    apply_hover_effect();
+    if (m_hovered)
+    {
+        m_hovered = false;
+        apply_hover_effect();
+    }
 
     m_dock.schedule_hide_tooltip(*this);
-
     return false;
 }
 
