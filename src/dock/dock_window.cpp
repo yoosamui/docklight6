@@ -1072,35 +1072,359 @@ void DockWindow::capture_x11_base_workarea(
     if (best_workareas.empty())
     {
         m_x11_base_workarea = fallback;
-        m_has_x11_base_workarea = true;
-        return;
+    }
+    else
+    {
+        workareas = std::move(best_workareas);
+
+        const std::size_t offset =
+            static_cast<std::size_t>(desktop) * 4;
+        const int root_x =
+            static_cast<int>(workareas[offset]);
+        const int root_y =
+            static_cast<int>(workareas[offset + 1]);
+        const int root_right = root_x +
+            static_cast<int>(workareas[offset + 2]);
+        const int root_bottom = root_y +
+            static_cast<int>(workareas[offset + 3]);
+
+        const int right = std::min(
+            output.x + output.width,
+            root_right);
+        const int bottom = std::min(
+            output.y + output.height,
+            root_bottom);
+
+        m_x11_base_workarea = {
+            std::max(output.x, root_x),
+            std::max(output.y, root_y),
+            std::max(1, right - std::max(output.x, root_x)),
+            std::max(1, bottom - std::max(output.y, root_y))};
     }
 
-    workareas = std::move(best_workareas);
+    // KWin reserves only the Plasma panel's content thickness in
+    // _NET_WORKAREA. A floating panel's X11 window can be taller because it
+    // also contains its outside margin and shadow (for example, a 60 px
+    // window with a 44 px top strut). Placing another dock at the reported
+    // work-area edge then makes the two surfaces visibly overlap. Inspect
+    // mapped dock clients which own a strut and keep our base area outside
+    // their visible panel geometry. Plasma centres the strut-sized panel in
+    // the larger X11 window, so half of the excess dimension is an outer gap
+    // rather than occupied panel content.
+    const Atom client_list_atom = XInternAtom(
+        xdisplay, "_NET_CLIENT_LIST", False);
+    const Atom strut_partial_atom = XInternAtom(
+        xdisplay, "_NET_WM_STRUT_PARTIAL", False);
+    const Atom kde_blur_region_atom = XInternAtom(
+        xdisplay, "_KDE_NET_WM_BLUR_BEHIND_REGION", False);
 
-    const std::size_t offset =
-        static_cast<std::size_t>(desktop) * 4;
-    const int root_x =
-        static_cast<int>(workareas[offset]);
-    const int root_y =
-        static_cast<int>(workareas[offset + 1]);
-    const int root_right = root_x +
-        static_cast<int>(workareas[offset + 2]);
-    const int root_bottom = root_y +
-        static_cast<int>(workareas[offset + 3]);
+    auto read_property =
+        [xdisplay](
+            ::Window window,
+            Atom property,
+            Atom requested_type,
+            unsigned long requested,
+            std::vector<unsigned long> &values)
+        {
+            Atom actual_type = None;
+            int actual_format = 0;
+            unsigned long item_count = 0;
+            unsigned long bytes_after = 0;
+            unsigned char *data = nullptr;
 
-    const int right = std::min(
-        output.x + output.width,
-        root_right);
-    const int bottom = std::min(
-        output.y + output.height,
-        root_bottom);
+            const int status = XGetWindowProperty(
+                xdisplay,
+                window,
+                property,
+                0,
+                static_cast<long>(requested),
+                False,
+                requested_type,
+                &actual_type,
+                &actual_format,
+                &item_count,
+                &bytes_after,
+                &data);
 
-    m_x11_base_workarea = {
-        std::max(output.x, root_x),
-        std::max(output.y, root_y),
-        std::max(1, right - std::max(output.x, root_x)),
-        std::max(1, bottom - std::max(output.y, root_y))};
+            if (status != Success ||
+                actual_type != requested_type ||
+                actual_format != 32 ||
+                !data)
+            {
+                if (data)
+                    XFree(data);
+                return false;
+            }
+
+            const auto *items =
+                reinterpret_cast<unsigned long *>(data);
+            values.assign(items, items + item_count);
+            XFree(data);
+            return true;
+        };
+
+    std::vector<unsigned long> clients;
+    // A client can disappear between _NET_CLIENT_LIST and the property or
+    // geometry request. Do not let that ordinary X11 race terminate DockLight.
+    gdk_x11_display_error_trap_push(display->gobj());
+    if (read_property(
+            root,
+            client_list_atom,
+            XA_WINDOW,
+            4096,
+            clients))
+    {
+        ::Window own_window = None;
+        if (get_realized())
+        {
+            auto gdk_window = get_window();
+            if (gdk_window)
+            {
+                own_window = gdk_x11_window_get_xid(
+                    gdk_window->gobj());
+            }
+        }
+
+        const int output_right = output.x + output.width;
+        const int output_bottom = output.y + output.height;
+        int area_left = m_x11_base_workarea.x;
+        int area_top = m_x11_base_workarea.y;
+        int area_right = area_left + m_x11_base_workarea.width;
+        int area_bottom = area_top + m_x11_base_workarea.height;
+
+        auto ranges_overlap = [](int first_start,
+                                 int first_end,
+                                 int second_start,
+                                 int second_end)
+        {
+            return first_start < second_end &&
+                   second_start < first_end;
+        };
+
+        for (const auto client_value : clients)
+        {
+            const ::Window client =
+                static_cast<::Window>(client_value);
+            if (client == own_window)
+                continue;
+
+            std::vector<unsigned long> struts;
+            if (!read_property(
+                    client,
+                    strut_partial_atom,
+                    XA_CARDINAL,
+                    12,
+                    struts) ||
+                struts.size() < 12)
+            {
+                continue;
+            }
+
+            XWindowAttributes attributes{};
+            if (!XGetWindowAttributes(
+                    xdisplay, client, &attributes) ||
+                attributes.map_state != IsViewable)
+            {
+                continue;
+            }
+
+            int client_x = 0;
+            int client_y = 0;
+            ::Window child = None;
+            if (!XTranslateCoordinates(
+                    xdisplay,
+                    client,
+                    root,
+                    0,
+                    0,
+                    &client_x,
+                    &client_y,
+                    &child))
+            {
+                continue;
+            }
+
+            const int client_right =
+                client_x + attributes.width;
+            const int client_bottom =
+                client_y + attributes.height;
+            const int horizontal_outer_gap =
+                std::max(
+                    0,
+                    (attributes.width -
+                     static_cast<int>(
+                         std::max(struts[0], struts[1]))) /
+                        2);
+            const int vertical_outer_gap =
+                std::max(
+                    0,
+                    (attributes.height -
+                     static_cast<int>(
+                         std::max(struts[2], struts[3]))) /
+                        2);
+            int visible_left =
+                client_x + horizontal_outer_gap;
+            int visible_top =
+                client_y + vertical_outer_gap;
+            int visible_right =
+                client_right - horizontal_outer_gap;
+            int visible_bottom =
+                client_bottom - vertical_outer_gap;
+
+            // Plasma publishes the painted panel region as local rectangles.
+            // This remains accurate when a right/bottom EWMH strut is measured
+            // from the far edge of a multi-monitor root window and therefore
+            // cannot be interpreted as the panel's local thickness.
+            std::vector<unsigned long> blur_region;
+            if (read_property(
+                    client,
+                    kde_blur_region_atom,
+                    XA_CARDINAL,
+                    4096,
+                    blur_region) &&
+                blur_region.size() >= 4 &&
+                blur_region.size() % 4 == 0)
+            {
+                int region_left = attributes.width;
+                int region_top = attributes.height;
+                int region_right = 0;
+                int region_bottom = 0;
+                bool has_region = false;
+
+                for (std::size_t index = 0;
+                     index + 3 < blur_region.size();
+                     index += 4)
+                {
+                    const int rectangle_x =
+                        static_cast<int>(blur_region[index]);
+                    const int rectangle_y =
+                        static_cast<int>(blur_region[index + 1]);
+                    const int rectangle_width =
+                        static_cast<int>(blur_region[index + 2]);
+                    const int rectangle_height =
+                        static_cast<int>(blur_region[index + 3]);
+
+                    if (rectangle_width <= 0 ||
+                        rectangle_height <= 0 ||
+                        rectangle_x < 0 ||
+                        rectangle_y < 0 ||
+                        rectangle_x + rectangle_width >
+                            attributes.width ||
+                        rectangle_y + rectangle_height >
+                            attributes.height)
+                    {
+                        continue;
+                    }
+
+                    region_left = std::min(
+                        region_left,
+                        rectangle_x);
+                    region_top = std::min(
+                        region_top,
+                        rectangle_y);
+                    region_right = std::max(
+                        region_right,
+                        rectangle_x + rectangle_width);
+                    region_bottom = std::max(
+                        region_bottom,
+                        rectangle_y + rectangle_height);
+                    has_region = true;
+                }
+
+                if (has_region)
+                {
+                    visible_left = client_x + region_left;
+                    visible_top = client_y + region_top;
+                    visible_right = client_x + region_right;
+                    visible_bottom = client_y + region_bottom;
+                }
+            }
+
+            if (struts[2] > 0 &&
+                ranges_overlap(
+                    static_cast<int>(struts[8]),
+                    static_cast<int>(struts[9]) + 1,
+                    output.x,
+                    output_right) &&
+                ranges_overlap(
+                    client_x,
+                    client_right,
+                    output.x,
+                    output_right))
+            {
+                area_top = std::max(
+                    area_top,
+                    std::min(
+                        output_bottom,
+                        visible_bottom));
+            }
+
+            if (struts[3] > 0 &&
+                ranges_overlap(
+                    static_cast<int>(struts[10]),
+                    static_cast<int>(struts[11]) + 1,
+                    output.x,
+                    output_right) &&
+                ranges_overlap(
+                    client_x,
+                    client_right,
+                    output.x,
+                    output_right))
+            {
+                area_bottom = std::min(
+                    area_bottom,
+                    std::max(
+                        output.y,
+                        visible_top));
+            }
+
+            if (struts[0] > 0 &&
+                ranges_overlap(
+                    static_cast<int>(struts[4]),
+                    static_cast<int>(struts[5]) + 1,
+                    output.y,
+                    output_bottom) &&
+                ranges_overlap(
+                    client_y,
+                    client_bottom,
+                    output.y,
+                    output_bottom))
+            {
+                area_left = std::max(
+                    area_left,
+                    std::min(
+                        output_right,
+                        visible_right));
+            }
+
+            if (struts[1] > 0 &&
+                ranges_overlap(
+                    static_cast<int>(struts[6]),
+                    static_cast<int>(struts[7]) + 1,
+                    output.y,
+                    output_bottom) &&
+                ranges_overlap(
+                    client_y,
+                    client_bottom,
+                    output.y,
+                    output_bottom))
+            {
+                area_right = std::min(
+                    area_right,
+                    std::max(
+                        output.x,
+                        visible_left));
+            }
+        }
+
+        m_x11_base_workarea = {
+            area_left,
+            area_top,
+            std::max(1, area_right - area_left),
+            std::max(1, area_bottom - area_top)};
+    }
+    gdk_x11_display_error_trap_pop_ignored(display->gobj());
+
     m_has_x11_base_workarea = true;
 
     g_message(

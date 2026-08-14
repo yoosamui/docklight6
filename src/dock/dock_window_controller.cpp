@@ -498,6 +498,17 @@ void DockWindowController::apply_configuration(
     m_pending_tooltip_text.clear();
     hide_tooltip();
 
+    const bool location_changed =
+        m_layout_request.location !=
+        configuration.layout_request.location;
+
+    if (location_changed)
+    {
+        // The existing X11 base area may describe a panel which occupied the
+        // previous edge. Re-sample dock clients before placing the new edge.
+        m_window.prepare_x11_monitor_change();
+    }
+
     m_settings =
         configuration.settings;
 

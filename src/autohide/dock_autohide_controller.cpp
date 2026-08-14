@@ -492,20 +492,30 @@ ScreenPosition DockAutohideController::hidden_x11_position() const
     if (m_placement.anchor_top &&
         m_placement.is_horizontal())
     {
-        hidden.y -= height;
+        hidden.y -= m_placement.margin_top > 0
+            ? std::min(height, m_placement.margin_top)
+            : height;
     }
     else if (m_placement.anchor_bottom &&
              m_placement.is_horizontal())
     {
-        hidden.y += height;
+        hidden.y += m_placement.margin_bottom > 0
+            ? std::min(height, m_placement.margin_bottom)
+            : height;
     }
-    else if (m_placement.anchor_left)
+    else if (m_placement.anchor_left &&
+             m_placement.is_vertical())
     {
-        hidden.x -= width;
+        hidden.x -= m_placement.margin_left > 0
+            ? std::min(width, m_placement.margin_left)
+            : width;
     }
-    else if (m_placement.anchor_right)
+    else if (m_placement.anchor_right &&
+             m_placement.is_vertical())
     {
-        hidden.x += width;
+        hidden.x += m_placement.margin_right > 0
+            ? std::min(width, m_placement.margin_right)
+            : width;
     }
 
     return hidden;
@@ -619,6 +629,19 @@ bool DockAutohideController::advance_x11_animation()
     const double eased = m_animating_to_hidden
         ? progress * progress * progress
         : 1.0 - std::pow(1.0 - progress, 3.0);
+    const bool selected_edge_is_inset =
+        (m_placement.is_horizontal() &&
+         m_placement.anchor_top &&
+         m_placement.margin_top > 0) ||
+        (m_placement.is_horizontal() &&
+         m_placement.anchor_bottom &&
+         m_placement.margin_bottom > 0) ||
+        (m_placement.is_vertical() &&
+         m_placement.anchor_left &&
+         m_placement.margin_left > 0) ||
+        (m_placement.is_vertical() &&
+         m_placement.anchor_right &&
+         m_placement.margin_right > 0);
 
     const int x = static_cast<int>(std::lround(
         m_animation_start_x +
@@ -630,7 +653,14 @@ bool DockAutohideController::advance_x11_animation()
             eased));
     m_window.move(x, y);
 
-    if (!m_animating_to_hidden)
+    if (m_animating_to_hidden &&
+        selected_edge_is_inset)
+    {
+        // An existing panel can be narrower than DockLight. Fade the final
+        // part of the inset-edge slide so no opaque pixels sweep over it.
+        m_window.set_opacity(1.0 - eased);
+    }
+    else
     {
         m_window.set_opacity(
             X11_REVEAL_INITIAL_OPACITY +

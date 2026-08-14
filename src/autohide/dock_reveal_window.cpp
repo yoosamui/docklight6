@@ -239,23 +239,6 @@ DockRevealWindow::calculate_toplevel_geometry() const
     int x = m_monitor_geometry.x;
     int y = m_monitor_geometry.y;
 
-    MonitorGeometry workarea =
-        m_monitor_geometry;
-    if (m_monitor)
-    {
-        Gdk::Rectangle geometry;
-        m_monitor->get_workarea(geometry);
-        if (geometry.get_width() > 0 &&
-            geometry.get_height() > 0)
-        {
-            workarea = {
-                geometry.get_x(),
-                geometry.get_y(),
-                geometry.get_width(),
-                geometry.get_height()};
-        }
-    }
-
     if (horizontal)
     {
         width = m_placement.width > 0
@@ -275,10 +258,15 @@ DockRevealWindow::calculate_toplevel_geometry() const
         else
             x += (m_monitor_geometry.width - width) / 2;
 
+        // Placement margins already include the compositor work-area inset
+        // and, on Plasma X11, the panel's visible painted geometry. Using
+        // Gdk::Monitor::get_workarea() here would put the reveal strip back
+        // at KWin's smaller strut edge instead of beside the visible dock.
         if (m_placement.anchor_top)
-            y = workarea.y;
+            y += m_placement.margin_top;
         else if (m_placement.anchor_bottom)
-            y = workarea.y + workarea.height - height;
+            y += m_monitor_geometry.height -
+                m_placement.margin_bottom - height;
     }
     else
     {
@@ -300,9 +288,10 @@ DockRevealWindow::calculate_toplevel_geometry() const
             y += (m_monitor_geometry.height - height) / 2;
 
         if (m_placement.anchor_left)
-            x = workarea.x;
+            x += m_placement.margin_left;
         else if (m_placement.anchor_right)
-            x = workarea.x + workarea.width - width;
+            x += m_monitor_geometry.width -
+                m_placement.margin_right - width;
     }
 
     geometry.x = x;
