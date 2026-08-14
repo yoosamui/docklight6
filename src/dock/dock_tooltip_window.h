@@ -67,8 +67,13 @@ public:
 private:
     void cancel_reveal();
     void cancel_opacity_animation();
+    void cancel_motion_animation();
     void start_opacity_animation(bool hiding);
     bool advance_opacity_animation();
+    void start_motion_animation(
+        const ScreenPosition &position,
+        int width);
+    bool advance_motion_animation();
     void make_input_transparent();
     void apply_position(
         DockLocation location,
@@ -91,18 +96,26 @@ private:
 
     sigc::connection m_reveal_timer;
     sigc::connection m_opacity_timer;
+    sigc::connection m_motion_timer;
 
     DockLocation m_request_location =
         DockLocation::bottom;
 
     ScreenPosition m_request_position;
+    ScreenPosition m_displayed_position;
+    ScreenPosition m_motion_start_position;
+    ScreenPosition m_motion_target_position;
     MonitorGeometry m_monitor_geometry;
 
     int m_tooltip_height = DockLayoutMetrics::TOOLTIP_HEIGHT;
     int m_tooltip_distance = DockLayoutMetrics::TOOLTIP_DISTANCE;
     int m_icon_size = DockLayoutMetrics::BASE_ICON_SIZE;
     int m_request_width = 0;
+    int m_displayed_width = 0;
+    int m_motion_start_width = 0;
+    int m_motion_target_width = 0;
     gint64 m_opacity_animation_start_us = 0;
+    gint64 m_motion_animation_start_us = 0;
     double m_opacity_animation_start = 1.0;
     double m_opacity_animation_target = 1.0;
     int m_animation_start_x = 0;
