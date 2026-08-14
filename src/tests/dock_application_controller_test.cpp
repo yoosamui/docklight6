@@ -1203,6 +1203,152 @@ void verifies_launcher_click_ignores_unminimizable_auxiliary()
                 ->minimized);
 }
 
+void verifies_remote_normal_group_toggles_instead_of_current_pip()
+{
+    FakeWindowBackend backend;
+
+    auto browser_one = window(
+        "browser-one",
+        true,
+        "org.mozilla.firefox");
+    browser_one.on_current_desktop = false;
+    browser_one.desktop_numbers = {2};
+
+    auto browser_two = window(
+        "browser-two",
+        true,
+        "org.mozilla.firefox");
+    browser_two.on_current_desktop = false;
+    browser_two.desktop_numbers = {2};
+
+    auto picture_in_picture = window(
+        "picture-in-picture",
+        false,
+        "org.mozilla.firefox");
+    picture_in_picture.desktop_numbers = {1};
+    picture_in_picture.skip_taskbar = true;
+    picture_in_picture.include_when_skip_taskbar = true;
+
+    backend.set_snapshot(
+        {browser_one, browser_two, picture_in_picture},
+        {"browser-one", "browser-two", "picture-in-picture"},
+        "picture-in-picture");
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {"org.mozilla.firefox.desktop"});
+
+    assert(controller.toggle_minimized());
+    assert(!registry
+                .find_window("browser-one")
+                ->minimized);
+    assert(!registry
+                .find_window("browser-two")
+                ->minimized);
+    assert(!registry
+                .find_window("picture-in-picture")
+                ->minimized);
+    assert(registry.active_window() ==
+           std::optional<WindowId>{
+               "browser-two"});
+}
+
+void verifies_normal_group_reveals_while_pip_stays_visible()
+{
+    FakeWindowBackend backend;
+
+    auto browser_one = window(
+        "browser-one",
+        false,
+        "org.mozilla.firefox");
+    auto browser_two = window(
+        "browser-two",
+        false,
+        "org.mozilla.firefox");
+    auto picture_in_picture = window(
+        "picture-in-picture",
+        false,
+        "org.mozilla.firefox");
+    picture_in_picture.skip_taskbar = true;
+    picture_in_picture.include_when_skip_taskbar = true;
+
+    backend.set_snapshot(
+        {browser_one, browser_two, picture_in_picture},
+        {"browser-one", "browser-two", "picture-in-picture"},
+        "picture-in-picture");
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {"org.mozilla.firefox.desktop"});
+
+    assert(controller.toggle_minimized());
+    assert(registry.find_window("browser-one")->minimized);
+    assert(registry.find_window("browser-two")->minimized);
+    assert(!registry
+                .find_window("picture-in-picture")
+                ->minimized);
+
+    assert(controller.toggle_minimized());
+    assert(!registry.find_window("browser-one")->minimized);
+    assert(!registry.find_window("browser-two")->minimized);
+    assert(!registry
+                .find_window("picture-in-picture")
+                ->minimized);
+    assert(registry.active_window() ==
+           std::optional<WindowId>{"browser-two"});
+}
+
+void verifies_pip_group_reveals_before_hide_state_arrives()
+{
+    FakeWindowBackend backend;
+
+    auto browser = window(
+        "browser-window",
+        false,
+        "org.mozilla.firefox");
+    auto picture_in_picture = window(
+        "picture-in-picture",
+        false,
+        "org.mozilla.firefox");
+    picture_in_picture.skip_taskbar = true;
+    picture_in_picture.include_when_skip_taskbar = true;
+
+    backend.set_snapshot(
+        {browser, picture_in_picture},
+        {"browser-window", "picture-in-picture"},
+        "picture-in-picture");
+
+    WindowRegistry registry(backend);
+    registry.start();
+
+    DockApplicationController controller(
+        &registry,
+        {"org.mozilla.firefox.desktop"});
+
+    assert(controller.toggle_minimized());
+    assert(registry.find_window("browser-window")->minimized);
+
+    // Reproduce a delayed compositor notification: the hide command was
+    // accepted, but the controller's snapshot still says the normal window
+    // is visible when the next DockItem click arrives.
+    browser.minimized = false;
+    backend.update_window(browser);
+
+    assert(controller.toggle_minimized());
+    assert(!registry.find_window("browser-window")->minimized);
+    assert(!registry
+                .find_window("picture-in-picture")
+                ->minimized);
+    assert(registry.active_window() ==
+           std::optional<WindowId>{"browser-window"});
+}
+
 }
 
 int main()
@@ -1226,6 +1372,9 @@ int main()
     verifies_grouped_window_entries();
     verifies_unfocusable_auxiliary_preview_toggles();
     verifies_launcher_click_ignores_unminimizable_auxiliary();
+    verifies_remote_normal_group_toggles_instead_of_current_pip();
+    verifies_normal_group_reveals_while_pip_stays_visible();
+    verifies_pip_group_reveals_before_hide_state_arrives();
 
     return 0;
 }

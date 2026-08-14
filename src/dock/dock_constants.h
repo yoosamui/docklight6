@@ -41,7 +41,7 @@ namespace DockConstants
 
     // Autohide behaviour
 
-    constexpr int AUTOHIDE_HIDE_DELAY_MS = 800;
+    constexpr int AUTOHIDE_HIDE_DELAY_MS = 2000;
     constexpr int AUTOHIDE_REVEAL_SIZE = 2;
     constexpr int AUTOHIDE_ANIMATION_DURATION_MS = 200;
     constexpr int AUTOHIDE_ANIMATION_FRAME_MS = 16;

@@ -353,6 +353,7 @@ DockItem::~DockItem()
     m_context_menu_button_press.disconnect();
     m_context_menu_map.disconnect();
     m_context_menu_unmap.disconnect();
+    m_context_menu_uninhibit_idle.disconnect();
 }
 
 void DockItem::set_icon_size(int icon_size)
@@ -1511,14 +1512,40 @@ void DockItem::initialize_context_menu()
                 m_context_menu_secondary_dismissed =
                     false;
 
+                // Dynamic window entries run after GtkMenu releases its
+                // popup grab. Preserve the menu's autohide inhibition until
+                // that deferred window action has completed.
+                if (m_context_menu_window_action_pending)
+                    return;
+
                 if (reopen_preview)
                     m_dock.schedule_show_tooltip(
                         *this);
 
-                if (reopen_preview)
-                    m_dock.uninhibit_autohide(true);
-                else
-                    m_dock.uninhibit_autohide();
+                // GtkMenu may unmap before it emits the selected dynamic
+                // item's activate signal. Defer the release until all menu
+                // signals from this event have run, when the pending window
+                // action flag is authoritative.
+                m_context_menu_uninhibit_idle.disconnect();
+                m_context_menu_uninhibit_idle =
+                    Glib::signal_idle().connect(
+                        [this,
+                         reopen_preview]()
+                        {
+                            if (!m_context_menu_window_action_pending)
+                            {
+                                if (reopen_preview)
+                                {
+                                    m_dock.uninhibit_autohide(true);
+                                }
+                                else
+                                {
+                                    m_dock.uninhibit_autohide();
+                                }
+                            }
+
+                            return false;
+                        });
             });
 }
 
@@ -1738,6 +1765,7 @@ void DockItem::schedule_window_action(
     // Activating a KWin window while GtkMenu still owns its popup grab can
     // make GTK restore focus to the popup during teardown.  Close the menu
     // first and dispatch the window command on the next main-loop turn.
+    m_context_menu_window_action_pending = true;
     m_context_menu.popdown();
     m_window_action_idle.disconnect();
 
@@ -1766,6 +1794,10 @@ void DockItem::schedule_window_action(
                         window_id.c_str(),
                         m_app->get_id().c_str());
                 }
+
+                m_context_menu_window_action_pending = false;
+                m_context_menu_uninhibit_idle.disconnect();
+                m_dock.uninhibit_autohide();
 
                 return false;
             });

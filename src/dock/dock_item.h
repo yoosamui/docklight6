@@ -217,6 +217,7 @@ private:
     sigc::connection m_context_menu_button_press;
     sigc::connection m_context_menu_map;
     sigc::connection m_context_menu_unmap;
+    sigc::connection m_context_menu_uninhibit_idle;
 
     DockHoverEffect m_hover_effect =
         DockHoverEffect::standard;
@@ -247,4 +248,5 @@ private:
     bool m_dragging = false;
     bool m_context_menu_mapped = false;
     bool m_context_menu_secondary_dismissed = false;
+    bool m_context_menu_window_action_pending = false;
 };

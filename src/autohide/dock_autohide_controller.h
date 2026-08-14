@@ -76,6 +76,7 @@ private:
     void hide_now(bool refresh_pointer = true);
     void reveal();
     bool can_hide() const;
+    bool pointer_inside() const;
     bool has_shell_reveal_trigger() const;
     bool uses_shell_reveal_trigger() const;
 
@@ -124,6 +125,7 @@ private:
     bool m_animation_clips_top = false;
     bool m_animation_scale_anchor_right = true;
     bool m_pointer_inside = false;
+    bool m_shell_pointer_inside = false;
     bool m_suppress_next_map_hide = false;
     bool m_pending_x11_reveal_animation = false;
     ShellDockState m_shell_state = ShellDockState::visible;

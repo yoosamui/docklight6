@@ -600,6 +600,36 @@ bool DockWindow::pointer_is_inside()
     if (!pointer)
         return false;
 
+    // On X11, activating a window can change the topmost GdkWindow below
+    // the pointer before the pointer itself has moved. Asking the dock's
+    // GdkWindow for the device position then returns no pointer window and
+    // autohide incorrectly treats the activation as a leave. Use root
+    // coordinates for the physical dock rectangle instead; the dock must
+    // remain visible until the pointer actually leaves that rectangle.
+    if (GDK_IS_X11_DISPLAY(display))
+    {
+        int pointer_x = 0;
+        int pointer_y = 0;
+        int window_x = 0;
+        int window_y = 0;
+
+        gdk_device_get_position(
+            pointer,
+            nullptr,
+            &pointer_x,
+            &pointer_y);
+        get_position(window_x, window_y);
+
+        return pointer_x >= window_x &&
+               pointer_y >= window_y &&
+               pointer_x <
+                   window_x +
+                       get_allocated_width() &&
+               pointer_y <
+                   window_y +
+                       get_allocated_height();
+    }
+
     int x = 0;
     int y = 0;
     GdkModifierType modifiers{};

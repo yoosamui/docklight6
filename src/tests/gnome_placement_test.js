@@ -372,8 +372,12 @@ assert.match(
     "placement completion must not reveal a dock that autohid while placement settled");
 assert.match(
     autohideControllerSource,
-    /set_shell_pointer_inside\([\s\S]*?m_pointer_inside = inside[\s\S]*?ShellDockState::hiding[\s\S]*?reveal\(\)/,
+    /set_shell_pointer_inside\([\s\S]*?m_shell_pointer_inside = inside[\s\S]*?ShellDockState::hiding[\s\S]*?reveal\(\)/,
     "authoritative Shell pointer entry must reverse an in-progress hide");
+assert.match(
+    autohideControllerSource,
+    /pointer_inside\(\) const[\s\S]*?m_pointer_inside \|\|[\s\S]*?m_shell_pointer_inside/,
+    "Shell pointer state must survive GTK preview and popup cleanup");
 assert.match(
     autohideControllerSource,
     /reveal\(\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(false\);/,

@@ -336,7 +336,7 @@ void DockAutohideController::set_shell_pointer_inside(
     if (!uses_shell_reveal_trigger())
         return;
 
-    m_pointer_inside = inside;
+    m_shell_pointer_inside = inside;
     if (inside)
     {
         cancel_hide();
@@ -370,7 +370,7 @@ void DockAutohideController::finish_shell_animation(
 
     m_shell_state = ShellDockState::visible;
     set_shell_input_passthrough(false);
-    if (!m_pointer_inside)
+    if (!pointer_inside())
         schedule_hide(false);
 }
 
@@ -407,7 +407,7 @@ void DockAutohideController::schedule_hide(
     if (!can_hide() ||
         m_hidden ||
         m_inhibit_count > 0 ||
-        m_pointer_inside ||
+        pointer_inside() ||
         !m_window.get_mapped())
     {
         return;
@@ -864,7 +864,7 @@ void DockAutohideController::hide_now(
     if (!can_hide() ||
         m_hidden ||
         m_inhibit_count > 0 ||
-        m_pointer_inside)
+        pointer_inside())
     {
         return;
     }
@@ -981,6 +981,13 @@ bool DockAutohideController::can_hide() const
     return hiding_requested &&
            (!has_shell_reveal_trigger() ||
             uses_shell_reveal_trigger());
+}
+
+bool DockAutohideController::pointer_inside() const
+{
+    return m_pointer_inside ||
+           (uses_shell_reveal_trigger() &&
+            m_shell_pointer_inside);
 }
 
 bool DockAutohideController::

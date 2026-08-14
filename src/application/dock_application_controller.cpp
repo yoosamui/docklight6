@@ -77,6 +77,24 @@ bool is_application_auxiliary(
            window.include_when_skip_taskbar;
 }
 
+bool has_ordinary_window(
+    const RunningApplication &application,
+    const WindowRegistry &registry)
+{
+    return std::any_of(
+        application.window_ids.begin(),
+        application.window_ids.end(),
+        [&registry](const WindowId &window_id)
+        {
+            const auto window =
+                registry.find_window(window_id);
+
+            return window &&
+                   !is_application_auxiliary(
+                       *window);
+        });
+}
+
 }
 
 DockApplicationController::
@@ -153,6 +171,46 @@ bool DockApplicationController::
         current_desktop_windows(
             *running_application);
 
+    // Backend window-state notifications are asynchronous. A second click
+    // can therefore arrive after hide was accepted but before the registry
+    // reports the ordinary windows as minimized. Remember the transition we
+    // initiated so that click reveals the group instead of dispatching hide
+    // a second time. PiP windows never participate in this state.
+    if (m_group_hidden_by_toggle)
+    {
+        bool accepted = false;
+
+        if (!m_manage_all_workspaces)
+        {
+            accepted =
+                activate_windows(
+                    current_windows);
+        }
+        else
+        {
+            auto target_windows =
+                current_windows;
+
+            if (target_windows.empty())
+            {
+                target_windows =
+                    most_recent_desktop_group(
+                        *running_application,
+                        false);
+            }
+
+            accepted =
+                restore_all_and_activate(
+                    *running_application,
+                    target_windows);
+        }
+
+        if (accepted)
+            m_group_hidden_by_toggle = false;
+
+        return accepted;
+    }
+
     if (!m_manage_all_workspaces)
     {
         if (current_windows.empty())
@@ -172,16 +230,28 @@ bool DockApplicationController::
                 !is_application_auxiliary(
                     *active_window))
             {
-                return minimize_windows(
-                    current_windows);
+                const bool accepted =
+                    minimize_windows(
+                        current_windows);
+
+                if (accepted)
+                    m_group_hidden_by_toggle = true;
+
+                return accepted;
             }
         }
 
         if (group_is_frontmost(
                 *running_application))
         {
-            return minimize_windows(
-                current_windows);
+            const bool accepted =
+                minimize_windows(
+                    current_windows);
+
+            if (accepted)
+                m_group_hidden_by_toggle = true;
+
+            return accepted;
         }
 
         return activate_windows(
@@ -205,7 +275,12 @@ bool DockApplicationController::
             !is_application_auxiliary(
                 *active_window))
         {
-            return minimize();
+            const bool accepted = minimize();
+
+            if (accepted)
+                m_group_hidden_by_toggle = true;
+
+            return accepted;
         }
     }
 
@@ -217,7 +292,12 @@ bool DockApplicationController::
     if (group_is_frontmost(
             *running_application))
     {
-        return minimize();
+        const bool accepted = minimize();
+
+        if (accepted)
+            m_group_hidden_by_toggle = true;
+
+        return accepted;
     }
 
     // If the complete application was hidden, restore every workspace's
@@ -268,6 +348,10 @@ DockApplicationController::
 {
     std::vector<WindowId> window_ids;
     std::vector<WindowId> auxiliary_window_ids;
+    const bool use_ordinary_windows =
+        has_ordinary_window(
+            running_application,
+            *m_registry);
 
     for (const auto &window_id :
          running_application.window_ids)
@@ -279,10 +363,16 @@ DockApplicationController::
         if (window &&
             window->on_current_desktop)
         {
-            (is_application_auxiliary(*window)
-                 ? auxiliary_window_ids
-                 : window_ids)
-                .push_back(window_id);
+            if (is_application_auxiliary(*window))
+            {
+                if (!use_ordinary_windows)
+                    auxiliary_window_ids.push_back(
+                        window_id);
+            }
+            else
+            {
+                window_ids.push_back(window_id);
+            }
         }
     }
 
@@ -304,6 +394,10 @@ DockApplicationController::
         bool require_unminimized) const
 {
     const ManagedWindow *target = nullptr;
+    const bool use_ordinary_windows =
+        has_ordinary_window(
+            running_application,
+            *m_registry);
 
     for (auto window_id =
              running_application
@@ -319,6 +413,8 @@ DockApplicationController::
 
         if (!window ||
             window->on_current_desktop ||
+            (use_ordinary_windows &&
+             is_application_auxiliary(*window)) ||
             (require_unminimized &&
              window->minimized))
         {
@@ -343,6 +439,8 @@ DockApplicationController::
 
         if (window &&
             !window->on_current_desktop &&
+            (!use_ordinary_windows ||
+             !is_application_auxiliary(*window)) &&
             belongs_to_activation_desktop(
                 *window,
                 *target))
@@ -378,28 +476,23 @@ bool DockApplicationController::
 
     const auto all_window_ids =
         running_application.window_ids;
+    const bool use_ordinary_windows =
+        has_ordinary_window(
+            running_application,
+            *m_registry);
 
-    bool accepted =
-        m_registry->present_windows(
-            current_window_ids);
+    bool accepted = true;
 
     for (const auto &window_id :
          all_window_ids)
     {
-        if (std::find(
-                current_window_ids.begin(),
-                current_window_ids.end(),
-                window_id) !=
-            current_window_ids.end())
-        {
-            continue;
-        }
-
         const auto window =
             m_registry->find_window(
                 window_id);
 
         if (window &&
+            (!use_ordinary_windows ||
+             !is_application_auxiliary(*window)) &&
             window->minimized)
         {
             accepted =
@@ -411,7 +504,9 @@ bool DockApplicationController::
         }
     }
 
-    return accepted;
+    return m_registry->present_windows(
+               current_window_ids) &&
+           accepted;
 }
 
 bool DockApplicationController::minimize_windows(
@@ -980,6 +1075,11 @@ bool DockApplicationController::
     if (!running_application)
         return false;
 
+    const bool use_ordinary_windows =
+        has_ordinary_window(
+            *running_application,
+            *m_registry);
+
     for (const auto &window_id :
          running_application->window_ids)
     {
@@ -988,6 +1088,8 @@ bool DockApplicationController::
                 window_id);
 
         if (window &&
+            (!use_ordinary_windows ||
+             !is_application_auxiliary(*window)) &&
             window->minimized)
         {
             return true;
@@ -1006,6 +1108,11 @@ bool DockApplicationController::
     if (!running_application)
         return false;
 
+    const bool use_ordinary_windows =
+        has_ordinary_window(
+            *running_application,
+            *m_registry);
+
     for (const auto &window_id :
          running_application->window_ids)
     {
@@ -1014,6 +1121,8 @@ bool DockApplicationController::
                 window_id);
 
         if (window &&
+            (!use_ordinary_windows ||
+             !is_application_auxiliary(*window)) &&
             !window->minimized)
         {
             return true;

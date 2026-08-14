@@ -139,4 +139,5 @@ private:
 
     WindowRegistry *m_registry = nullptr;
     bool m_manage_all_workspaces = true;
+    bool m_group_hidden_by_toggle = false;
 };
