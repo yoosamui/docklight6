@@ -46,6 +46,8 @@ namespace
 constexpr unsigned int INITIAL_X11_WORKAREA_SAMPLE_INTERVAL_MS = 300;
 constexpr int INITIAL_X11_WORKAREA_REQUIRED_STABLE_SAMPLES = 3;
 constexpr int INITIAL_X11_WORKAREA_MAX_SAMPLE_ATTEMPTS = 7;
+constexpr unsigned int INITIAL_X11_PLACEMENT_POLL_INTERVAL_MS = 16;
+constexpr int INITIAL_X11_PLACEMENT_MAX_ATTEMPTS = 30;
 
 bool same_monitor_geometry(
     const MonitorGeometry &left,
@@ -157,6 +159,7 @@ DockWindowController::~DockWindowController()
     m_realize.disconnect();
     m_map.disconnect();
     m_initial_x11_workarea_timer.disconnect();
+    m_initial_x11_placement_timer.disconnect();
     m_size_allocate.disconnect();
     m_window_registry_changed.disconnect();
     m_window_registry_connection_changed.disconnect();
@@ -189,7 +192,6 @@ void DockWindowController::initialize()
         // toplevel invisible and avoid publishing our strut until Muffin has
         // repeatedly reported the same output and work area.
         m_initial_x11_workarea_pending = true;
-        m_window.set_opacity(0.0);
         m_initial_x11_workarea_timer =
             Glib::signal_timeout().connect(
                 sigc::mem_fun(
@@ -204,6 +206,15 @@ void DockWindowController::initialize()
         m_monitor);
     m_autohide_controller->set_mode(
         m_layout_request.autohide);
+
+    if (native_x11_window)
+    {
+        // set_monitor() resets the X11 animation transform, including window
+        // opacity. Apply the startup guard afterwards so the provisional
+        // output-edge position cannot be painted before the stable work-area
+        // sample places the dock beside the desktop panel.
+        m_window.set_opacity(0.0);
+    }
 
     // A launcher mutation changes the maximum size available to every item.
     // Coalesce GTK's add/remove notifications and recalculate after the
@@ -584,7 +595,76 @@ bool DockWindowController::sample_initial_x11_workarea()
 
     m_initial_x11_workarea_pending = false;
     update_dock_layout();
+
+    // apply_dock_layout() submits an asynchronous X11 move and autohide's
+    // placement reset restores opacity. Reapply the guard before returning to
+    // the main loop, then reveal only after Muffin reports the requested root
+    // coordinates. This prevents one painted frame at the provisional edge.
+    m_window.set_opacity(0.0);
+
+    const int requested_width =
+        m_placement.width > 0
+            ? m_placement.width
+            : std::max(
+                  1,
+                  m_output_geometry.width -
+                      m_placement.margin_left -
+                      m_placement.margin_right);
+    const int requested_height =
+        m_placement.height > 0
+            ? m_placement.height
+            : std::max(
+                  1,
+                  m_output_geometry.height -
+                      m_placement.margin_top -
+                      m_placement.margin_bottom);
+    m_initial_x11_target_position =
+        calculated_dock_screen_position(
+            requested_width,
+            requested_height);
+    m_initial_x11_placement_attempt_count = 0;
+    m_initial_x11_placement_timer.disconnect();
+    m_initial_x11_placement_timer =
+        Glib::signal_timeout().connect(
+            sigc::mem_fun(
+                *this,
+                &DockWindowController::
+                    finish_initial_x11_placement),
+            INITIAL_X11_PLACEMENT_POLL_INTERVAL_MS);
+    return false;
+}
+
+bool DockWindowController::finish_initial_x11_placement()
+{
+    int x = 0;
+    int y = 0;
+    m_window.get_position(x, y);
+
+    if (x == m_initial_x11_target_position.x &&
+        y == m_initial_x11_target_position.y)
+    {
+        m_window.set_opacity(1.0);
+        return false;
+    }
+
+    ++m_initial_x11_placement_attempt_count;
+    if (m_initial_x11_placement_attempt_count <
+        INITIAL_X11_PLACEMENT_MAX_ATTEMPTS)
+    {
+        return true;
+    }
+
+    // Do not leave the dock permanently transparent if a non-conforming
+    // window manager adjusts the requested position. The final coordinates
+    // are still preferable to painting its provisional startup position.
     m_window.set_opacity(1.0);
+    g_warning(
+        "X11 did not confirm Docklight's initial position "
+        "(%d,%d); using compositor position (%d,%d)",
+        m_initial_x11_target_position.x,
+        m_initial_x11_target_position.y,
+        x,
+        y);
     return false;
 }
 

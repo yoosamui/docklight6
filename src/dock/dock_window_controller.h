@@ -107,6 +107,7 @@ public:
 
 private:
     bool sample_initial_x11_workarea();
+    bool finish_initial_x11_placement();
     void update_dock_layout();
     void update_effective_icon_size(
         const MonitorGeometry &monitor,
@@ -195,6 +196,7 @@ private:
     sigc::connection m_realize;
     sigc::connection m_map;
     sigc::connection m_initial_x11_workarea_timer;
+    sigc::connection m_initial_x11_placement_timer;
     sigc::connection m_size_allocate;
     sigc::connection m_window_registry_changed;
     sigc::connection
@@ -242,6 +244,8 @@ private:
     int m_initial_x11_workarea_sample_attempt_count = 0;
     MonitorGeometry m_initial_x11_output_sample;
     MonitorGeometry m_initial_x11_workarea_sample;
+    ScreenPosition m_initial_x11_target_position;
+    int m_initial_x11_placement_attempt_count = 0;
 
     bool m_has_applied_layout = false;
 };
