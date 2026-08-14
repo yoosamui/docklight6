@@ -488,6 +488,13 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _considerDockWindow(window, allowRetry = true) {
+        // Native X11 Docklight owns its EWMH placement, stacking, struts,
+        // and autohide surfaces. Running the Wayland placement transition in
+        // an X11 Shell sets the compositor actor opacity to zero while
+        // waiting for geometry that the X11 backend never publishes.
+        if (!Meta.is_wayland_compositor())
+            return;
+
         if (this._considerDialogWindow(window))
             return;
         if (this._considerAuxiliaryWindow(window))

@@ -268,6 +268,10 @@ assert.match(
     /_isX11DockWindow\(window\)[\s\S]*?_removeDockStrut\(\)[\s\S]*?_publishDockSurfaceGeometry\(rect\)/,
     "GNOME must leave XWayland dock placement and reservation to EWMH");
 assert.match(
+    extensionSource,
+    /_considerDockWindow\(window[\s\S]*?!Meta\.is_wayland_compositor\(\)[\s\S]*?return;[\s\S]*?_beginDockTransition\(\)/,
+    "the GNOME Wayland extension must not hide native X11 dock actors");
+assert.match(
     autohideControllerSource,
     /hide_now\([\s\S]*?\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(true\);\s*return;/,
     "GNOME autohide must keep the placed dock mapped instead of remapping at the centre");
