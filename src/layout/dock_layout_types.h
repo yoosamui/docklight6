@@ -210,6 +210,46 @@ struct ScreenPosition
     int y = 0;
 };
 
+// GTK can allocate a decorated overlay a few pixels larger than the size
+// used to calculate its initial position. Keep the surface centred on its
+// dock item along the main axis and preserve the edge facing the dock along
+// the cross axis.
+inline ScreenPosition overlay_position_for_allocation(
+    DockLocation location,
+    const ScreenPosition &requested_position,
+    int requested_width,
+    int requested_height,
+    int allocated_width,
+    int allocated_height)
+{
+    ScreenPosition position = requested_position;
+
+    if (location == DockLocation::bottom ||
+        location == DockLocation::top)
+    {
+        position.x +=
+            (requested_width - allocated_width) / 2;
+    }
+    else
+    {
+        position.y +=
+            (requested_height - allocated_height) / 2;
+    }
+
+    if (location == DockLocation::bottom)
+    {
+        position.y +=
+            requested_height - allocated_height;
+    }
+    else if (location == DockLocation::right)
+    {
+        position.x +=
+            requested_width - allocated_width;
+    }
+
+    return position;
+}
+
 // Native X11 autohide moves outward from the dock's shown position. Preserve
 // the standard bottom-edge inset distance while the other edge paths use the
 // complete dock thickness or their dedicated clipped animation.

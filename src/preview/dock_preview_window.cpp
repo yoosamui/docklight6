@@ -1027,12 +1027,31 @@ DockPreviewWindow::DockPreviewWindow()
         {
             if (m_has_position)
             {
-                apply_position(
-                    m_location,
-                    m_position,
-                    m_size.width,
-                    m_size.height);
+                const auto allocation =
+                    get_allocation();
+                apply_allocated_position(
+                    std::max(
+                        1,
+                        allocation.get_width()),
+                    std::max(
+                        1,
+                        allocation.get_height()));
             }
+        });
+
+    signal_size_allocate().connect(
+        [this](Gtk::Allocation &allocation)
+        {
+            if (!m_has_position || !get_visible())
+                return;
+
+            apply_allocated_position(
+                std::max(
+                    1,
+                    allocation.get_width()),
+                std::max(
+                    1,
+                    allocation.get_height()));
         });
 }
 
@@ -1748,6 +1767,7 @@ void DockPreviewWindow::show_preview(
     set_default_size(size.width, size.height);
     m_location = location;
     m_position = position;
+    m_applied_position = position;
     m_size = size;
     m_has_position = true;
     apply_position(
@@ -1886,10 +1906,10 @@ void DockPreviewWindow::start_opacity_animation(
                 m_location);
         const int visible_x =
             m_monitor_geometry.x +
-            m_position.x;
+            m_applied_position.x;
         const int visible_y =
             m_monitor_geometry.y +
-            m_position.y;
+            m_applied_position.y;
         const int hidden_x =
             visible_x + offset.x;
         const int hidden_y =
@@ -2877,9 +2897,11 @@ void DockPreviewWindow::start_live_streams()
         previews.reserve(m_window_ids.size());
 
         const int global_x =
-            m_monitor_geometry.x + m_position.x;
+            m_monitor_geometry.x +
+            m_applied_position.x;
         const int global_y =
-            m_monitor_geometry.y + m_position.y;
+            m_monitor_geometry.y +
+            m_applied_position.y;
 
         for (std::size_t index = 0;
              index < m_window_ids.size();
@@ -3144,6 +3166,8 @@ void DockPreviewWindow::apply_position(
     int width,
     int height)
 {
+    m_applied_position = position;
+
     if (!m_uses_layer_shell)
     {
         const int global_x =
@@ -3211,6 +3235,41 @@ void DockPreviewWindow::apply_position(
                   m_monitor_geometry.height -
                       position.y - height)
             : 0);
+}
+
+void DockPreviewWindow::apply_allocated_position(
+    int width,
+    int height)
+{
+    const auto position =
+        overlay_position_for_allocation(
+            m_location,
+            m_position,
+            m_size.width,
+            m_size.height,
+            width,
+            height);
+    const bool position_changed =
+        position.x != m_applied_position.x ||
+        position.y != m_applied_position.y;
+
+    apply_position(
+        m_location,
+        position,
+        width,
+        height);
+
+    // GNOME Shell paints live compositor actors at absolute card positions.
+    // If GTK reports its final allocation after the actors were installed,
+    // publish the corrected origin as well as moving the GTK surface.
+    if (position_changed &&
+        m_thumbnail_provider
+            .supports_gnome_live_previews() &&
+        !m_live_window_ids.empty())
+    {
+        m_live_window_ids.clear();
+        start_live_streams();
+    }
 }
 
 bool DockPreviewWindow::on_enter_notify_event(

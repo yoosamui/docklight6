@@ -453,5 +453,36 @@ int main()
     assert(preview_position.x == 76);
     assert(preview_position.y == 8);
 
+    // A fitted preview's CSS borders can make GTK's final allocation larger
+    // than the requested card geometry. Bottom previews must remain centred
+    // on the group icon and keep their lower edge (and therefore their gap to
+    // the dock) fixed when that happens.
+    const ScreenPosition requested_preview{
+        300,
+        500};
+    const auto allocated_bottom_preview =
+        overlay_position_for_allocation(
+            DockLocation::bottom,
+            requested_preview,
+            1000,
+            200,
+            1012,
+            208);
+    assert(allocated_bottom_preview.x == 294);
+    assert(allocated_bottom_preview.y == 492);
+    assert(allocated_bottom_preview.y + 208 ==
+        requested_preview.y + 200);
+
+    const auto allocated_top_preview =
+        overlay_position_for_allocation(
+            DockLocation::top,
+            requested_preview,
+            1000,
+            200,
+            1012,
+            208);
+    assert(allocated_top_preview.x == 294);
+    assert(allocated_top_preview.y == 500);
+
     return 0;
 }

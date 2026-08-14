@@ -171,6 +171,9 @@ private:
     void cancel_opacity_animation();
     void start_opacity_animation(bool hiding);
     bool advance_opacity_animation();
+    void apply_allocated_position(
+        int width,
+        int height);
     void apply_position(
         DockLocation location,
         const ScreenPosition &position,
@@ -256,6 +259,7 @@ private:
     std::set<WindowId> m_live_window_ids;
     MonitorGeometry m_monitor_geometry;
     ScreenPosition m_position;
+    ScreenPosition m_applied_position;
     DockLocation m_location = DockLocation::bottom;
     DockPreviewSize m_size;
     bool m_dynamic_refresh = false;
