@@ -64,10 +64,9 @@ const DOCK_PLACEMENT_MAX_ATTEMPTS = 40;
 const DOCK_DISCOVERY_MAX_ATTEMPTS = 30;
 const REGISTRATION_RETRY_MS = 250;
 const CONFIGURATION_SETTLE_MS = 50;
-// Keep the motion short and decisive; compositor transforms remain fluid at
-// this duration without making the dock feel reluctant to leave or return.
-const DOCK_HIDE_ANIMATION_MS = 160;
-const DOCK_REVEAL_ANIMATION_MS = 170;
+// Match Cinnamon's panel tween: a 200 ms compositor-side ease-out movement.
+const DOCK_HIDE_ANIMATION_MS = 200;
+const DOCK_REVEAL_ANIMATION_MS = 200;
 const DOCK_CLIP_FRAME_MS = 16;
 // Browser PiP surfaces commonly reserve a double-click for maximizing the
 // player. The preview bridge must not turn a stress-click burst into that
@@ -1107,7 +1106,7 @@ export default class DocklightWindowIntegration extends Extension {
             });
         const animation = {
             duration,
-            mode: Clutter.AnimationMode.EASE_OUT_CUBIC,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
             onComplete: completeTransition,
         };
         if (collapseRight)

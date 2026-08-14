@@ -87,6 +87,56 @@ bool is_gnome_wayland_session()
 
 }
 
+DockSurfaceBox::DockSurfaceBox()
+    : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
+{
+}
+
+void DockSurfaceBox::set_horizontal_scale(
+    double scale)
+{
+    const double clamped =
+        std::clamp(scale, 0.0, 1.0);
+    if (std::abs(
+            clamped -
+            m_horizontal_scale) < 0.0001)
+    {
+        return;
+    }
+
+    m_horizontal_scale = clamped;
+    queue_draw();
+}
+
+double DockSurfaceBox::horizontal_scale() const
+{
+    return m_horizontal_scale;
+}
+
+bool DockSurfaceBox::on_draw(
+    const Cairo::RefPtr<Cairo::Context>
+        &context)
+{
+    if (m_horizontal_scale <= 0.0)
+        return true;
+
+    if (m_horizontal_scale >= 1.0)
+        return Gtk::Box::on_draw(context);
+
+    context->save();
+    context->translate(
+        get_allocated_width() *
+            (1.0 - m_horizontal_scale),
+        0.0);
+    context->scale(
+        m_horizontal_scale,
+        1.0);
+    const bool handled =
+        Gtk::Box::on_draw(context);
+    context->restore();
+    return handled;
+}
+
 DockWindow::DockWindow(
     const DockConfiguration &configuration,
     const Glib::RefPtr<Gdk::Monitor>
@@ -260,6 +310,17 @@ DockWindow::DockWindow(
 DockWindow::~DockWindow()
 {
     m_dock_item_sync.disconnect();
+}
+
+void DockWindow::set_x11_horizontal_scale(
+    double scale)
+{
+    m_dock_box.set_horizontal_scale(scale);
+}
+
+double DockWindow::x11_horizontal_scale() const
+{
+    return m_dock_box.horizontal_scale();
 }
 
 void DockWindow::apply_configuration(

@@ -474,6 +474,74 @@ bool DockAutohideController::can_animate_x11() const
            m_has_placement;
 }
 
+bool DockAutohideController::
+    should_collapse_x11_right() const
+{
+    if (!can_animate_x11() ||
+        !m_placement.is_vertical() ||
+        !m_placement.anchor_right ||
+        !m_has_shown_position)
+    {
+        return false;
+    }
+
+    auto *window = gtk_widget_get_window(
+        GTK_WIDGET(m_window.gobj()));
+    auto *display = window
+        ? gdk_window_get_display(window)
+        : nullptr;
+    auto *dock_monitor = display
+        ? gdk_display_get_monitor_at_window(
+              display,
+              window)
+        : nullptr;
+
+    if (!display || !dock_monitor)
+        return false;
+
+    const int width = std::max(
+        1,
+        m_window.get_allocated_width());
+    const int height = std::max(
+        1,
+        m_window.get_allocated_height());
+    const int monitor_count =
+        gdk_display_get_n_monitors(display);
+
+    for (int index = 0;
+         index < monitor_count;
+         ++index)
+    {
+        auto *monitor =
+            gdk_display_get_monitor(
+                display,
+                index);
+        if (!monitor || monitor == dock_monitor)
+            continue;
+
+        GdkRectangle rectangle{};
+        gdk_monitor_get_geometry(
+            monitor,
+            &rectangle);
+        if (right_hide_corridor_intersects_monitor(
+                m_placement,
+                m_shown_x,
+                m_shown_y,
+                width,
+                height,
+                {
+                    rectangle.x,
+                    rectangle.y,
+                    rectangle.width,
+                    rectangle.height}))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 ScreenPosition DockAutohideController::hidden_x11_position() const
 {
     const int width = std::max(
@@ -544,17 +612,33 @@ void DockAutohideController::animate_x11(
         m_has_shown_position = true;
     }
 
+    m_animation_collapses_right =
+        should_collapse_x11_right() ||
+        m_window.x11_horizontal_scale() < 1.0;
+
     const auto hidden =
         hidden_x11_position();
 
     if (!hiding && start_at_hidden_edge)
     {
-        current_x = hidden.x;
-        current_y = hidden.y;
-        m_window.move(current_x, current_y);
-        // Set opacity only after moving to the hidden edge. Raising it before
-        // this move exposes one frame at the shown position during reveal.
-        m_window.set_opacity(X11_REVEAL_INITIAL_OPACITY);
+        if (m_animation_collapses_right)
+        {
+            current_x = m_shown_x;
+            current_y = m_shown_y;
+            m_window.move(current_x, current_y);
+            m_window.set_x11_horizontal_scale(0.0);
+            m_window.set_opacity(1.0);
+        }
+        else
+        {
+            current_x = hidden.x;
+            current_y = hidden.y;
+            m_window.move(current_x, current_y);
+            // Set opacity only after moving to the hidden edge. Raising it
+            // before this move exposes one frame at the shown position.
+            m_window.set_opacity(
+                X11_REVEAL_INITIAL_OPACITY);
+        }
     }
 
     if (hiding)
@@ -567,22 +651,50 @@ void DockAutohideController::animate_x11(
     m_animation_target_x =
         hiding ? hidden.x : m_shown_x;
     m_animation_target_y =
-        hiding ? hidden.y : m_shown_y;
+        m_animation_collapses_right
+            ? m_shown_y
+            : hiding ? hidden.y : m_shown_y;
+    if (m_animation_collapses_right)
+    {
+        m_animation_target_x = m_shown_x;
+        m_animation_start_scale =
+            m_window.x11_horizontal_scale();
+        m_animation_target_scale =
+            hiding ? 0.0 : 1.0;
+    }
+    else
+    {
+        m_animation_start_scale = 1.0;
+        m_animation_target_scale = 1.0;
+        m_window.set_x11_horizontal_scale(1.0);
+    }
     m_animating_to_hidden = hiding;
 
-    const double remaining = std::hypot(
-        static_cast<double>(
-            m_animation_target_x - current_x),
-        static_cast<double>(
-            m_animation_target_y - current_y));
+    const double remaining =
+        m_animation_collapses_right
+            ? std::abs(
+                  m_animation_target_scale -
+                  m_animation_start_scale) *
+                  std::max(
+                      1,
+                      m_window.get_allocated_width())
+            : std::hypot(
+                  static_cast<double>(
+                      m_animation_target_x - current_x),
+                  static_cast<double>(
+                      m_animation_target_y - current_y));
     const double full_distance =
-        std::max(
-            1.0,
-            std::hypot(
-                static_cast<double>(
-                    hidden.x - m_shown_x),
-                static_cast<double>(
-                    hidden.y - m_shown_y)));
+        m_animation_collapses_right
+            ? std::max(
+                  1,
+                  m_window.get_allocated_width())
+            : std::max(
+                  1.0,
+                  std::hypot(
+                      static_cast<double>(
+                          hidden.x - m_shown_x),
+                      static_cast<double>(
+                          hidden.y - m_shown_y)));
     const double distance_fraction = std::clamp(
         remaining / std::max(1.0, full_distance),
         0.0,
@@ -625,11 +737,12 @@ bool DockAutohideController::advance_x11_animation()
         0.0,
         1.0);
 
-    // Ease out in both directions. An ease-in hide spends most of its time
-    // barely moving, then jumps through the edge and feels sluggish even at
-    // a short nominal duration.
-    const double eased =
-        1.0 - std::pow(1.0 - progress, 3.0);
+    // Preserve the original X11 motion: hiding accelerates away from the
+    // pointer and revealing decelerates into place. The adjacent-monitor
+    // RIGHT collapse changes only the animated property, not this curve.
+    const double eased = m_animating_to_hidden
+        ? progress * progress * progress
+        : 1.0 - std::pow(1.0 - progress, 3.0);
     const int x = static_cast<int>(std::lround(
         m_animation_start_x +
         (m_animation_target_x - m_animation_start_x) *
@@ -638,9 +751,21 @@ bool DockAutohideController::advance_x11_animation()
         m_animation_start_y +
         (m_animation_target_y - m_animation_start_y) *
             eased));
-    m_window.move(x, y);
+    if (m_animation_collapses_right)
+    {
+        m_window.set_x11_horizontal_scale(
+            m_animation_start_scale +
+            (m_animation_target_scale -
+             m_animation_start_scale) *
+                eased);
+    }
+    else
+    {
+        m_window.move(x, y);
+    }
 
-    if (!m_animating_to_hidden)
+    if (!m_animating_to_hidden &&
+        !m_animation_collapses_right)
     {
         m_window.set_opacity(
             X11_REVEAL_INITIAL_OPACITY +
@@ -660,6 +785,7 @@ bool DockAutohideController::advance_x11_animation()
     }
     else
     {
+        m_window.set_x11_horizontal_scale(1.0);
         m_window.set_opacity(1.0);
     }
 
@@ -692,6 +818,7 @@ void DockAutohideController::reveal_immediately()
     }
 
     m_window.set_opacity(1.0);
+    m_window.set_x11_horizontal_scale(1.0);
 
     if (m_hidden)
     {
@@ -775,9 +902,20 @@ void DockAutohideController::reveal()
                     hidden_x11_position();
                 m_pending_x11_reveal_animation = true;
                 m_window.set_opacity(0.0);
-                m_window.move(
-                    hidden.x,
-                    hidden.y);
+                if (should_collapse_x11_right())
+                {
+                    m_window.set_x11_horizontal_scale(
+                        0.0);
+                    m_window.move(
+                        m_shown_x,
+                        m_shown_y);
+                }
+                else
+                {
+                    m_window.move(
+                        hidden.x,
+                        hidden.y);
+                }
             }
 
             m_window.show();

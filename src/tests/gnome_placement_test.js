@@ -289,7 +289,7 @@ assert.match(
     "input pass-through must begin only after Shell completes the hide animation");
 assert.match(
     extensionSource,
-    /_startDockVisibilityTransition\(hidden[\s\S]*?calculateDockHideOffset\(positioned\)[\s\S]*?_updateDockAnimationClip\(actor, positioned, base\)[\s\S]*?EASE_OUT_CUBIC[\s\S]*?actor\.ease\(/,
+    /_startDockVisibilityTransition\(hidden[\s\S]*?calculateDockHideOffset\(positioned\)[\s\S]*?_updateDockAnimationClip\(actor, positioned, base\)[\s\S]*?EASE_OUT_QUAD[\s\S]*?actor\.ease\(/,
     "GNOME must use Cinnamon-style compositor movement and monitor clipping");
 assert.match(
     extensionSource,
@@ -321,8 +321,12 @@ assert.match(
     "a Shell reveal must restore the existing mapped dock surface");
 assert.match(
     autohideControllerSource,
-    /m_window\.move\(current_x, current_y\);[\s\S]*?m_window\.set_opacity\(X11_REVEAL_INITIAL_OPACITY\)/,
+    /else[\s\S]*?current_x = hidden\.x;[\s\S]*?m_window\.move\(current_x, current_y\);[\s\S]*?m_window\.set_opacity\(\s*X11_REVEAL_INITIAL_OPACITY\)/,
     "an X11 reveal must move to its hidden edge before becoming visible");
+assert.match(
+    autohideControllerSource,
+    /should_collapse_x11_right\(\)[\s\S]*?right_hide_corridor_intersects_monitor\([\s\S]*?m_animation_collapses_right[\s\S]*?set_x11_horizontal_scale\(0\.0\)[\s\S]*?m_animation_target_scale/,
+    "a native X11 RIGHT dock facing another monitor must collapse at its fixed edge");
 assert.match(
     extensionSource,
     /signalName === 'DockHiddenChanged'[\s\S]*?this\._dockHidden = Boolean[\s\S]*?this\._startDockVisibilityTransition/,

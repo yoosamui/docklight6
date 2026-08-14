@@ -47,6 +47,22 @@ class DockAutohideController;
 class DockHomeItem;
 class WindowRegistry;
 
+class DockSurfaceBox : public Gtk::Box
+{
+public:
+    DockSurfaceBox();
+    void set_horizontal_scale(double scale);
+    double horizontal_scale() const;
+
+protected:
+    bool on_draw(
+        const Cairo::RefPtr<Cairo::Context>
+            &context) override;
+
+private:
+    double m_horizontal_scale = 1.0;
+};
+
 class DockWindow : public Gtk::Window
 {
 public:
@@ -125,6 +141,8 @@ private:
     void apply_dock_orientation(
         DockOrientation orientation);
     void apply_visual_style();
+    void set_x11_horizontal_scale(double scale);
+    double x11_horizontal_scale() const;
     void apply_main_axis_end_margins(
         DockOrientation orientation);
     void synchronize_dock_items();
@@ -141,7 +159,7 @@ private:
 
     Glib::RefPtr<Gtk::CssProvider> m_visual_css;
 
-    Gtk::Box m_dock_box{Gtk::ORIENTATION_HORIZONTAL};
+    DockSurfaceBox m_dock_box;
     Gtk::Box m_leading_margin;
     Gtk::Box m_trailing_margin;
 

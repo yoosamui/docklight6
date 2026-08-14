@@ -278,3 +278,29 @@ inline bool x11_strut_reaches_root_edge(
 
     return false;
 }
+
+// A RIGHT-edge X11 dock cannot slide outward when another monitor occupies
+// that space: the dock would simply become visible on the adjacent output.
+// Detect that corridor so the native animation can collapse in place.
+inline bool right_hide_corridor_intersects_monitor(
+    const DockPlacement &placement,
+    int x,
+    int y,
+    int width,
+    int height,
+    const MonitorGeometry &monitor)
+{
+    if (!placement.is_vertical() ||
+        !placement.anchor_right ||
+        width <= 0 || height <= 0 ||
+        monitor.width <= 0 || monitor.height <= 0)
+    {
+        return false;
+    }
+
+    const int corridor_x = x + width;
+    return corridor_x < monitor.x + monitor.width &&
+           corridor_x + width > monitor.x &&
+           y < monitor.y + monitor.height &&
+           y + height > monitor.y;
+}
