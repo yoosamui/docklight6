@@ -10,7 +10,7 @@ DockLight is a lightweight application dock for Linux with X11 and Wayland
 support. It provides application launchers, window management, live window
 previews, multi-monitor placement, and configurable auto-hide behavior.
 
-**Current version:** `6.0.29`  
+**Current version:** `6.0.32`
 
 Here is the current desktop/session compatibility matrix. PASS means confirmed
 in a real desktop session; PENDING means implemented but still needs
@@ -23,6 +23,7 @@ real-session verification.
 | XFCE / xfwm4 | X11 | Xfwm4WindowBackend | PASS |
 | Cinnamon / Muffin | X11 | MuffinWindowBackend | PASS |
 | GNOME / Mutter | X11 | MutterWindowBackend | PASS |
+| GNOME / Mutter | Wayland | MutterWindowBackend | PASS |
 | Other EWMH window managers | X11 | EwmhFallbackWindowBackend | PASS |
 | XFCE Wayland | Wayland | No backend | NOT IMPLEMENTED |
 | Sway / wlroots | Wayland | No backend | NOT IMPLEMENTED |
