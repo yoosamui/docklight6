@@ -85,6 +85,10 @@ int main()
     assert(placement.margin_top == 32);
     assert(placement.margin_left == 760);
     assert(placement.margin_right == 760);
+    // X11 applies these margins from the physical output edge. The top
+    // target must equal the work-area edge, not add the panel inset twice.
+    assert(monitor.y + placement.margin_top ==
+           top_panel_workarea.y);
 
     const MonitorGeometry right_dock_workarea{
         0,

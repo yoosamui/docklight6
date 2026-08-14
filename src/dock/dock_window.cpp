@@ -771,19 +771,10 @@ void DockWindow::apply_dock_layout(
             output,
             workarea);
 
-        const auto &base_workarea =
-            m_has_x11_base_workarea
-                ? m_x11_base_workarea
-                : workarea;
-
-        // Mutter does not expose layer-shell. Keep every dock edge in the
-        // physical output coordinate space and let the GNOME integration
-        // manage the ordinary toplevel there. Other window managers retain
-        // their work-area-aware placement around compositor panels.
-        const auto &edge_area =
-            is_gnome_wayland_session()
-                ? output
-                : base_workarea;
+        // DockPlacement margins are output-relative: apply_workarea_insets()
+        // has already converted every panel reservation into an edge margin.
+        // Starting from the work-area edge here would count that reservation
+        // twice (for example, a 32 px Cinnamon top panel produced y = 64).
 
         gtk_widget_set_size_request(
             GTK_WIDGET(gtk_win),
@@ -812,12 +803,12 @@ void DockWindow::apply_dock_layout(
         if (placement.is_vertical() &&
             placement.anchor_left)
         {
-            x = edge_area.x + placement.margin_left;
+            x = output.x + placement.margin_left;
         }
         else if (placement.is_vertical() &&
                  placement.anchor_right)
         {
-            x = edge_area.x + edge_area.width -
+            x = output.x + output.width -
                 placement.margin_right - width;
         }
         else if (placement.anchor_left)
@@ -828,12 +819,12 @@ void DockWindow::apply_dock_layout(
         if (placement.is_horizontal() &&
             placement.anchor_top)
         {
-            y = edge_area.y + placement.margin_top;
+            y = output.y + placement.margin_top;
         }
         else if (placement.is_horizontal() &&
                  placement.anchor_bottom)
         {
-            y = edge_area.y + edge_area.height -
+            y = output.y + output.height -
                 placement.margin_bottom - height;
         }
         else if (placement.anchor_top)
