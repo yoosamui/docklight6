@@ -63,6 +63,7 @@ private:
     void schedule_hide(bool refresh_pointer = true);
     void cancel_hide();
     void cancel_animation();
+    void reset_x11_visual_transform();
     void request_shell_visibility(bool hidden);
     void set_shell_input_passthrough(bool passthrough);
     bool can_animate_x11() const;

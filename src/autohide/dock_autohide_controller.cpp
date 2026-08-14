@@ -219,6 +219,7 @@ void DockAutohideController::set_monitor(
         reveal_immediately();
 
     cancel_animation();
+    reset_x11_visual_transform();
     m_has_shown_position = false;
 
     m_reveal_window.set_monitor(monitor);
@@ -245,6 +246,7 @@ void DockAutohideController::set_placement(
         reveal_immediately();
 
     cancel_animation();
+    reset_x11_visual_transform();
     m_has_shown_position = false;
 
     m_reveal_window.apply_placement(placement);
@@ -434,6 +436,15 @@ void DockAutohideController::cancel_animation()
     m_animation_timer.disconnect();
 }
 
+void DockAutohideController::reset_x11_visual_transform()
+{
+    m_window.set_x11_horizontal_scale(
+        1.0,
+        m_placement.anchor_right);
+    m_window.set_x11_vertical_offset(0.0);
+    m_window.set_opacity(1.0);
+}
+
 void DockAutohideController::set_shell_input_passthrough(
     bool passthrough)
 {
@@ -567,8 +578,9 @@ void DockAutohideController::animate_x11(
     }
 
     m_animation_collapses_horizontally =
-        should_collapse_x11_horizontally() ||
-        m_window.x11_horizontal_scale() < 1.0;
+        m_placement.is_vertical() &&
+        (should_collapse_x11_horizontally() ||
+         m_window.x11_horizontal_scale() < 1.0);
     m_animation_clips_top =
         !m_animation_collapses_horizontally &&
         m_placement.is_horizontal() &&
@@ -795,11 +807,7 @@ bool DockAutohideController::advance_x11_animation()
     }
     else
     {
-        m_window.set_x11_horizontal_scale(
-            1.0,
-            m_animation_scale_anchor_right);
-        m_window.set_x11_vertical_offset(0.0);
-        m_window.set_opacity(1.0);
+        reset_x11_visual_transform();
     }
 
     return false;
@@ -830,11 +838,7 @@ void DockAutohideController::reveal_immediately()
         m_shell_state = ShellDockState::visible;
     }
 
-    m_window.set_opacity(1.0);
-    m_window.set_x11_horizontal_scale(
-        1.0,
-        m_placement.anchor_right);
-    m_window.set_x11_vertical_offset(0.0);
+    reset_x11_visual_transform();
 
     if (m_hidden)
     {

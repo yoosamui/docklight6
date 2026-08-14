@@ -376,6 +376,14 @@ assert.match(
     "a native X11 vertical dock facing another monitor must collapse at its fixed edge");
 assert.match(
     autohideControllerSource,
+    /m_animation_collapses_horizontally\s*=\s*m_placement\.is_vertical\(\)\s*&&\s*\(should_collapse_x11_horizontally\(\)\s*\|\|\s*m_window\.x11_horizontal_scale\(\) < 1\.0\)/,
+    "a partial vertical collapse must not leak into a horizontal dock edge");
+assert.match(
+    autohideControllerSource,
+    /set_placement\([\s\S]*?cancel_animation\(\);\s*reset_x11_visual_transform\(\);/,
+    "changing dock placement must clear an interrupted X11 transform");
+assert.match(
+    autohideControllerSource,
     /const double eased = m_animating_to_hidden[\s\S]*?progress \* progress \* progress[\s\S]*?1\.0 - std::pow\(1\.0 - progress, 3\.0\)/,
     "every native X11 edge must use the standard hide and reveal curves");
 assert.match(
