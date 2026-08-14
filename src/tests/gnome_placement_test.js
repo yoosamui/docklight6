@@ -217,6 +217,10 @@ assert.match(
     "Docklight must publish live preview rectangles through the GNOME service");
 assert.match(
     thumbnailProviderSource,
+    /gnome_shell_capture\s*=\s*normalized_desktop\.find\("gnome"\) != std::string::npos/,
+    "GNOME X11 stable window ids must use Shell compositor thumbnail capture");
+assert.match(
+    thumbnailProviderSource,
     /set_gnome_preview_color[\s\S]*?SetPreviewColor[\s\S]*?\(dddd\)/,
     "Docklight must publish preview color independently of live preview rectangles");
 assert.match(
@@ -269,8 +273,12 @@ assert.match(
     "GNOME must leave XWayland dock placement and reservation to EWMH");
 assert.match(
     extensionSource,
-    /_considerDockWindow\(window[\s\S]*?!Meta\.is_wayland_compositor\(\)[\s\S]*?return;[\s\S]*?_beginDockTransition\(\)/,
-    "the GNOME Wayland extension must not hide native X11 dock actors");
+    /_beginDockTransition\(\)[\s\S]*?if \(!Meta\.is_wayland_compositor\(\)\) \{[\s\S]*?this\._dockActor = null;[\s\S]*?return;[\s\S]*?actor\.set_opacity\(0\)/,
+    "GNOME must keep native X11 docks out of the Wayland actor transition lifecycle without excluding XWayland docks");
+assert.match(
+    extensionSource,
+    /\['unmanaged', \(\) => this\._clearDockWindow\(true\)\][\s\S]*?_clearDockWindow\(unmanaged = false\)[\s\S]*?if \(unmanaged\) \{[\s\S]*?this\._dockActor = null;/,
+    "GNOME must not dereference a disposed dock actor from its unmanaged callback");
 assert.match(
     autohideControllerSource,
     /hide_now\([\s\S]*?\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(true\);\s*return;/,
@@ -281,16 +289,20 @@ assert.match(
     "input pass-through must begin only after Shell completes the hide animation");
 assert.match(
     extensionSource,
-    /_startDockVisibilityTransition\(hidden[\s\S]*?calculateDockHideOffset\(positioned\)[\s\S]*?actor\.ease\([\s\S]*?EASE_IN_QUAD[\s\S]*?EASE_OUT_QUAD/,
-    "GNOME must use a native compositor transition at the screen edge");
+    /_startDockVisibilityTransition\(hidden[\s\S]*?calculateDockHideOffset\(positioned\)[\s\S]*?_updateDockAnimationClip\(actor, positioned, base\)[\s\S]*?actor\.ease\([\s\S]*?EASE_OUT_QUAD/,
+    "GNOME must use Cinnamon-style compositor movement and monitor clipping");
 assert.match(
     extensionSource,
     /get_string\('dock', 'location'\)[\s\S]*?this\._dockLocation = location[\s\S]*?placeDockInWorkArea\([\s\S]*?this\._dockLocation/,
     "GNOME autohide must preserve the configured dock edge");
 assert.match(
     extensionSource,
-    /remainingDistance < 0\.5[\s\S]*?completeTransition\(\)[\s\S]*?return;[\s\S]*?actor\.ease/,
+    /remainingAmount < \(collapseRight \? 0\.001 : 0\.5\)[\s\S]*?completeTransition\(\)[\s\S]*?return;[\s\S]*?actor\.ease/,
     "an already-positioned actor must still complete the visibility state change");
+assert.match(
+    extensionSource,
+    /rightHideCorridorIntersectsMonitor\([\s\S]*?collapseRight[\s\S]*?set_pivot_point\(1, 0\.5\)[\s\S]*?targetScaleX[\s\S]*?animation\.scale_x = targetScaleX/,
+    "a RIGHT dock facing another monitor must collapse into its fixed outer edge");
 assert.match(
     extensionSource,
     /completionSource = GLib\.timeout_add\([\s\S]*?duration \+ 32[\s\S]*?completeTransition\(\)[\s\S]*?actor\.ease/,
@@ -307,6 +319,10 @@ assert.match(
     autohideControllerSource,
     /reveal\(\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(false\);/,
     "a Shell reveal must restore the existing mapped dock surface");
+assert.match(
+    autohideControllerSource,
+    /m_window\.move\(current_x, current_y\);[\s\S]*?m_window\.set_opacity\(X11_REVEAL_INITIAL_OPACITY\)/,
+    "an X11 reveal must move to its hidden edge before becoming visible");
 assert.match(
     extensionSource,
     /signalName === 'DockHiddenChanged'[\s\S]*?this\._dockHidden = Boolean[\s\S]*?this\._startDockVisibilityTransition/,
@@ -420,7 +436,7 @@ const source = fs.readFileSync(helperPath, "utf8")
     "clampAuxiliaryToWorkArea, inferDockEdge, " +
     "isDockPlacementCommitted, isPointerInsideDockInterior, " +
     "isSyntheticApplicationId, " +
-    "parseAuxiliaryPosition, placeDockInWorkArea};";
+    "parseAuxiliaryPosition, placeDockInWorkArea, rightHideCorridorIntersectsMonitor};";
 const context = {};
 vm.createContext(context);
 vm.runInContext(source, context, {filename: helperPath});
@@ -436,9 +452,23 @@ const {
     isSyntheticApplicationId,
     parseAuxiliaryPosition,
     placeDockInWorkArea,
+    rightHideCorridorIntersectsMonitor,
 } = context.testApi;
 const primary = {x: 0, y: 0, width: 1170, height: 1080};
 const primaryWorkArea = {x: 0, y: 32, width: 1170, height: 1048};
+
+assert.strictEqual(rightHideCorridorIntersectsMonitor(
+    {x: 1112, y: 32, width: 58, height: 1048, edge: "right"},
+    0,
+    [primary, {x: 1170, y: 0, width: 1920, height: 1080}]), true);
+assert.strictEqual(rightHideCorridorIntersectsMonitor(
+    {x: 1112, y: 32, width: 58, height: 1048, edge: "right"},
+    0,
+    [primary, {x: 1170, y: 1200, width: 1920, height: 1080}]), false);
+assert.strictEqual(rightHideCorridorIntersectsMonitor(
+    {x: 0, y: 32, width: 58, height: 1048, edge: "left"},
+    0,
+    [primary, {x: -1920, y: 0, width: 1920, height: 1080}]), false);
 
 assert.strictEqual(isDockPlacementCommitted(
     {x: 385, y: 508}, {x: 385, y: 1016}, {x: 0, y: 0}), false);

@@ -227,3 +227,54 @@ struct ItemGeometry
     int center_x = 0;
     int center_y = 0;
 };
+
+// EWMH struts extend inward from an edge of the complete X11 root window;
+// they cannot reserve an internal edge between monitor outputs. Placement
+// margins are included because an existing panel can legitimately put the
+// dock inward from an outer root edge while the combined reservation still
+// begins at that edge.
+inline bool x11_strut_reaches_root_edge(
+    const DockPlacement &placement,
+    int x,
+    int y,
+    int width,
+    int height,
+    int root_width,
+    int root_height)
+{
+    if (width <= 0 || height <= 0 ||
+        root_width <= 0 || root_height <= 0)
+    {
+        return false;
+    }
+
+    if (placement.is_vertical() &&
+        placement.anchor_left)
+    {
+        return x - placement.margin_left == 0;
+    }
+
+    if (placement.is_vertical() &&
+        placement.anchor_right)
+    {
+        return x + width +
+                   placement.margin_right ==
+               root_width;
+    }
+
+    if (placement.is_horizontal() &&
+        placement.anchor_top)
+    {
+        return y - placement.margin_top == 0;
+    }
+
+    if (placement.is_horizontal() &&
+        placement.anchor_bottom)
+    {
+        return y + height +
+                   placement.margin_bottom ==
+               root_height;
+    }
+
+    return false;
+}

@@ -258,11 +258,11 @@ void WindowSystemController::start()
 
     const bool kde_wayland =
         is_kde_wayland_session();
-    const bool gnome_wayland =
-        is_gnome_wayland_session();
+    const bool gnome_shell =
+        identifies_gnome(desktop);
     const bool x11 = is_x11_session();
     const bool uses_shell_protocol =
-        kde_wayland || gnome_wayland;
+        kde_wayland || gnome_shell;
 
     if (!uses_shell_protocol && !x11)
     {
@@ -271,7 +271,17 @@ void WindowSystemController::start()
         return;
     }
 
-    if (x11)
+    if (gnome_shell)
+    {
+        m_backend =
+            std::make_unique<
+                GnomeWaylandWindowBackend>(
+                    !x11);
+
+        DocklightLog::startup(
+            "selected backend: GNOME Shell");
+    }
+    else if (x11)
     {
         const auto backend_kind =
             select_x11_backend_kind(
@@ -311,15 +321,6 @@ void WindowSystemController::start()
             "selected backend: %s",
             x11_backend_kind_name(
                 backend_kind));
-    }
-    else if (gnome_wayland)
-    {
-        m_backend =
-            std::make_unique<
-                GnomeWaylandWindowBackend>();
-
-        DocklightLog::startup(
-            "selected backend: GNOME Wayland");
     }
     else
     {

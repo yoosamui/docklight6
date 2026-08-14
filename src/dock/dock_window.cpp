@@ -1502,14 +1502,24 @@ void DockWindow::apply_x11_strut(
     const Atom strut_partial = XInternAtom(
         xdisplay, "_NET_WM_STRUT_PARTIAL", False);
 
-    unsigned long values[12] = {};
-    if (placement.exclusive_zone < 0)
-    {
-        const int screen_width = DisplayWidth(
-            xdisplay, DefaultScreen(xdisplay));
-        const int screen_height = DisplayHeight(
-            xdisplay, DefaultScreen(xdisplay));
+    const int screen_width = DisplayWidth(
+        xdisplay, DefaultScreen(xdisplay));
+    const int screen_height = DisplayHeight(
+        xdisplay, DefaultScreen(xdisplay));
+    const bool can_reserve_root_edge =
+        placement.exclusive_zone < 0 &&
+        x11_strut_reaches_root_edge(
+            placement,
+            x,
+            y,
+            width,
+            height,
+            screen_width,
+            screen_height);
 
+    unsigned long values[12] = {};
+    if (can_reserve_root_edge)
+    {
         if (placement.is_vertical() &&
             placement.anchor_left)
         {

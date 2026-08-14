@@ -35,6 +35,32 @@ export function calculateDockHideOffset(placement) {
     return {x: placement.width, y: 0};
 }
 
+// Experimental RIGHT-edge policy: collapse only when the dock's complete
+// outward slide corridor overlaps another monitor. Other edges deliberately
+// retain their existing animation while this behavior is evaluated.
+export function rightHideCorridorIntersectsMonitor(
+    placement, monitorIndex, monitors) {
+    if (placement?.edge !== 'right' || !Array.isArray(monitors))
+        return false;
+
+    const corridor = {
+        x: placement.x + placement.width,
+        y: placement.y,
+        width: placement.width,
+        height: placement.height,
+    };
+
+    return monitors.some((monitor, index) => {
+        if (!monitor || index === monitorIndex)
+            return false;
+
+        return corridor.x < monitor.x + monitor.width &&
+            corridor.x + corridor.width > monitor.x &&
+            corridor.y < monitor.y + monitor.height &&
+            corridor.y + corridor.height > monitor.y;
+    });
+}
+
 export function parseAuxiliaryPosition(title) {
     const match = String(title || '').match(
         /^Docklight 6 (Tooltip|Preview|Reveal)@(-?\d+),(-?\d+)$/);

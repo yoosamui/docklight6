@@ -143,8 +143,6 @@ void DockAutohideController::initialize()
                                     return false;
                                 }
 
-                                m_window.set_opacity(
-                                    X11_REVEAL_INITIAL_OPACITY);
                                 animate_x11(false, true);
                                 return false;
                             },
@@ -554,6 +552,9 @@ void DockAutohideController::animate_x11(
         current_x = hidden.x;
         current_y = hidden.y;
         m_window.move(current_x, current_y);
+        // Set opacity only after moving to the hidden edge. Raising it before
+        // this move exposes one frame at the shown position during reveal.
+        m_window.set_opacity(X11_REVEAL_INITIAL_OPACITY);
     }
 
     if (hiding)

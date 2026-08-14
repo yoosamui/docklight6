@@ -122,6 +122,84 @@ int main()
     assert(placement.margin_top == 356);
     assert(placement.margin_bottom == 324);
 
+    DockPlacement right_strut;
+    right_strut.orientation =
+        DockOrientation::vertical;
+    right_strut.anchor_right = true;
+
+    // The primary output ends at x=2560, but the X11 root continues across
+    // the second monitor to x=4480. A root-right strut here would reserve the
+    // complete second monitor, so an internal-edge dock must publish none.
+    assert(!x11_strut_reaches_root_edge(
+        right_strut,
+        2502,
+        29,
+        58,
+        1411,
+        4480,
+        1440));
+
+    assert(x11_strut_reaches_root_edge(
+        right_strut,
+        4422,
+        29,
+        58,
+        1411,
+        4480,
+        1440));
+
+    // Preserve a valid combined outer-edge reservation when another panel
+    // contributes the margin between the dock and the root boundary.
+    right_strut.margin_right = 64;
+    assert(x11_strut_reaches_root_edge(
+        right_strut,
+        4358,
+        29,
+        58,
+        1411,
+        4480,
+        1440));
+
+    DockPlacement left_strut;
+    left_strut.orientation =
+        DockOrientation::vertical;
+    left_strut.anchor_left = true;
+    left_strut.margin_left = 32;
+    assert(x11_strut_reaches_root_edge(
+        left_strut,
+        32,
+        29,
+        58,
+        1411,
+        4480,
+        1440));
+
+    DockPlacement top_strut;
+    top_strut.orientation =
+        DockOrientation::horizontal;
+    top_strut.anchor_top = true;
+    assert(!x11_strut_reaches_root_edge(
+        top_strut,
+        2800,
+        164,
+        400,
+        64,
+        4480,
+        1440));
+
+    DockPlacement bottom_strut;
+    bottom_strut.orientation =
+        DockOrientation::horizontal;
+    bottom_strut.anchor_bottom = true;
+    assert(x11_strut_reaches_root_edge(
+        bottom_strut,
+        1080,
+        1376,
+        400,
+        64,
+        4480,
+        1440));
+
     const WindowGeometry dock_window{
         760,
         1016,

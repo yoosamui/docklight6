@@ -20,6 +20,7 @@ import {
     isSyntheticApplicationId,
     parseAuxiliaryPosition,
     placeDockInWorkArea,
+    rightHideCorridorIntersectsMonitor,
 } from './placement.js';
 
 const SERVICE = 'org.docklight6.WindowIntegration';
@@ -63,8 +64,10 @@ const DOCK_PLACEMENT_MAX_ATTEMPTS = 40;
 const DOCK_DISCOVERY_MAX_ATTEMPTS = 30;
 const REGISTRATION_RETRY_MS = 250;
 const CONFIGURATION_SETTLE_MS = 50;
-const DOCK_HIDE_ANIMATION_MS = 180;
-const DOCK_REVEAL_ANIMATION_MS = 220;
+// Match Cinnamon's panel tween: a 200 ms compositor-side ease-out movement.
+const DOCK_HIDE_ANIMATION_MS = 200;
+const DOCK_REVEAL_ANIMATION_MS = 200;
+const DOCK_CLIP_FRAME_MS = 16;
 // Browser PiP surfaces commonly reserve a double-click for maximizing the
 // player. The preview bridge must not turn a stress-click burst into that
 // window-management gesture.
@@ -152,6 +155,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockActorOpacity = 255;
         this._dockActorBaseTranslation = {x: 0, y: 0};
         this._dockVisibilityAnimationSerial = 0;
+        this._dockClipSource = 0;
         this._dockVisibilityState = 'visible';
         this._dockPointerInside = null;
         this._pointerPosition = null;
@@ -316,6 +320,7 @@ export default class DocklightWindowIntegration extends Extension {
             this._pointerPollSource = 0;
         }
         this._dockVisibilityAnimationSerial++;
+        this._cancelDockAnimationClip();
         if (this._configurationReloadSource) {
             GLib.source_remove(this._configurationReloadSource);
             this._configurationReloadSource = 0;
@@ -488,13 +493,6 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _considerDockWindow(window, allowRetry = true) {
-        // Native X11 Docklight owns its EWMH placement, stacking, struts,
-        // and autohide surfaces. Running the Wayland placement transition in
-        // an X11 Shell sets the compositor actor opacity to zero while
-        // waiting for geometry that the X11 backend never publishes.
-        if (!Meta.is_wayland_compositor())
-            return;
-
         if (this._considerDialogWindow(window))
             return;
         if (this._considerAuxiliaryWindow(window))
@@ -814,7 +812,7 @@ export default class DocklightWindowIntegration extends Extension {
                 this._beginDockTransition();
                 this._scheduleDockPlacement(true);
             }],
-            ['unmanaged', () => this._clearDockWindow()],
+            ['unmanaged', () => this._clearDockWindow(true)],
         ]) {
             try {
                 this._dockWindowSignals.push(window.connect(signal, callback));
@@ -850,8 +848,19 @@ export default class DocklightWindowIntegration extends Extension {
         }
     }
 
-    _clearDockWindow() {
-        this._finishDockTransition();
+    _clearDockWindow(unmanaged = false) {
+        // The unmanaged signal is emitted while Mutter is disposing the
+        // compositor actor. Do not restore or otherwise dereference it; the
+        // actor owns and discards its transitions and clip during disposal.
+        this._cancelDockAnimationClip(!unmanaged);
+        if (unmanaged) {
+            this._dockTransitioning = false;
+            this._dockPlacementAttempts = 0;
+            this._dockActor = null;
+            this._dockActorOpacity = 255;
+        } else {
+            this._finishDockTransition();
+        }
         this._removeDockStrut();
 
         if (this._dockWindow)
@@ -875,6 +884,14 @@ export default class DocklightWindowIntegration extends Extension {
     _beginDockTransition() {
         if (!this._dockWindow)
             return;
+
+        // In a native X11 Shell, placement and autohide are owned by GTK/EWMH.
+        // An XWayland dock in a Wayland Shell still needs this transition.
+        if (!Meta.is_wayland_compositor()) {
+            this._dockTransitioning = false;
+            this._dockActor = null;
+            return;
+        }
 
         if (!this._dockTransitioning) {
             this._dockTransitioning = true;
@@ -923,6 +940,48 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockActorOpacity = 255;
     }
 
+    _cancelDockAnimationClip(removeClip = true) {
+        if (this._dockClipSource) {
+            GLib.source_remove(this._dockClipSource);
+            this._dockClipSource = 0;
+        }
+
+        if (removeClip) {
+            try {
+                this._dockWindow?.get_compositor_private?.()?.remove_clip();
+            } catch (_error) {
+                // The actor can disappear while its window is being closed.
+            }
+        }
+    }
+
+    _updateDockAnimationClip(actor, positioned, base) {
+        if (!this._isX11DockWindow() || !actor || !positioned)
+            return;
+
+        const monitor =
+            Main.layoutManager.monitors[this._dockMonitorIndex()];
+        if (!monitor)
+            return;
+
+        const actorX = positioned.x + actor.translation_x - base.x;
+        const actorY = positioned.y + actor.translation_y - base.y;
+        const left = Math.max(actorX, monitor.x);
+        const top = Math.max(actorY, monitor.y);
+        const right = Math.min(
+            actorX + positioned.width,
+            monitor.x + monitor.width);
+        const bottom = Math.min(
+            actorY + positioned.height,
+            monitor.y + monitor.height);
+
+        actor.set_clip(
+            Math.max(0, Math.round(left - actorX)),
+            Math.max(0, Math.round(top - actorY)),
+            Math.max(0, Math.round(right - left)),
+            Math.max(0, Math.round(bottom - top)));
+    }
+
     _startDockVisibilityTransition(hidden, requestedActor = null) {
         const actor = requestedActor ??
             this._dockWindow?.get_compositor_private?.();
@@ -935,38 +994,69 @@ export default class DocklightWindowIntegration extends Extension {
         }
 
         const base = this._dockActorBaseTranslation ?? {x: 0, y: 0};
+        const monitorIndex = this._dockMonitorIndex();
         const positioned = placeDockInWorkArea(
-            Main.layoutManager.monitors[this._dockMonitorIndex()],
-            this._workAreaForMonitor(this._dockMonitorIndex()),
+            Main.layoutManager.monitors[monitorIndex],
+            this._workAreaForMonitor(monitorIndex),
             placement,
             this._dockAlignment,
             this._dockLocation);
         const offset = calculateDockHideOffset(positioned);
+        const collapseRight = rightHideCorridorIntersectsMonitor(
+            positioned,
+            monitorIndex,
+            Main.layoutManager.monitors);
 
         const serial = ++this._dockVisibilityAnimationSerial;
+        this._cancelDockAnimationClip(false);
         actor.remove_all_transitions();
-        if (!hidden && actor.get_opacity() === 0 &&
-            actor.translation_x === base.x &&
-            actor.translation_y === base.y) {
-            actor.translation_x = base.x + offset.x;
-            actor.translation_y = base.y + offset.y;
+        if (collapseRight) {
+            actor.remove_clip();
+            actor.translation_x = base.x;
+            actor.translation_y = base.y;
+            actor.scale_y = 1;
+            actor.set_pivot_point(1, 0.5);
+            if (!hidden && actor.get_opacity() === 0 &&
+                actor.scale_x >= 0.999) {
+                actor.scale_x = 0;
+            }
+        } else {
+            actor.scale_x = 1;
+            actor.scale_y = 1;
+            actor.set_pivot_point(0.5, 0.5);
+            if (!hidden && actor.get_opacity() === 0 &&
+                actor.translation_x === base.x &&
+                actor.translation_y === base.y) {
+                actor.translation_x = base.x + offset.x;
+                actor.translation_y = base.y + offset.y;
+            }
         }
         const startX = actor.translation_x;
         const startY = actor.translation_y;
-        const targetX = hidden ? base.x + offset.x : base.x;
-        const targetY = hidden ? base.y + offset.y : base.y;
+        const startScaleX = actor.scale_x;
+        const targetX = collapseRight
+            ? base.x
+            : hidden ? base.x + offset.x : base.x;
+        const targetY = collapseRight
+            ? base.y
+            : hidden ? base.y + offset.y : base.y;
+        const targetScaleX = collapseRight && hidden ? 0 : 1;
         const fullDistance = Math.max(1, Math.hypot(offset.x, offset.y));
-        const remainingFraction = Math.min(1,
-            Math.hypot(targetX - startX, targetY - startY) / fullDistance);
+        const remainingAmount = collapseRight
+            ? Math.abs(targetScaleX - startScaleX)
+            : Math.hypot(targetX - startX, targetY - startY);
+        const remainingFraction = Math.min(1, collapseRight
+            ? remainingAmount
+            : remainingAmount / fullDistance);
         const fullDuration = hidden
             ? DOCK_HIDE_ANIMATION_MS
             : DOCK_REVEAL_ANIMATION_MS;
-        const remainingDistance = Math.hypot(
-            targetX - startX, targetY - startY);
         const duration = Math.max(60,
             Math.round(fullDuration * remainingFraction));
 
         this._dockVisibilityState = hidden ? 'hiding' : 'revealing';
+        if (!collapseRight)
+            this._updateDockAnimationClip(actor, positioned, base);
         actor.set_opacity(this._dockActorOpacity);
         this._updateDockRevealActor();
         this._publishDockPointerInside(true);
@@ -982,10 +1072,15 @@ export default class DocklightWindowIntegration extends Extension {
                 GLib.source_remove(completionSource);
                 completionSource = 0;
             }
+            this._cancelDockAnimationClip(false);
             this._dockVisibilityState = hidden ? 'hidden' : 'visible';
             actor.translation_x = targetX;
             actor.translation_y = targetY;
+            actor.scale_x = targetScaleX;
+            if (!collapseRight)
+                this._updateDockAnimationClip(actor, positioned, base);
             actor.set_opacity(hidden ? 0 : this._dockActorOpacity);
+            actor.remove_clip();
             this._updateDockRevealActor();
             this._publishDockPointerInside(true);
             this._call(
@@ -996,7 +1091,7 @@ export default class DocklightWindowIntegration extends Extension {
         // animated property already equals its target. Complete that state
         // change here so the C++ controller never waits forever for an
         // animation that was not created.
-        if (remainingDistance < 0.5) {
+        if (remainingAmount < (collapseRight ? 0.001 : 0.5)) {
             completeTransition();
             return;
         }
@@ -1009,15 +1104,31 @@ export default class DocklightWindowIntegration extends Extension {
                 completeTransition();
                 return GLib.SOURCE_REMOVE;
             });
-        actor.ease({
-            translation_x: targetX,
-            translation_y: targetY,
+        const animation = {
             duration,
-            mode: hidden
-                ? Clutter.AnimationMode.EASE_IN_QUAD
-                : Clutter.AnimationMode.EASE_OUT_QUAD,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
             onComplete: completeTransition,
-        });
+        };
+        if (collapseRight)
+            animation.scale_x = targetScaleX;
+        else {
+            animation.translation_x = targetX;
+            animation.translation_y = targetY;
+        }
+        actor.ease(animation);
+        if (this._isX11DockWindow() && !collapseRight) {
+            this._dockClipSource = GLib.timeout_add(
+                GLib.PRIORITY_HIGH,
+                DOCK_CLIP_FRAME_MS,
+                () => {
+                    if (serial !== this._dockVisibilityAnimationSerial) {
+                        this._dockClipSource = 0;
+                        return GLib.SOURCE_REMOVE;
+                    }
+                    this._updateDockAnimationClip(actor, positioned, base);
+                    return GLib.SOURCE_CONTINUE;
+                });
+        }
     }
 
     _dockPointerIsInside() {

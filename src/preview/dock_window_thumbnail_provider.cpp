@@ -1073,25 +1073,11 @@ DockWindowThumbnailProvider::
             return static_cast<char>(std::tolower(character));
         });
 
-    const char *session_type = std::getenv("XDG_SESSION_TYPE");
-    std::string normalized_session =
-        session_type ? session_type : "";
-    std::transform(
-        normalized_session.begin(),
-        normalized_session.end(),
-        normalized_session.begin(),
-        [](unsigned char character)
-        {
-            return static_cast<char>(std::tolower(character));
-        });
-
-    // Docklight uses XWayland for its dock surface on GNOME, but GNOME's
-    // window registry publishes Mutter stable-sequence ids rather than X11
-    // window ids. Route those requests back through the Shell extension so
-    // native Wayland and XWayland client windows use the same compositor
-    // capture path.
+    // The GNOME Shell registry publishes Mutter stable-sequence ids on both
+    // Wayland and X11. They can be numeric but are not X11 window handles.
+    // Route them through the same Shell compositor capture service that owns
+    // the registry so static and live previews address the correct actors.
     m_state->gnome_shell_capture =
-        normalized_session == "wayland" &&
         normalized_desktop.find("gnome") != std::string::npos;
 
     // ScreenShot2 is a KWin-only API. On other Wayland compositors, avoid

@@ -8,7 +8,7 @@ int main()
     GnomeWaylandWindowBackend backend;
 
     assert(backend.name() ==
-           "GNOME Wayland");
+           "GNOME Shell");
 
     const auto capabilities =
         backend.capabilities();
@@ -25,6 +25,10 @@ int main()
     assert(capabilities.provides_dock_reveal_trigger);
     assert(!capabilities.provides_activities);
     assert(capabilities.accepts_icon_geometry);
+
+    GnomeWaylandWindowBackend x11_backend(false);
+    assert(!x11_backend.capabilities()
+                .provides_dock_reveal_trigger);
 
     backend.start();
     assert(backend.register_integration(
