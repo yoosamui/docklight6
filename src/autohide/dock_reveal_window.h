@@ -35,6 +35,7 @@ class DockRevealWindow : public Gtk::Window
 {
 public:
     DockRevealWindow();
+    ~DockRevealWindow() override;
 
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor> &monitor);
@@ -54,6 +55,10 @@ private:
     void prepare_reconfiguration();
     void apply_wayland_toplevel_placement();
     void apply_x11_placement();
+    void start_x11_edge_poll();
+    void stop_x11_edge_poll();
+    bool poll_x11_physical_edge();
+    bool has_x11_panel_inset() const;
     bool on_enter_notify_event(
         GdkEventCrossing *event) override;
 
@@ -62,6 +67,8 @@ private:
     Glib::RefPtr<Gdk::Monitor> m_monitor;
     MonitorGeometry m_monitor_geometry;
     DockPlacement m_placement;
+    sigc::connection m_x11_edge_poll_timer;
     bool m_has_placement = false;
+    bool m_pointer_was_on_physical_edge = false;
     SurfaceBackend m_backend = SurfaceBackend::x11;
 };

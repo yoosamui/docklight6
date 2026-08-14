@@ -255,9 +255,11 @@ struct MonitorGeometry
     int height = 0;
 };
 
-// The invisible autohide trigger belongs on the physical output edge. Dock
-// margins position visible content around panels; applying the cross-axis
-// margin here makes an edge trigger unreachable from the screen boundary.
+// Place an ordinary toplevel reveal trigger beside the dock's shown edge.
+// On X11, desktop panels can own the physical output edge above every client
+// window. A trigger left underneath such a panel is mapped but can never
+// receive pointer input, so include the dock's cross-axis panel inset. A zero
+// inset still places the trigger directly on the physical output edge.
 inline MonitorGeometry edge_reveal_geometry(
     const DockPlacement &placement,
     const MonitorGeometry &monitor,
@@ -291,8 +293,11 @@ inline MonitorGeometry edge_reveal_geometry(
             geometry.x +=
                 (monitor.width - geometry.width) / 2;
 
-        if (placement.anchor_bottom)
-            geometry.y += monitor.height - thickness;
+        if (placement.anchor_top)
+            geometry.y += placement.margin_top;
+        else if (placement.anchor_bottom)
+            geometry.y += monitor.height -
+                placement.margin_bottom - thickness;
     }
     else
     {
@@ -313,11 +318,82 @@ inline MonitorGeometry edge_reveal_geometry(
             geometry.y +=
                 (monitor.height - geometry.height) / 2;
 
-        if (placement.anchor_right)
-            geometry.x += monitor.width - thickness;
+        if (placement.anchor_left)
+            geometry.x += placement.margin_left;
+        else if (placement.anchor_right)
+            geometry.x += monitor.width -
+                placement.margin_right - thickness;
     }
 
     return geometry;
+}
+
+// Desktop-shell panels can cover an X11 reveal window at the physical output
+// edge. Keep physical-edge pointer detection as a separate pure rule so the
+// X11 reveal surface can poll only while that otherwise-covered trigger is
+// needed. The main-axis hit area remains aligned with the configured dock.
+inline bool point_on_physical_reveal_edge(
+    const DockPlacement &placement,
+    const MonitorGeometry &monitor,
+    int reveal_size,
+    int pointer_x,
+    int pointer_y)
+{
+    if (monitor.width <= 0 || monitor.height <= 0)
+        return false;
+
+    const int thickness = reveal_size > 0
+        ? reveal_size
+        : 1;
+    const auto trigger = edge_reveal_geometry(
+        placement,
+        monitor,
+        thickness);
+
+    if (placement.is_horizontal())
+    {
+        const bool on_main_axis =
+            pointer_x >= trigger.x &&
+            pointer_x < trigger.x + trigger.width;
+        if (!on_main_axis)
+            return false;
+
+        if (placement.anchor_top)
+        {
+            return pointer_y >= monitor.y &&
+                   pointer_y < monitor.y + thickness;
+        }
+
+        if (placement.anchor_bottom)
+        {
+            return pointer_y >=
+                       monitor.y + monitor.height - thickness &&
+                   pointer_y < monitor.y + monitor.height;
+        }
+
+        return false;
+    }
+
+    const bool on_main_axis =
+        pointer_y >= trigger.y &&
+        pointer_y < trigger.y + trigger.height;
+    if (!on_main_axis)
+        return false;
+
+    if (placement.anchor_left)
+    {
+        return pointer_x >= monitor.x &&
+               pointer_x < monitor.x + thickness;
+    }
+
+    if (placement.anchor_right)
+    {
+        return pointer_x >=
+                   monitor.x + monitor.width - thickness &&
+               pointer_x < monitor.x + monitor.width;
+    }
+
+    return false;
 }
 
 struct ItemGeometry

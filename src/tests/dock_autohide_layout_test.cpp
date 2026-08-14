@@ -95,9 +95,30 @@ int main()
         monitor,
         2);
     assert(top_reveal.x == 760);
-    assert(top_reveal.y == 0);
+    // Cinnamon and other X11 desktops keep their panel above ordinary
+    // clients. The trigger must therefore sit at the dock-facing side of the
+    // panel rather than underneath it at the physical screen edge.
+    assert(top_reveal.y == 32);
     assert(top_reveal.width == 400);
     assert(top_reveal.height == 2);
+    assert(point_on_physical_reveal_edge(
+        placement,
+        monitor,
+        2,
+        960,
+        0));
+    assert(!point_on_physical_reveal_edge(
+        placement,
+        monitor,
+        2,
+        759,
+        0));
+    assert(!point_on_physical_reveal_edge(
+        placement,
+        monitor,
+        2,
+        960,
+        2));
 
     DockPlacement bottom_reveal_placement = placement;
     bottom_reveal_placement.anchor_top = false;
@@ -108,7 +129,13 @@ int main()
         bottom_reveal_placement,
         monitor,
         2);
-    assert(bottom_reveal.y == 1078);
+    assert(bottom_reveal.y == 1054);
+    assert(point_on_physical_reveal_edge(
+        bottom_reveal_placement,
+        monitor,
+        2,
+        960,
+        1079));
 
     DockPlacement left_reveal_placement;
     left_reveal_placement.orientation =
@@ -122,10 +149,16 @@ int main()
         left_reveal_placement,
         monitor,
         2);
-    assert(left_reveal.x == 0);
+    assert(left_reveal.x == 32);
     assert(left_reveal.y == 340);
     assert(left_reveal.width == 2);
     assert(left_reveal.height == 400);
+    assert(point_on_physical_reveal_edge(
+        left_reveal_placement,
+        monitor,
+        2,
+        0,
+        540));
 
     DockPlacement right_reveal_placement =
         left_reveal_placement;
@@ -137,7 +170,13 @@ int main()
         right_reveal_placement,
         monitor,
         2);
-    assert(right_reveal.x == 1918);
+    assert(right_reveal.x == 1854);
+    assert(point_on_physical_reveal_edge(
+        right_reveal_placement,
+        monitor,
+        2,
+        1919,
+        540));
 
     const MonitorGeometry right_dock_workarea{
         0,

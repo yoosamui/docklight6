@@ -21,9 +21,18 @@
 #include "dock/dock_constants.h"
 
 #include <gtk-layer-shell.h>
+#include <gdk/gdk.h>
 #include <gdk/gdkwayland.h>
+#include <glibmm/main.h>
 
 #include <string>
+
+namespace
+{
+
+constexpr int X11_EDGE_POLL_INTERVAL_MS = 50;
+
+}
 
 DockRevealWindow::DockRevealWindow()
 {
@@ -105,8 +114,22 @@ DockRevealWindow::DockRevealWindow()
             if (m_backend == SurfaceBackend::wayland_toplevel)
                 apply_wayland_toplevel_placement();
             else if (m_backend == SurfaceBackend::x11)
+            {
                 apply_x11_placement();
+                start_x11_edge_poll();
+            }
         });
+
+    signal_unmap().connect(
+        [this]()
+        {
+            stop_x11_edge_poll();
+        });
+}
+
+DockRevealWindow::~DockRevealWindow()
+{
+    stop_x11_edge_poll();
 }
 
 void DockRevealWindow::set_monitor(
@@ -272,6 +295,89 @@ void DockRevealWindow::apply_x11_placement()
     set_size_request(geometry.width, geometry.height);
     resize(geometry.width, geometry.height);
     move(geometry.x, geometry.y);
+}
+
+bool DockRevealWindow::has_x11_panel_inset() const
+{
+    if (m_backend != SurfaceBackend::x11 || !m_has_placement)
+        return false;
+
+    if (m_placement.is_horizontal())
+    {
+        return (m_placement.anchor_top &&
+                m_placement.margin_top > 0) ||
+               (m_placement.anchor_bottom &&
+                m_placement.margin_bottom > 0);
+    }
+
+    return (m_placement.anchor_left &&
+            m_placement.margin_left > 0) ||
+           (m_placement.anchor_right &&
+            m_placement.margin_right > 0);
+}
+
+void DockRevealWindow::start_x11_edge_poll()
+{
+    stop_x11_edge_poll();
+
+    if (!has_x11_panel_inset())
+        return;
+
+    m_pointer_was_on_physical_edge = false;
+    m_x11_edge_poll_timer =
+        Glib::signal_timeout().connect(
+            sigc::mem_fun(
+                *this,
+                &DockRevealWindow::poll_x11_physical_edge),
+            X11_EDGE_POLL_INTERVAL_MS);
+}
+
+void DockRevealWindow::stop_x11_edge_poll()
+{
+    m_x11_edge_poll_timer.disconnect();
+    m_pointer_was_on_physical_edge = false;
+}
+
+bool DockRevealWindow::poll_x11_physical_edge()
+{
+    if (!get_mapped() || !has_x11_panel_inset())
+        return false;
+
+    auto *display = gdk_display_get_default();
+    auto *seat = display
+        ? gdk_display_get_default_seat(display)
+        : nullptr;
+    auto *pointer = seat
+        ? gdk_seat_get_pointer(seat)
+        : nullptr;
+    if (!pointer)
+        return true;
+
+    int pointer_x = 0;
+    int pointer_y = 0;
+    gdk_device_get_position(
+        pointer,
+        nullptr,
+        &pointer_x,
+        &pointer_y);
+
+    const bool on_edge =
+        point_on_physical_reveal_edge(
+            m_placement,
+            m_monitor_geometry,
+            DockConstants::AUTOHIDE_REVEAL_SIZE,
+            pointer_x,
+            pointer_y);
+
+    if (on_edge && !m_pointer_was_on_physical_edge)
+    {
+        m_pointer_was_on_physical_edge = true;
+        m_signal_reveal_requested.emit();
+        return get_mapped();
+    }
+
+    m_pointer_was_on_physical_edge = on_edge;
+    return true;
 }
 
 sigc::signal<void> &
