@@ -2,7 +2,7 @@
 // of Meta.Window makes multi-monitor edge behavior testable without Mutter.
 
 export function inferDockEdge(monitor, rect) {
-    const distances = [
+    let distances = [
         ['top', Math.abs(rect.y - monitor.y)],
         ['bottom', Math.abs(
             monitor.y + monitor.height - rect.y - rect.height)],
@@ -10,8 +10,29 @@ export function inferDockEdge(monitor, rect) {
         ['right', Math.abs(
             monitor.x + monitor.width - rect.x - rect.width)],
     ];
+
+    // A fill-aligned dock can touch a corner, making two edge distances
+    // identical. Prefer the axis implied by its shape so a full-height LEFT
+    // dock is not mistaken for TOP (and animated vertically).
+    if (rect.height > rect.width)
+        distances = distances.filter(([edge]) =>
+            edge === 'left' || edge === 'right');
+    else if (rect.width > rect.height)
+        distances = distances.filter(([edge]) =>
+            edge === 'top' || edge === 'bottom');
+
     distances.sort((left, right) => left[1] - right[1]);
     return distances[0][0];
+}
+
+export function calculateDockHideOffset(placement) {
+    if (placement.edge === 'top')
+        return {x: 0, y: -placement.height};
+    if (placement.edge === 'bottom')
+        return {x: 0, y: placement.height};
+    if (placement.edge === 'left')
+        return {x: -placement.width, y: 0};
+    return {x: placement.width, y: 0};
 }
 
 export function parseAuxiliaryPosition(title) {
@@ -81,9 +102,12 @@ export function placeDockInWorkArea(
     monitor,
     workArea,
     rect,
-    alignment = 'center') {
+    alignment = 'center',
+    configuredEdge = null) {
     const area = workArea || monitor;
-    const edge = inferDockEdge(monitor, rect);
+    const edge = ['top', 'bottom', 'left', 'right'].includes(configuredEdge)
+        ? configuredEdge
+        : inferDockEdge(monitor, rect);
     let x = rect.x;
     let y = rect.y;
 
@@ -149,7 +173,9 @@ export function isSyntheticApplicationId(applicationId) {
 }
 
 export function calculateDockStrut(monitor, dockRect) {
-    const edge = inferDockEdge(monitor, dockRect);
+    const edge = ['top', 'bottom', 'left', 'right'].includes(dockRect.edge)
+        ? dockRect.edge
+        : inferDockEdge(monitor, dockRect);
     let x = monitor.x;
     let y = monitor.y;
     let width = monitor.width;

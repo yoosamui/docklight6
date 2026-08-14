@@ -1,6 +1,11 @@
 SUBDIRS = src po
 
 EXTRA_DIST = \
+    SETUP.md \
+    autogen.sh \
+    build.sh \
+    createpo.sh \
+    install_dependencies.sh \
     run_xwayland_prototype.sh \
     setup_backend.sh \
     setup_presentation.sh \

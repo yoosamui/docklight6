@@ -18,10 +18,12 @@ esac
 
 DOCKLIGHT_BUILD_DIR=$(realpath -m -- "$DOCKLIGHT_BUILD_DIR")
 
-if [ "$DOCKLIGHT_BUILD_DIR" = "$SOURCE_DIR" ]; then
-    echo "The build directory must be separate from the source directory." >&2
-    exit 1
-fi
+case $DOCKLIGHT_BUILD_DIR in
+    "$SOURCE_DIR"|/)
+        echo "Refusing unsafe build directory: $DOCKLIGHT_BUILD_DIR" >&2
+        exit 1
+        ;;
+esac
 
 cd "$SOURCE_DIR"
 autoreconf --install --force --verbose

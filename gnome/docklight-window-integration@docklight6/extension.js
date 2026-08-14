@@ -11,6 +11,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 Gio._promisify(Shell.Screenshot, 'composite_to_stream');
 
 import {
+    calculateDockHideOffset,
     calculateDockRevealRect,
     calculateDockStrut,
     clampAuxiliaryToWorkArea,
@@ -370,6 +371,7 @@ export default class DocklightWindowIntegration extends Extension {
     _loadDockPlacement() {
         let autohide = 'none';
         let alignment = 'center';
+        let location = 'bottom';
 
         const path = GLib.build_filenamev([
             GLib.get_user_config_dir(), 'docklight6', 'docklight.conf',
@@ -392,14 +394,23 @@ export default class DocklightWindowIntegration extends Extension {
             } catch (_error) {
                 // Missing and empty alignment values use the centred default.
             }
+            try {
+                const configuredLocation = keyFile.get_string('dock', 'location').trim();
+                if (['top', 'bottom', 'left', 'right'].includes(configuredLocation))
+                    location = configuredLocation;
+            } catch (_error) {
+                // Missing and empty location values use the bottom edge.
+            }
         } catch (_error) {
             // Missing keys and a missing first-run file both mean defaults.
         }
 
         const changed = this._dockAutohide !== autohide ||
-            this._dockAlignment !== alignment;
+            this._dockAlignment !== alignment ||
+            this._dockLocation !== location;
         this._dockAutohide = autohide;
         this._dockAlignment = alignment;
+        this._dockLocation = location;
         return changed;
     }
 
@@ -921,16 +932,9 @@ export default class DocklightWindowIntegration extends Extension {
             Main.layoutManager.monitors[this._dockMonitorIndex()],
             this._workAreaForMonitor(this._dockMonitorIndex()),
             placement,
-            this._dockAlignment);
-        const offset = {x: 0, y: 0};
-        if (positioned.edge === 'top')
-            offset.y = -positioned.height;
-        else if (positioned.edge === 'bottom')
-            offset.y = positioned.height;
-        else if (positioned.edge === 'left')
-            offset.x = -positioned.width;
-        else
-            offset.x = positioned.width;
+            this._dockAlignment,
+            this._dockLocation);
+        const offset = calculateDockHideOffset(positioned);
 
         const serial = ++this._dockVisibilityAnimationSerial;
         actor.remove_all_transitions();
@@ -1022,7 +1026,8 @@ export default class DocklightWindowIntegration extends Extension {
             monitor,
             this._workAreaForMonitor(monitorIndex),
             this._dockPlacement,
-            this._dockAlignment);
+            this._dockAlignment,
+            this._dockLocation);
         if (!this._pointerPosition)
             return false;
 
@@ -1215,7 +1220,8 @@ export default class DocklightWindowIntegration extends Extension {
             monitor,
             this._workAreaForMonitor(monitorIndex),
             this._dockPlacement,
-            this._dockAlignment);
+            this._dockAlignment,
+            this._dockLocation);
         const reveal = calculateDockRevealRect(placement);
 
         actor.set_position(reveal.x, reveal.y);
@@ -1382,7 +1388,8 @@ export default class DocklightWindowIntegration extends Extension {
             monitor,
             this._workAreaForMonitor(monitorIndex),
             placement,
-            this._dockAlignment);
+            this._dockAlignment,
+            this._dockLocation);
         const x = positionedPlacement.x;
         const y = positionedPlacement.y;
         if (rect.x !== x || rect.y !== y)

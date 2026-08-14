@@ -87,10 +87,12 @@ sudo ./install_dependencies.sh
 Build and install DockLight into `/usr/local`:
 
 ```sh
-sudo ./install_docklight.sh
+./build.sh debug --clean --check
+./build.sh release --clean --install
 ```
 
-The root installer owns only the DockLight core. Configure the current
+The build script requests `sudo` only for the installation step. The core
+installation does not install a desktop integration. Configure the current
 desktop integration separately as the logged-in desktop user (without
 `sudo`):
 
@@ -127,22 +129,13 @@ DockLight can then be launched from the application menu or with:
 docklight6
 ```
 
-### Build without installing
+### Development builds
 
 DockLight uses an out-of-source Autotools build, keeping generated files out of
-`src/`. The default build is an unoptimized debug build with full debug symbols:
+`src/`. Create a debug build with full debug symbols and run its tests with:
 
 ```sh
-./autogen.sh
-make -C build -j"$(nproc)"
-make -C build check
-./build/src/docklight6
-```
-
-Create a clean debug build in a dedicated directory with:
-
-```sh
-./create_debug.sh
+./build.sh debug --check
 ./build-debug/src/docklight6
 ```
 
@@ -150,9 +143,23 @@ Create an optimized release build with assertions and debug-only logging
 disabled:
 
 ```sh
-./create_release.sh
+./build.sh release
 ./build-release/src/docklight6
 ```
+
+Run tests against the debug build: release mode defines `NDEBUG`, which
+disables the C++ suite's `assert()` checks.
+
+Clean and rebuild either configuration with:
+
+```sh
+./build.sh debug --clean
+./build.sh release --clean
+```
+
+Use `./build.sh --help` for installation, run, restart, GDB, job-count, and
+clean-only options. See [SETUP.md](SETUP.md) for the complete development and
+script reference.
 
 Install the KWin integration separately when testing window management on KDE
 Plasma Wayland:
@@ -160,8 +167,6 @@ Plasma Wayland:
 ```sh
 ./setup_backend.sh plasma
 ```
-
-Use `./clean.sh` to remove the build directory and start a clean build.
 
 ## Optional Plasma integration
 

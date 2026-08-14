@@ -26,7 +26,7 @@ sudo ./install_dependencies.sh
 Optional workflows need extra tools:
 
 ```sh
-# Debugging with 1.debugbuild.sh
+# Debugging with ./build.sh debug --gdb
 sudo apt install gdb
 
 # JavaScript tests, if Node.js is not already installed
@@ -50,112 +50,120 @@ relative value is resolved from the repository root.
 
 | Directory | Purpose |
 | --- | --- |
-| `build/` | Default used by `autogen.sh` and `install_docklight.sh` |
+| `build/` | Low-level default used by `autogen.sh` |
 | `build-debug/` | Debug helper build |
 | `build-release/` | Release helper build |
 
 Never point `DOCKLIGHT_BUILD_DIR` at the source directory or `/`.
-`clean.sh` rejects both unsafe locations.
+`build.sh` and `autogen.sh` reject unsafe locations.
 
 ## Standard development build
 
-For a debug-friendly build that does not install or launch anything:
+The normal developer entry point creates a debug build without installing or
+launching anything:
 
 ```sh
-./autogen.sh
-make -C build -j"$(nproc)"
-make -C build check
-./build/src/docklight6
+./build.sh debug
+./build-debug/src/docklight6
 ```
 
-`autogen.sh` regenerates Autotools files, creates the build directory, and
-runs `configure`. Its defaults are `-O0 -g3` for C and
-`-O0 -g3 -DDEBUG` for C++. Caller-provided `CFLAGS` and `CXXFLAGS` take
-precedence. Arguments are forwarded to `configure`:
+Add `--check` to run the complete test suite:
+
+```sh
+./build.sh debug --check
+```
+
+`build.sh` selects the correct directory and compiler flags, configures it when
+needed, and performs an incremental parallel build. Run `./build.sh --help`
+for its complete command-line reference.
+
+## Unified build command
+
+The general syntax is:
+
+```sh
+./build.sh <debug|release> [OPTIONS]
+```
+
+Modes map to these defaults:
+
+| Mode | Directory | C/C++ flags |
+| --- | --- | --- |
+| `debug` | `build-debug/` | `-O0 -g3`; C++ also uses `-DDEBUG` |
+| `release` | `build-release/` | `-O2 -DNDEBUG` |
+
+Common workflows:
+
+```sh
+# Incremental builds
+./build.sh debug
+./build.sh release
+
+# Clean debug build with complete tests; clean release build
+./build.sh debug --clean --check
+./build.sh release --clean
+
+# Install the complete release under /usr/local
+./build.sh release --install
+
+# Install, stop an old instance, and run
+./build.sh release --install --restart --run
+
+# Debug in GDB without installing
+./build.sh debug --gdb
+
+# Install the debug build and debug the registered executable
+./build.sh debug --install --restart --gdb
+```
+
+Options:
+
+- `--clean` removes the mode's build directory before rebuilding.
+- `--clean-only` removes the build directory and exits without rebuilding.
+- `--check` runs `make check` after the build. Use it with debug mode for full
+  validation because release mode defines `NDEBUG`, disabling C++ `assert()`
+  checks.
+- `--install` runs the complete `make install` workflow and requests `sudo`
+  when the caller is not root.
+- `--run` launches the resulting executable.
+- `--gdb` launches it under GDB and cannot be combined with `--run`.
+- `--restart` stops a running `docklight6` before `--run` or `--gdb`.
+- `--jobs N` overrides the default `nproc` parallelism.
+
+The default operation is deliberately non-invasive: it builds only. It never
+installs, stops, or launches DockLight unless the corresponding option is
+present.
+
+Override mode defaults with these environment variables:
+
+```sh
+DOCKLIGHT_BUILD_DIR=build-custom ./build.sh debug
+DEBUG_CFLAGS="-Og -g3" DEBUG_CXXFLAGS="-Og -g3 -DDEBUG" \
+    ./build.sh debug --clean
+RELEASE_CFLAGS="-O3 -DNDEBUG" RELEASE_CXXFLAGS="-O3 -DNDEBUG" \
+    ./build.sh release --clean
+```
+
+When `--install` is present, `--run` and `--gdb` use
+`/usr/local/bin/docklight6`. Override that path with
+`DOCKLIGHT_INSTALLED_BINARY` if the project was configured with another
+prefix.
+
+### Low-level Autotools workflow
+
+Use `autogen.sh` directly when passing custom `configure` arguments or when a
+mode-specific build is not appropriate:
 
 ```sh
 DOCKLIGHT_BUILD_DIR=build-local \
     ./autogen.sh --prefix="$HOME/.local"
 make -C build-local -j"$(nproc)"
+make -C build-local check
 ```
 
-After changing source files, rerun `make`. Rerun `autogen.sh` after changing
-`configure.ac`, a `Makefile.am`, or another build-system input.
-
-## Debug builds
-
-### Build without installing
-
-```sh
-DOCKLIGHT_BUILD_DIR=build-debug \
-    CFLAGS="-O0 -g3" \
-    CXXFLAGS="-O0 -g3 -DDEBUG" \
-    ./autogen.sh
-make -C build-debug -j"$(nproc)"
-make -C build-debug check
-./build-debug/src/docklight6
-```
-
-### Build, install, and run
-
-```sh
-./build_debug.sh
-```
-
-This helper removes `build-debug/`, configures and builds it, installs the
-binary as `/usr/local/bin/docklight6` using `sudo`, stops a running
-DockLight process, and launches the installed binary. Its defaults can be
-overridden with `DOCKLIGHT_BUILD_DIR`, `DEBUG_CFLAGS`, and
-`DEBUG_CXXFLAGS`.
-
-The script ends with `exec`, so it remains attached to the launched
-application.
-
-### Build and launch under GDB
-
-```sh
-./1.debugbuild.sh
-```
-
-This interactive developer shortcut performs a clean debug build, installs the
-binary into `/usr/local/bin`, stops an existing DockLight process, and runs
-`gdb /usr/local/bin/docklight6`. Enter `run` at the GDB prompt.
-
-## Release builds
-
-### Build without installing
-
-```sh
-DOCKLIGHT_BUILD_DIR=build-release \
-    CFLAGS="-O2 -DNDEBUG" \
-    CXXFLAGS="-O2 -DNDEBUG" \
-    ./autogen.sh
-make -C build-release -j"$(nproc)"
-make -C build-release check
-```
-
-The binary is `build-release/src/docklight6`.
-
-### Build, install, and run
-
-```sh
-./build_release.sh
-```
-
-This helper removes and recreates `build-release/`, builds with
-`-O2 -DNDEBUG`, installs `/usr/local/bin/docklight6`, stops the current
-DockLight process, and launches the new binary. Override its defaults with
-`RELEASE_CFLAGS`, `RELEASE_CXXFLAGS`, and `DOCKLIGHT_BUILD_DIR`.
-
-### Incremental release shortcut
-
-```sh
-./2.releasebuild.sh
-```
-
-This helper defaults to `build/`. It reconfigures only when the build is
-missing or has different flags, then builds, installs, stops the running
-application, and launches the installed binary.
+`autogen.sh` regenerates Autotools files and uses debug-friendly flags unless
+the caller supplies `CFLAGS` and `CXXFLAGS`. Arguments are forwarded to
+`configure`.
 
 On KDE Plasma Wayland, the installed path is significant. KWin authorizes
 restricted screenshot and screencast interfaces using the executable path in
@@ -199,13 +207,14 @@ make -C build-debug/src check TESTS=tests/gnome_placement_test.js
 ### Automated core installation
 
 ```sh
-sudo ./install_docklight.sh
+./build.sh debug --clean --check
+./build.sh release --clean --install
 ```
 
-This configures `build/`, builds the project, runs `make install`, and
-deploys translations under `/usr/local`. It installs the core only. Return to
-the logged-in desktop user afterward and configure integration without
-`sudo`:
+This validates the debug build, then creates and installs the release binary,
+desktop file, icons, data, and translations under `/usr/local`. The script
+requests `sudo` only for `make install`. It installs the core only; configure
+desktop integration afterward as the logged-in user:
 
 ```sh
 ./setup_backend.sh auto
@@ -214,15 +223,15 @@ the logged-in desktop user afterward and configure integration without
 ### Manual installation
 
 ```sh
-make -C build -j"$(nproc)"
-sudo make -C build install
+./build.sh release
+sudo make -C build-release install
 ```
 
 The default prefix is `/usr/local`. To stage a package without changing the
 live system:
 
 ```sh
-make -C build DESTDIR=/tmp/docklight-package install
+make -C build-release DESTDIR=/tmp/docklight-package install
 ```
 
 ## Desktop backend setup
@@ -386,8 +395,9 @@ Translation scripts:
 Remove the selected build directory:
 
 ```sh
-./clean.sh
-DOCKLIGHT_BUILD_DIR=build-debug ./clean.sh
+./build.sh debug --clean-only
+./build.sh release --clean-only
+DOCKLIGHT_BUILD_DIR=build-custom ./build.sh debug --clean-only
 ```
 
 The script deletes the entire selected directory. It does not remove installed
@@ -403,13 +413,8 @@ make -C build-debug clean
 | Script | Purpose | Side effect |
 | --- | --- | --- |
 | `autogen.sh` | Regenerate and configure an out-of-source build | Build files |
-| `build_debug.sh` | Clean debug build, install, stop old process, run | System/session |
-| `build_release.sh` | Clean release build, install, stop old process, run | System/session |
-| `1.debugbuild.sh` | Clean debug build, install, launch under GDB | System/session |
-| `2.releasebuild.sh` | Incremental release build, install, run | System/session |
-| `clean.sh` | Delete the selected build directory | Deletes build output |
+| `build.sh` | Build, test, clean, install, run, or debug | Depends on options |
 | `install_dependencies.sh` | Install Debian/Ubuntu dependencies | System packages |
-| `install_docklight.sh` | Build and install core and translations | `/usr/local` |
 | `setup_backend.sh` | Install or inspect desktop integration | Per-user |
 | `setup_presentation.sh` | Save native/XWayland presentation | Per-user config |
 | `run_xwayland_prototype.sh` | Run one XWayland test instance | Process only |
@@ -443,7 +448,8 @@ Also confirm that `msgfmt`, `xgettext`, `msgmerge`, and
 Autotools caches configuration. Remove and recreate the relevant directory:
 
 ```sh
-DOCKLIGHT_BUILD_DIR=build-debug ./clean.sh
+./build.sh debug --clean-only
+./build.sh debug
 ```
 
 ### GNOME integration does not activate
@@ -477,4 +483,3 @@ find build-debug -name test-suite.log -print
 ```
 
 The logs contain the failing test command and its output.
-

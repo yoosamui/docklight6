@@ -277,8 +277,12 @@ assert.match(
     "input pass-through must begin only after Shell completes the hide animation");
 assert.match(
     extensionSource,
-    /_startDockVisibilityTransition\(hidden[\s\S]*?actor\.ease\([\s\S]*?EASE_IN_QUAD[\s\S]*?EASE_OUT_QUAD/,
+    /_startDockVisibilityTransition\(hidden[\s\S]*?calculateDockHideOffset\(positioned\)[\s\S]*?actor\.ease\([\s\S]*?EASE_IN_QUAD[\s\S]*?EASE_OUT_QUAD/,
     "GNOME must use a native compositor transition at the screen edge");
+assert.match(
+    extensionSource,
+    /get_string\('dock', 'location'\)[\s\S]*?this\._dockLocation = location[\s\S]*?placeDockInWorkArea\([\s\S]*?this\._dockLocation/,
+    "GNOME autohide must preserve the configured dock edge");
 assert.match(
     extensionSource,
     /remainingDistance < 0\.5[\s\S]*?completeTransition\(\)[\s\S]*?return;[\s\S]*?actor\.ease/,
@@ -408,7 +412,7 @@ assert.match(
 
 const source = fs.readFileSync(helperPath, "utf8")
     .replaceAll("export function ", "function ") +
-    "\nthis.testApi = {calculateDockRevealRect, calculateDockStrut, " +
+    "\nthis.testApi = {calculateDockHideOffset, calculateDockRevealRect, calculateDockStrut, " +
     "clampAuxiliaryToWorkArea, inferDockEdge, " +
     "isDockPlacementCommitted, isPointerInsideDockInterior, " +
     "isSyntheticApplicationId, " +
@@ -418,6 +422,7 @@ vm.createContext(context);
 vm.runInContext(source, context, {filename: helperPath});
 
 const {
+    calculateDockHideOffset,
     calculateDockRevealRect,
     calculateDockStrut,
     clampAuxiliaryToWorkArea,
@@ -462,6 +467,12 @@ assert.deepStrictEqual(
 assert.strictEqual(
     inferDockEdge(primary, {x: 385, y: 0, width: 400, height: 64}),
     "top");
+assert.strictEqual(
+    inferDockEdge(primary, {x: 0, y: 0, width: 64, height: 1080}),
+    "left");
+assert.strictEqual(
+    inferDockEdge(primary, {x: 1106, y: 0, width: 64, height: 1080}),
+    "right");
 assert.deepStrictEqual(
     {...placeDockInWorkArea(
         primary,
@@ -500,6 +511,14 @@ assert.deepStrictEqual(
         {x: 0, y: 61, width: 62, height: 958},
         "center")},
     {x: 0, y: 77, width: 62, height: 958, edge: "left"});
+assert.deepStrictEqual(
+    {...placeDockInWorkArea(
+        primary,
+        primaryWorkArea,
+        {x: 0, y: 0, width: 64, height: 1080},
+        "fill",
+        "left")},
+    {x: 0, y: 32, width: 64, height: 1080, edge: "left"});
 assert.deepStrictEqual(
     {...placeDockInWorkArea(
         primary,
@@ -577,6 +596,18 @@ for (const fixture of pointerFixtures) {
     assert.strictEqual(isPointerInsideDockInterior(
         fixture.placement, ...fixture.interior), true);
 }
+assert.deepStrictEqual(
+    {...calculateDockHideOffset(pointerFixtures[0].placement)},
+    {x: 0, y: -64});
+assert.deepStrictEqual(
+    {...calculateDockHideOffset(pointerFixtures[1].placement)},
+    {x: 0, y: 64});
+assert.deepStrictEqual(
+    {...calculateDockHideOffset(pointerFixtures[2].placement)},
+    {x: -64, y: 0});
+assert.deepStrictEqual(
+    {...calculateDockHideOffset(pointerFixtures[3].placement)},
+    {x: 64, y: 0});
 assert.strictEqual(isPointerInsideDockInterior(
     pointerFixtures[1].placement, 299, 1070), false);
 

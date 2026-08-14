@@ -118,9 +118,9 @@ Docklight 6 has a solid layered core: platform-specific window handling is isola
      removed.
 
   2. Release tests disable most C++ checks.
-     The release script defines NDEBUG 2.releasebuild.sh:7, but the C++ tests use approximately 500 assert() calls. Consequently, make check
-     against the release build reports success with most assertions compiled out. Tests should use an always-active test assertion framework or
-     remove NDEBUG from test targets.
+     Release mode defines NDEBUG in build.sh, but the C++ tests use approximately 500 assert() calls. Consequently, make check against the
+     release build reports success with most assertions compiled out. build.sh warns about this combination and the setup documentation directs
+     full validation through debug mode. Tests should eventually use an always-active assertion framework or remove NDEBUG from test targets.
 
   3. README and implementation disagree about KWin/X11.
      The README says KWin X11 selects EwmhFallbackWindowBackend README.md:22, but the selector returns KWinX11WindowBackend.
