@@ -301,13 +301,18 @@ void DockTooltipWindow::show_tooltip(
         return;
     }
 
+    // Keep an already-visible tooltip mapped while crossing from one dock
+    // item to another. Unmapping it here creates a blank compositor frame
+    // before the replacement is mapped, which is especially noticeable as a
+    // flash while moving horizontally across a bottom dock.
+    const bool update_mapped_tooltip =
+        m_has_request && get_mapped();
+
     cancel_reveal();
     cancel_opacity_animation();
 
-    // Update layer-shell placement while the tooltip is unmapped, then reveal
-    // it again below. The hide/show transition is what lets KWin apply the
-    // configured tooltip effect for each dock item.
-    hide();
+    if (!update_mapped_tooltip)
+        hide();
 
     m_has_request = true;
     m_request_text = text;
@@ -328,6 +333,14 @@ void DockTooltipWindow::show_tooltip(
         position,
         tooltip_width,
         m_tooltip_height);
+
+    if (update_mapped_tooltip)
+    {
+        // A previous fade may have been interrupted by the new hover. Restore
+        // the stable visible state without replaying the map animation.
+        set_opacity(1.0);
+        return;
+    }
 
     m_reveal_timer =
         Glib::signal_timeout().connect(
