@@ -66,8 +66,7 @@ private:
     void request_shell_visibility(bool hidden);
     void set_shell_input_passthrough(bool passthrough);
     bool can_animate_x11() const;
-    bool should_collapse_x11_right() const;
-    ScreenPosition hidden_x11_position() const;
+    bool should_collapse_x11_horizontally() const;
     void animate_x11(
         bool hiding,
         bool start_at_hidden_edge = false);
@@ -112,13 +111,17 @@ private:
     int m_animation_target_y = 0;
     double m_animation_start_scale = 1.0;
     double m_animation_target_scale = 1.0;
+    double m_animation_start_vertical_offset = 0.0;
+    double m_animation_target_vertical_offset = 0.0;
     gint64 m_animation_start_time_us = 0;
     int m_animation_duration_ms = 0;
     bool m_initialized = false;
     bool m_hidden = false;
     bool m_has_shown_position = false;
     bool m_animating_to_hidden = false;
-    bool m_animation_collapses_right = false;
+    bool m_animation_collapses_horizontally = false;
+    bool m_animation_clips_top = false;
+    bool m_animation_scale_anchor_right = true;
     bool m_pointer_inside = false;
     bool m_suppress_next_map_hide = false;
     bool m_pending_x11_reveal_animation = false;

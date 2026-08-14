@@ -23,7 +23,6 @@
 #include <gtk-layer-shell.h>
 #include <gdk/gdkwayland.h>
 
-#include <algorithm>
 #include <string>
 
 DockRevealWindow::DockRevealWindow()
@@ -133,6 +132,16 @@ void DockRevealWindow::set_monitor(
             GTK_WINDOW(gobj()),
             monitor ? monitor->gobj() : nullptr);
     }
+    else if (m_has_placement)
+    {
+        // X11 and ordinary Wayland reveal surfaces cache absolute geometry.
+        // Reapply an unchanged edge placement when the monitor moves or the
+        // configured primary output changes.
+        if (m_backend == SurfaceBackend::wayland_toplevel)
+            apply_wayland_toplevel_placement();
+        else
+            apply_x11_placement();
+    }
 }
 
 void DockRevealWindow::apply_placement(
@@ -218,89 +227,6 @@ void DockRevealWindow::prepare_reconfiguration()
         gtk_widget_unrealize(GTK_WIDGET(gobj()));
 }
 
-DockRevealWindow::ToplevelGeometry
-DockRevealWindow::calculate_toplevel_geometry() const
-{
-    ToplevelGeometry geometry;
-    if (!m_has_placement ||
-        m_monitor_geometry.width <= 0 ||
-        m_monitor_geometry.height <= 0)
-    {
-        return geometry;
-    }
-
-    const bool horizontal =
-        m_placement.is_horizontal();
-    const int reveal_size =
-        DockConstants::AUTOHIDE_REVEAL_SIZE;
-
-    int width = reveal_size;
-    int height = reveal_size;
-    int x = m_monitor_geometry.x;
-    int y = m_monitor_geometry.y;
-
-    if (horizontal)
-    {
-        width = m_placement.width > 0
-                    ? m_placement.width
-                    : std::max(
-                          1,
-                          m_monitor_geometry.width -
-                              m_placement.margin_left -
-                              m_placement.margin_right);
-        height = reveal_size;
-
-        if (m_placement.anchor_left)
-            x += m_placement.margin_left;
-        else if (m_placement.anchor_right)
-            x += m_monitor_geometry.width -
-                m_placement.margin_right - width;
-        else
-            x += (m_monitor_geometry.width - width) / 2;
-
-        // Placement margins already include the compositor work-area inset
-        // and, on Plasma X11, the panel's visible painted geometry. Using
-        // Gdk::Monitor::get_workarea() here would put the reveal strip back
-        // at KWin's smaller strut edge instead of beside the visible dock.
-        if (m_placement.anchor_top)
-            y += m_placement.margin_top;
-        else if (m_placement.anchor_bottom)
-            y += m_monitor_geometry.height -
-                m_placement.margin_bottom - height;
-    }
-    else
-    {
-        width = reveal_size;
-        height = m_placement.height > 0
-                     ? m_placement.height
-                     : std::max(
-                           1,
-                           m_monitor_geometry.height -
-                               m_placement.margin_top -
-                               m_placement.margin_bottom);
-
-        if (m_placement.anchor_top)
-            y += m_placement.margin_top;
-        else if (m_placement.anchor_bottom)
-            y += m_monitor_geometry.height -
-                m_placement.margin_bottom - height;
-        else
-            y += (m_monitor_geometry.height - height) / 2;
-
-        if (m_placement.anchor_left)
-            x += m_placement.margin_left;
-        else if (m_placement.anchor_right)
-            x += m_monitor_geometry.width -
-                m_placement.margin_right - width;
-    }
-
-    geometry.x = x;
-    geometry.y = y;
-    geometry.width = width;
-    geometry.height = height;
-    return geometry;
-}
-
 void DockRevealWindow::apply_wayland_toplevel_placement()
 {
     if (!m_has_placement ||
@@ -311,7 +237,10 @@ void DockRevealWindow::apply_wayland_toplevel_placement()
     }
 
     const auto geometry =
-        calculate_toplevel_geometry();
+        edge_reveal_geometry(
+            m_placement,
+            m_monitor_geometry,
+            DockConstants::AUTOHIDE_REVEAL_SIZE);
 
     set_size_request(geometry.width, geometry.height);
     resize(geometry.width, geometry.height);
@@ -335,7 +264,10 @@ void DockRevealWindow::apply_x11_placement()
     }
 
     const auto geometry =
-        calculate_toplevel_geometry();
+        edge_reveal_geometry(
+            m_placement,
+            m_monitor_geometry,
+            DockConstants::AUTOHIDE_REVEAL_SIZE);
 
     set_size_request(geometry.width, geometry.height);
     resize(geometry.width, geometry.height);

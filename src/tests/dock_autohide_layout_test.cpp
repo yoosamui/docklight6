@@ -90,6 +90,55 @@ int main()
     assert(monitor.y + placement.margin_top ==
            top_panel_workarea.y);
 
+    const auto top_reveal = edge_reveal_geometry(
+        placement,
+        monitor,
+        2);
+    assert(top_reveal.x == 760);
+    assert(top_reveal.y == 0);
+    assert(top_reveal.width == 400);
+    assert(top_reveal.height == 2);
+
+    DockPlacement bottom_reveal_placement = placement;
+    bottom_reveal_placement.anchor_top = false;
+    bottom_reveal_placement.anchor_bottom = true;
+    bottom_reveal_placement.margin_top = 0;
+    bottom_reveal_placement.margin_bottom = 24;
+    const auto bottom_reveal = edge_reveal_geometry(
+        bottom_reveal_placement,
+        monitor,
+        2);
+    assert(bottom_reveal.y == 1078);
+
+    DockPlacement left_reveal_placement;
+    left_reveal_placement.orientation =
+        DockOrientation::vertical;
+    left_reveal_placement.anchor_left = true;
+    left_reveal_placement.anchor_top = true;
+    left_reveal_placement.height = 400;
+    left_reveal_placement.margin_left = 32;
+    left_reveal_placement.margin_top = 340;
+    const auto left_reveal = edge_reveal_geometry(
+        left_reveal_placement,
+        monitor,
+        2);
+    assert(left_reveal.x == 0);
+    assert(left_reveal.y == 340);
+    assert(left_reveal.width == 2);
+    assert(left_reveal.height == 400);
+
+    DockPlacement right_reveal_placement =
+        left_reveal_placement;
+    right_reveal_placement.anchor_left = false;
+    right_reveal_placement.anchor_right = true;
+    right_reveal_placement.margin_left = 0;
+    right_reveal_placement.margin_right = 64;
+    const auto right_reveal = edge_reveal_geometry(
+        right_reveal_placement,
+        monitor,
+        2);
+    assert(right_reveal.x == 1918);
+
     const MonitorGeometry right_dock_workarea{
         0,
         32,
@@ -122,19 +171,76 @@ int main()
     assert(placement.margin_top == 356);
     assert(placement.margin_bottom == 324);
 
+    DockPlacement top_slide;
+    top_slide.orientation =
+        DockOrientation::horizontal;
+    top_slide.anchor_top = true;
+    top_slide.margin_top = 27;
+    const auto top_hidden =
+        x11_hidden_screen_position(
+            top_slide,
+            528,
+            27,
+            1504,
+            62);
+    assert(top_hidden.x == 528);
+    assert(top_hidden.y == -35);
+
+    DockPlacement bottom_slide = top_slide;
+    bottom_slide.anchor_top = false;
+    bottom_slide.anchor_bottom = true;
+    bottom_slide.margin_top = 0;
+    bottom_slide.margin_bottom = 27;
+    const auto bottom_hidden =
+        x11_hidden_screen_position(
+            bottom_slide,
+            528,
+            1351,
+            1504,
+            62);
+    assert(bottom_hidden.x == 528);
+    assert(bottom_hidden.y == 1378);
+
+    DockPlacement left_slide;
+    left_slide.orientation =
+        DockOrientation::vertical;
+    left_slide.anchor_left = true;
+    const auto left_hidden =
+        x11_hidden_screen_position(
+            left_slide,
+            0,
+            356,
+            58,
+            728);
+    assert(left_hidden.x == -58);
+    assert(left_hidden.y == 356);
+
+    DockPlacement right_slide = left_slide;
+    right_slide.anchor_left = false;
+    right_slide.anchor_right = true;
+    const auto right_hidden =
+        x11_hidden_screen_position(
+            right_slide,
+            2502,
+            356,
+            58,
+            728);
+    assert(right_hidden.x == 2560);
+    assert(right_hidden.y == 356);
+
     const MonitorGeometry adjacent_right_monitor{
         1920,
         0,
         1920,
         1080};
-    assert(right_hide_corridor_intersects_monitor(
+    assert(horizontal_hide_corridor_intersects_monitor(
         placement,
         1856,
         356,
         64,
         400,
         adjacent_right_monitor));
-    assert(!right_hide_corridor_intersects_monitor(
+    assert(!horizontal_hide_corridor_intersects_monitor(
         placement,
         1856,
         356,
@@ -145,9 +251,16 @@ int main()
     DockPlacement left_placement = placement;
     left_placement.anchor_right = false;
     left_placement.anchor_left = true;
-    assert(!right_hide_corridor_intersects_monitor(
+    assert(horizontal_hide_corridor_intersects_monitor(
         left_placement,
-        0,
+        1920,
+        356,
+        64,
+        400,
+        {0, 0, 1920, 1080}));
+    assert(!horizontal_hide_corridor_intersects_monitor(
+        left_placement,
+        1920,
         356,
         64,
         400,

@@ -51,16 +51,7 @@ private:
         x11
     };
 
-    struct ToplevelGeometry
-    {
-        int x = 0;
-        int y = 0;
-        int width = 1;
-        int height = 1;
-    };
-
     void prepare_reconfiguration();
-    ToplevelGeometry calculate_toplevel_geometry() const;
     void apply_wayland_toplevel_placement();
     void apply_x11_placement();
     bool on_enter_notify_event(

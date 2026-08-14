@@ -475,11 +475,10 @@ bool DockAutohideController::can_animate_x11() const
 }
 
 bool DockAutohideController::
-    should_collapse_x11_right() const
+    should_collapse_x11_horizontally() const
 {
     if (!can_animate_x11() ||
         !m_placement.is_vertical() ||
-        !m_placement.anchor_right ||
         !m_has_shown_position)
     {
         return false;
@@ -523,7 +522,7 @@ bool DockAutohideController::
         gdk_monitor_get_geometry(
             monitor,
             &rectangle);
-        if (right_hide_corridor_intersects_monitor(
+        if (horizontal_hide_corridor_intersects_monitor(
                 m_placement,
                 m_shown_x,
                 m_shown_y,
@@ -540,51 +539,6 @@ bool DockAutohideController::
     }
 
     return false;
-}
-
-ScreenPosition DockAutohideController::hidden_x11_position() const
-{
-    const int width = std::max(
-        1,
-        m_window.get_allocated_width());
-    const int height = std::max(
-        1,
-        m_window.get_allocated_height());
-
-    ScreenPosition hidden{
-        m_shown_x,
-        m_shown_y};
-
-    if (m_placement.anchor_top &&
-        m_placement.is_horizontal())
-    {
-        hidden.y -= m_placement.margin_top > 0
-            ? std::min(height, m_placement.margin_top)
-            : height;
-    }
-    else if (m_placement.anchor_bottom &&
-             m_placement.is_horizontal())
-    {
-        hidden.y += m_placement.margin_bottom > 0
-            ? std::min(height, m_placement.margin_bottom)
-            : height;
-    }
-    else if (m_placement.anchor_left &&
-             m_placement.is_vertical())
-    {
-        hidden.x -= m_placement.margin_left > 0
-            ? std::min(width, m_placement.margin_left)
-            : width;
-    }
-    else if (m_placement.anchor_right &&
-             m_placement.is_vertical())
-    {
-        hidden.x += m_placement.margin_right > 0
-            ? std::min(width, m_placement.margin_right)
-            : width;
-    }
-
-    return hidden;
 }
 
 void DockAutohideController::animate_x11(
@@ -612,22 +566,45 @@ void DockAutohideController::animate_x11(
         m_has_shown_position = true;
     }
 
-    m_animation_collapses_right =
-        should_collapse_x11_right() ||
+    m_animation_collapses_horizontally =
+        should_collapse_x11_horizontally() ||
         m_window.x11_horizontal_scale() < 1.0;
+    m_animation_clips_top =
+        !m_animation_collapses_horizontally &&
+        m_placement.is_horizontal() &&
+        m_placement.anchor_top;
+    m_animation_scale_anchor_right =
+        m_placement.anchor_right;
 
     const auto hidden =
-        hidden_x11_position();
+        x11_hidden_screen_position(
+            m_placement,
+            m_shown_x,
+            m_shown_y,
+            m_window.get_allocated_width(),
+            m_window.get_allocated_height());
 
     if (!hiding && start_at_hidden_edge)
     {
-        if (m_animation_collapses_right)
+        if (m_animation_collapses_horizontally)
         {
             current_x = m_shown_x;
             current_y = m_shown_y;
             m_window.move(current_x, current_y);
-            m_window.set_x11_horizontal_scale(0.0);
+            m_window.set_x11_horizontal_scale(
+                0.0,
+                m_animation_scale_anchor_right);
             m_window.set_opacity(1.0);
+        }
+        else if (m_animation_clips_top)
+        {
+            current_x = m_shown_x;
+            current_y = m_shown_y;
+            m_window.move(current_x, current_y);
+            m_window.set_x11_vertical_offset(
+                -m_window.get_allocated_height());
+            m_window.set_opacity(
+                X11_REVEAL_INITIAL_OPACITY);
         }
         else
         {
@@ -651,10 +628,11 @@ void DockAutohideController::animate_x11(
     m_animation_target_x =
         hiding ? hidden.x : m_shown_x;
     m_animation_target_y =
-        m_animation_collapses_right
+        m_animation_collapses_horizontally ||
+                m_animation_clips_top
             ? m_shown_y
             : hiding ? hidden.y : m_shown_y;
-    if (m_animation_collapses_right)
+    if (m_animation_collapses_horizontally)
     {
         m_animation_target_x = m_shown_x;
         m_animation_start_scale =
@@ -666,28 +644,52 @@ void DockAutohideController::animate_x11(
     {
         m_animation_start_scale = 1.0;
         m_animation_target_scale = 1.0;
-        m_window.set_x11_horizontal_scale(1.0);
+        m_window.set_x11_horizontal_scale(
+            1.0,
+            m_animation_scale_anchor_right);
+    }
+    if (m_animation_clips_top)
+    {
+        m_animation_start_vertical_offset =
+            m_window.x11_vertical_offset();
+        m_animation_target_vertical_offset = hiding
+            ? -m_window.get_allocated_height()
+            : 0.0;
+    }
+    else
+    {
+        m_animation_start_vertical_offset = 0.0;
+        m_animation_target_vertical_offset = 0.0;
+        m_window.set_x11_vertical_offset(0.0);
     }
     m_animating_to_hidden = hiding;
 
     const double remaining =
-        m_animation_collapses_right
+        m_animation_collapses_horizontally
             ? std::abs(
                   m_animation_target_scale -
                   m_animation_start_scale) *
                   std::max(
                       1,
                       m_window.get_allocated_width())
+            : m_animation_clips_top
+                ? std::abs(
+                      m_animation_target_vertical_offset -
+                      m_animation_start_vertical_offset)
             : std::hypot(
                   static_cast<double>(
                       m_animation_target_x - current_x),
                   static_cast<double>(
                       m_animation_target_y - current_y));
     const double full_distance =
-        m_animation_collapses_right
+        m_animation_collapses_horizontally
             ? std::max(
                   1,
                   m_window.get_allocated_width())
+            : m_animation_clips_top
+                ? std::max(
+                      1,
+                      m_window.get_allocated_height())
             : std::max(
                   1.0,
                   std::hypot(
@@ -737,9 +739,8 @@ bool DockAutohideController::advance_x11_animation()
         0.0,
         1.0);
 
-    // Preserve the original X11 motion: hiding accelerates away from the
-    // pointer and revealing decelerates into place. The adjacent-monitor
-    // RIGHT collapse changes only the animated property, not this curve.
+    // Apply the standard X11 timing to every edge and to the adjacent-monitor
+    // collapse: accelerate while hiding, then decelerate while revealing.
     const double eased = m_animating_to_hidden
         ? progress * progress * progress
         : 1.0 - std::pow(1.0 - progress, 3.0);
@@ -751,12 +752,21 @@ bool DockAutohideController::advance_x11_animation()
         m_animation_start_y +
         (m_animation_target_y - m_animation_start_y) *
             eased));
-    if (m_animation_collapses_right)
+    if (m_animation_collapses_horizontally)
     {
         m_window.set_x11_horizontal_scale(
             m_animation_start_scale +
             (m_animation_target_scale -
              m_animation_start_scale) *
+                eased,
+            m_animation_scale_anchor_right);
+    }
+    else if (m_animation_clips_top)
+    {
+        m_window.set_x11_vertical_offset(
+            m_animation_start_vertical_offset +
+            (m_animation_target_vertical_offset -
+             m_animation_start_vertical_offset) *
                 eased);
     }
     else
@@ -765,7 +775,7 @@ bool DockAutohideController::advance_x11_animation()
     }
 
     if (!m_animating_to_hidden &&
-        !m_animation_collapses_right)
+        !m_animation_collapses_horizontally)
     {
         m_window.set_opacity(
             X11_REVEAL_INITIAL_OPACITY +
@@ -785,7 +795,10 @@ bool DockAutohideController::advance_x11_animation()
     }
     else
     {
-        m_window.set_x11_horizontal_scale(1.0);
+        m_window.set_x11_horizontal_scale(
+            1.0,
+            m_animation_scale_anchor_right);
+        m_window.set_x11_vertical_offset(0.0);
         m_window.set_opacity(1.0);
     }
 
@@ -818,7 +831,10 @@ void DockAutohideController::reveal_immediately()
     }
 
     m_window.set_opacity(1.0);
-    m_window.set_x11_horizontal_scale(1.0);
+    m_window.set_x11_horizontal_scale(
+        1.0,
+        m_placement.anchor_right);
+    m_window.set_x11_vertical_offset(0.0);
 
     if (m_hidden)
     {
@@ -899,13 +915,28 @@ void DockAutohideController::reveal()
             if (defer_x11_reveal)
             {
                 const auto hidden =
-                    hidden_x11_position();
+                    x11_hidden_screen_position(
+                        m_placement,
+                        m_shown_x,
+                        m_shown_y,
+                        m_window.get_allocated_width(),
+                        m_window.get_allocated_height());
                 m_pending_x11_reveal_animation = true;
                 m_window.set_opacity(0.0);
-                if (should_collapse_x11_right())
+                if (should_collapse_x11_horizontally())
                 {
                     m_window.set_x11_horizontal_scale(
-                        0.0);
+                        0.0,
+                        m_placement.anchor_right);
+                    m_window.move(
+                        m_shown_x,
+                        m_shown_y);
+                }
+                else if (m_placement.is_horizontal() &&
+                         m_placement.anchor_top)
+                {
+                    m_window.set_x11_vertical_offset(
+                        -m_window.get_allocated_height());
                     m_window.move(
                         m_shown_x,
                         m_shown_y);

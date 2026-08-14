@@ -51,8 +51,12 @@ class DockSurfaceBox : public Gtk::Box
 {
 public:
     DockSurfaceBox();
-    void set_horizontal_scale(double scale);
+    void set_horizontal_scale(
+        double scale,
+        bool anchor_right);
     double horizontal_scale() const;
+    void set_vertical_offset(double offset);
+    double vertical_offset() const;
 
 protected:
     bool on_draw(
@@ -61,6 +65,8 @@ protected:
 
 private:
     double m_horizontal_scale = 1.0;
+    bool m_scale_anchor_right = true;
+    double m_vertical_offset = 0.0;
 };
 
 class DockWindow : public Gtk::Window
@@ -82,7 +88,7 @@ public:
     void schedule_show_tooltip(
         Gtk::Widget &item,
         const Glib::ustring &text);
-    void schedule_hide_tooltip();
+    void schedule_hide_tooltip(Gtk::Widget &item);
     void hide_tooltip_immediately();
     void inhibit_autohide();
     void uninhibit_autohide();
@@ -141,8 +147,12 @@ private:
     void apply_dock_orientation(
         DockOrientation orientation);
     void apply_visual_style();
-    void set_x11_horizontal_scale(double scale);
+    void set_x11_horizontal_scale(
+        double scale,
+        bool anchor_right);
     double x11_horizontal_scale() const;
+    void set_x11_vertical_offset(double offset);
+    double x11_vertical_offset() const;
     void apply_main_axis_end_margins(
         DockOrientation orientation);
     void synchronize_dock_items();

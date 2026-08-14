@@ -93,18 +93,21 @@ DockSurfaceBox::DockSurfaceBox()
 }
 
 void DockSurfaceBox::set_horizontal_scale(
-    double scale)
+    double scale,
+    bool anchor_right)
 {
     const double clamped =
         std::clamp(scale, 0.0, 1.0);
     if (std::abs(
             clamped -
-            m_horizontal_scale) < 0.0001)
+            m_horizontal_scale) < 0.0001 &&
+        anchor_right == m_scale_anchor_right)
     {
         return;
     }
 
     m_horizontal_scale = clamped;
+    m_scale_anchor_right = anchor_right;
     queue_draw();
 }
 
@@ -113,21 +116,48 @@ double DockSurfaceBox::horizontal_scale() const
     return m_horizontal_scale;
 }
 
+void DockSurfaceBox::set_vertical_offset(
+    double offset)
+{
+    if (std::abs(offset - m_vertical_offset) < 0.0001)
+        return;
+
+    m_vertical_offset = offset;
+    queue_draw();
+}
+
+double DockSurfaceBox::vertical_offset() const
+{
+    return m_vertical_offset;
+}
+
 bool DockSurfaceBox::on_draw(
     const Cairo::RefPtr<Cairo::Context>
         &context)
 {
-    if (m_horizontal_scale <= 0.0)
+    if (m_horizontal_scale <= 0.0 ||
+        m_vertical_offset <= -get_allocated_height())
         return true;
 
-    if (m_horizontal_scale >= 1.0)
+    if (m_horizontal_scale >= 1.0 &&
+        std::abs(m_vertical_offset) < 0.0001)
         return Gtk::Box::on_draw(context);
 
     context->save();
-    context->translate(
-        get_allocated_width() *
-            (1.0 - m_horizontal_scale),
-        0.0);
+    context->rectangle(
+        0.0,
+        0.0,
+        get_allocated_width(),
+        get_allocated_height());
+    context->clip();
+    context->translate(0.0, m_vertical_offset);
+    if (m_scale_anchor_right)
+    {
+        context->translate(
+            get_allocated_width() *
+                (1.0 - m_horizontal_scale),
+            0.0);
+    }
     context->scale(
         m_horizontal_scale,
         1.0);
@@ -313,14 +343,28 @@ DockWindow::~DockWindow()
 }
 
 void DockWindow::set_x11_horizontal_scale(
-    double scale)
+    double scale,
+    bool anchor_right)
 {
-    m_dock_box.set_horizontal_scale(scale);
+    m_dock_box.set_horizontal_scale(
+        scale,
+        anchor_right);
 }
 
 double DockWindow::x11_horizontal_scale() const
 {
     return m_dock_box.horizontal_scale();
+}
+
+void DockWindow::set_x11_vertical_offset(
+    double offset)
+{
+    m_dock_box.set_vertical_offset(offset);
+}
+
+double DockWindow::x11_vertical_offset() const
+{
+    return m_dock_box.vertical_offset();
 }
 
 void DockWindow::apply_configuration(
@@ -345,10 +389,10 @@ void DockWindow::request_reveal()
 void DockWindow::schedule_show_tooltip(
     DockItem &item)
 {
-    if (item.running() &&
-        m_controller
-            ->settings()
-            .display_preview())
+    // A DockItem with windows represents a group. Grouped items use only the
+    // preview path; label tooltips are reserved for launchers whose group is
+    // empty.
+    if (!item.window_entries().empty())
     {
         m_controller->schedule_show_preview(item);
     }
@@ -369,9 +413,10 @@ void DockWindow::schedule_show_tooltip(
         text);
 }
 
-void DockWindow::schedule_hide_tooltip()
+void DockWindow::schedule_hide_tooltip(
+    Gtk::Widget &item)
 {
-    m_controller->schedule_hide_tooltip();
+    m_controller->schedule_hide_tooltip(item);
 }
 
 void DockWindow::hide_tooltip_immediately()

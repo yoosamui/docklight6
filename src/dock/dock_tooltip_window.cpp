@@ -301,23 +301,13 @@ void DockTooltipWindow::show_tooltip(
         return;
     }
 
-    // Keep an already-visible tooltip mapped while crossing from one dock
-    // item to another. Unmapping it here creates a blank compositor frame
-    // before the replacement is mapped, which is especially noticeable as a
-    // flash while moving horizontally across a bottom dock.
-    const bool update_mapped_tooltip =
-        m_has_request &&
-        get_mapped() &&
-        m_request_location == location;
-
     cancel_reveal();
     cancel_opacity_animation();
 
-    if (!update_mapped_tooltip)
-    {
-        cancel_motion_animation();
-        hide();
-    }
+    // A request that survives the controller's hover delay gets a complete
+    // hide/remap/reveal transition. Fast item crossings replace the pending
+    // request before reaching this point, so their labels are never shown.
+    hide();
 
     m_has_request = true;
     m_request_text = text;
@@ -326,18 +316,6 @@ void DockTooltipWindow::show_tooltip(
     m_request_position = position;
 
     m_label.set_text(text);
-
-    if (update_mapped_tooltip)
-    {
-        // A previous fade may have been interrupted by the new hover. Restore
-        // the stable visible state, then continue from the tooltip's current
-        // on-screen position so rapid pointer movement does not jump backward.
-        set_opacity(1.0);
-        start_motion_animation(
-            position,
-            tooltip_width);
-        return;
-    }
 
     // This is the same measured width used by DockLayoutEngine. Applying it
     // here prevents the window from changing size after it has been centered.
@@ -350,9 +328,6 @@ void DockTooltipWindow::show_tooltip(
         position,
         tooltip_width,
         m_tooltip_height);
-    m_displayed_position = position;
-    m_displayed_width = tooltip_width;
-
     m_reveal_timer =
         Glib::signal_timeout().connect(
             [this]()
@@ -376,7 +351,6 @@ void DockTooltipWindow::show_tooltip(
 void DockTooltipWindow::hide_tooltip()
 {
     cancel_reveal();
-    cancel_motion_animation();
     m_has_request = false;
 
     if (!get_mapped())
@@ -394,7 +368,6 @@ void DockTooltipWindow::hide_tooltip_immediately()
 {
     cancel_reveal();
     cancel_opacity_animation();
-    cancel_motion_animation();
     m_has_request = false;
     hide();
     set_opacity(1.0);
@@ -410,99 +383,6 @@ void DockTooltipWindow::cancel_opacity_animation()
 {
     if (m_opacity_timer.connected())
         m_opacity_timer.disconnect();
-}
-
-void DockTooltipWindow::cancel_motion_animation()
-{
-    if (m_motion_timer.connected())
-        m_motion_timer.disconnect();
-}
-
-void DockTooltipWindow::start_motion_animation(
-    const ScreenPosition &position,
-    int width)
-{
-    cancel_motion_animation();
-
-    m_motion_start_position = m_displayed_position;
-    m_motion_target_position = position;
-    m_motion_start_width = m_displayed_width;
-    m_motion_target_width = width;
-    m_motion_animation_start_us =
-        g_get_monotonic_time();
-
-    if (m_motion_start_position.x == position.x &&
-        m_motion_start_position.y == position.y &&
-        m_motion_start_width == width)
-    {
-        return;
-    }
-
-    m_motion_timer =
-        Glib::signal_timeout().connect(
-            sigc::mem_fun(
-                *this,
-                &DockTooltipWindow::
-                    advance_motion_animation),
-            DockConstants::OVERLAY_ANIMATION_FRAME_MS);
-}
-
-bool DockTooltipWindow::advance_motion_animation()
-{
-    const double elapsed_ms =
-        static_cast<double>(
-            g_get_monotonic_time() -
-            m_motion_animation_start_us) /
-        1000.0;
-    const double progress =
-        std::clamp(
-            elapsed_ms /
-                std::max(
-                    1,
-                    DockConstants::
-                        TOOLTIP_MOVE_DURATION_MS),
-            0.0,
-            1.0);
-    const double eased =
-        progress * progress *
-        (3.0 - 2.0 * progress);
-
-    m_displayed_position.x =
-        static_cast<int>(
-            std::lround(
-                m_motion_start_position.x +
-                (m_motion_target_position.x -
-                 m_motion_start_position.x) *
-                    eased));
-    m_displayed_position.y =
-        static_cast<int>(
-            std::lround(
-                m_motion_start_position.y +
-                (m_motion_target_position.y -
-                 m_motion_start_position.y) *
-                    eased));
-    m_displayed_width =
-        static_cast<int>(
-            std::lround(
-                m_motion_start_width +
-                (m_motion_target_width -
-                 m_motion_start_width) *
-                    eased));
-
-    set_size_request(
-        m_displayed_width,
-        m_tooltip_height);
-    apply_position(
-        m_request_location,
-        m_displayed_position,
-        m_displayed_width,
-        m_tooltip_height);
-
-    if (progress < 1.0)
-        return true;
-
-    cancel_motion_animation();
-    return false;
 }
 
 void DockTooltipWindow::start_opacity_animation(

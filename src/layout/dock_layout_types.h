@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <algorithm>
+
 enum class DockOrientation
 {
     horizontal,
@@ -208,6 +210,43 @@ struct ScreenPosition
     int y = 0;
 };
 
+// Native X11 autohide moves outward from the dock's shown position. Preserve
+// the standard bottom-edge inset distance while the other edge paths use the
+// complete dock thickness or their dedicated clipped animation.
+inline ScreenPosition x11_hidden_screen_position(
+    const DockPlacement &placement,
+    int shown_x,
+    int shown_y,
+    int width,
+    int height)
+{
+    ScreenPosition hidden{shown_x, shown_y};
+    const int dock_width = width > 0 ? width : 1;
+    const int dock_height = height > 0 ? height : 1;
+
+    if (placement.is_horizontal())
+    {
+        if (placement.anchor_top)
+            hidden.y -= dock_height;
+        else if (placement.anchor_bottom)
+            hidden.y += placement.margin_bottom > 0
+                ? std::min(
+                      dock_height,
+                      placement.margin_bottom)
+                : dock_height;
+    }
+    else if (placement.anchor_left)
+    {
+        hidden.x -= dock_width;
+    }
+    else if (placement.anchor_right)
+    {
+        hidden.x += dock_width;
+    }
+
+    return hidden;
+}
+
 struct MonitorGeometry
 {
     int x = 0;
@@ -215,6 +254,71 @@ struct MonitorGeometry
     int width = 0;
     int height = 0;
 };
+
+// The invisible autohide trigger belongs on the physical output edge. Dock
+// margins position visible content around panels; applying the cross-axis
+// margin here makes an edge trigger unreachable from the screen boundary.
+inline MonitorGeometry edge_reveal_geometry(
+    const DockPlacement &placement,
+    const MonitorGeometry &monitor,
+    int reveal_size)
+{
+    const int thickness = reveal_size > 0
+        ? reveal_size
+        : 1;
+    MonitorGeometry geometry{
+        monitor.x,
+        monitor.y,
+        thickness,
+        thickness};
+
+    if (placement.is_horizontal())
+    {
+        geometry.width = placement.width > 0
+            ? placement.width
+            : monitor.width -
+                  placement.margin_left -
+                  placement.margin_right;
+        if (geometry.width < 1)
+            geometry.width = 1;
+
+        if (placement.anchor_left)
+            geometry.x += placement.margin_left;
+        else if (placement.anchor_right)
+            geometry.x += monitor.width -
+                placement.margin_right - geometry.width;
+        else
+            geometry.x +=
+                (monitor.width - geometry.width) / 2;
+
+        if (placement.anchor_bottom)
+            geometry.y += monitor.height - thickness;
+    }
+    else
+    {
+        geometry.height = placement.height > 0
+            ? placement.height
+            : monitor.height -
+                  placement.margin_top -
+                  placement.margin_bottom;
+        if (geometry.height < 1)
+            geometry.height = 1;
+
+        if (placement.anchor_top)
+            geometry.y += placement.margin_top;
+        else if (placement.anchor_bottom)
+            geometry.y += monitor.height -
+                placement.margin_bottom - geometry.height;
+        else
+            geometry.y +=
+                (monitor.height - geometry.height) / 2;
+
+        if (placement.anchor_right)
+            geometry.x += monitor.width - thickness;
+    }
+
+    return geometry;
+}
 
 struct ItemGeometry
 {
@@ -279,10 +383,11 @@ inline bool x11_strut_reaches_root_edge(
     return false;
 }
 
-// A RIGHT-edge X11 dock cannot slide outward when another monitor occupies
+// A vertical X11 dock cannot slide outward when another monitor occupies
 // that space: the dock would simply become visible on the adjacent output.
-// Detect that corridor so the native animation can collapse in place.
-inline bool right_hide_corridor_intersects_monitor(
+// Detect the corridor on either side so the native animation can collapse
+// in place.
+inline bool horizontal_hide_corridor_intersects_monitor(
     const DockPlacement &placement,
     int x,
     int y,
@@ -291,14 +396,17 @@ inline bool right_hide_corridor_intersects_monitor(
     const MonitorGeometry &monitor)
 {
     if (!placement.is_vertical() ||
-        !placement.anchor_right ||
+        (!placement.anchor_left &&
+         !placement.anchor_right) ||
         width <= 0 || height <= 0 ||
         monitor.width <= 0 || monitor.height <= 0)
     {
         return false;
     }
 
-    const int corridor_x = x + width;
+    const int corridor_x = placement.anchor_right
+        ? x + width
+        : x - width;
     return corridor_x < monitor.x + monitor.width &&
            corridor_x + width > monitor.x &&
            y < monitor.y + monitor.height &&

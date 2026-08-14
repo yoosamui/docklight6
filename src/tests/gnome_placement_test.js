@@ -22,6 +22,9 @@ const autohideControllerPath = path.resolve(
 const dockWindowControllerPath = path.resolve(
     __dirname,
     "../dock/dock_window_controller.cpp");
+const revealWindowPath = path.resolve(
+    __dirname,
+    "../autohide/dock_reveal_window.cpp");
 const previewWindowPath = path.resolve(
     __dirname,
     "../preview/dock_preview_window.cpp");
@@ -45,6 +48,8 @@ const autohideControllerSource = fs.readFileSync(
     autohideControllerPath, "utf8");
 const dockWindowControllerSource = fs.readFileSync(
     dockWindowControllerPath, "utf8");
+const revealWindowSource = fs.readFileSync(
+    revealWindowPath, "utf8");
 const previewWindowSource = fs.readFileSync(
     previewWindowPath, "utf8");
 const thumbnailProviderSource = fs.readFileSync(
@@ -268,6 +273,14 @@ assert.match(
     /GDK_IS_X11_DISPLAY[\s\S]*?capture_x11_base_workarea[\s\S]*?m_x11_base_workarea/,
     "X11 layout must not feed Docklight's own strut back into its edge margin");
 assert.match(
+    dockWindowControllerSource,
+    /monitor_geometry_changed[\s\S]*?output_changed[\s\S]*?prepare_x11_monitor_change\(\)[\s\S]*?m_autohide_controller->set_monitor/,
+    "moving or resizing the selected output must invalidate cached X11 placement state");
+assert.match(
+    revealWindowSource,
+    /DockRevealWindow::set_monitor[\s\S]*?m_monitor_geometry[\s\S]*?m_has_placement[\s\S]*?apply_x11_placement\(\)/,
+    "an X11 reveal strip must reapply its placement after its monitor geometry changes");
+assert.match(
     extensionSource,
     /_isX11DockWindow\(window\)[\s\S]*?_removeDockStrut\(\)[\s\S]*?_publishDockSurfaceGeometry\(rect\)/,
     "GNOME must leave XWayland dock placement and reservation to EWMH");
@@ -325,8 +338,12 @@ assert.match(
     "an X11 reveal must move to its hidden edge before becoming visible");
 assert.match(
     autohideControllerSource,
-    /should_collapse_x11_right\(\)[\s\S]*?right_hide_corridor_intersects_monitor\([\s\S]*?m_animation_collapses_right[\s\S]*?set_x11_horizontal_scale\(0\.0\)[\s\S]*?m_animation_target_scale/,
-    "a native X11 RIGHT dock facing another monitor must collapse at its fixed edge");
+    /should_collapse_x11_horizontally\(\)[\s\S]*?horizontal_hide_corridor_intersects_monitor\([\s\S]*?m_animation_collapses_horizontally[\s\S]*?set_x11_horizontal_scale\([\s\S]*?0\.0,[\s\S]*?m_animation_target_scale/,
+    "a native X11 vertical dock facing another monitor must collapse at its fixed edge");
+assert.match(
+    autohideControllerSource,
+    /const double eased = m_animating_to_hidden[\s\S]*?progress \* progress \* progress[\s\S]*?1\.0 - std::pow\(1\.0 - progress, 3\.0\)/,
+    "every native X11 edge must use the standard hide and reveal curves");
 assert.match(
     extensionSource,
     /signalName === 'DockHiddenChanged'[\s\S]*?this\._dockHidden = Boolean[\s\S]*?this\._startDockVisibilityTransition/,

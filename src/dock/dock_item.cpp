@@ -913,7 +913,7 @@ bool DockItem::on_leave_notify_event(
     m_hovered = false;
     apply_hover_effect();
 
-    m_dock.schedule_hide_tooltip();
+    m_dock.schedule_hide_tooltip(*this);
 
     return false;
 }

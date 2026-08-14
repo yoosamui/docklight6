@@ -565,21 +565,39 @@ void DockWindowController::set_monitor(
 
     const bool monitor_changed =
         monitor != m_monitor;
+    const auto next_output_geometry =
+        m_layout_geometry.output_geometry(
+            monitor);
+    const bool monitor_geometry_changed =
+        m_output_geometry.width > 0 &&
+        m_output_geometry.height > 0 &&
+        (next_output_geometry.x !=
+             m_output_geometry.x ||
+         next_output_geometry.y !=
+             m_output_geometry.y ||
+         next_output_geometry.width !=
+             m_output_geometry.width ||
+         next_output_geometry.height !=
+             m_output_geometry.height);
+    const bool output_changed =
+        monitor_changed ||
+        monitor_geometry_changed;
 
     m_monitor = monitor;
 
-    if (monitor_changed)
+    if (output_changed)
     {
         hide_tooltip();
         hide_preview();
 
-        // Remove the reservation from the old X11 output before deriving
-        // geometry for the new one. Same-monitor work-area notifications do
-        // not enter this branch, so they retain the cached panel-only area
-        // and cannot feed DockLight's own strut back into its position.
+        // Remove the reservation before deriving geometry for a different
+        // output or a moved/resized selected output. Work-area-only signals
+        // do not enter this branch, so DockLight's own strut cannot feed back
+        // into its position.
         m_window.prepare_x11_monitor_change();
 
-        if (m_window.m_uses_layer_shell)
+        if (monitor_changed &&
+            m_window.m_uses_layer_shell)
         {
             gtk_layer_set_monitor(
                 GTK_WINDOW(m_window.gobj()),
@@ -1276,11 +1294,15 @@ void DockWindowController::schedule_show_tooltip(
     Gtk::Widget &item,
     const Glib::ustring &text)
 {
+    if (m_hovered_item == &item)
+        return;
+
     // Item crossing state remains authoritative while a preview layer is
     // unmapped and replaced by a tooltip. During that surface handoff GDK can
     // briefly report the physical pointer outside the dock even though it is
     // already over the newly entered item.
     m_dock_item_pointer_inside = true;
+    m_hovered_item = &item;
 
     if (!m_settings.display_tooltips())
     {
@@ -1295,22 +1317,43 @@ void DockWindowController::schedule_show_tooltip(
     m_pending_preview_desktop_id.clear();
     m_pending_tooltip_text = text;
 
-    // Always use the show timer, including when another item's tooltip is
-    // still visible during its hide grace period. This keeps show and hide
-    // timing active while moving between dock items.
+    auto *requested_item = &item;
+    const auto requested_text = text;
+    const auto request_generation =
+        m_tooltip_request_generation;
+
     m_show_timer =
         Glib::signal_timeout().connect(
-            [this]()
+            [this,
+             requested_item,
+             requested_text,
+             request_generation]()
             {
-                if (m_pending_item)
+                auto *dock_item =
+                    dynamic_cast<DockItem *>(
+                        requested_item);
+                const bool group_is_empty =
+                    !dock_item ||
+                    dock_item
+                        ->window_entries()
+                        .empty();
+
+                if (request_generation ==
+                        m_tooltip_request_generation &&
+                    requested_item == m_hovered_item &&
+                    group_is_empty)
                 {
                     show_tooltip(
-                        *m_pending_item,
-                        m_pending_tooltip_text);
+                        *requested_item,
+                        requested_text);
                 }
 
-                m_pending_item = nullptr;
-                m_pending_tooltip_text.clear();
+                if (request_generation ==
+                    m_tooltip_request_generation)
+                {
+                    m_pending_item = nullptr;
+                    m_pending_tooltip_text.clear();
+                }
                 return false;
             },
             DockConstants::TOOLTIP_SHOW_DELAY_MS);
@@ -1319,10 +1362,26 @@ void DockWindowController::schedule_show_tooltip(
 void DockWindowController::schedule_show_preview(
     DockItem &item)
 {
+    if (m_hovered_item == &item)
+        return;
+
     cancel_hide_timer();
     cancel_show_timer();
     cancel_preview_show_timer();
     m_dock_item_pointer_inside = true;
+    m_hovered_item = &item;
+
+    // A grouped item never owns a label tooltip. Fade any label left by an
+    // empty launcher as soon as the pointer enters the preview-only path.
+    hide_tooltip();
+
+    if (!m_settings.display_preview())
+    {
+        m_pending_item = nullptr;
+        m_pending_preview_desktop_id.clear();
+        m_pending_tooltip_text.clear();
+        return;
+    }
 
     // Moving from the preview back onto the icon that owns it crosses two
     // separate layer-shell surfaces. The preview leave event starts the hide
@@ -1339,44 +1398,15 @@ void DockWindowController::schedule_show_preview(
         return;
     }
 
-    m_pending_item = &item;
+    m_pending_item = nullptr;
     m_pending_preview_desktop_id =
         item.desktop_id();
-    m_pending_tooltip_text =
-        item.tooltip_text();
-
-    // A running item uses both delays: first show its label tooltip, then
-    // replace that tooltip with the window preview. Keeping these timers
-    // independent makes a longer preview delay useful instead of leaving the
-    // hover with no feedback until the preview appears.
-    if (m_settings.display_tooltips())
-    {
-        m_show_timer =
-            Glib::signal_timeout().connect(
-                [this]()
-                {
-                    if (m_pending_item)
-                    {
-                        show_tooltip(
-                            *m_pending_item,
-                            m_pending_tooltip_text,
-                            true);
-                    }
-
-                    m_pending_item = nullptr;
-                    m_pending_tooltip_text.clear();
-                    return false;
-                },
-                DockConstants::TOOLTIP_SHOW_DELAY_MS);
-    }
+    m_pending_tooltip_text.clear();
 
     m_preview_show_timer =
         Glib::signal_timeout().connect(
             [this]()
             {
-                // If the configured preview delay is shorter than the
-                // tooltip delay, suppress the late tooltip rather than
-                // allowing it to replace an already-open preview.
                 cancel_show_timer();
                 m_pending_item = nullptr;
                 m_pending_tooltip_text.clear();
@@ -1400,8 +1430,16 @@ void DockWindowController::schedule_show_preview(
             m_settings.preview_show_delay());
 }
 
-void DockWindowController::schedule_hide_tooltip()
+void DockWindowController::schedule_hide_tooltip(
+    Gtk::Widget &item)
 {
+    // Crossing events from adjacent EventBoxes can arrive out of order while
+    // moving quickly. A leave from the previous item must not cancel the
+    // tooltip or preview already requested by the newly entered item.
+    if (m_hovered_item != &item)
+        return;
+
+    m_hovered_item = nullptr;
     m_dock_item_pointer_inside = false;
     cancel_show_timer();
     cancel_preview_show_timer();
@@ -1413,6 +1451,8 @@ void DockWindowController::schedule_hide_tooltip()
 
 void DockWindowController::hide_tooltip_immediately()
 {
+    m_hovered_item = nullptr;
+    m_dock_item_pointer_inside = false;
     cancel_show_timer();
     cancel_preview_show_timer();
     cancel_hide_timer();
@@ -1899,6 +1939,8 @@ void DockWindowController::start_hide_timer()
 
 void DockWindowController::cancel_show_timer()
 {
+    ++m_tooltip_request_generation;
+
     if (m_show_timer.connected())
         m_show_timer.disconnect();
 }

@@ -73,7 +73,7 @@ public:
         Gtk::Widget &item,
         const Glib::ustring &text);
     void schedule_show_preview(DockItem &item);
-    void schedule_hide_tooltip();
+    void schedule_hide_tooltip(Gtk::Widget &item);
     void hide_tooltip_immediately();
     void dock_items_reordered();
     void dock_items_changed();
@@ -217,6 +217,9 @@ private:
     sigc::connection m_dock_remove;
 
     Gtk::Widget *m_pending_item = nullptr;
+    Gtk::Widget *m_hovered_item = nullptr;
+    unsigned long long
+        m_tooltip_request_generation = 0;
     std::string m_pending_preview_desktop_id;
     std::string m_preview_desktop_id;
     Glib::ustring m_pending_tooltip_text;

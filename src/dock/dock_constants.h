@@ -36,7 +36,6 @@ namespace DockConstants
     // its standard show animation is replayed for every dock item.
     constexpr int TOOLTIP_REMAP_DELAY_MS = 20; // Delay before remapping a tooltip
     constexpr int TOOLTIP_FADE_DURATION_MS = 180;
-    constexpr int TOOLTIP_MOVE_DURATION_MS = 140;
     constexpr int PREVIEW_FADE_DURATION_MS = 220;
     constexpr int OVERLAY_ANIMATION_FRAME_MS = 16;
 

@@ -198,7 +198,7 @@ bool DockHomeItem::on_leave_notify_event(
         return false;
     }
 
-    m_dock.schedule_hide_tooltip();
+    m_dock.schedule_hide_tooltip(*this);
     return false;
 }
 
