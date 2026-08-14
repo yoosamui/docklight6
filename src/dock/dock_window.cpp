@@ -424,8 +424,14 @@ void DockWindow::inhibit_autohide()
 
 void DockWindow::uninhibit_autohide()
 {
+    uninhibit_autohide(pointer_is_inside());
+}
+
+void DockWindow::uninhibit_autohide(
+    bool pointer_inside)
+{
     m_controller->uninhibit_autohide(
-        pointer_is_inside());
+        pointer_inside);
 }
 
 bool DockWindow::set_item_attached(

@@ -303,13 +303,25 @@ assert.match(
     /DockItem::on_enter_notify_event[\s\S]*?schedule_show_tooltip[\s\S]*?DockItem::on_leave_notify_event[\s\S]*?schedule_hide_tooltip/,
     "each item must start and cancel tooltip timing from its own crossing events");
 assert.match(
-    dockWindowControllerSource,
-    /DockWindowController::schedule_show_preview[\s\S]*?start_tooltip_show_timer\([\s\S]*?item\.tooltip_text\(\)[\s\S]*?m_preview_show_timer/,
-    "grouped dock items must show a delayed label before their preview");
+    dockItemSource,
+    /signal_button_press_event[\s\S]*?GDK_BUTTON_SECONDARY[\s\S]*?outside_menu[\s\S]*?m_context_menu\.popdown\(\)/,
+    "the context menu must catch an outside secondary press consumed by its pointer grab");
+assert.match(
+    dockItemSource,
+    /signal_unmap[\s\S]*?m_context_menu_secondary_dismissed[\s\S]*?schedule_show_tooltip[\s\S]*?uninhibit_autohide\(true\)/,
+    "a secondary-button menu dismissal must restore preview and pointer-inside autohide state");
 assert.match(
     dockWindowControllerSource,
-    /m_settings\.preview_show_delay\(\) \+[\s\S]*?TOOLTIP_SHOW_DELAY_MS[\s\S]*?TOOLTIP_REMAP_DELAY_MS[\s\S]*?TOOLTIP_FADE_DURATION_MS/,
-    "the preview delay must begin after the grouped-item tooltip is fully visible");
+    /DockWindowController::schedule_show_preview[\s\S]*?hide_tooltip\(\)[\s\S]*?m_preview_show_timer/,
+    "grouped dock items must transition directly to their preview");
+assert.match(
+    dockWindowControllerSource,
+    /m_preview_show_timer[\s\S]*?m_settings\.preview_show_delay\(\)\);/,
+    "grouped dock items must use only the configured preview delay");
+assert.match(
+    dockWindowControllerSource,
+    /DockWindowController::hide_tooltip_immediately[\s\S]*?hide_preview\(\)[\s\S]*?hide_preview_immediately\(\)/,
+    "immediate preview closure must clear controller state before hiding the surface");
 assert.match(
     revealWindowSource,
     /DockRevealWindow::set_monitor[\s\S]*?m_monitor_geometry[\s\S]*?m_has_placement[\s\S]*?apply_x11_placement\(\)/,

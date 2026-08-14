@@ -214,6 +214,7 @@ private:
     sigc::connection m_blur_animation;
     sigc::connection m_primary_action_effect;
     sigc::connection m_window_action_idle;
+    sigc::connection m_context_menu_button_press;
     sigc::connection m_context_menu_map;
     sigc::connection m_context_menu_unmap;
 
@@ -245,4 +246,5 @@ private:
     bool m_primary_button_pressed = false;
     bool m_dragging = false;
     bool m_context_menu_mapped = false;
+    bool m_context_menu_secondary_dismissed = false;
 };

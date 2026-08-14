@@ -350,6 +350,7 @@ DockItem::~DockItem()
     m_blur_animation.disconnect();
     m_primary_action_effect.disconnect();
     m_window_action_idle.disconnect();
+    m_context_menu_button_press.disconnect();
     m_context_menu_map.disconnect();
     m_context_menu_unmap.disconnect();
 }
@@ -1447,6 +1448,42 @@ void DockItem::initialize_context_menu()
     m_context_menu.show_all();
     m_group_separator.hide();
 
+    m_context_menu_button_press =
+        m_context_menu
+            .signal_button_press_event()
+            .connect(
+                [this](GdkEventButton *event)
+                {
+                    if (!event ||
+                        event->button !=
+                            GDK_BUTTON_SECONDARY)
+                    {
+                        return false;
+                    }
+
+                    // GtkMenu owns the pointer grab, so a secondary press on
+                    // its owning DockItem arrives in menu coordinates outside
+                    // the menu allocation instead of reaching the item.
+                    const bool outside_menu =
+                        event->x < 0.0 ||
+                        event->y < 0.0 ||
+                        event->x >=
+                            m_context_menu
+                                .get_allocated_width() ||
+                        event->y >=
+                            m_context_menu
+                                .get_allocated_height();
+
+                    if (!outside_menu)
+                        return false;
+
+                    m_context_menu_secondary_dismissed =
+                        true;
+                    m_context_menu.popdown();
+                    return true;
+                },
+                false);
+
     m_context_menu_map =
         m_context_menu.signal_map().connect(
             [this]()
@@ -1455,6 +1492,8 @@ void DockItem::initialize_context_menu()
                     return;
 
                 m_context_menu_mapped = true;
+                m_context_menu_secondary_dismissed =
+                    false;
                 m_dock.inhibit_autohide();
             });
 
@@ -1466,7 +1505,20 @@ void DockItem::initialize_context_menu()
                     return;
 
                 m_context_menu_mapped = false;
-                m_dock.uninhibit_autohide();
+
+                const bool reopen_preview =
+                    m_context_menu_secondary_dismissed;
+                m_context_menu_secondary_dismissed =
+                    false;
+
+                if (reopen_preview)
+                    m_dock.schedule_show_tooltip(
+                        *this);
+
+                if (reopen_preview)
+                    m_dock.uninhibit_autohide(true);
+                else
+                    m_dock.uninhibit_autohide();
             });
 }
 

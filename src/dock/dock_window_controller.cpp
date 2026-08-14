@@ -1385,8 +1385,8 @@ void DockWindowController::schedule_show_preview(
     m_dock_item_pointer_inside = true;
     m_hovered_item = &item;
 
-    // Returning from an existing preview to its owning icon must not replace
-    // that preview with a newly scheduled label.
+    // Returning from an existing preview to its owning icon must not rebuild
+    // and remap the same surface.
     if (!m_preview_desktop_id.empty() &&
         m_preview_desktop_id == item.desktop_id())
     {
@@ -1396,26 +1396,23 @@ void DockWindowController::schedule_show_preview(
         return;
     }
 
-    // A new item owns a new delayed label. Fade the previous label during
-    // that delay instead of leaving it displayed under the old icon.
+    // Running items use the preview directly. A label-first transition adds
+    // two tooltip animations to the configured preview delay and makes
+    // moving between application icons feel unresponsive.
     hide_tooltip();
-
-    if (m_settings.display_tooltips())
-    {
-        start_tooltip_show_timer(
-            item,
-            item.tooltip_text(),
-            true);
-    }
 
     if (!m_settings.display_preview())
     {
+        m_pending_item = nullptr;
         m_pending_preview_desktop_id.clear();
+        m_pending_tooltip_text.clear();
         return;
     }
 
+    m_pending_item = nullptr;
     m_pending_preview_desktop_id =
         item.desktop_id();
+    m_pending_tooltip_text.clear();
 
     m_preview_show_timer =
         Glib::signal_timeout().connect(
@@ -1441,12 +1438,7 @@ void DockWindowController::schedule_show_preview(
 
                 return false;
             },
-            m_settings.preview_show_delay() +
-                (m_settings.display_tooltips()
-                     ? DockConstants::TOOLTIP_SHOW_DELAY_MS +
-                           DockConstants::TOOLTIP_REMAP_DELAY_MS +
-                           DockConstants::TOOLTIP_FADE_DURATION_MS
-                     : 0));
+            m_settings.preview_show_delay());
 }
 
 void DockWindowController::schedule_hide_tooltip(
@@ -1479,6 +1471,11 @@ void DockWindowController::hide_tooltip_immediately()
     m_pending_tooltip_text.clear();
     m_tooltip_item = nullptr;
     m_window.m_overlay_window.hide_tooltip_immediately();
+
+    // Keep the preview surface and its controller identity in one state.
+    // Hiding only the surface leaves m_preview_desktop_id populated, causing
+    // the next hover to be mistaken for an already-visible preview.
+    hide_preview();
 
     if (m_preview_window)
         m_preview_window->hide_preview_immediately();

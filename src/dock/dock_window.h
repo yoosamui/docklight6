@@ -92,6 +92,7 @@ public:
     void hide_tooltip_immediately();
     void inhibit_autohide();
     void uninhibit_autohide();
+    void uninhibit_autohide(bool pointer_inside);
     bool set_item_attached(
         DockItem &item,
         bool attached);
