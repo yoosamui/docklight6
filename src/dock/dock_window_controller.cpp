@@ -40,6 +40,25 @@
 
 #include <algorithm>
 
+namespace
+{
+
+constexpr unsigned int INITIAL_X11_WORKAREA_SAMPLE_INTERVAL_MS = 300;
+constexpr int INITIAL_X11_WORKAREA_REQUIRED_STABLE_SAMPLES = 3;
+constexpr int INITIAL_X11_WORKAREA_MAX_SAMPLE_ATTEMPTS = 7;
+
+bool same_monitor_geometry(
+    const MonitorGeometry &left,
+    const MonitorGeometry &right)
+{
+    return left.x == right.x &&
+           left.y == right.y &&
+           left.width == right.width &&
+           left.height == right.height;
+}
+
+}
+
 DockWindowController::DockWindowController(
     DockWindow &window,
     const DockConfiguration &configuration,
@@ -137,6 +156,7 @@ DockWindowController::~DockWindowController()
     m_media_playback_changed.disconnect();
     m_realize.disconnect();
     m_map.disconnect();
+    m_initial_x11_workarea_timer.disconnect();
     m_size_allocate.disconnect();
     m_window_registry_changed.disconnect();
     m_window_registry_connection_changed.disconnect();
@@ -156,6 +176,29 @@ DockWindowController::~DockWindowController()
 
 void DockWindowController::initialize()
 {
+    auto *display = gdk_display_get_default();
+    const bool native_x11_window =
+        !m_window.m_uses_layer_shell &&
+        display &&
+        GDK_IS_X11_DISPLAY(display);
+
+    if (native_x11_window)
+    {
+        // Cinnamon publishes provisional monitor and panel work areas while
+        // the login session is still being assembled. Keep the ordinary X11
+        // toplevel invisible and avoid publishing our strut until Muffin has
+        // repeatedly reported the same output and work area.
+        m_initial_x11_workarea_pending = true;
+        m_window.set_opacity(0.0);
+        m_initial_x11_workarea_timer =
+            Glib::signal_timeout().connect(
+                sigc::mem_fun(
+                    *this,
+                    &DockWindowController::
+                        sample_initial_x11_workarea),
+                INITIAL_X11_WORKAREA_SAMPLE_INTERVAL_MS);
+    }
+
     m_autohide_controller->initialize();
     m_autohide_controller->set_monitor(
         m_monitor);
@@ -470,7 +513,6 @@ void DockWindowController::initialize()
     // EWMH window managers are allowed to adjust a client's initial map
     // position. Reassert the calculated dock coordinates once the X11
     // window is managed; the coalesced update is harmless on layer-shell.
-    auto *display = gdk_display_get_default();
     const bool ordinary_wayland_window =
         !m_window.m_uses_layer_shell &&
         display &&
@@ -487,6 +529,63 @@ void DockWindowController::initialize()
     }
 
     update_dock_layout();
+}
+
+bool DockWindowController::sample_initial_x11_workarea()
+{
+    const auto output_geometry =
+        m_layout_geometry.output_geometry(
+            m_monitor);
+    const auto workarea_geometry =
+        m_layout_geometry.monitor_geometry(
+            m_monitor);
+
+    ++m_initial_x11_workarea_sample_attempt_count;
+
+    const bool valid_sample =
+        output_geometry.width > 0 &&
+        output_geometry.height > 0 &&
+        workarea_geometry.width > 0 &&
+        workarea_geometry.height > 0;
+
+    if (valid_sample &&
+        m_initial_x11_workarea_stable_sample_count > 0 &&
+        same_monitor_geometry(
+            m_initial_x11_workarea_sample,
+            workarea_geometry) &&
+        same_monitor_geometry(
+            m_initial_x11_output_sample,
+            output_geometry))
+    {
+        ++m_initial_x11_workarea_stable_sample_count;
+    }
+    else if (valid_sample)
+    {
+        m_initial_x11_workarea_sample =
+            workarea_geometry;
+        m_initial_x11_output_sample =
+            output_geometry;
+        m_initial_x11_workarea_stable_sample_count = 1;
+    }
+    else
+    {
+        m_initial_x11_workarea_stable_sample_count = 0;
+    }
+
+    const bool stable =
+        m_initial_x11_workarea_stable_sample_count >=
+            INITIAL_X11_WORKAREA_REQUIRED_STABLE_SAMPLES;
+    const bool exhausted =
+        m_initial_x11_workarea_sample_attempt_count >=
+            INITIAL_X11_WORKAREA_MAX_SAMPLE_ATTEMPTS;
+
+    if (!stable && !exhausted)
+        return true;
+
+    m_initial_x11_workarea_pending = false;
+    update_dock_layout();
+    m_window.set_opacity(1.0);
+    return false;
 }
 
 void DockWindowController::apply_configuration(
@@ -640,6 +739,9 @@ void DockWindowController::set_preview_rounded_corners(
 // live GTK state and the side-effect-free layout engine.
 void DockWindowController::update_dock_layout()
 {
+    if (m_initial_x11_workarea_pending)
+        return;
+
     auto output_geometry =
         m_layout_geometry.output_geometry(
             m_monitor);

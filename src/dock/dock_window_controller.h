@@ -106,6 +106,7 @@ public:
     }
 
 private:
+    bool sample_initial_x11_workarea();
     void update_dock_layout();
     void update_effective_icon_size(
         const MonitorGeometry &monitor,
@@ -193,6 +194,7 @@ private:
     sigc::connection m_media_playback_changed;
     sigc::connection m_realize;
     sigc::connection m_map;
+    sigc::connection m_initial_x11_workarea_timer;
     sigc::connection m_size_allocate;
     sigc::connection m_window_registry_changed;
     sigc::connection
@@ -234,6 +236,12 @@ private:
     bool m_preview_pointer_inside = false;
     bool m_shell_preview_pointer_inside = false;
     bool m_preview_input_forwarding = false;
+
+    bool m_initial_x11_workarea_pending = false;
+    int m_initial_x11_workarea_stable_sample_count = 0;
+    int m_initial_x11_workarea_sample_attempt_count = 0;
+    MonitorGeometry m_initial_x11_output_sample;
+    MonitorGeometry m_initial_x11_workarea_sample;
 
     bool m_has_applied_layout = false;
 };
