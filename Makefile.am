@@ -10,6 +10,7 @@ EXTRA_DIST = \
     setup_backend.sh \
     setup_presentation.sh \
     validate_presentation.sh \
+    tests/build_script_test.sh \
     tests/setup_backend_test.sh \
     tests/setup_presentation_test.sh \
     tests/validate_presentation_test.sh \
@@ -39,6 +40,7 @@ EXTRA_DIST = \
     protocols/zkde-screencast-unstable-v1.xml
 
 TESTS = \
+    tests/build_script_test.sh \
     tests/setup_backend_test.sh \
     tests/setup_presentation_test.sh \
     tests/validate_presentation_test.sh \

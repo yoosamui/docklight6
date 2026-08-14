@@ -130,6 +130,12 @@ Options:
 - `--restart` stops a running `docklight6` before `--run` or `--gdb`.
 - `--jobs N` overrides the default `nproc` parallelism.
 
+When `--run` or `--gdb` is used from a non-Wayland session, the build script
+launches DockLight with `--presentation=native`. This keeps an XWayland mode
+saved for a Wayland desktop from preventing a launch after switching to an
+X11 desktop such as XFCE. The saved per-user presentation setting is not
+modified.
+
 The default operation is deliberately non-invasive: it builds only. It never
 installs, stops, or launches DockLight unless the corresponding option is
 present.

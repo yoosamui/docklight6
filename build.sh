@@ -214,14 +214,27 @@ if "$restart_binary"; then
     pkill -x docklight6 2>/dev/null || true
 fi
 
+launch_arguments=()
+
+# A saved XWayland presentation choice is only usable from a Wayland
+# session.  Development machines can retain that choice while switching to
+# an X11 desktop, so make --run and --gdb usable there without rewriting the
+# per-user configuration.
+if { "$run_binary" || "$run_gdb"; } &&
+   [[ ${XDG_SESSION_TYPE:-} != wayland &&
+      -z ${WAYLAND_DISPLAY:-} ]]; then
+    launch_arguments+=("--presentation=native")
+    echo "Non-Wayland session detected; using native presentation"
+fi
+
 if "$run_gdb"; then
     command -v gdb >/dev/null 2>&1 ||
         fail "gdb is required for --gdb"
-    exec gdb "$binary"
+    exec gdb --args "$binary" "${launch_arguments[@]}"
 fi
 
 if "$run_binary"; then
-    exec "$binary"
+    exec "$binary" "${launch_arguments[@]}"
 fi
 
 echo
