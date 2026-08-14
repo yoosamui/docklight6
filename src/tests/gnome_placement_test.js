@@ -289,7 +289,7 @@ assert.match(
     "input pass-through must begin only after Shell completes the hide animation");
 assert.match(
     extensionSource,
-    /_startDockVisibilityTransition\(hidden[\s\S]*?calculateDockHideOffset\(positioned\)[\s\S]*?_updateDockAnimationClip\(actor, positioned, base\)[\s\S]*?actor\.ease\([\s\S]*?EASE_OUT_QUAD/,
+    /_startDockVisibilityTransition\(hidden[\s\S]*?calculateDockHideOffset\(positioned\)[\s\S]*?_updateDockAnimationClip\(actor, positioned, base\)[\s\S]*?EASE_OUT_CUBIC[\s\S]*?actor\.ease\(/,
     "GNOME must use Cinnamon-style compositor movement and monitor clipping");
 assert.match(
     extensionSource,

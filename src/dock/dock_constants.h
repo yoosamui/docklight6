@@ -42,9 +42,9 @@ namespace DockConstants
 
     // Autohide behaviour
 
-    constexpr int AUTOHIDE_HIDE_DELAY_MS = 800;
+    constexpr int AUTOHIDE_HIDE_DELAY_MS = 500;
     constexpr int AUTOHIDE_REVEAL_SIZE = 2;
-    constexpr int AUTOHIDE_ANIMATION_DURATION_MS = 220;
+    constexpr int AUTOHIDE_ANIMATION_DURATION_MS = 170;
     constexpr int AUTOHIDE_ANIMATION_FRAME_MS = 16;
     constexpr int GNOME_PLACEMENT_FALLBACK_DELAY_MS = 2000;
 

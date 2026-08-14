@@ -625,11 +625,11 @@ bool DockAutohideController::advance_x11_animation()
         0.0,
         1.0);
 
-    // Hiding accelerates away from the pointer; revealing decelerates into
-    // place. Both curves have a gentle edge and a decisive middle section.
-    const double eased = m_animating_to_hidden
-        ? progress * progress * progress
-        : 1.0 - std::pow(1.0 - progress, 3.0);
+    // Ease out in both directions. An ease-in hide spends most of its time
+    // barely moving, then jumps through the edge and feels sluggish even at
+    // a short nominal duration.
+    const double eased =
+        1.0 - std::pow(1.0 - progress, 3.0);
     const int x = static_cast<int>(std::lround(
         m_animation_start_x +
         (m_animation_target_x - m_animation_start_x) *
