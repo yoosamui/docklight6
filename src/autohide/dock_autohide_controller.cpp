@@ -985,9 +985,9 @@ bool DockAutohideController::can_hide() const
 
 bool DockAutohideController::pointer_inside() const
 {
-    return m_pointer_inside ||
-           (uses_shell_reveal_trigger() &&
-            m_shell_pointer_inside);
+    return uses_shell_reveal_trigger()
+        ? m_shell_pointer_inside
+        : m_pointer_inside;
 }
 
 bool DockAutohideController::

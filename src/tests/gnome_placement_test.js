@@ -376,8 +376,8 @@ assert.match(
     "authoritative Shell pointer entry must reverse an in-progress hide");
 assert.match(
     autohideControllerSource,
-    /pointer_inside\(\) const[\s\S]*?m_pointer_inside \|\|[\s\S]*?m_shell_pointer_inside/,
-    "Shell pointer state must survive GTK preview and popup cleanup");
+    /pointer_inside\(\) const[\s\S]*?uses_shell_reveal_trigger\(\)[\s\S]*?\? m_shell_pointer_inside[\s\S]*?: m_pointer_inside/,
+    "Shell pointer ownership must replace stale GTK crossing state");
 assert.match(
     autohideControllerSource,
     /reveal\(\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(false\);/,
