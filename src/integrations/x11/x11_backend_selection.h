@@ -11,6 +11,7 @@
 enum class X11BackendKind
 {
     kwin,
+    marco,
     muffin,
     mutter,
     xfwm4,

@@ -42,6 +42,11 @@ X11BackendKind select_x11_backend_kind(
     // the native X11 capture path instead of the Wayland script protocol.
     if (contains(manager, "kwin"))
         return X11BackendKind::kwin;
+    if (contains(manager, "marco") ||
+        contains(manager, "metacity"))
+    {
+        return X11BackendKind::marco;
+    }
     if (contains(manager, "muffin"))
         return X11BackendKind::muffin;
     if (contains(manager, "mutter") ||
@@ -64,6 +69,8 @@ X11BackendKind select_x11_backend_kind(
     {
         return X11BackendKind::kwin;
     }
+    if (contains(desktop, "mate"))
+        return X11BackendKind::marco;
     if (contains(desktop, "cinnamon"))
         return X11BackendKind::muffin;
     if (contains(desktop, "gnome"))
@@ -81,6 +88,8 @@ const char *x11_backend_kind_name(
     {
     case X11BackendKind::kwin:
         return "KWin/X11";
+    case X11BackendKind::marco:
+        return "Marco/Metacity";
     case X11BackendKind::muffin:
         return "Muffin";
     case X11BackendKind::mutter:

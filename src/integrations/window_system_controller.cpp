@@ -30,6 +30,7 @@
 #include "integrations/plasma/plasma_geometry_bridge_manager.h"
 #include "integrations/x11/ewmh_fallback_window_backend.h"
 #include "integrations/x11/kwin_x11_window_backend.h"
+#include "integrations/x11/marco_window_backend.h"
 #include "integrations/x11/muffin_window_backend.h"
 #include "integrations/x11/mutter_window_backend.h"
 #include "integrations/x11/xfwm4_window_backend.h"
@@ -293,6 +294,11 @@ void WindowSystemController::start()
             m_backend =
                 std::make_unique<
                     KWinX11WindowBackend>();
+            break;
+        case X11BackendKind::marco:
+            m_backend =
+                std::make_unique<
+                    MarcoWindowBackend>();
             break;
         case X11BackendKind::muffin:
             m_backend =

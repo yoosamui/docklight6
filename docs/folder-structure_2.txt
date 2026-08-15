@@ -55,6 +55,7 @@ docklight6/
 │   │   ├── x11/
 │   │   │   ├── ewmh_window_backend.*
 │   │   │   ├── kwin_x11_window_backend.*
+│   │   │   ├── marco_window_backend.*
 │   │   │   ├── muffin_window_backend.*
 │   │   │   ├── mutter_window_backend.*
 │   │   │   ├── xfwm4_window_backend.*

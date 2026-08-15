@@ -1171,6 +1171,18 @@ void DockPreviewWindow::set_rounded_corners(
         "px; }");
 }
 
+void DockPreviewWindow::set_thumbnail_policy(
+    WindowThumbnailPolicy policy)
+{
+    m_thumbnail_policy = policy;
+}
+
+bool DockPreviewWindow::uses_mapped_thumbnail_cache() const
+{
+    return m_thumbnail_policy ==
+           WindowThumbnailPolicy::cache_mapped_windows;
+}
+
 void DockPreviewWindow::prime_thumbnail_cache(
     const std::vector<ApplicationWindowEntry>
         &entries)
@@ -1188,6 +1200,8 @@ void DockPreviewWindow::prime_thumbnail_cache(
             uses_xfwm_session();
         const bool kde_x11_session =
             uses_kde_session();
+        const bool mapped_cache_session =
+            uses_mapped_thumbnail_cache();
         const auto previously_active =
             m_thumbnail_cache_active;
         std::set<WindowId> known_window_ids;
@@ -1202,7 +1216,8 @@ void DockPreviewWindow::prime_thumbnail_cache(
                 const auto visible_target =
                     m_thumbnail_targets.find(
                         entry.id);
-                if (kde_x11_session &&
+                if ((kde_x11_session ||
+                     mapped_cache_session) &&
                     visible_target !=
                     m_thumbnail_targets.end())
                 {
@@ -1220,7 +1235,9 @@ void DockPreviewWindow::prime_thumbnail_cache(
                     target.application_auxiliary =
                         entry.application_auxiliary;
 
-                    if (entry.minimized)
+                    if (entry.minimized ||
+                        (mapped_cache_session &&
+                         !entry.on_current_desktop))
                     {
                         const auto recovered =
                             m_thumbnail_cache.find(
@@ -1270,7 +1287,8 @@ void DockPreviewWindow::prime_thumbnail_cache(
                 const auto identity =
                     persistent_thumbnail_identity(
                         entry,
-                        kde_x11_session);
+                        kde_x11_session ||
+                            mapped_cache_session);
                 const auto previous_identity =
                     m_thumbnail_cache_keys.find(
                         entry.id);
@@ -1284,16 +1302,18 @@ void DockPreviewWindow::prime_thumbnail_cache(
                 m_thumbnail_cache_keys[entry.id] =
                     identity;
 
-                // Never read a minimized window's native X11 pixmap. Load a
-                // complete frame saved while it was mapped, including one
-                // persisted by a previous DockLight process.
+                // Some X11 managers unmap minimized and off-workspace
+                // windows. Load a complete frame saved while the window was
+                // mapped, including one persisted by a previous process.
                 const bool persistent_cache_session =
                     xfwm_session ||
-                    kde_x11_session;
+                    kde_x11_session ||
+                    mapped_cache_session;
                 const bool capture_unsafe =
                     (kde_x11_session &&
                      entry.minimized) ||
-                    (xfwm_session &&
+                    ((xfwm_session ||
+                      mapped_cache_session) &&
                      (entry.minimized ||
                       !entry.on_current_desktop));
                 if (persistent_cache_session &&
@@ -1316,16 +1336,19 @@ void DockPreviewWindow::prime_thumbnail_cache(
                 }
 
                 if ((!xfwm_session &&
-                     !kde_x11_session) ||
+                     !kde_x11_session &&
+                     !mapped_cache_session) ||
                     (!entry.minimized &&
-                     (!xfwm_session ||
+                     ((!xfwm_session &&
+                       !mapped_cache_session) ||
                       entry.on_current_desktop)))
                 {
                     eligible_window_ids.insert(
                         entry.id);
 
                     if ((xfwm_session ||
-                         kde_x11_session) &&
+                         kde_x11_session ||
+                         mapped_cache_session) &&
                         entry.active)
                     {
                         active_window_ids.insert(
@@ -1456,11 +1479,11 @@ void DockPreviewWindow::request_cached_thumbnail(
 
     m_thumbnail_cache_in_flight.insert(window_id);
 
-    // Remember a compositor-scaled frame while Xfwm still exposes the
-    // mapped window pixmap. The registry can announce a new window slightly
-    // before that pixmap exists, so retry cache priming just like the visible
-    // preview capture. Once minimized or moved off-workspace, the last valid
-    // frame remains available without reading Xfwm's unmapped backing store.
+    // Remember a compositor-scaled frame while the window manager still
+    // exposes its mapped pixmap. The registry can announce a new window
+    // slightly before that pixmap exists, so retry cache priming just like
+    // visible preview capture. Once the window is unmapped, the last valid
+    // frame remains available without reading stale backing storage.
     m_thumbnail_provider.request(
         window_id,
         MAX_HEIGHT * 2,
@@ -1709,7 +1732,8 @@ void DockPreviewWindow::persist_thumbnail_cache(
 {
     if (m_uses_layer_shell ||
         (!uses_xfwm_session() &&
-         !uses_kde_session()) ||
+         !uses_kde_session() &&
+         !uses_mapped_thumbnail_cache()) ||
         window_id.empty() ||
         !thumbnail)
     {
@@ -2561,7 +2585,8 @@ void DockPreviewWindow::request_thumbnail(
         uses_kde_session();
     if ((kde_x11_session &&
          target->second.minimized) ||
-        (uses_xfwm_session() &&
+        ((uses_xfwm_session() ||
+          uses_mapped_thumbnail_cache()) &&
          (target->second.minimized ||
           !target->second.on_current_desktop)))
     {
@@ -2602,7 +2627,8 @@ void DockPreviewWindow::request_thumbnail(
             if (thumbnail &&
                 (m_uses_layer_shell ||
                  (!uses_xfwm_session() &&
-                  !uses_kde_session()) ||
+                  !uses_kde_session() &&
+                  !uses_mapped_thumbnail_cache()) ||
                  m_thumbnail_cache_eligible.count(
                      window_id) != 0))
             {
@@ -2765,7 +2791,8 @@ void DockPreviewWindow::request_x11_change_probe(
         found->second.capture_in_flight ||
         found->second.probe_in_flight ||
         found->second.minimized ||
-        (uses_xfwm_session() &&
+        ((uses_xfwm_session() ||
+          uses_mapped_thumbnail_cache()) &&
          !found->second.on_current_desktop))
     {
         return;
@@ -2796,7 +2823,8 @@ void DockPreviewWindow::request_x11_change_probe(
 
             if (!frame ||
                 (!m_uses_layer_shell &&
-                 uses_kde_session() &&
+                 (uses_kde_session() ||
+                  uses_mapped_thumbnail_cache()) &&
                  m_thumbnail_cache_eligible.count(
                      completed_window_id) == 0))
                 return;
@@ -2831,7 +2859,8 @@ void DockPreviewWindow::request_live_x11_thumbnail(
     if (found == m_thumbnail_targets.end() ||
         found->second.capture_in_flight ||
         found->second.minimized ||
-        (uses_xfwm_session() &&
+        ((uses_xfwm_session() ||
+          uses_mapped_thumbnail_cache()) &&
          !found->second.on_current_desktop))
     {
         return;
@@ -2874,7 +2903,8 @@ void DockPreviewWindow::request_live_x11_thumbnail(
 
             if (!frame ||
                 (!m_uses_layer_shell &&
-                 uses_kde_session() &&
+                 (uses_kde_session() ||
+                  uses_mapped_thumbnail_cache()) &&
                  m_thumbnail_cache_eligible.count(
                      completed_window_id) == 0))
                 return;
@@ -2944,7 +2974,8 @@ void DockPreviewWindow::start_live_streams()
         // associated with an unrelated tab. Refresh the complete visible
         // group on X11 so a playing page cannot be omitted by stale metadata.
         if (!entry.second.minimized &&
-            (!uses_xfwm_session() ||
+            ((!uses_xfwm_session() &&
+              !uses_mapped_thumbnail_cache()) ||
              entry.second.on_current_desktop))
             desired_windows.insert(entry.first);
     }

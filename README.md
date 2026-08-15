@@ -23,6 +23,7 @@ Current test state:
 | KDE Plasma / KWin | Wayland | KWinWindowBackend | PASS |
 | KDE Plasma / KWin | X11 | EwmhFallbackWindowBackend | PASS |
 | XFCE / xfwm4 | X11 | Xfwm4WindowBackend | PASS |
+| MATE / Marco or Metacity | X11 | MarcoWindowBackend | PASS |
 | Cinnamon / Muffin | X11 | MuffinWindowBackend | PASS |
 | GNOME / Mutter | X11 | MutterWindowBackend | PASS |
 | GNOME / Mutter | Wayland | MutterWindowBackend | PASS |
@@ -37,7 +38,7 @@ Current test state:
 
 Important current-code details:
 
-- Cinnamon/Muffin and GNOME/Mutter have separate X11 backends.
+- MATE/Marco, Cinnamon/Muffin, and GNOME/Mutter have separate X11 backends.
 - KWin X11 currently deliberately selects `EwmhFallbackWindowBackend`, even
   though a `KWinX11WindowBackend` class exists.
 - KDE Plasma/KWin is currently the only enabled Wayland environment.

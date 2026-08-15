@@ -35,6 +35,12 @@
 #include <string>
 #include <vector>
 
+enum class WindowThumbnailPolicy
+{
+    capture_on_demand,
+    cache_mapped_windows
+};
+
 struct WindowBackendCapabilities
 {
     bool can_activate = false;
@@ -49,6 +55,8 @@ struct WindowBackendCapabilities
     bool provides_icons = false;
     bool accepts_icon_geometry = false;
     bool provides_dock_reveal_trigger = false;
+    WindowThumbnailPolicy thumbnail_policy =
+        WindowThumbnailPolicy::capture_on_demand;
 };
 
 class WindowBackend

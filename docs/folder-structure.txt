@@ -63,6 +63,7 @@ src/
 │   │   ├── ewmh_window_backend.cpp            # Implements shared EWMH window discovery, state, and commands.
 │   │   ├── ewmh_window_backend.h              # Declares the common base used by concrete X11 backends.
 │   │   ├── kwin_x11_window_backend.*           # Uses native EWMH/XIDs for KDE/KWin X11 integration.
+│   │   ├── marco_window_backend.*              # Selects the MATE/Marco and Metacity X11 integration.
 │   │   ├── muffin_window_backend.*            # Adds Cinnamon/Muffin-specific window actions.
 │   │   ├── mutter_window_backend.*            # Selects the GNOME/Mutter X11 integration.
 │   │   ├── xfwm4_window_backend.*             # Selects the XFCE/xfwm4 X11 integration.

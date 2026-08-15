@@ -65,6 +65,8 @@ docklight6_SOURCES = \
     integrations/x11/ewmh_fallback_window_backend.cpp \
     integrations/x11/kwin_x11_window_backend.h \
     integrations/x11/kwin_x11_window_backend.cpp \
+    integrations/x11/marco_window_backend.h \
+    integrations/x11/marco_window_backend.cpp \
     integrations/x11/muffin_window_backend.h \
     integrations/x11/muffin_window_backend.cpp \
     integrations/x11/mutter_window_backend.h \

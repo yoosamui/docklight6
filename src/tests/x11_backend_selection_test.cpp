@@ -95,8 +95,12 @@ int main()
         X11BackendKind::xfwm4);
     passed &= expect_backend(
         "Marco",
-        "MATE",
-        X11BackendKind::ewmh_fallback);
+        "XFCE",
+        X11BackendKind::marco);
+    passed &= expect_backend(
+        "Metacity",
+        "",
+        X11BackendKind::marco);
     passed &= expect_backend(
         "Openbox",
         "XFCE",
@@ -112,6 +116,10 @@ int main()
         "",
         "KDE:Plasma",
         X11BackendKind::kwin);
+    passed &= expect_backend(
+        "",
+        "MATE",
+        X11BackendKind::marco);
     passed &= expect_backend(
         "",
         "Cinnamon",

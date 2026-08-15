@@ -51,7 +51,7 @@ Docklight 6 has a solid layered core: platform-specific window handling is isola
   src/integrations/window_system_controller.cpp:235 selects the backend at runtime:
 
   - KDE Wayland → KWinWindowBackend.
-  - X11 → KWin, Muffin, Mutter, xfwm4, or generic EWMH backend.
+  - X11 → KWin, Marco/Metacity, Muffin, Mutter, xfwm4, or generic EWMH backend.
   - Other Wayland compositors → dock runs without window integration.
 
   The X11 implementations share src/integrations/x11/ewmh_window_backend.h:14, with WM-specific overrides where required.

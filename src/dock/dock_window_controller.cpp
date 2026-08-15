@@ -87,6 +87,14 @@ DockWindowController::DockWindowController(
     m_preview_window->set_preview_color(
         m_settings.preview_color());
 
+    if (m_window.m_window_registry)
+    {
+        m_preview_window->set_thumbnail_policy(
+            m_window.m_window_registry
+                ->capabilities()
+                .thumbnail_policy);
+    }
+
     m_preview_window
         ->signal_pointer_entered()
         .connect(

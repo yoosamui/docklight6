@@ -30,6 +30,7 @@
 #include "layout/dock_layout_types.h"
 #include "dock_window_stream_provider.h"
 #include "dock_window_thumbnail_provider.h"
+#include "windowing/window_backend.h"
 
 #include <gdkmm/monitor.h>
 #include <gtkmm.h>
@@ -75,6 +76,8 @@ public:
     void set_rounded_corners(
         bool enabled,
         int radius);
+    void set_thumbnail_policy(
+        WindowThumbnailPolicy policy);
     void prime_thumbnail_cache(
         const std::vector<ApplicationWindowEntry>
             &entries);
@@ -165,6 +168,7 @@ private:
     void request_x11_change_probe(
         const WindowId &window_id,
         unsigned int generation);
+    bool uses_mapped_thumbnail_cache() const;
     void start_live_streams();
     void stop_live_streams();
     void clear_cards();
@@ -250,6 +254,8 @@ private:
     int m_card_user_height = CARD_USER_HEIGHT;
     Gdk::RGBA m_preview_color;
     bool m_input_forwarding = false;
+    WindowThumbnailPolicy m_thumbnail_policy =
+        WindowThumbnailPolicy::capture_on_demand;
     gint64 m_opacity_animation_start_us = 0;
     double m_opacity_animation_start = 1.0;
     double m_opacity_animation_target = 1.0;
