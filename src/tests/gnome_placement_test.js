@@ -312,12 +312,12 @@ assert.match(
     "a secondary-button menu dismissal must restore preview and pointer-inside autohide state");
 assert.match(
     dockWindowControllerSource,
-    /DockWindowController::schedule_show_preview[\s\S]*?hide_tooltip\(\)[\s\S]*?m_preview_show_timer/,
-    "grouped dock items must transition directly to their preview");
+    /DockWindowController::schedule_show_preview[\s\S]*?start_tooltip_show_timer\([\s\S]*?item\.tooltip_text\(\)[\s\S]*?m_preview_show_timer/,
+    "grouped dock items must show a delayed label before their preview");
 assert.match(
     dockWindowControllerSource,
-    /m_preview_show_timer[\s\S]*?m_settings\.preview_show_delay\(\)\);/,
-    "grouped dock items must use only the configured preview delay");
+    /m_settings\.preview_show_delay\(\) \+[\s\S]*?TOOLTIP_SHOW_DELAY_MS[\s\S]*?TOOLTIP_REMAP_DELAY_MS[\s\S]*?TOOLTIP_FADE_DURATION_MS/,
+    "the preview delay must begin after the grouped-item tooltip is fully visible");
 assert.match(
     dockWindowControllerSource,
     /DockWindowController::hide_tooltip_immediately[\s\S]*?hide_preview\(\)[\s\S]*?hide_preview_immediately\(\)/,

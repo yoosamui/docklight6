@@ -1586,23 +1586,29 @@ void DockWindowController::schedule_show_preview(
         return;
     }
 
-    // Running items use the preview directly. A label-first transition adds
-    // two tooltip animations to the configured preview delay and makes
-    // moving between application icons feel unresponsive.
+    // Populated groups still own the same application-name tooltip as empty
+    // launchers. Keep the preview request alive while that label is shown,
+    // then replace the label with the window cards.
     hide_tooltip();
+    m_pending_item = nullptr;
+    m_pending_tooltip_text.clear();
+
+    if (m_settings.display_tooltips())
+    {
+        start_tooltip_show_timer(
+            item,
+            item.tooltip_text(),
+            true);
+    }
 
     if (!m_settings.display_preview())
     {
-        m_pending_item = nullptr;
         m_pending_preview_desktop_id.clear();
-        m_pending_tooltip_text.clear();
         return;
     }
 
-    m_pending_item = nullptr;
     m_pending_preview_desktop_id =
         item.desktop_id();
-    m_pending_tooltip_text.clear();
 
     m_preview_show_timer =
         Glib::signal_timeout().connect(
@@ -1628,7 +1634,12 @@ void DockWindowController::schedule_show_preview(
 
                 return false;
             },
-            m_settings.preview_show_delay());
+            m_settings.preview_show_delay() +
+                (m_settings.display_tooltips()
+                     ? DockConstants::TOOLTIP_SHOW_DELAY_MS +
+                           DockConstants::TOOLTIP_REMAP_DELAY_MS +
+                           DockConstants::TOOLTIP_FADE_DURATION_MS
+                     : 0));
 }
 
 void DockWindowController::schedule_hide_tooltip(

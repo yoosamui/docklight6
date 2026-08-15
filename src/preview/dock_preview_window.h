@@ -151,7 +151,8 @@ private:
         unsigned int generation);
     void request_cached_thumbnail(
         const WindowId &window_id,
-        unsigned int retries_remaining);
+        unsigned int retries_remaining,
+        std::uint64_t xfwm_settle_epoch = 0);
     void request_active_cache_refresh(
         const WindowId &window_id);
     void persist_thumbnail_cache(
@@ -222,6 +223,10 @@ private:
         m_thumbnail_cache_active;
     std::map<WindowId, sigc::connection>
         m_thumbnail_cache_retries;
+    std::map<WindowId, std::uint64_t>
+        m_thumbnail_cache_settle_epochs;
+    std::map<WindowId, sigc::connection>
+        m_thumbnail_cache_settle_delays;
     sigc::connection
         m_thumbnail_cache_refresh;
     std::set<WindowId>
@@ -232,7 +237,7 @@ private:
     std::set<WindowId>
         m_thumbnail_recovery_capture_allowed;
     std::map<WindowId, std::uint64_t>
-        m_thumbnail_recovery_candidate_signatures;
+        m_thumbnail_candidate_signatures;
     sigc::connection
         m_thumbnail_recovery_delay;
     std::vector<WindowId> m_window_ids;
@@ -251,6 +256,7 @@ private:
         m_close_window;
 
     unsigned int m_generation = 0;
+    std::uint64_t m_thumbnail_cache_settle_epoch = 0;
     int m_card_user_height = CARD_USER_HEIGHT;
     Gdk::RGBA m_preview_color;
     bool m_input_forwarding = false;

@@ -183,7 +183,7 @@ namespace
         }
 
         return sha256(
-            "docklight-xfwm-thumbnail-v2\n" +
+            "docklight-xfwm-thumbnail-v3\n" +
             entry.id + "\n" +
             std::to_string(entry.process_id) + "\n" +
             start_time + "\n" +
@@ -1063,6 +1063,9 @@ DockPreviewWindow::~DockPreviewWindow()
     for (auto &retry : m_thumbnail_cache_retries)
         retry.second.disconnect();
     m_thumbnail_cache_retries.clear();
+    for (auto &delay : m_thumbnail_cache_settle_delays)
+        delay.second.disconnect();
+    m_thumbnail_cache_settle_delays.clear();
     stop_live_streams();
     ++m_generation;
 
@@ -1204,6 +1207,8 @@ void DockPreviewWindow::prime_thumbnail_cache(
             uses_mapped_thumbnail_cache();
         const auto previously_active =
             m_thumbnail_cache_active;
+        const auto previously_eligible =
+            m_thumbnail_cache_eligible;
         std::set<WindowId> known_window_ids;
         std::set<WindowId> eligible_window_ids;
         std::set<WindowId> active_window_ids;
@@ -1216,7 +1221,8 @@ void DockPreviewWindow::prime_thumbnail_cache(
                 const auto visible_target =
                     m_thumbnail_targets.find(
                         entry.id);
-                if ((kde_x11_session ||
+                if ((xfwm_session ||
+                     kde_x11_session ||
                      mapped_cache_session) &&
                     visible_target !=
                     m_thumbnail_targets.end())
@@ -1365,6 +1371,128 @@ void DockPreviewWindow::prime_thumbnail_cache(
         m_thumbnail_cache_active =
             std::move(active_window_ids);
 
+        // Xfwm reports the new workspace before every newly mapped client has
+        // finished repainting. A named XComposite pixmap can already exist at
+        // that point, so a successful read is not proof that its contents are
+        // complete. Quarantine newly eligible windows until the map/paint
+        // transition settles, then require two matching samples before a new
+        // frame is allowed to replace the last good cache entry.
+        if (xfwm_session)
+        {
+            for (const auto &window_id :
+                 m_thumbnail_cache_eligible)
+            {
+                if (previously_eligible.count(window_id) != 0 ||
+                    m_thumbnail_cache_settle_epochs.count(
+                        window_id) != 0)
+                {
+                    continue;
+                }
+
+                const auto settle_epoch =
+                    ++m_thumbnail_cache_settle_epoch;
+                m_thumbnail_cache_settle_epochs[window_id] =
+                    settle_epoch;
+                auto &delay =
+                    m_thumbnail_cache_settle_delays[window_id];
+                delay.disconnect();
+                delay = Glib::signal_timeout().connect(
+                    [this, window_id, settle_epoch]()
+                    {
+                        const auto current_epoch =
+                            m_thumbnail_cache_settle_epochs.find(
+                                window_id);
+                        if (current_epoch ==
+                                m_thumbnail_cache_settle_epochs.end() ||
+                            current_epoch->second != settle_epoch)
+                        {
+                            return false;
+                        }
+
+                        if (m_thumbnail_cache_eligible.count(
+                                window_id) == 0 ||
+                            m_known_window_ids.count(
+                                window_id) == 0)
+                        {
+                            m_thumbnail_cache_settle_epochs.erase(
+                                window_id);
+                            m_thumbnail_candidate_signatures.erase(
+                                window_id);
+                            m_thumbnail_cache_settle_delays.erase(
+                                window_id);
+                            return false;
+                        }
+
+                        // A request started before the workspace notification
+                        // must finish and be rejected before the validated
+                        // post-settle capture starts.
+                        if (m_thumbnail_cache_in_flight.count(
+                                window_id) != 0)
+                        {
+                            return true;
+                        }
+
+                        const auto target =
+                            m_thumbnail_targets.find(window_id);
+                        if (target != m_thumbnail_targets.end() &&
+                            (target->second.capture_in_flight ||
+                             target->second.probe_in_flight))
+                        {
+                            return true;
+                        }
+
+                        m_thumbnail_cache_settle_delays.erase(
+                            window_id);
+                        request_cached_thumbnail(
+                            window_id,
+                            X11_STATIC_RETRY_COUNT,
+                            settle_epoch);
+                        return false;
+                    },
+                    XFWM_RECOVERY_SETTLE_MS);
+            }
+        }
+
+        for (auto delay =
+                 m_thumbnail_cache_settle_delays.begin();
+             delay != m_thumbnail_cache_settle_delays.end();)
+        {
+            if (m_thumbnail_cache_eligible.count(
+                    delay->first) == 0)
+            {
+                delay->second.disconnect();
+                m_thumbnail_cache_settle_epochs.erase(
+                    delay->first);
+                m_thumbnail_candidate_signatures.erase(
+                    delay->first);
+                delay = m_thumbnail_cache_settle_delays.erase(
+                    delay);
+            }
+            else
+            {
+                ++delay;
+            }
+        }
+
+        for (auto settling =
+                 m_thumbnail_cache_settle_epochs.begin();
+             settling !=
+                 m_thumbnail_cache_settle_epochs.end();)
+        {
+            if (m_thumbnail_cache_eligible.count(
+                    settling->first) == 0)
+            {
+                m_thumbnail_candidate_signatures.erase(
+                    settling->first);
+                settling = m_thumbnail_cache_settle_epochs.erase(
+                    settling);
+            }
+            else
+            {
+                ++settling;
+            }
+        }
+
         for (const auto &window_id : previously_active)
         {
             if (m_thumbnail_cache_active.count(
@@ -1446,6 +1574,8 @@ void DockPreviewWindow::prime_thumbnail_cache(
                     entry.id) == 0 ||
                 entry.id ==
                     m_thumbnail_recovery_active ||
+                m_thumbnail_cache_settle_epochs.count(
+                    entry.id) != 0 ||
                 m_thumbnail_cache.count(entry.id) != 0 ||
                 m_thumbnail_cache_in_flight.count(
                     entry.id) != 0)
@@ -1465,12 +1595,19 @@ void DockPreviewWindow::prime_thumbnail_cache(
 
 void DockPreviewWindow::request_cached_thumbnail(
     const WindowId &window_id,
-    unsigned int retries_remaining)
+    unsigned int retries_remaining,
+    std::uint64_t xfwm_settle_epoch)
 {
+    const bool validate_xfwm_frame =
+        xfwm_settle_epoch != 0;
     if (window_id.empty() ||
-        m_thumbnail_cache.count(window_id) != 0 ||
+        (!validate_xfwm_frame &&
+         m_thumbnail_cache.count(window_id) != 0) ||
         m_thumbnail_cache_in_flight.count(
             window_id) != 0 ||
+        (!validate_xfwm_frame &&
+         m_thumbnail_cache_settle_epochs.count(
+             window_id) != 0) ||
         m_thumbnail_cache_eligible.count(
             window_id) == 0)
     {
@@ -1488,17 +1625,33 @@ void DockPreviewWindow::request_cached_thumbnail(
         window_id,
         MAX_HEIGHT * 2,
         MAX_HEIGHT,
-        [this, retries_remaining](
+        [this, retries_remaining, xfwm_settle_epoch](
             const WindowId &completed_window_id,
             const Glib::RefPtr<Gdk::Pixbuf> &thumbnail)
         {
+            const bool validate_xfwm_frame =
+                xfwm_settle_epoch != 0;
             m_thumbnail_cache_in_flight.erase(
                 completed_window_id);
+
+            if (validate_xfwm_frame)
+            {
+                const auto current_epoch =
+                    m_thumbnail_cache_settle_epochs.find(
+                        completed_window_id);
+                if (current_epoch ==
+                        m_thumbnail_cache_settle_epochs.end() ||
+                    current_epoch->second != xfwm_settle_epoch)
+                {
+                    return;
+                }
+            }
 
             const auto retry_capture =
                 [this,
                  completed_window_id,
-                 retries_remaining]()
+                 retries_remaining,
+                 xfwm_settle_epoch]()
                 {
                     auto &retry =
                         m_thumbnail_cache_retries[
@@ -1507,11 +1660,13 @@ void DockPreviewWindow::request_cached_thumbnail(
                     retry = Glib::signal_timeout().connect(
                         [this,
                          completed_window_id,
-                         retries_remaining]()
+                         retries_remaining,
+                         xfwm_settle_epoch]()
                         {
                             request_cached_thumbnail(
                                 completed_window_id,
-                                retries_remaining - 1);
+                                retries_remaining - 1,
+                                xfwm_settle_epoch);
                             return false;
                         },
                         X11_STATIC_RETRY_MS);
@@ -1521,13 +1676,17 @@ void DockPreviewWindow::request_cached_thumbnail(
                 m_known_window_ids.count(
                     completed_window_id) != 0 &&
                 m_thumbnail_cache_eligible.count(
-                    completed_window_id) != 0)
+                    completed_window_id) != 0 &&
+                (validate_xfwm_frame ||
+                 m_thumbnail_cache_settle_epochs.count(
+                     completed_window_id) == 0))
             {
                 // A capture already in flight when recovery presented the
                 // window can finish while Xfwm is still painting it. Only
                 // the request started after the settle delay may complete an
                 // icon recovery.
-                if (m_thumbnail_recovery_active ==
+                if (!validate_xfwm_frame &&
+                    m_thumbnail_recovery_active ==
                         completed_window_id &&
                     m_thumbnail_recovery_capture_allowed.count(
                         completed_window_id) == 0)
@@ -1537,10 +1696,11 @@ void DockPreviewWindow::request_cached_thumbnail(
 
                 const bool recovering_xfwm_window =
                     uses_xfwm_session() &&
-                    m_thumbnail_recovery_active ==
-                        completed_window_id &&
-                    m_thumbnail_recovery_capture_allowed.count(
-                        completed_window_id) != 0;
+                    (validate_xfwm_frame ||
+                     (m_thumbnail_recovery_active ==
+                          completed_window_id &&
+                      m_thumbnail_recovery_capture_allowed.count(
+                          completed_window_id) != 0));
 
                 if (recovering_xfwm_window)
                 {
@@ -1553,14 +1713,14 @@ void DockPreviewWindow::request_cached_thumbnail(
                     const auto signature =
                         pixbuf_signature(thumbnail);
                     const auto candidate =
-                        m_thumbnail_recovery_candidate_signatures.find(
+                        m_thumbnail_candidate_signatures.find(
                             completed_window_id);
 
                     if (candidate ==
-                            m_thumbnail_recovery_candidate_signatures.end() ||
+                            m_thumbnail_candidate_signatures.end() ||
                         candidate->second != signature)
                     {
-                        m_thumbnail_recovery_candidate_signatures[
+                        m_thumbnail_candidate_signatures[
                             completed_window_id] = signature;
 
                         if (retries_remaining > 0)
@@ -1570,10 +1730,15 @@ void DockPreviewWindow::request_cached_thumbnail(
                         }
                     }
 
-                    m_thumbnail_recovery_candidate_signatures.erase(
+                    m_thumbnail_candidate_signatures.erase(
                         completed_window_id);
                     m_thumbnail_recovery_capture_allowed.erase(
                         completed_window_id);
+                    if (validate_xfwm_frame)
+                    {
+                        m_thumbnail_cache_settle_epochs.erase(
+                            completed_window_id);
+                    }
                 }
 
                 m_thumbnail_cache[completed_window_id] =
@@ -1595,7 +1760,8 @@ void DockPreviewWindow::request_cached_thumbnail(
                     m_thumbnail_targets.find(
                         completed_window_id);
                 if (target != m_thumbnail_targets.end() &&
-                    !target->second.has_thumbnail)
+                    (!target->second.has_thumbnail ||
+                     validate_xfwm_frame))
                 {
                     target->second.image->set(
                         scaled_to_fit(
@@ -1629,10 +1795,15 @@ void DockPreviewWindow::request_cached_thumbnail(
                 m_thumbnail_cache_eligible.count(
                     completed_window_id) == 0)
             {
-                m_thumbnail_recovery_candidate_signatures.erase(
+                m_thumbnail_candidate_signatures.erase(
                     completed_window_id);
                 m_thumbnail_recovery_capture_allowed.erase(
                     completed_window_id);
+                if (validate_xfwm_frame)
+                {
+                    m_thumbnail_cache_settle_epochs.erase(
+                        completed_window_id);
+                }
 
                 if (m_thumbnail_recovery_active ==
                     completed_window_id)
@@ -1649,8 +1820,9 @@ void DockPreviewWindow::request_cached_thumbnail(
             retry_capture();
         },
         1.0,
-        m_thumbnail_recovery_capture_allowed.count(
-            window_id) != 0,
+        validate_xfwm_frame ||
+            m_thumbnail_recovery_capture_allowed.count(
+                window_id) != 0,
         uses_xfwm_session());
 }
 
@@ -1660,6 +1832,8 @@ void DockPreviewWindow::request_active_cache_refresh(
     if (window_id.empty() ||
         m_thumbnail_cache_active.count(window_id) == 0 ||
         m_thumbnail_cache_in_flight.count(
+            window_id) != 0 ||
+        m_thumbnail_cache_settle_epochs.count(
             window_id) != 0 ||
         m_thumbnail_recovery_requested.count(
             window_id) != 0 ||
@@ -1686,6 +1860,8 @@ void DockPreviewWindow::request_active_cache_refresh(
                 completed_window_id);
 
             if (!thumbnail ||
+                m_thumbnail_cache_settle_epochs.count(
+                    completed_window_id) != 0 ||
                 m_thumbnail_cache_active.count(
                     completed_window_id) == 0 ||
                 m_known_window_ids.count(
@@ -2578,6 +2754,20 @@ void DockPreviewWindow::request_thumbnail(
         return;
     }
 
+    if (uses_xfwm_session() &&
+        m_thumbnail_cache_settle_epochs.count(window_id) != 0)
+    {
+        if (!target->second.has_thumbnail)
+        {
+            target->second.image->set_pixel_size(
+                target->second.fallback_size);
+            target->second.image->set_from_icon_name(
+                target->second.fallback_icon,
+                Gtk::ICON_SIZE_DIALOG);
+        }
+        return;
+    }
+
     // Minimized X11 pixmaps can contain compositor garbage. Keep the last
     // frame captured while mapped; only use the icon when no cache exists.
     const bool kde_x11_session =
@@ -2625,6 +2815,9 @@ void DockPreviewWindow::request_thumbnail(
             target.capture_in_flight = false;
 
             if (thumbnail &&
+                (!uses_xfwm_session() ||
+                 m_thumbnail_cache_settle_epochs.count(
+                     window_id) == 0) &&
                 (m_uses_layer_shell ||
                  (!uses_xfwm_session() &&
                   !uses_kde_session() &&
@@ -2741,7 +2934,7 @@ void DockPreviewWindow::start_next_thumbnail_recovery()
         }
 
         m_thumbnail_recovery_active = window_id;
-        m_thumbnail_recovery_candidate_signatures.erase(
+        m_thumbnail_candidate_signatures.erase(
             window_id);
         m_reload_thumbnail.emit(window_id);
 
@@ -2790,6 +2983,8 @@ void DockPreviewWindow::request_x11_change_probe(
     if (found == m_thumbnail_targets.end() ||
         found->second.capture_in_flight ||
         found->second.probe_in_flight ||
+        m_thumbnail_cache_settle_epochs.count(
+            window_id) != 0 ||
         found->second.minimized ||
         ((uses_xfwm_session() ||
           uses_mapped_thumbnail_cache()) &&
@@ -2822,6 +3017,8 @@ void DockPreviewWindow::request_x11_change_probe(
             target.probe_in_flight = false;
 
             if (!frame ||
+                m_thumbnail_cache_settle_epochs.count(
+                    completed_window_id) != 0 ||
                 (!m_uses_layer_shell &&
                  (uses_kde_session() ||
                   uses_mapped_thumbnail_cache()) &&
@@ -2858,6 +3055,8 @@ void DockPreviewWindow::request_live_x11_thumbnail(
 
     if (found == m_thumbnail_targets.end() ||
         found->second.capture_in_flight ||
+        m_thumbnail_cache_settle_epochs.count(
+            window_id) != 0 ||
         found->second.minimized ||
         ((uses_xfwm_session() ||
           uses_mapped_thumbnail_cache()) &&
@@ -2902,6 +3101,8 @@ void DockPreviewWindow::request_live_x11_thumbnail(
             thumbnail.capture_in_flight = false;
 
             if (!frame ||
+                m_thumbnail_cache_settle_epochs.count(
+                    completed_window_id) != 0 ||
                 (!m_uses_layer_shell &&
                  (uses_kde_session() ||
                   uses_mapped_thumbnail_cache()) &&
@@ -3240,7 +3441,7 @@ void DockPreviewWindow::clear_cards()
     m_thumbnail_recovery_queue.clear();
     m_thumbnail_recovery_active.clear();
     m_thumbnail_recovery_capture_allowed.clear();
-    m_thumbnail_recovery_candidate_signatures.clear();
+    m_thumbnail_candidate_signatures.clear();
     m_thumbnail_recovery_delay.disconnect();
     m_window_ids.clear();
     m_selected_card = nullptr;
