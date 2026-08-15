@@ -183,7 +183,7 @@ namespace
         }
 
         return sha256(
-            "docklight-xfwm-thumbnail-v1\n" +
+            "docklight-xfwm-thumbnail-v2\n" +
             entry.id + "\n" +
             std::to_string(entry.process_id) + "\n" +
             start_time + "\n" +
@@ -1472,6 +1472,28 @@ void DockPreviewWindow::request_cached_thumbnail(
             m_thumbnail_cache_in_flight.erase(
                 completed_window_id);
 
+            const auto retry_capture =
+                [this,
+                 completed_window_id,
+                 retries_remaining]()
+                {
+                    auto &retry =
+                        m_thumbnail_cache_retries[
+                            completed_window_id];
+                    retry.disconnect();
+                    retry = Glib::signal_timeout().connect(
+                        [this,
+                         completed_window_id,
+                         retries_remaining]()
+                        {
+                            request_cached_thumbnail(
+                                completed_window_id,
+                                retries_remaining - 1);
+                            return false;
+                        },
+                        X11_STATIC_RETRY_MS);
+                };
+
             if (thumbnail &&
                 m_known_window_ids.count(
                     completed_window_id) != 0 &&
@@ -1490,8 +1512,47 @@ void DockPreviewWindow::request_cached_thumbnail(
                     return;
                 }
 
-                m_thumbnail_recovery_capture_allowed.erase(
-                    completed_window_id);
+                const bool recovering_xfwm_window =
+                    uses_xfwm_session() &&
+                    m_thumbnail_recovery_active ==
+                        completed_window_id &&
+                    m_thumbnail_recovery_capture_allowed.count(
+                        completed_window_id) != 0;
+
+                if (recovering_xfwm_window)
+                {
+                    // A newly mapped Xfwm pixmap can be readable before the
+                    // client has repainted every damaged region. Treat the
+                    // first frame as a candidate and only cache it after a
+                    // second sampled frame agrees. Animated windows remain
+                    // bounded by the normal retry count and use the newest
+                    // complete readback when that count expires.
+                    const auto signature =
+                        pixbuf_signature(thumbnail);
+                    const auto candidate =
+                        m_thumbnail_recovery_candidate_signatures.find(
+                            completed_window_id);
+
+                    if (candidate ==
+                            m_thumbnail_recovery_candidate_signatures.end() ||
+                        candidate->second != signature)
+                    {
+                        m_thumbnail_recovery_candidate_signatures[
+                            completed_window_id] = signature;
+
+                        if (retries_remaining > 0)
+                        {
+                            retry_capture();
+                            return;
+                        }
+                    }
+
+                    m_thumbnail_recovery_candidate_signatures.erase(
+                        completed_window_id);
+                    m_thumbnail_recovery_capture_allowed.erase(
+                        completed_window_id);
+                }
+
                 m_thumbnail_cache[completed_window_id] =
                     thumbnail;
                 m_thumbnail_cache_dirty.insert(
@@ -1545,24 +1606,24 @@ void DockPreviewWindow::request_cached_thumbnail(
                 m_thumbnail_cache_eligible.count(
                     completed_window_id) == 0)
             {
+                m_thumbnail_recovery_candidate_signatures.erase(
+                    completed_window_id);
+                m_thumbnail_recovery_capture_allowed.erase(
+                    completed_window_id);
+
+                if (m_thumbnail_recovery_active ==
+                    completed_window_id)
+                {
+                    m_thumbnail_recovery_requested.erase(
+                        completed_window_id);
+                    m_thumbnail_recovery_active.clear();
+                    start_next_thumbnail_recovery();
+                }
+
                 return;
             }
 
-            auto &retry =
-                m_thumbnail_cache_retries[
-                    completed_window_id];
-            retry.disconnect();
-            retry = Glib::signal_timeout().connect(
-                [this,
-                 completed_window_id,
-                 retries_remaining]()
-                {
-                    request_cached_thumbnail(
-                        completed_window_id,
-                        retries_remaining - 1);
-                    return false;
-                },
-                X11_STATIC_RETRY_MS);
+            retry_capture();
         },
         1.0,
         m_thumbnail_recovery_capture_allowed.count(
@@ -2654,6 +2715,8 @@ void DockPreviewWindow::start_next_thumbnail_recovery()
         }
 
         m_thumbnail_recovery_active = window_id;
+        m_thumbnail_recovery_candidate_signatures.erase(
+            window_id);
         m_reload_thumbnail.emit(window_id);
 
         // Workspace activation and unminimize are asynchronous in Xfwm.
@@ -3146,6 +3209,7 @@ void DockPreviewWindow::clear_cards()
     m_thumbnail_recovery_queue.clear();
     m_thumbnail_recovery_active.clear();
     m_thumbnail_recovery_capture_allowed.clear();
+    m_thumbnail_recovery_candidate_signatures.clear();
     m_thumbnail_recovery_delay.disconnect();
     m_window_ids.clear();
     m_selected_card = nullptr;

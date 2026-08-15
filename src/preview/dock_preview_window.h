@@ -227,6 +227,8 @@ private:
     WindowId m_thumbnail_recovery_active;
     std::set<WindowId>
         m_thumbnail_recovery_capture_allowed;
+    std::map<WindowId, std::uint64_t>
+        m_thumbnail_recovery_candidate_signatures;
     sigc::connection
         m_thumbnail_recovery_delay;
     std::vector<WindowId> m_window_ids;
