@@ -34,6 +34,7 @@
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <set>
 #include <vector>
 
 struct GnomeLivePreviewRect
@@ -77,7 +78,12 @@ public:
         Callback callback,
         double x11_oversample = 2.0,
         bool x11_native_capture = false,
-        bool x11_xfwm_mode = false);
+        bool x11_strict_composite = false);
+
+    void set_x11_window_redirection(
+        bool enabled);
+    void set_x11_redirected_windows(
+        const std::vector<WindowId> &window_ids);
 
     bool supports_gnome_live_previews() const;
     void set_gnome_preview_color(
@@ -96,4 +102,7 @@ public:
 
 private:
     std::shared_ptr<State> m_state;
+    void *m_x11_redirect_display = nullptr;
+    std::set<unsigned long>
+        m_x11_redirected_windows;
 };

@@ -104,6 +104,10 @@ int main()
     passed &= expect_backend(
         "Openbox",
         "XFCE",
+        X11BackendKind::openbox);
+    passed &= expect_backend(
+        "i3",
+        "LXDE",
         X11BackendKind::ewmh_fallback);
 
     // Desktop metadata is a startup fallback only when EWMH has not yet
@@ -134,8 +138,12 @@ int main()
         X11BackendKind::xfwm4);
     passed &= expect_backend(
         "",
+        "LXDE",
+        X11BackendKind::openbox);
+    passed &= expect_backend(
+        "",
         "LXQt",
-        X11BackendKind::ewmh_fallback);
+        X11BackendKind::openbox);
 
     passed &= expect_desktop_file_name(
         "soffice.bin",

@@ -46,14 +46,30 @@
 #include "config.h"
 
 #include <gtkmm.h>
+#include <glib/gi18n.h>
 
 #include <clocale>
 #include <libintl.h>
+#include <memory>
 #include <optional>
 #include <string>
 
 namespace
 {
+
+    DockConfiguration effective_configuration(
+        const DockConfiguration &configuration,
+        bool window_previews_available)
+    {
+        auto effective = configuration;
+        if (!window_previews_available)
+        {
+            effective.settings.set_display_preview(
+                false);
+        }
+
+        return effective;
+    }
 
     bool take_list_monitors_option(
         int &argc,
@@ -196,6 +212,15 @@ int main(int argc, char *argv[])
     WindowSystemController window_system;
     window_system.start();
 
+    const bool window_previews_available =
+        window_system.window_previews_available();
+    const bool disable_configured_previews =
+        !window_previews_available &&
+        configuration
+            .current()
+            .settings
+            .display_preview();
+
     auto css = Gtk::CssProvider::create();
     const std::string style_path =
         std::string(SOURCE_DIR) + "/style.css";
@@ -227,8 +252,13 @@ int main(int argc, char *argv[])
             .settings
             .monitor());
 
+    const auto initial_configuration =
+        effective_configuration(
+            configuration.current(),
+            window_previews_available);
+
     DockWindow window(
-        configuration.current(),
+        initial_configuration,
         monitors.selected_monitor(),
         window_system.registry());
 
@@ -242,12 +272,18 @@ int main(int argc, char *argv[])
         });
 
     configuration.signal_changed().connect(
-        [&window, &monitors](
+        [&window,
+         &monitors,
+         window_previews_available](
             const DockConfiguration
                 &updated_configuration)
         {
+            const auto effective =
+                effective_configuration(
+                    updated_configuration,
+                    window_previews_available);
             window.apply_configuration(
-                updated_configuration);
+                effective);
 
             monitors.set_requested_monitor(
                 updated_configuration
@@ -263,6 +299,13 @@ int main(int argc, char *argv[])
     configuration.start_monitoring();
     monitors.start_monitoring();
 
+    if (disable_configured_previews)
+    {
+        configuration.save_setting(
+            "display_preview",
+            "false");
+    }
+
     // Gtk::Application::run(window) returns as soon as that window is hidden.
     // gtk_layer_set_monitor() temporarily unmaps the layer surface while
     // moving it, so using the convenience overload would terminate DockLight
@@ -273,6 +316,35 @@ int main(int argc, char *argv[])
 
     DocklightLog::startup(
         "DockLight is ready");
+
+    std::unique_ptr<Gtk::MessageDialog>
+        compositor_warning;
+    if (!window_previews_available)
+    {
+        compositor_warning =
+            std::make_unique<Gtk::MessageDialog>(
+                window,
+                _("Window previews are disabled"),
+                false,
+                Gtk::MESSAGE_WARNING,
+                Gtk::BUTTONS_OK,
+                false);
+        compositor_warning->set_title(
+            _("DockLight"));
+        compositor_warning->set_secondary_text(
+            _("Openbox requires an X11 compositor for complete window "
+              "previews. Display Preview is disabled. Start compton or "
+              "picom, then enable "
+              "Display Preview in DockLight Settings."));
+        compositor_warning
+            ->signal_response()
+            .connect(
+                [&compositor_warning](int)
+                {
+                    compositor_warning->hide();
+                });
+        compositor_warning->show_all();
+    }
 
     return app->run();
 }

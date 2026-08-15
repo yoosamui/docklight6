@@ -27,6 +27,8 @@ Current test state:
 | Cinnamon / Muffin | X11 | MuffinWindowBackend | PASS |
 | GNOME / Mutter | X11 | MutterWindowBackend | PASS |
 | GNOME / Mutter | Wayland | MutterWindowBackend | PASS |
+| LXDE / Openbox | X11 | OpenboxWindowBackend | PASS |
+| LXQt / Openbox | X11 | OpenboxWindowBackend | PENDING |
 | Other EWMH window managers | X11 | EwmhFallbackWindowBackend | PASS |
 | XFCE Wayland | Wayland | No backend | NOT IMPLEMENTED |
 | Sway / wlroots | Wayland | No backend | NOT IMPLEMENTED |
@@ -38,7 +40,11 @@ Current test state:
 
 Important current-code details:
 
-- MATE/Marco, Cinnamon/Muffin, and GNOME/Mutter have separate X11 backends.
+- MATE/Marco, Cinnamon/Muffin, GNOME/Mutter, and Openbox have separate X11
+  backends.
+- Openbox window previews require an X11 compositor such as `compton` or
+  `picom`. Without one, DockLight continues running, sets `display_preview`
+  to `false`, and displays a warning.
 - KWin X11 currently deliberately selects `EwmhFallbackWindowBackend`, even
   though a `KWinX11WindowBackend` class exists.
 - KDE Plasma/KWin is currently the only enabled Wayland environment.

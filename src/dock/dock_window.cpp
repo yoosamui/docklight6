@@ -1204,38 +1204,24 @@ void DockWindow::capture_x11_base_workarea(
         }
     }
 
-    if (best_workareas.empty())
-    {
-        m_x11_base_workarea = fallback;
-    }
-    else
+    MonitorGeometry root_workarea = fallback;
+    if (!best_workareas.empty())
     {
         workareas = std::move(best_workareas);
 
         const std::size_t offset =
             static_cast<std::size_t>(desktop) * 4;
-        const int root_x =
-            static_cast<int>(workareas[offset]);
-        const int root_y =
-            static_cast<int>(workareas[offset + 1]);
-        const int root_right = root_x +
-            static_cast<int>(workareas[offset + 2]);
-        const int root_bottom = root_y +
-            static_cast<int>(workareas[offset + 3]);
-
-        const int right = std::min(
-            output.x + output.width,
-            root_right);
-        const int bottom = std::min(
-            output.y + output.height,
-            root_bottom);
-
-        m_x11_base_workarea = {
-            std::max(output.x, root_x),
-            std::max(output.y, root_y),
-            std::max(1, right - std::max(output.x, root_x)),
-            std::max(1, bottom - std::max(output.y, root_y))};
+        root_workarea = {
+            static_cast<int>(workareas[offset]),
+            static_cast<int>(workareas[offset + 1]),
+            static_cast<int>(workareas[offset + 2]),
+            static_cast<int>(workareas[offset + 3])};
     }
+
+    m_x11_base_workarea = x11_initial_monitor_workarea(
+        output,
+        root_workarea,
+        gdk_display_get_n_monitors(display->gobj()) > 1);
 
     // KWin reserves only the Plasma panel's content thickness in
     // _NET_WORKAREA. A floating panel's X11 window can be taller because it

@@ -58,6 +58,7 @@ docklight6/
 │   │   │   ├── marco_window_backend.*
 │   │   │   ├── muffin_window_backend.*
 │   │   │   ├── mutter_window_backend.*
+│   │   │   ├── openbox_window_backend.*
 │   │   │   ├── xfwm4_window_backend.*
 │   │   │   ├── ewmh_fallback_window_backend.*
 │   │   │   └── x11_backend_selection.*

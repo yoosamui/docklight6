@@ -66,6 +66,7 @@ src/
 │   │   ├── marco_window_backend.*              # Selects the MATE/Marco and Metacity X11 integration.
 │   │   ├── muffin_window_backend.*            # Adds Cinnamon/Muffin-specific window actions.
 │   │   ├── mutter_window_backend.*            # Selects the GNOME/Mutter X11 integration.
+│   │   ├── openbox_window_backend.*            # Selects the LXDE/LXQt Openbox X11 integration.
 │   │   ├── xfwm4_window_backend.*             # Selects the XFCE/xfwm4 X11 integration.
 │   │   ├── ewmh_fallback_window_backend.*     # Handles other EWMH-compatible X11 window managers.
 │   │   └── x11_backend_selection.*            # Classifies the WM without mixing concrete implementations.

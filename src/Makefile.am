@@ -71,6 +71,8 @@ docklight6_SOURCES = \
     integrations/x11/muffin_window_backend.cpp \
     integrations/x11/mutter_window_backend.h \
     integrations/x11/mutter_window_backend.cpp \
+    integrations/x11/openbox_window_backend.h \
+    integrations/x11/openbox_window_backend.cpp \
     integrations/x11/xfwm4_window_backend.h \
     integrations/x11/xfwm4_window_backend.cpp \
     integrations/x11/x11_backend_selection.h \

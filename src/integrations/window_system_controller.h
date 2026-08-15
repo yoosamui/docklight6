@@ -47,6 +47,7 @@ public:
     void stop();
 
     bool available() const;
+    bool window_previews_available() const;
 
     WindowRegistry *registry();
     const WindowRegistry *registry() const;
@@ -71,4 +72,5 @@ private:
         m_connection_changed;
 
     bool m_started = false;
+    bool m_window_previews_available = true;
 };

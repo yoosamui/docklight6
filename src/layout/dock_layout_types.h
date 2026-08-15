@@ -295,6 +295,38 @@ struct MonitorGeometry
     int height = 0;
 };
 
+// _NET_WORKAREA is one root-window rectangle per desktop, not one rectangle
+// per monitor. On a multi-monitor X11 desktop, a panel on one output can
+// therefore shrink the work area reported for every output. Begin with the
+// selected output in that case; the caller can then apply each client's
+// _NET_WM_STRUT_PARTIAL only when its range intersects this output.
+inline MonitorGeometry x11_initial_monitor_workarea(
+    const MonitorGeometry &output,
+    const MonitorGeometry &root_workarea,
+    bool multiple_monitors)
+{
+    if (multiple_monitors ||
+        root_workarea.width <= 0 ||
+        root_workarea.height <= 0)
+    {
+        return output;
+    }
+
+    const int left = std::max(output.x, root_workarea.x);
+    const int top = std::max(output.y, root_workarea.y);
+    const int right = std::min(
+        output.x + output.width,
+        root_workarea.x + root_workarea.width);
+    const int bottom = std::min(
+        output.y + output.height,
+        root_workarea.y + root_workarea.height);
+
+    if (right <= left || bottom <= top)
+        return output;
+
+    return {left, top, right - left, bottom - top};
+}
+
 // Place an ordinary toplevel reveal trigger beside the dock's shown edge.
 // On X11, desktop panels can own the physical output edge above every client
 // window. A trigger left underneath such a panel is mapped but can never
@@ -368,10 +400,10 @@ inline MonitorGeometry edge_reveal_geometry(
     return geometry;
 }
 
-// Desktop-shell panels can cover an X11 reveal window at the physical output
-// edge. Keep physical-edge pointer detection as a separate pure rule so the
-// X11 reveal surface can poll only while that otherwise-covered trigger is
-// needed. The main-axis hit area remains aligned with the configured dock.
+// Desktop-shell panels and GTK grabs can prevent an X11 reveal window from
+// receiving crossing events at the physical output edge. Keep physical-edge
+// pointer detection as a separate pure rule so the X11 reveal surface can
+// poll reliably. The main-axis hit area remains aligned with the dock.
 inline bool point_on_physical_reveal_edge(
     const DockPlacement &placement,
     const MonitorGeometry &monitor,

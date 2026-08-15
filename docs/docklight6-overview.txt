@@ -12,8 +12,10 @@ Docklight 6 has a solid layered core: platform-specific window handling is isola
    │    │    ├─ KWin Wayland backend ← D-Bus ← KWin script
    │    │    └─ EWMH/X11 backend
    │    │         ├─ KWin
+   │    │         ├─ Marco/Metacity
    │    │         ├─ Muffin
    │    │         ├─ Mutter
+   │    │         ├─ Openbox
    │    │         └─ Xfwm4/fallback
    │    └─ WindowRegistry ─────── normalized windows/app groups
    └─ DockWindow
@@ -51,8 +53,12 @@ Docklight 6 has a solid layered core: platform-specific window handling is isola
   src/integrations/window_system_controller.cpp:235 selects the backend at runtime:
 
   - KDE Wayland → KWinWindowBackend.
-  - X11 → KWin, Marco/Metacity, Muffin, Mutter, xfwm4, or generic EWMH backend.
+  - X11 → KWin, Marco/Metacity, Muffin, Mutter, Openbox, xfwm4, or generic EWMH backend.
   - Other Wayland compositors → dock runs without window integration.
+
+  Openbox previews require an X11 compositor. If no compositor owns the
+  standard _NET_WM_CM_Sn selection, DockLight keeps the dock running, disables
+  display_preview in the configuration, and presents a warning.
 
   The X11 implementations share src/integrations/x11/ewmh_window_backend.h:14, with WM-specific overrides where required.
 

@@ -40,6 +40,44 @@ int main()
         64,
         false};
 
+    // Openbox publishes one root-global work area. A panel on the shorter
+    // right output must not shorten the full-height primary output before
+    // its monitor-scoped strut is inspected.
+    const MonitorGeometry global_openbox_workarea{
+        0,
+        0,
+        4480,
+        1054};
+    const auto primary_initial_workarea =
+        x11_initial_monitor_workarea(
+            {0, 0, 2560, 1440},
+            global_openbox_workarea,
+            true);
+    assert(primary_initial_workarea.x == 0);
+    assert(primary_initial_workarea.y == 0);
+    assert(primary_initial_workarea.width == 2560);
+    assert(primary_initial_workarea.height == 1440);
+
+    const auto secondary_initial_workarea =
+        x11_initial_monitor_workarea(
+            {2560, 0, 1920, 1080},
+            global_openbox_workarea,
+            true);
+    assert(secondary_initial_workarea.x == 2560);
+    assert(secondary_initial_workarea.y == 0);
+    assert(secondary_initial_workarea.width == 1920);
+    assert(secondary_initial_workarea.height == 1080);
+
+    const auto single_monitor_workarea =
+        x11_initial_monitor_workarea(
+            monitor,
+            {0, 32, 1920, 1048},
+            false);
+    assert(single_monitor_workarea.x == 0);
+    assert(single_monitor_workarea.y == 32);
+    assert(single_monitor_workarea.width == 1920);
+    assert(single_monitor_workarea.height == 1048);
+
     request.location = DockLocation::bottom;
     request.alignment = DockAlignment::center;
     request.autohide = DockAutohide::none;

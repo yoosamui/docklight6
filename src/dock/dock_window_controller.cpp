@@ -87,13 +87,7 @@ DockWindowController::DockWindowController(
     m_preview_window->set_preview_color(
         m_settings.preview_color());
 
-    if (m_window.m_window_registry)
-    {
-        m_preview_window->set_thumbnail_policy(
-            m_window.m_window_registry
-                ->capabilities()
-                .thumbnail_policy);
-    }
+    apply_thumbnail_policy();
 
     m_preview_window
         ->signal_pointer_entered()
@@ -702,6 +696,7 @@ void DockWindowController::apply_configuration(
         configuration.settings;
 
     hide_preview();
+    apply_thumbnail_policy();
     m_preview_window->set_card_user_height(
         m_settings.preview_card_height());
     m_preview_window->set_preview_color(
@@ -743,6 +738,23 @@ void DockWindowController::apply_configuration(
     // converge in update_dock_layout(). Coalesce rapid configuration saves
     // into one recalculation on the GTK main loop.
     schedule_layout_update();
+}
+
+void DockWindowController::apply_thumbnail_policy()
+{
+    auto policy =
+        WindowThumbnailPolicy::capture_on_demand;
+
+    if (m_settings.display_preview() &&
+        m_window.m_window_registry)
+    {
+        policy = m_window.m_window_registry
+                     ->capabilities()
+                     .thumbnail_policy;
+    }
+
+    m_preview_window->set_thumbnail_policy(
+        policy);
 }
 
 void DockWindowController::set_monitor(

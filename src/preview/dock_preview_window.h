@@ -152,7 +152,7 @@ private:
     void request_cached_thumbnail(
         const WindowId &window_id,
         unsigned int retries_remaining,
-        std::uint64_t xfwm_settle_epoch = 0);
+        std::uint64_t settle_epoch = 0);
     void request_active_cache_refresh(
         const WindowId &window_id);
     void persist_thumbnail_cache(
@@ -170,6 +170,8 @@ private:
         const WindowId &window_id,
         unsigned int generation);
     bool uses_mapped_thumbnail_cache() const;
+    bool uses_redirected_thumbnail_capture() const;
+    bool uses_strict_x11_capture() const;
     void start_live_streams();
     void stop_live_streams();
     void clear_cards();

@@ -38,7 +38,8 @@
 enum class WindowThumbnailPolicy
 {
     capture_on_demand,
-    cache_mapped_windows
+    cache_mapped_windows,
+    redirect_and_cache_mapped_windows
 };
 
 struct WindowBackendCapabilities
@@ -57,6 +58,7 @@ struct WindowBackendCapabilities
     bool provides_dock_reveal_trigger = false;
     WindowThumbnailPolicy thumbnail_policy =
         WindowThumbnailPolicy::capture_on_demand;
+    bool thumbnails_require_compositor = false;
 };
 
 class WindowBackend

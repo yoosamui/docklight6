@@ -58,7 +58,6 @@ private:
     void start_x11_edge_poll();
     void stop_x11_edge_poll();
     bool poll_x11_physical_edge();
-    bool has_x11_panel_inset() const;
     bool on_enter_notify_event(
         GdkEventCrossing *event) override;
 

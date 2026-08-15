@@ -297,30 +297,12 @@ void DockRevealWindow::apply_x11_placement()
     move(geometry.x, geometry.y);
 }
 
-bool DockRevealWindow::has_x11_panel_inset() const
-{
-    if (m_backend != SurfaceBackend::x11 || !m_has_placement)
-        return false;
-
-    if (m_placement.is_horizontal())
-    {
-        return (m_placement.anchor_top &&
-                m_placement.margin_top > 0) ||
-               (m_placement.anchor_bottom &&
-                m_placement.margin_bottom > 0);
-    }
-
-    return (m_placement.anchor_left &&
-            m_placement.margin_left > 0) ||
-           (m_placement.anchor_right &&
-            m_placement.margin_right > 0);
-}
-
 void DockRevealWindow::start_x11_edge_poll()
 {
     stop_x11_edge_poll();
 
-    if (!has_x11_panel_inset())
+    if (m_backend != SurfaceBackend::x11 ||
+        !m_has_placement)
         return;
 
     m_pointer_was_on_physical_edge = false;
@@ -340,7 +322,9 @@ void DockRevealWindow::stop_x11_edge_poll()
 
 bool DockRevealWindow::poll_x11_physical_edge()
 {
-    if (!get_mapped() || !has_x11_panel_inset())
+    if (!get_mapped() ||
+        m_backend != SurfaceBackend::x11 ||
+        !m_has_placement)
         return false;
 
     auto *display = gdk_display_get_default();

@@ -71,7 +71,7 @@ struct Completion
     int target_height = 0;
     double x11_oversample = 2.0;
     bool x11_native_capture = false;
-    bool x11_xfwm_mode = false;
+    bool x11_strict_composite = false;
     std::vector<unsigned char> rgba;
     std::vector<unsigned char> encoded_image;
     DockWindowThumbnailProvider::Callback callback;
@@ -80,7 +80,7 @@ struct Completion
 std::mutex x_error_handler_mutex;
 thread_local bool x_capture_error = false;
 
-bool is_x11_window_id(
+unsigned long parsed_x11_window_id(
     const WindowId &window_id)
 {
     char *end = nullptr;
@@ -90,12 +90,23 @@ bool is_x11_window_id(
         &end,
         0);
 
-    return errno == 0 &&
-           end &&
-           *end == '\0' &&
-           parsed > 0 &&
-           parsed <=
-               std::numeric_limits<unsigned long>::max();
+    if (errno != 0 ||
+        !end ||
+        *end != '\0' ||
+        parsed == 0 ||
+        parsed >
+            std::numeric_limits<unsigned long>::max())
+    {
+        return None;
+    }
+
+    return static_cast<unsigned long>(parsed);
+}
+
+bool is_x11_window_id(
+    const WindowId &window_id)
+{
+    return parsed_x11_window_id(window_id) != None;
 }
 
 int capture_x_error_handler(
@@ -229,7 +240,7 @@ bool capture_x11_window(
             display,
             window,
             &attributes) &&
-        (!completion.x11_xfwm_mode ||
+        (!completion.x11_strict_composite ||
          (attributes.map_state == IsViewable &&
           attributes.c_class == InputOutput)) &&
         attributes.width > 0 &&
@@ -249,7 +260,7 @@ bool capture_x11_window(
                 window);
             XSync(display, False);
 
-            if (completion.x11_xfwm_mode &&
+            if (completion.x11_strict_composite &&
                 x_capture_error)
                 pixmap = None;
         }
@@ -283,10 +294,10 @@ bool capture_x11_window(
 
             if (has_pixmap_geometry &&
                 !x_capture_error &&
-                ((!completion.x11_xfwm_mode &&
+                ((!completion.x11_strict_composite &&
                   width > 0 &&
                   height > 0) ||
-                 (completion.x11_xfwm_mode &&
+                 (completion.x11_strict_composite &&
                   width == static_cast<unsigned int>(
                                attributes.width) &&
                   height == static_cast<unsigned int>(
@@ -305,14 +316,13 @@ bool capture_x11_window(
         }
 
         // When Composite is available, never fall back to reading the window
-        // drawable after NameWindowPixmap fails. During Xfwm map/unmap
-        // transitions that drawable can expose stale storage, including
-        // pixels belonging to another client.
+        // drawable after NameWindowPixmap fails in strict mode. During
+        // map/unmap transitions, or without a compositor-owned redirection,
+        // that drawable can expose stale or partially obscured storage.
         const bool named_pixmap_valid =
             pixmap != None && !x_capture_error;
         const bool drawable_valid =
-            !completion.x11_xfwm_mode ||
-            !composite_available ||
+            !completion.x11_strict_composite ||
             named_pixmap_valid ||
             completion.x11_native_capture;
 
@@ -335,7 +345,7 @@ bool capture_x11_window(
         int render_error_base = 0;
         if (drawable_valid &&
             (!completion.x11_native_capture ||
-             completion.x11_xfwm_mode) &&
+             completion.x11_strict_composite) &&
             completion.target_width > 0 &&
             completion.target_height > 0 &&
             XRenderQueryExtension(
@@ -483,7 +493,7 @@ bool capture_x11_window(
         }
 
         bool image_is_valid = image && !x_capture_error;
-        if (image_is_valid && completion.x11_xfwm_mode)
+        if (image_is_valid && completion.x11_strict_composite)
         {
             XWindowAttributes verified_attributes{};
             x_capture_error = false;
@@ -745,7 +755,7 @@ void capture(
     int target_height,
     double x11_oversample,
     bool x11_native_capture,
-    bool x11_xfwm_mode,
+    bool x11_strict_composite,
     DockWindowThumbnailProvider::Callback callback)
 {
     auto completion =
@@ -758,7 +768,8 @@ void capture(
         std::clamp(x11_oversample, 1.0, 2.0);
     completion->x11_native_capture =
         x11_native_capture;
-    completion->x11_xfwm_mode = x11_xfwm_mode;
+    completion->x11_strict_composite =
+        x11_strict_composite;
     completion->callback = std::move(callback);
 
     // Hold the provider state for the entire capture so its shared session
@@ -1112,6 +1123,140 @@ DockWindowThumbnailProvider::
 {
     hide_gnome_live_previews();
     m_state->alive = false;
+    set_x11_window_redirection(false);
+}
+
+void DockWindowThumbnailProvider::
+    set_x11_window_redirection(
+        bool enabled)
+{
+    if (!m_state || !m_state->x11)
+        return;
+
+    auto *redirect_display =
+        static_cast<Display *>(
+            m_x11_redirect_display);
+    if (enabled == (redirect_display != nullptr))
+        return;
+
+    std::lock_guard<std::mutex> guard(
+        x_error_handler_mutex);
+
+    if (!enabled)
+    {
+        auto previous_handler = XSetErrorHandler(
+            capture_x_error_handler);
+        x_capture_error = false;
+        for (const auto window :
+             m_x11_redirected_windows)
+        {
+            XCompositeUnredirectWindow(
+                redirect_display,
+                window,
+                CompositeRedirectAutomatic);
+        }
+        XSync(redirect_display, False);
+        XSetErrorHandler(previous_handler);
+        m_x11_redirected_windows.clear();
+        XCloseDisplay(redirect_display);
+        m_x11_redirect_display = nullptr;
+        return;
+    }
+
+    redirect_display = XOpenDisplay(nullptr);
+    if (!redirect_display)
+    {
+        g_warning(
+            "Cannot open X11 display for window thumbnail redirection");
+        return;
+    }
+
+    int event_base = 0;
+    int error_base = 0;
+    int major_version = 0;
+    int minor_version = 0;
+    const bool composite_available =
+        XCompositeQueryExtension(
+            redirect_display,
+            &event_base,
+            &error_base) &&
+        XCompositeQueryVersion(
+            redirect_display,
+            &major_version,
+            &minor_version) &&
+        (major_version > 0 || minor_version >= 2);
+
+    if (!composite_available)
+    {
+        XCloseDisplay(redirect_display);
+        g_warning(
+            "XComposite 0.2 is required for complete Openbox thumbnails");
+        return;
+    }
+
+    m_x11_redirect_display = redirect_display;
+}
+
+void DockWindowThumbnailProvider::
+    set_x11_redirected_windows(
+        const std::vector<WindowId> &window_ids)
+{
+    auto *display =
+        static_cast<Display *>(
+            m_x11_redirect_display);
+    if (!display)
+        return;
+
+    std::set<unsigned long> desired_windows;
+    for (const auto &window_id : window_ids)
+    {
+        const auto window =
+            parsed_x11_window_id(window_id);
+        if (window != None)
+            desired_windows.insert(window);
+    }
+
+    std::lock_guard<std::mutex> guard(
+        x_error_handler_mutex);
+    auto previous_handler = XSetErrorHandler(
+        capture_x_error_handler);
+
+    for (const auto window :
+         m_x11_redirected_windows)
+    {
+        if (desired_windows.count(window) == 0)
+        {
+            x_capture_error = false;
+            XCompositeUnredirectWindow(
+                display,
+                window,
+                CompositeRedirectAutomatic);
+            XSync(display, False);
+        }
+    }
+
+    std::set<unsigned long> redirected_windows;
+    for (const auto window : desired_windows)
+    {
+        if (m_x11_redirected_windows.count(window) != 0)
+        {
+            redirected_windows.insert(window);
+            continue;
+        }
+
+        x_capture_error = false;
+        XCompositeRedirectWindow(
+            display,
+            window,
+            CompositeRedirectAutomatic);
+        XSync(display, False);
+        if (!x_capture_error)
+            redirected_windows.insert(window);
+    }
+
+    XSetErrorHandler(previous_handler);
+    m_x11_redirected_windows =
+        std::move(redirected_windows);
 }
 
 bool DockWindowThumbnailProvider::
@@ -1264,7 +1409,7 @@ void DockWindowThumbnailProvider::request(
     Callback callback,
     double x11_oversample,
     bool x11_native_capture,
-    bool x11_xfwm_mode)
+    bool x11_strict_composite)
 {
     if (window_id.empty() ||
         target_width <= 0 ||
@@ -1282,7 +1427,7 @@ void DockWindowThumbnailProvider::request(
         target_height,
         x11_oversample,
         x11_native_capture,
-        x11_xfwm_mode,
+        x11_strict_composite,
         std::move(callback))
         .detach();
 }

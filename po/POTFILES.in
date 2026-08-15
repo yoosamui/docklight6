@@ -1,3 +1,4 @@
+src/main.cpp
 src/dock/dock_item.cpp
 src/dock/dock_home_item.cpp
 src/dialogs/dock_settings_dialog.cpp

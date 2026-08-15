@@ -149,6 +149,7 @@ private:
         const WindowId &window_id);
     void close_preview_window(
         const WindowId &window_id);
+    void apply_thumbnail_policy();
     void start_hide_timer();
     void cancel_show_timer();
     void cancel_preview_show_timer();

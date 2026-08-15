@@ -11,7 +11,7 @@
 // WM-specific EWMH backend on X11.
 //
 // Important implementation decisions:
-// - Muffin, Mutter, and xfwm4 never share concrete backend classes.
+// - Each recognized X11 window manager has its own concrete backend class.
 // - Unknown EWMH-compatible X11 managers use an explicit fallback backend.
 // - Unsupported sessions keep the dock usable without window control.
 // - Owned components are created and destroyed in dependency order.
@@ -33,12 +33,14 @@
 #include "integrations/x11/marco_window_backend.h"
 #include "integrations/x11/muffin_window_backend.h"
 #include "integrations/x11/mutter_window_backend.h"
+#include "integrations/x11/openbox_window_backend.h"
 #include "integrations/x11/xfwm4_window_backend.h"
 #include "integrations/x11/x11_backend_selection.h"
 #include "windowing/window_backend.h"
 #include "windowing/window_registry.h"
 
 #include <glib.h>
+#include <X11/Xlib.h>
 
 #include <algorithm>
 #include <cctype>
@@ -186,10 +188,40 @@ std::string detected_window_manager(
         return "Marco";
     }
 
+    if (normalized.find("lxde") !=
+            std::string::npos ||
+        normalized.find("lxqt") !=
+            std::string::npos)
+    {
+        return "Openbox";
+    }
+
     return "unknown";
 }
 
-std::string detected_compositor()
+bool x11_compositor_is_running()
+{
+    auto *display = XOpenDisplay(nullptr);
+    if (!display)
+        return false;
+
+    const auto selection_name =
+        "_NET_WM_CM_S" +
+        std::to_string(DefaultScreen(display));
+    const auto selection = XInternAtom(
+        display,
+        selection_name.c_str(),
+        True);
+    const bool running =
+        selection != None &&
+        XGetSelectionOwner(display, selection) != None;
+
+    XCloseDisplay(display);
+    return running;
+}
+
+std::string detected_compositor(
+    bool x11_compositor_running)
 {
     const auto session_type =
         lowercase(
@@ -209,7 +241,9 @@ std::string detected_compositor()
              "DISPLAY")
              .empty())
     {
-        return "X11";
+        return x11_compositor_running
+                   ? "X11"
+                   : "none";
     }
 
     return "unknown";
@@ -217,7 +251,8 @@ std::string detected_compositor()
 
 void log_detected_environment(
     const std::string &desktop,
-    const std::string &window_manager)
+    const std::string &window_manager,
+    const std::string &compositor)
 {
     DocklightLog::startup(
         "detected Desktop: %s",
@@ -227,7 +262,7 @@ void log_detected_environment(
         window_manager.c_str());
     DocklightLog::startup(
         "detected compositor: %s",
-        detected_compositor().c_str());
+        compositor.c_str());
 }
 
 }
@@ -253,15 +288,22 @@ void WindowSystemController::start()
     const auto window_manager =
         detected_window_manager(desktop);
 
+    const bool x11 = is_x11_session();
+    const bool x11_compositor_running =
+        x11 && x11_compositor_is_running();
+    const auto compositor =
+        detected_compositor(
+            x11_compositor_running);
+
     log_detected_environment(
         desktop,
-        window_manager);
+        window_manager,
+        compositor);
 
     const bool kde_wayland =
         is_kde_wayland_session();
     const bool gnome_shell =
         identifies_gnome(desktop);
-    const bool x11 = is_x11_session();
     const bool uses_shell_protocol =
         kde_wayland || gnome_shell;
 
@@ -310,6 +352,11 @@ void WindowSystemController::start()
                 std::make_unique<
                     MutterWindowBackend>();
             break;
+        case X11BackendKind::openbox:
+            m_backend =
+                std::make_unique<
+                    OpenboxWindowBackend>();
+            break;
         case X11BackendKind::xfwm4:
             m_backend =
                 std::make_unique<
@@ -326,6 +373,17 @@ void WindowSystemController::start()
             "selected backend: %s",
             x11_backend_kind_name(
                 backend_kind));
+
+        if (m_backend
+                ->capabilities()
+                .thumbnails_require_compositor &&
+            !x11_compositor_running)
+        {
+            m_window_previews_available = false;
+            g_warning(
+                "Window previews are disabled: Openbox requires an "
+                "X11 compositor such as compton or picom");
+        }
     }
     else
     {
@@ -417,12 +475,19 @@ void WindowSystemController::stop()
     m_backend.reset();
 
     m_started = false;
+    m_window_previews_available = true;
 }
 
 bool WindowSystemController::available() const
 {
     return m_registry &&
            m_registry->connected();
+}
+
+bool WindowSystemController::
+    window_previews_available() const
+{
+    return m_window_previews_available;
 }
 
 WindowRegistry *

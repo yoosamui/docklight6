@@ -54,6 +54,8 @@ X11BackendKind select_x11_backend_kind(
     {
         return X11BackendKind::mutter;
     }
+    if (contains(manager, "openbox"))
+        return X11BackendKind::openbox;
     if (contains(manager, "xfwm"))
         return X11BackendKind::xfwm4;
 
@@ -75,6 +77,11 @@ X11BackendKind select_x11_backend_kind(
         return X11BackendKind::muffin;
     if (contains(desktop, "gnome"))
         return X11BackendKind::mutter;
+    if (contains(desktop, "lxde") ||
+        contains(desktop, "lxqt"))
+    {
+        return X11BackendKind::openbox;
+    }
     if (contains(desktop, "xfce"))
         return X11BackendKind::xfwm4;
 
@@ -94,6 +101,8 @@ const char *x11_backend_kind_name(
         return "Muffin";
     case X11BackendKind::mutter:
         return "Mutter";
+    case X11BackendKind::openbox:
+        return "Openbox";
     case X11BackendKind::xfwm4:
         return "Xfwm4";
     case X11BackendKind::ewmh_fallback:

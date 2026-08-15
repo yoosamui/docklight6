@@ -14,6 +14,7 @@ enum class X11BackendKind
     marco,
     muffin,
     mutter,
+    openbox,
     xfwm4,
     ewmh_fallback
 };
