@@ -41,7 +41,7 @@ namespace DockConstants
 
     // Autohide behaviour
 
-    constexpr int AUTOHIDE_HIDE_DELAY_MS = 2000;
+    constexpr int AUTOHIDE_HIDE_DELAY_MS = 1200;
     constexpr int AUTOHIDE_REVEAL_SIZE = 2;
     constexpr int AUTOHIDE_ANIMATION_DURATION_MS = 200;
     constexpr int AUTOHIDE_ANIMATION_FRAME_MS = 16;
@@ -53,6 +53,6 @@ namespace DockConstants
 
     // Safety limits
 
-    constexpr int MAX_DOCK_ITEMS = 50; // Maximum applications shown in the dock
+    constexpr int MAX_DOCK_ITEMS = 30; // Maximum applications shown in the dock
     constexpr int TOOLTIP_MARGIN = 8;  // Minimum tooltip margin in pixels
 }
