@@ -344,7 +344,7 @@ assert.match(
     "GNOME autohide must keep the placed dock mapped instead of remapping at the centre");
 assert.match(
     autohideControllerSource,
-    /finish_shell_animation\([\s\S]*?hidden[\s\S]*?ShellDockState::hidden[\s\S]*?set_shell_input_passthrough\(true\)/,
+    /finish_shell_animation\([\s\S]*?hidden[\s\S]*?ShellDockState::hidden[\s\S]*?set_surface_input_passthrough\(true\)/,
     "input pass-through must begin only after Shell completes the hide animation");
 assert.match(
     extensionSource,
@@ -386,6 +386,14 @@ assert.match(
     autohideControllerSource,
     /else[\s\S]*?current_x = hidden\.x;[\s\S]*?m_window\.move\(current_x, current_y\);[\s\S]*?m_window\.set_opacity\(\s*X11_REVEAL_INITIAL_OPACITY\)/,
     "an X11 reveal must move to its hidden edge before becoming visible");
+assert.match(
+    autohideControllerSource,
+    /constexpr double X11_REVEAL_INITIAL_OPACITY = 0\.0;/,
+    "a remapped X11 dock must stay transparent until its hidden-edge transform reaches the compositor");
+assert.match(
+    autohideControllerSource,
+    /if \(m_animating_to_hidden\)[\s\S]*?m_window\.set_opacity\(0\.0\);[\s\S]*?set_surface_input_passthrough\(true\);[\s\S]*?else[\s\S]*?reset_x11_visual_transform\(\);/,
+    "a hidden native X11 dock must remain mapped and input-pass-through so reveal does not trigger a compositor map effect");
 assert.match(
     autohideControllerSource,
     /should_collapse_x11_horizontally\(\)[\s\S]*?horizontal_hide_corridor_intersects_monitor\([\s\S]*?m_animation_collapses_horizontally[\s\S]*?set_x11_horizontal_scale\([\s\S]*?0\.0,[\s\S]*?m_animation_target_scale/,

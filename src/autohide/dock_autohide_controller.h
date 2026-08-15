@@ -65,7 +65,7 @@ private:
     void cancel_animation();
     void reset_x11_visual_transform();
     void request_shell_visibility(bool hidden);
-    void set_shell_input_passthrough(bool passthrough);
+    void set_surface_input_passthrough(bool passthrough);
     bool can_animate_x11() const;
     bool should_collapse_x11_horizontally() const;
     void animate_x11(

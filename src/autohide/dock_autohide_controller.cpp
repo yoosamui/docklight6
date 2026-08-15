@@ -31,7 +31,11 @@
 namespace
 {
 
-constexpr double X11_REVEAL_INITIAL_OPACITY = 0.18;
+// Keep a newly mapped X11 dock fully transparent until its hidden-edge
+// transform has survived one event-loop frame.  Marco can composite an
+// opacity property change before it applies the preceding move request,
+// otherwise exposing a dark ghost of the dock at its provisional position.
+constexpr double X11_REVEAL_INITIAL_OPACITY = 0.0;
 constexpr int X11_REVEAL_PLACEMENT_DELAY_MS = 30;
 
 bool same_placement(
@@ -361,7 +365,7 @@ void DockAutohideController::finish_shell_animation(
             return;
 
         m_shell_state = ShellDockState::hidden;
-        set_shell_input_passthrough(true);
+        set_surface_input_passthrough(true);
         return;
     }
 
@@ -369,7 +373,7 @@ void DockAutohideController::finish_shell_animation(
         return;
 
     m_shell_state = ShellDockState::visible;
-    set_shell_input_passthrough(false);
+    set_surface_input_passthrough(false);
     if (!pointer_inside())
         schedule_hide(false);
 }
@@ -445,7 +449,7 @@ void DockAutohideController::reset_x11_visual_transform()
     m_window.set_opacity(1.0);
 }
 
-void DockAutohideController::set_shell_input_passthrough(
+void DockAutohideController::set_surface_input_passthrough(
     bool passthrough)
 {
     auto gdk_window = m_window.get_window();
@@ -460,14 +464,13 @@ void DockAutohideController::set_shell_input_passthrough(
             0,
             0);
     }
-
 }
 
 void DockAutohideController::request_shell_visibility(
     bool hidden)
 {
     if (!hidden)
-        set_shell_input_passthrough(false);
+        set_surface_input_passthrough(false);
 
     m_shell_state = hidden
         ? ShellDockState::hiding
@@ -606,7 +609,8 @@ void DockAutohideController::animate_x11(
             m_window.set_x11_horizontal_scale(
                 0.0,
                 m_animation_scale_anchor_right);
-            m_window.set_opacity(1.0);
+            m_window.set_opacity(
+                X11_REVEAL_INITIAL_OPACITY);
         }
         else if (m_animation_clips_top)
         {
@@ -623,8 +627,9 @@ void DockAutohideController::animate_x11(
             current_x = hidden.x;
             current_y = hidden.y;
             m_window.move(current_x, current_y);
-            // Set opacity only after moving to the hidden edge. Raising it
-            // before this move exposes one frame at the shown position.
+            // Keep the remapped surface transparent here. The animation
+            // timer raises opacity on its first frame, after the window
+            // manager has had an event-loop turn to apply this move.
             m_window.set_opacity(
                 X11_REVEAL_INITIAL_OPACITY);
         }
@@ -786,8 +791,7 @@ bool DockAutohideController::advance_x11_animation()
         m_window.move(x, y);
     }
 
-    if (!m_animating_to_hidden &&
-        !m_animation_collapses_horizontally)
+    if (!m_animating_to_hidden)
     {
         m_window.set_opacity(
             X11_REVEAL_INITIAL_OPACITY +
@@ -802,8 +806,13 @@ bool DockAutohideController::advance_x11_animation()
 
     if (m_animating_to_hidden)
     {
-        m_window.hide();
-        m_window.set_opacity(1.0);
+        // Keep native X11 docks mapped at their hidden transform. Marco's
+        // compositor can briefly paint a shadow or stale frame whenever the
+        // dock is mapped again, before our reveal animation starts. A fully
+        // transparent, input-pass-through mapped surface avoids that map
+        // transition while the separate edge window remains the trigger.
+        m_window.set_opacity(0.0);
+        set_surface_input_passthrough(true);
     }
     else
     {
@@ -832,19 +841,22 @@ void DockAutohideController::reveal_immediately()
         // A Shell extension can disappear while its actor is transparent and
         // its input region is empty. Restore the GTK surface locally before
         // falling back to the always-visible safety state.
-        set_shell_input_passthrough(false);
         if (m_window.m_window_registry)
             m_window.m_window_registry->set_dock_hidden(false);
         m_shell_state = ShellDockState::visible;
     }
 
     reset_x11_visual_transform();
+    set_surface_input_passthrough(false);
 
     if (m_hidden)
     {
         m_hidden = false;
-        m_suppress_next_map_hide = true;
-        m_window.show();
+        if (!m_window.get_mapped())
+        {
+            m_suppress_next_map_hide = true;
+            m_window.show();
+        }
     }
 
     m_reveal_window.hide();
@@ -903,7 +915,7 @@ void DockAutohideController::reveal()
 
         if (has_shell_reveal_trigger())
         {
-            set_shell_input_passthrough(false);
+            set_surface_input_passthrough(false);
             if (m_window.m_window_registry)
                 m_window.m_window_registry->set_dock_hidden(false);
             m_shell_state = ShellDockState::visible;
@@ -961,6 +973,9 @@ void DockAutohideController::reveal()
                 return;
             }
         }
+
+        if (can_animate_x11())
+            set_surface_input_passthrough(false);
 
         animate_x11(false);
     }
