@@ -327,6 +327,19 @@ inline MonitorGeometry x11_initial_monitor_workarea(
     return {left, top, right - left, bottom - top};
 }
 
+// Mutter exposes a monitor-scoped work area through GDK even when DockLight
+// is an XWayland client. GNOME Shell panels are not X11 dock clients, so this
+// value is the only source for their reserved edge on a multi-monitor session.
+inline MonitorGeometry x11_gnome_monitor_workarea(
+    const MonitorGeometry &output,
+    const MonitorGeometry &monitor_workarea)
+{
+    return x11_initial_monitor_workarea(
+        output,
+        monitor_workarea,
+        false);
+}
+
 // Place an ordinary toplevel reveal trigger beside the dock's shown edge.
 // On X11, desktop panels can own the physical output edge above every client
 // window. A trigger left underneath such a panel is mapped but can never

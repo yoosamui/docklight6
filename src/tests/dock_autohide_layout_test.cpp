@@ -78,6 +78,18 @@ int main()
     assert(single_monitor_workarea.width == 1920);
     assert(single_monitor_workarea.height == 1048);
 
+    // GNOME's top panel is Shell chrome rather than an X11 dock client.
+    // Preserve Mutter's monitor-scoped GDK work area on XWayland instead of
+    // replacing it with the full output merely because two monitors exist.
+    const auto gnome_xwayland_workarea =
+        x11_gnome_monitor_workarea(
+            {0, 0, 2560, 1440},
+            {0, 29, 2560, 1411});
+    assert(gnome_xwayland_workarea.x == 0);
+    assert(gnome_xwayland_workarea.y == 29);
+    assert(gnome_xwayland_workarea.width == 2560);
+    assert(gnome_xwayland_workarea.height == 1411);
+
     request.location = DockLocation::bottom;
     request.alignment = DockAlignment::center;
     request.autohide = DockAutohide::none;

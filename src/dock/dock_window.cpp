@@ -1220,10 +1220,26 @@ void DockWindow::capture_x11_base_workarea(
             static_cast<int>(workareas[offset + 3])};
     }
 
-    m_x11_base_workarea = x11_initial_monitor_workarea(
-        output,
-        root_workarea,
-        gdk_display_get_n_monitors(display->gobj()) > 1);
+    // Under GNOME Wayland, Mutter's GDK monitor work area is authoritative.
+    // Its Shell panel is not represented by an X11 strut client, while the
+    // root-global _NET_WORKAREA cannot identify which monitor owns the panel.
+    // Dropping the GDK inset here put a top dock underneath the Shell panel.
+    if (is_gnome_wayland_session())
+    {
+        m_x11_base_workarea =
+            x11_gnome_monitor_workarea(
+                output,
+                fallback);
+    }
+    else
+    {
+        m_x11_base_workarea =
+            x11_initial_monitor_workarea(
+                output,
+                root_workarea,
+                gdk_display_get_n_monitors(
+                    display->gobj()) > 1);
+    }
 
     // KWin reserves only the Plasma panel's content thickness in
     // _NET_WORKAREA. A floating panel's X11 window can be taller because it
