@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "application/dock_runtime_info.h"
+
 #include <gtkmm.h>
 #include <sigc++/connection.h>
 
@@ -40,6 +42,7 @@ public:
     DockHomeItem(
         DockWindow &dock,
         WindowRegistry *window_registry,
+        const DockRuntimeInfo &runtime_info,
         int icon_size,
         const std::string &icon_path);
     ~DockHomeItem() override;
@@ -79,6 +82,7 @@ private:
 private:
     DockWindow &m_dock;
     WindowRegistry *m_window_registry = nullptr;
+    DockRuntimeInfo m_runtime_info;
 
     Glib::RefPtr<Gdk::Pixbuf> m_source_icon;
     Glib::RefPtr<Gdk::Pixbuf> m_display_icon;

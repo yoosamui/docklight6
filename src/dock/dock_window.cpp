@@ -22,6 +22,7 @@
 #include "dock_window.h"
 #include "dock_home_item.h"
 
+#include "application/dock_runtime_info.h"
 #include "dock_constants.h"
 #include "layout/dock_layout_metrics.h"
 #include "dock_window_controller.h"
@@ -171,7 +172,8 @@ DockWindow::DockWindow(
     const DockConfiguration &configuration,
     const Glib::RefPtr<Gdk::Monitor>
         &monitor,
-    WindowRegistry *window_registry)
+    WindowRegistry *window_registry,
+    const DockRuntimeInfo &runtime_info)
     : m_window_registry(window_registry)
 {
     m_controller =
@@ -324,7 +326,7 @@ DockWindow::DockWindow(
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION +
             1);
 
-    create_dock();
+    create_dock(runtime_info);
 
     m_effective_icon_size =
         std::max(
@@ -2345,7 +2347,8 @@ void DockWindow::synchronize_dock_items()
 // Creates the persistent dock container and its initial items after the
 // controller is available. Separating construction from the window
 // constructor also gives later synchronization a single widget setup path.
-void DockWindow::create_dock()
+void DockWindow::create_dock(
+    const DockRuntimeInfo &runtime_info)
 {
     m_dock_box.pack_start(
         m_leading_margin,
@@ -2356,6 +2359,7 @@ void DockWindow::create_dock()
             new DockHomeItem(
                 *this,
                 m_window_registry,
+                runtime_info,
                 m_controller
                     ->settings()
                     .icon_size(),

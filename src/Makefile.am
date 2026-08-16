@@ -89,6 +89,7 @@ docklight6_SOURCES = \
     integrations/kwin/kwin_window_command.h \
     integrations/kwin/kwin_window_backend.h \
     integrations/kwin/kwin_window_backend.cpp \
+    application/dock_runtime_info.h \
     application/dock_application_controller.h \
     application/dock_application_controller.cpp \
     config/dock_configuration.h \

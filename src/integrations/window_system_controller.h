@@ -32,10 +32,19 @@
 #include <sigc++/connection.h>
 
 #include <memory>
+#include <string>
 
 class KWinIntegrationService;
 class WindowBackend;
 class WindowRegistry;
+
+struct WindowSystemDetails
+{
+    std::string desktop = "unknown";
+    std::string window_manager = "unknown";
+    std::string compositor = "unknown";
+    std::string backend = "none";
+};
 
 class WindowSystemController
 {
@@ -48,6 +57,7 @@ public:
 
     bool available() const;
     bool window_previews_available() const;
+    const WindowSystemDetails &details() const;
 
     WindowRegistry *registry();
     const WindowRegistry *registry() const;
@@ -73,4 +83,5 @@ private:
 
     bool m_started = false;
     bool m_window_previews_available = true;
+    WindowSystemDetails m_details;
 };

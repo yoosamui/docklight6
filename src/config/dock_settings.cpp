@@ -71,6 +71,18 @@ void DockSettings::set_preview_show_delay(
         std::clamp(delay_ms, 0, 5000);
 }
 
+int DockSettings::autohide_hide_delay() const
+{
+    return m_autohide_hide_delay;
+}
+
+void DockSettings::set_autohide_hide_delay(
+    int delay_ms)
+{
+    m_autohide_hide_delay =
+        std::clamp(delay_ms, 0, 5000);
+}
+
 DockHoverEffect DockSettings::hover_effect() const
 {
     return m_hover_effect;

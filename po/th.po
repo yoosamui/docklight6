@@ -7,16 +7,34 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-13 08:37+0700\n"
-"PO-Revision-Date: 2026-08-06 14:30+0700\n"
+"POT-Creation-Date: 2026-08-16 14:01+0700\n"
+"PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: \n"
-"Language-Team: THAI <LL@li.org>\n"
 "Language: th\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: THAI <LL@li.org>\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
+
+#: src/main.cpp:340
+msgid "Window previews are disabled"
+msgstr "การแสดงตัวอย่างหน้าต่างถูกปิดใช้งาน"
+
+#: src/main.cpp:346
+msgid "DockLight"
+msgstr "Dockแสง"
+
+#: src/main.cpp:348
+msgid ""
+"Openbox requires an X11 compositor for complete window previews. Display "
+"Preview is disabled. Start compton or picom, then enable Display Preview in "
+"DockLight Settings."
+msgstr ""
+"Openbox ต้องใช้ตัวประกอบ X11 เพื่อดูตัวอย่างหน้าต่างทั้งหมด "
+"การแสดงตัวอย่างถูกปิดใช้งาน เริ่ม compton หรือ picom จากนั้นเปิดใช้งาน "
+"Display Preview ในการตั้งค่า DockLight"
 
 #: src/dock/dock_item.cpp:267
 msgid "_Attach"
@@ -26,7 +44,7 @@ msgstr "_ปักหมุดไปที่ Dock"
 msgid "_Open New Window"
 msgstr "_เปิดหน้าต่างใหม่"
 
-#: src/dock/dock_item.cpp:273 src/dock/dock_home_item.cpp:68
+#: src/dock/dock_home_item.cpp:70 src/dock/dock_item.cpp:273
 msgid "_Close All"
 msgstr "_ปิดทั้งหมด"
 
@@ -42,31 +60,31 @@ msgstr "_คืนค่า"
 msgid "_Maximize"
 msgstr "_ขยายใหญ่สุด"
 
-#: src/dock/dock_home_item.cpp:56
+#: src/dock/dock_home_item.cpp:58
 msgid "_Settings"
 msgstr "_การตั้งค่า"
 
-#: src/dock/dock_home_item.cpp:59
+#: src/dock/dock_home_item.cpp:61
 msgid "_Minimize All"
 msgstr "_ย่อขนาดทั้งหมด"
 
-#: src/dock/dock_home_item.cpp:62
+#: src/dock/dock_home_item.cpp:64
 msgid "_Unminimize All"
 msgstr "_กู้คืนทั้งหมด"
 
-#: src/dock/dock_home_item.cpp:65
+#: src/dock/dock_home_item.cpp:67
 msgid "_Maximize All"
 msgstr "_เพิ่มทั้งหมดให้สูงสุด"
 
-#: src/dock/dock_home_item.cpp:71
+#: src/dock/dock_home_item.cpp:73
 msgid "_About"
 msgstr "_เกี่ยวกับ"
 
-#: src/dock/dock_home_item.cpp:74
+#: src/dock/dock_home_item.cpp:76
 msgid "_Exit"
 msgstr "_ออก"
 
-#: src/dock/dock_home_item.cpp:183
+#: src/dock/dock_home_item.cpp:185
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "บ้าน"
@@ -76,8 +94,7 @@ msgstr "บ้าน"
 msgid "DockLight Settings"
 msgstr "การตั้งค่า DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:191
-#: src/dialogs/dock_about_dialog.cpp:182
+#: src/dialogs/dock_about_dialog.cpp:183 src/dialogs/dock_settings_dialog.cpp:191
 msgid "_Close"
 msgstr "_ปิด"
 
@@ -94,12 +111,12 @@ msgid "Indicator"
 msgstr "ตัวบ่งชี้"
 
 #: src/dialogs/dock_settings_dialog.cpp:209
-#: src/dialogs/dock_settings_dialog.cpp:451
+#: src/dialogs/dock_settings_dialog.cpp:454
 msgid "Indicator Color"
 msgstr "สีของตัวบ่งชี้"
 
 #: src/dialogs/dock_settings_dialog.cpp:211
-#: src/dialogs/dock_settings_dialog.cpp:470
+#: src/dialogs/dock_settings_dialog.cpp:473
 msgid "Preview Color"
 msgstr "สีตัวอย่าง"
 
@@ -163,168 +180,193 @@ msgstr "การจัดตำแหน่ง"
 msgid "Autohide"
 msgstr "ซ่อนอัตโนมัติ"
 
-#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:243
+msgid "Autohide Delay (ms)"
+msgstr "ความล่าช้าในการซ่อนอัตโนมัติ (มิลลิวินาที)"
+
+#: src/dialogs/dock_settings_dialog.cpp:333
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "จอภาพหลัก"
 
-#: src/dialogs/dock_settings_dialog.cpp:369
+#: src/dialogs/dock_settings_dialog.cpp:372
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "เอฟเฟกต์มาตรฐาน"
 
-#: src/dialogs/dock_settings_dialog.cpp:371
+#: src/dialogs/dock_settings_dialog.cpp:374
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "ผลการซูม"
 
-#: src/dialogs/dock_settings_dialog.cpp:373
+#: src/dialogs/dock_settings_dialog.cpp:376
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "เอฟเฟกต์เบลอ"
 
-#: src/dialogs/dock_settings_dialog.cpp:410
+#: src/dialogs/dock_settings_dialog.cpp:413
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "ตัวบ่งชี้เส้น"
 
-#: src/dialogs/dock_settings_dialog.cpp:412
+#: src/dialogs/dock_settings_dialog.cpp:415
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "ตัวชี้วัดแบบจุด"
 
-#: src/dialogs/dock_settings_dialog.cpp:453
+#: src/dialogs/dock_settings_dialog.cpp:456
 msgid "Choose the indicator color"
 msgstr "เลือกสีของตัวบ่งชี้"
 
-#: src/dialogs/dock_settings_dialog.cpp:472
+#: src/dialogs/dock_settings_dialog.cpp:475
 msgid "Choose the preview color"
 msgstr "เลือกสีตัวอย่าง"
 
-#: src/dialogs/dock_settings_dialog.cpp:484
+#: src/dialogs/dock_settings_dialog.cpp:487
 msgid "Select…"
 msgstr "เลือก..."
 
-#: src/dialogs/dock_settings_dialog.cpp:486
+#: src/dialogs/dock_settings_dialog.cpp:489
 msgid "Use Default"
 msgstr "ใช้ค่าเริ่มต้น"
 
-#: src/dialogs/dock_settings_dialog.cpp:494
+#: src/dialogs/dock_settings_dialog.cpp:497
 msgid "Built-in DockLight icon"
 msgstr "ไอคอน DockLight ในตัว"
 
-#: src/dialogs/dock_settings_dialog.cpp:528
+#: src/dialogs/dock_settings_dialog.cpp:531
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "มิฉะนั้น ให้เปิดการแสดงตัวอย่างไว้จนกว่าตัวชี้จะออกไป"
 
-#: src/dialogs/dock_settings_dialog.cpp:535
+#: src/dialogs/dock_settings_dialog.cpp:538
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr "ใช้การทำงานของไอคอนและการหมุนเวียนล้อเมาส์กับพื้นที่ทำงานทั้งหมด"
 
-#: src/dialogs/dock_settings_dialog.cpp:566
+#: src/dialogs/dock_settings_dialog.cpp:569
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0 เลือกขนาดอัตโนมัติ มิฉะนั้นให้ใช้ 64 ถึง 512 พิกเซล"
 
-#: src/dialogs/dock_settings_dialog.cpp:583
-#, fuzzy
+#: src/dialogs/dock_settings_dialog.cpp:586
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
-msgstr "หน่วงเวลาก่อนที่การแสดงตัวอย่างหน้าต่างจะปรากฏขึ้น ตั้งแต่ 0 ถึง 1,000 มิลลิวินาที"
+msgstr ""
+"หน่วงเวลาก่อนที่การแสดงตัวอย่างหน้าต่างจะปรากฏขึ้น ตั้งแต่ 0 ถึง 5,000 "
+"มิลลิวินาที"
 
-#: src/dialogs/dock_settings_dialog.cpp:590
+#: src/dialogs/dock_settings_dialog.cpp:604
+msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
+msgstr "หน่วงเวลาก่อนที่ท่าเรือจะซ่อน จาก 0 ถึง 5,000 มิลลิวินาที"
+
+#: src/dialogs/dock_settings_dialog.cpp:611
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "ขอบล่าง"
 
-#: src/dialogs/dock_settings_dialog.cpp:592
+#: src/dialogs/dock_settings_dialog.cpp:613
 msgctxt "dock location"
 msgid "Left"
 msgstr "ขอบซ้าย"
 
-#: src/dialogs/dock_settings_dialog.cpp:594
+#: src/dialogs/dock_settings_dialog.cpp:615
 msgctxt "dock location"
 msgid "Top"
 msgstr "ขอบบน"
 
-#: src/dialogs/dock_settings_dialog.cpp:596
+#: src/dialogs/dock_settings_dialog.cpp:617
 msgctxt "dock location"
 msgid "Right"
 msgstr "ขอบขวา"
 
-#: src/dialogs/dock_settings_dialog.cpp:643
+#: src/dialogs/dock_settings_dialog.cpp:664
 msgid "Use the black-to-gray dock background gradient"
 msgstr "ใช้การไล่ระดับสีพื้นหลังท่าเรือสีดำถึงสีเทา"
 
-#: src/dialogs/dock_settings_dialog.cpp:666
+#: src/dialogs/dock_settings_dialog.cpp:687
 msgid "-1 selects the automatic radius"
 msgstr "-1 เลือกรัศมีอัตโนมัติ"
 
-#: src/dialogs/dock_settings_dialog.cpp:672
+#: src/dialogs/dock_settings_dialog.cpp:693
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "เริ่มจัดตำแหน่ง"
 
-#: src/dialogs/dock_settings_dialog.cpp:674
+#: src/dialogs/dock_settings_dialog.cpp:695
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "อยู่ตรงกลาง"
 
-#: src/dialogs/dock_settings_dialog.cpp:676
+#: src/dialogs/dock_settings_dialog.cpp:697
 msgctxt "dock alignment"
 msgid "End"
 msgstr "จัดวางท้าย"
 
-#: src/dialogs/dock_settings_dialog.cpp:678
+#: src/dialogs/dock_settings_dialog.cpp:699
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "เติมพื้นที่ว่าง"
 
-#: src/dialogs/dock_settings_dialog.cpp:724
+#: src/dialogs/dock_settings_dialog.cpp:745
 msgctxt "autohide mode"
 msgid "None"
 msgstr "ปิดการใช้งาน"
 
-#: src/dialogs/dock_settings_dialog.cpp:726
+#: src/dialogs/dock_settings_dialog.cpp:747
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "อัตโนมัติ"
 
-#: src/dialogs/dock_settings_dialog.cpp:728
+#: src/dialogs/dock_settings_dialog.cpp:749
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "อัจฉริยะ"
 
-#: src/dialogs/dock_settings_dialog.cpp:1260
-#: src/dialogs/dock_settings_dialog.cpp:1295
+#: src/dialogs/dock_settings_dialog.cpp:1294
+#: src/dialogs/dock_settings_dialog.cpp:1329
 msgid "Select Home Icon"
 msgstr "เลือกไอคอนหน้าแรก"
 
-#: src/dialogs/dock_settings_dialog.cpp:1265
+#: src/dialogs/dock_settings_dialog.cpp:1299
 msgid "_Cancel"
 msgstr "_ยกเลิก"
 
-#: src/dialogs/dock_settings_dialog.cpp:1268
+#: src/dialogs/dock_settings_dialog.cpp:1302
 msgid "_Open"
 msgstr "_เปิด"
 
-#: src/dialogs/dock_settings_dialog.cpp:1332
+#: src/dialogs/dock_settings_dialog.cpp:1366
 msgid "Image Files"
 msgstr "ไฟล์รูปภาพ"
 
-#: src/dialogs/dock_about_dialog.cpp:111 src/dialogs/dock_about_dialog.cpp:155
+#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_about_dialog.cpp:156
 msgid "About DockLight"
 msgstr "เกี่ยวกับ DockLight"
 
-#: src/dialogs/dock_about_dialog.cpp:192
+#: src/dialogs/dock_about_dialog.cpp:193
 msgid "Version %1"
 msgstr "ซอฟต์แวร์เวอร์ชัน %1"
 
-#: src/dialogs/dock_about_dialog.cpp:195
+#: src/dialogs/dock_about_dialog.cpp:196
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui"
 msgstr ""
 "แท่นวางแอปพลิเคชันน้ำหนักเบา\n"
 "ผู้แต่งและผู้ดูแล: yoosamui"
+
+#: src/dialogs/dock_about_dialog.cpp:204
+msgid ""
+"Presentation mode: %1\n"
+"Dock configuration loaded: %2\n"
+"detected Desktop: %3\n"
+"detected WM: %4\n"
+"detected compositor: %5\n"
+"selected backend: %6"
+msgstr ""
+"โหมดการนำเสนอ: %1\n"
+"โหลดการกำหนดค่าท่าเรือแล้ว: %2\n"
+"สภาพแวดล้อมเดสก์ท็อปที่ตรวจพบ: %3\n"
+"ตรวจพบตัวจัดการหน้าต่าง (WM): %4\n"
+"ตรวจพบผู้ประกอบการแสดงผล: %5\n"
+"แบ็กเอนด์ซอฟต์แวร์ที่เลือก: %6"
 
 #: src/monitors/dock_monitor_manager.cpp:505
 msgid "No monitors are available."
@@ -358,23 +400,27 @@ msgstr "จอภาพเริ่มต้น"
 #~ msgstr "เริ่มต้นแผงควบคุม"
 
 #~ msgid ""
-#~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
+#~ "Sets the primary Monitor.Settings are "
+#~ "primary oder the monitor name e.g "
 #~ "DP-3"
 #~ msgstr "ตั้งค่าจอภาพหลัก การตั้งค่าเป็นหลักหรือชื่อจอภาพ เช่น DP-3"
 
 #~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
 #~ msgstr ""
-#~ "ตั้งค่าตำแหน่งของแผงควบคุม: ด้านบน ด้านขวา ด้านล่าง หรือด้านซ้าย ค่าเริ่มต้นคือด้านล่าง"
+#~ "ตั้งค่าตำแหน่งของแผงควบคุม: ด้านบน ด้านขวา ด้านล่าง "
+#~ "หรือด้านซ้าย ค่าเริ่มต้นคือด้านล่าง"
 
 #~ msgid ""
-#~ "The dock alignment settings are start, end, center or fill. Default "
-#~ "center."
+#~ "The dock alignment settings are start, "
+#~ "end, center or fill. Default center."
 #~ msgstr ""
-#~ "การตั้งค่าการจัดตำแหน่งท่าเรือคือ เริ่มต้น สิ้นสุด ตรงกลาง หรือเต็มหน้าจอ ค่าเริ่มต้นคือ ตรงกลาง"
+#~ "การตั้งค่าการจัดตำแหน่งท่าเรือคือ เริ่มต้น สิ้นสุด "
+#~ "ตรงกลาง หรือเต็มหน้าจอ ค่าเริ่มต้นคือ ตรงกลาง"
 
-#~ msgid ""
-#~ "The icon alignment settings are start, end or center. Default center."
-#~ msgstr "การตั้งค่าการจัดตำแหน่งไอคอนคือ เริ่มต้น สิ้นสุด หรือตรงกลาง ค่าเริ่มต้นคือ ตรงกลาง"
+#~ msgid "The icon alignment settings are start, end or center. Default center."
+#~ msgstr ""
+#~ "การตั้งค่าการจัดตำแหน่งไอคอนคือ เริ่มต้น สิ้นสุด "
+#~ "หรือตรงกลาง ค่าเริ่มต้นคือ ตรงกลาง"
 
 #~ msgid "parsed values"
 #~ msgstr "ค่าที่ถูกวิเคราะห์"
@@ -419,11 +465,13 @@ msgstr "จอภาพเริ่มต้น"
 #~ msgstr "ใหม่"
 
 #~ msgid ""
-#~ "This program is a lightweight Dock Launcher for opening common "
-#~ "applications for the GNOME Desktop"
+#~ "This program is a lightweight Dock "
+#~ "Launcher for opening common applications "
+#~ "for the GNOME Desktop"
 #~ msgstr ""
-#~ "โปรแกรมนี้ใช้งานไม่ยาก Dock Launcher สำหรับการใช้งานเท่าไปเท่านั้น "
-#~ "จัดทำเพื่อแปลภาษาหน้าเดสก์ท็อปของ GNOME "
+#~ "โปรแกรมนี้ใช้งานไม่ยาก Dock Launcher "
+#~ "สำหรับการใช้งานเท่าไปเท่านั้น จัดทำเพื่อแปลภาษาหน้าเดสก์ท็อปของ "
+#~ "GNOME "
 
 #~ msgid "Create Launcher"
 #~ msgstr "สร้างตัวเปิดโปรแกรม"
@@ -465,8 +513,8 @@ msgstr "จอภาพเริ่มต้น"
 #~ msgid ""
 #~ "The command you enter is invalid.\n"
 #~ "\n"
-#~ "Some Applications are scripts files and others requires Administrator "
-#~ "privileges:\n"
+#~ "Some Applications are scripts files and "
+#~ "others requires Administrator privileges:\n"
 #~ "for scrips files you need to add the bash on the beginning:\n"
 #~ "\n"
 #~ "/bin/sh \"/usr/local/scriptfile.sh\"\n"
@@ -476,14 +524,16 @@ msgstr "จอภาพเริ่มต้น"
 #~ "pkexec Application\n"
 #~ "\n"
 #~ "Please make sure that the Application starts from the command line.\n"
-#~ "Open a terminal and navigate to the directory where the application is "
+#~ "Open a terminal and navigate to the"
+#~ " directory where the application is "
 #~ "locate\n"
 #~ "and trying the command from there..."
 #~ msgstr ""
 #~ "คำสั่งที่คุณป้อนไม่ถูกต้อง\n"
 #~ "\n"
-#~ "บางโปรแกรมเป็น ไฟล์สคริปต์หรือ ผู้อื่นต้องการใช้สิทธิ์ผู้ดูแลระบบ สำหรับ สคริปไฟล์คุณต้องการเพิ่ม "
-#~ "bash การทำงานเบื้องต้น\n"
+#~ "บางโปรแกรมเป็น ไฟล์สคริปต์หรือ "
+#~ "ผู้อื่นต้องการใช้สิทธิ์ผู้ดูแลระบบ สำหรับ "
+#~ "สคริปไฟล์คุณต้องการเพิ่ม bash การทำงานเบื้องต้น\n"
 #~ "\n"
 #~ "/bin/sh \"/usr/local/scriptfile.sh\"\n"
 #~ "/usr/bin/bash \"/home/yoo/Develop/scriptfile\"\n"

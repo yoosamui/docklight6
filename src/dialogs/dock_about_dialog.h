@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "application/dock_runtime_info.h"
+
 #include <gdkmm/pixbuf.h>
 #include <glibmm/refptr.h>
 
@@ -38,5 +40,6 @@ namespace DockAboutDialog
 {
 void show(
     Gtk::Window &parent,
-    const Glib::RefPtr<Gdk::Pixbuf> &icon);
+    const Glib::RefPtr<Gdk::Pixbuf> &icon,
+    const DockRuntimeInfo &runtime_info);
 }

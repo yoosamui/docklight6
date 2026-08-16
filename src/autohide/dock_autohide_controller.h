@@ -38,11 +38,13 @@ class DockAutohideController
 {
 public:
     explicit DockAutohideController(
-        DockWindow &window);
+        DockWindow &window,
+        int hide_delay_ms);
     ~DockAutohideController();
 
     void initialize();
     void set_mode(DockAutohide mode);
+    void set_hide_delay(int delay_ms);
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor> &monitor);
     void set_placement(
@@ -101,6 +103,7 @@ private:
     };
 
     DockAutohide m_mode = DockAutohide::none;
+    int m_hide_delay_ms = 0;
     int m_inhibit_count = 0;
     bool m_intellihide_overlap = false;
     bool m_has_placement = false;

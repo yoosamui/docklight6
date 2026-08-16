@@ -43,6 +43,8 @@ constexpr int MAX_PREVIEW_CARD_HEIGHT = 512;
 constexpr int DEFAULT_PREVIEW_CARD_HEIGHT = 200;
 constexpr int MIN_PREVIEW_SHOW_DELAY = 0;
 constexpr int MAX_PREVIEW_SHOW_DELAY = 5000;
+constexpr int MIN_AUTOHIDE_HIDE_DELAY = 0;
+constexpr int MAX_AUTOHIDE_HIDE_DELAY = 5000;
 constexpr int CURRENT_CONFIG_VERSION = 1;
 constexpr int MIN_CORNER_RADIUS = 2; // Smallest explicit dock corner radius
 constexpr unsigned int RELOAD_DELAY_MS = 200; // Delay before reloading changed settings
@@ -149,8 +151,15 @@ preview_card_height = 512
 
 // Configuration block added when preview timing is missing.
 const char *PREVIEW_SHOW_DELAY_SETTING_TEMPLATE = R"(# Delay before showing a window preview, in milliseconds.
-# Valid range: 0 to 1000
+# Valid range: 0 to 5000
 preview_show_delay = 500
+
+)";
+
+// Configuration block added when autohide timing is missing.
+const char *AUTOHIDE_HIDE_DELAY_SETTING_TEMPLATE = R"(# Delay before hiding the dock, in milliseconds.
+# Valid range: 0 to 5000
+autohide_hide_delay = 1200
 
 )";
 
@@ -253,6 +262,10 @@ alignment =
 # autohide hides after the pointer leaves and reveals at the screen edge.
 # intellihide hides only while a current-desktop window overlaps the dock.
 autohide =
+
+# Delay before hiding the dock, in milliseconds.
+# Valid range: 0 to 5000
+autohide_hide_delay = 1200
 )";
 
 std::string trimmed(const Glib::ustring &input)
@@ -385,6 +398,8 @@ bool same_configuration(
                right.settings.preview_card_height() &&
            left.settings.preview_show_delay() ==
                right.settings.preview_show_delay() &&
+           left.settings.autohide_hide_delay() ==
+               right.settings.autohide_hide_delay() &&
            left.settings.hover_effect() ==
                right.settings.hover_effect() &&
            left.settings.indicator() ==
@@ -486,6 +501,9 @@ DockConfigurationManager::DockConfigurationManager(
     ensure_setting(
         "preview_show_delay",
         PREVIEW_SHOW_DELAY_SETTING_TEMPLATE);
+    ensure_setting(
+        "autohide_hide_delay",
+        AUTOHIDE_HIDE_DELAY_SETTING_TEMPLATE);
     reload();
 }
 
@@ -941,6 +959,11 @@ void DockConfigurationManager::reload()
                 key_file,
                 "preview_show_delay");
 
+        const auto autohide_hide_delay =
+            value_for(
+                key_file,
+                "autohide_hide_delay");
+
         const auto home_icon_enabled =
             value_for(
                 key_file,
@@ -1209,6 +1232,40 @@ void DockConfigurationManager::reload()
                     MAX_PREVIEW_SHOW_DELAY,
                     candidate.settings
                         .preview_show_delay());
+            }
+        }
+
+        if (autohide_hide_delay.empty())
+        {
+            candidate.settings
+                .set_autohide_hide_delay(
+                    defaults.settings
+                        .autohide_hide_delay());
+        }
+        else
+        {
+            const auto parsed =
+                parse_integer(
+                    autohide_hide_delay);
+
+            if (parsed &&
+                *parsed >= MIN_AUTOHIDE_HIDE_DELAY &&
+                *parsed <= MAX_AUTOHIDE_HIDE_DELAY)
+            {
+                candidate.settings
+                    .set_autohide_hide_delay(
+                        *parsed);
+            }
+            else
+            {
+                g_warning(
+                    "Invalid [dock] autohide_hide_delay '%s'; "
+                    "expected %d..%d; keeping %d",
+                    autohide_hide_delay.c_str(),
+                    MIN_AUTOHIDE_HIDE_DELAY,
+                    MAX_AUTOHIDE_HIDE_DELAY,
+                    candidate.settings
+                        .autohide_hide_delay());
             }
         }
 

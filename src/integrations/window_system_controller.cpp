@@ -295,6 +295,11 @@ void WindowSystemController::start()
         detected_compositor(
             x11_compositor_running);
 
+    m_details.desktop = desktop;
+    m_details.window_manager = window_manager;
+    m_details.compositor = compositor;
+    m_details.backend = "none";
+
     log_detected_environment(
         desktop,
         window_manager,
@@ -316,6 +321,7 @@ void WindowSystemController::start()
 
     if (gnome_shell)
     {
+        m_details.backend = "GNOME Shell";
         m_backend =
             std::make_unique<
                 GnomeWaylandWindowBackend>();
@@ -329,6 +335,10 @@ void WindowSystemController::start()
             select_x11_backend_kind(
                 window_manager,
                 desktop);
+
+        m_details.backend =
+            x11_backend_kind_name(
+                backend_kind);
 
         switch (backend_kind)
         {
@@ -387,8 +397,12 @@ void WindowSystemController::start()
     }
     else
     {
+        m_details.backend = "KWin";
         m_backend =
             std::make_unique<KWinWindowBackend>();
+
+        DocklightLog::startup(
+            "selected backend: KWin");
     }
 
     m_registry =
@@ -488,6 +502,12 @@ bool WindowSystemController::
     window_previews_available() const
 {
     return m_window_previews_available;
+}
+
+const WindowSystemDetails &
+WindowSystemController::details() const
+{
+    return m_details;
 }
 
 WindowRegistry *

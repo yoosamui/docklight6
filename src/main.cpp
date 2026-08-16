@@ -38,6 +38,7 @@
 // ------------------------------------------------------------
 
 #include "config/dock_configuration_manager.h"
+#include "application/dock_runtime_info.h"
 #include "monitors/dock_monitor_manager.h"
 #include "dock/dock_window.h"
 #include "docklight_log.h"
@@ -212,6 +213,17 @@ int main(int argc, char *argv[])
     WindowSystemController window_system;
     window_system.start();
 
+    const auto &window_system_details =
+        window_system.details();
+    const DockRuntimeInfo runtime_info{
+        presentation_mode_name(
+            presentation.mode),
+        configuration.config_path(),
+        window_system_details.desktop,
+        window_system_details.window_manager,
+        window_system_details.compositor,
+        window_system_details.backend};
+
     const bool window_previews_available =
         window_system.window_previews_available();
     const bool disable_configured_previews =
@@ -260,7 +272,8 @@ int main(int argc, char *argv[])
     DockWindow window(
         initial_configuration,
         monitors.selected_monitor(),
-        window_system.registry());
+        window_system.registry(),
+        runtime_info);
 
     // A second invocation is delivered to this primary process as an
     // application activation. Treat it as an explicit request to reveal the

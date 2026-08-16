@@ -59,8 +59,10 @@ bool same_placement(
 }
 
 DockAutohideController::DockAutohideController(
-    DockWindow &window)
-    : m_window(window)
+    DockWindow &window,
+    int hide_delay_ms)
+    : m_window(window),
+      m_hide_delay_ms(std::max(0, hide_delay_ms))
 {
 }
 
@@ -191,6 +193,25 @@ void DockAutohideController::set_mode(
 
     if (!m_hidden && m_window.get_mapped())
         schedule_hide();
+}
+
+void DockAutohideController::set_hide_delay(
+    int delay_ms)
+{
+    const int clamped_delay =
+        std::max(0, delay_ms);
+    if (m_hide_delay_ms == clamped_delay)
+        return;
+
+    const bool hide_pending =
+        m_hide_timer.connected();
+    m_hide_delay_ms = clamped_delay;
+
+    if (hide_pending)
+    {
+        cancel_hide();
+        schedule_hide();
+    }
 }
 
 void DockAutohideController::set_intellihide_overlap(
@@ -426,7 +447,7 @@ void DockAutohideController::schedule_hide(
                 hide_now(true);
                 return false;
             },
-            DockConstants::AUTOHIDE_HIDE_DELAY_MS);
+            m_hide_delay_ms);
 }
 
 void DockAutohideController::cancel_hide()

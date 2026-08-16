@@ -37,10 +37,12 @@
 DockHomeItem::DockHomeItem(
     DockWindow &dock,
     WindowRegistry *window_registry,
+    const DockRuntimeInfo &runtime_info,
     int icon_size,
     const std::string &icon_path)
     : m_dock(dock),
       m_window_registry(window_registry),
+      m_runtime_info(runtime_info),
       m_icon_path(icon_path)
 {
     const auto set_menu_label =
@@ -679,7 +681,8 @@ void DockHomeItem::show_about()
     m_dock.inhibit_autohide();
     DockAboutDialog::show(
         m_dock,
-        m_source_icon);
+        m_source_icon,
+        m_runtime_info);
     m_dock.uninhibit_autohide();
 }
 

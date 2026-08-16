@@ -105,7 +105,8 @@ void center_dialog_on_parent_monitor(
 
 void DockAboutDialog::show(
     Gtk::Window &parent,
-    const Glib::RefPtr<Gdk::Pixbuf> &icon)
+    const Glib::RefPtr<Gdk::Pixbuf> &icon,
+    const DockRuntimeInfo &runtime_info)
 {
     Gtk::Dialog dialog(
         _("About DockLight"),
@@ -197,6 +198,21 @@ void DockAboutDialog::show(
     Gtk::LinkButton website(
         "https://github.com/yoosamui/DockLight",
         "yoosamui/DockLight");
+    Gtk::Separator details_separator;
+    Gtk::Label runtime_details(
+        Glib::ustring::compose(
+            _("Presentation mode: %1\n"
+              "Dock configuration loaded: %2\n"
+              "detected Desktop: %3\n"
+              "detected WM: %4\n"
+              "detected compositor: %5\n"
+              "selected backend: %6"),
+            runtime_info.presentation_mode,
+            runtime_info.configuration_path,
+            runtime_info.desktop,
+            runtime_info.window_manager,
+            runtime_info.compositor,
+            runtime_info.backend));
 
     about_content.set_border_width(20);
 
@@ -223,6 +239,16 @@ void DockAboutDialog::show(
         Gtk::JUSTIFY_CENTER);
     website.set_halign(
         Gtk::ALIGN_CENTER);
+    runtime_details.set_halign(
+        Gtk::ALIGN_FILL);
+    runtime_details.set_xalign(0.0f);
+    runtime_details.set_justify(
+        Gtk::JUSTIFY_LEFT);
+    runtime_details.set_selectable(true);
+    runtime_details.set_line_wrap(true);
+    runtime_details.set_line_wrap_mode(
+        Pango::WRAP_WORD_CHAR);
+    runtime_details.set_max_width_chars(72);
 
     about_content.pack_start(
         logo,
@@ -242,6 +268,14 @@ void DockAboutDialog::show(
         false);
     about_content.pack_start(
         website,
+        false,
+        false);
+    about_content.pack_start(
+        details_separator,
+        false,
+        false);
+    about_content.pack_start(
+        runtime_details,
         false,
         false);
 

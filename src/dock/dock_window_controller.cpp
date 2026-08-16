@@ -70,7 +70,9 @@ DockWindowController::DockWindowController(
       m_autohide_controller(
           std::make_unique<
               DockAutohideController>(
-              window)),
+              window,
+              configuration.settings
+                  .autohide_hide_delay())),
       m_preview_window(
           std::make_unique<DockPreviewWindow>()),
       m_media_playback_monitor(
@@ -729,6 +731,8 @@ void DockWindowController::apply_configuration(
     m_layout_request =
         configuration.layout_request;
 
+    m_autohide_controller->set_hide_delay(
+        m_settings.autohide_hide_delay());
     m_autohide_controller->set_mode(
         m_layout_request.autohide);
 

@@ -53,6 +53,8 @@ int main()
         assert(initial_configuration.current().settings
                    .preview_card_height() == 512);
         assert(initial_configuration.current().settings
+                   .autohide_hide_delay() == 1200);
+        assert(initial_configuration.current().settings
                    .display_preview());
         assert(!initial_configuration.current().settings
                     .close_preview_after_activation());
@@ -163,6 +165,9 @@ int main()
         "preview_show_delay",
         "5000"));
     assert(configuration.save_setting(
+        "autohide_hide_delay",
+        "2500"));
+    assert(configuration.save_setting(
         "location",
         "top"));
     assert(configuration.save_setting(
@@ -190,6 +195,9 @@ int main()
            std::string::npos);
     assert(contents.find(
                "preview_show_delay=5000") !=
+           std::string::npos);
+    assert(contents.find(
+               "autohide_hide_delay=2500") !=
            std::string::npos);
     assert(contents.find(
                "preview_color=#445566") !=
@@ -250,6 +258,8 @@ int main()
                .preview_card_height() == 256);
     assert(current.settings
                .preview_show_delay() == 5000);
+    assert(current.settings
+               .autohide_hide_delay() == 2500);
     assert(current.layout_request.location ==
            DockLocation::top);
     assert(!current.layout_request

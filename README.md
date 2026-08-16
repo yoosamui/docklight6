@@ -12,44 +12,47 @@ previews, multi-monitor placement, and configurable auto-hide behavior.
 
 **Current version:** `6.0.32`
 
-Here is the current desktop/session compatibility matrix. PASS means confirmed
-in a real desktop session; PENDING means implemented but still needs
-real-session verification.
+## Integration tests
 
+`PASS` means confirmed in a real desktop session. `PENDING` means the backend
+is implemented but still needs real-session verification. `NOT IMPLEMENTED`
+means DockLight can start, but desktop-specific window integration is not
+available.
 
-Current test state:
-| Desktop / WM | Session | Selected backend | Result |
-|---|---|---|---|
-| KDE Plasma / KWin | Wayland | KWinWindowBackend | PASS |
-| KDE Plasma / KWin | X11 | EwmhFallbackWindowBackend | PASS |
-| XFCE / xfwm4 | X11 | Xfwm4WindowBackend | PASS |
-| MATE / Marco or Metacity | X11 | MarcoWindowBackend | PASS |
-| Cinnamon / Muffin | X11 | MuffinWindowBackend | PASS |
-| GNOME / Mutter | X11 | MutterWindowBackend | PASS |
-| GNOME / Mutter | Wayland | MutterWindowBackend | PASS |
-| LXDE / Openbox | X11 | OpenboxWindowBackend | PASS |
-| LXQt / Openbox | X11 | OpenboxWindowBackend | PENDING |
-| Other EWMH window managers | X11 | EwmhFallbackWindowBackend | PASS |
-| XFCE Wayland | Wayland | No backend | NOT IMPLEMENTED |
-| Sway / wlroots | Wayland | No backend | NOT IMPLEMENTED |
-| Hyprland | Wayland | No backend | NOT IMPLEMENTED |
-| Wayfire / wlroots | Wayland | No backend | NOT IMPLEMENTED |
-| labwc / wlroots | Wayland | No backend | NOT IMPLEMENTED |
-| COSMIC | Wayland | No backend | NOT IMPLEMENTED |
-| Generic/other compositor | Wayland | No backend | NOT IMPLEMENTED |
+| Desktops | Session | WM | Compositor | Selected backend | Result | Comments |
+|---|---|---|---|---|---|---|
+| KDE Plasma | Wayland | KWin | KWin | `KWinWindowBackend` | PASS | Uses the KWin script and D-Bus integration. |
+| KDE Plasma | X11 | KWin | KWin | `KWinX11WindowBackend` | PASS | Uses native X11/EWMH window integration. |
+| XFCE | X11 | xfwm4 | xfwm4 | `Xfwm4WindowBackend` | PASS | Uses the desktop-specific X11 backend. |
+| MATE | X11 | Marco or Metacity | Marco or Metacity | `MarcoWindowBackend` | PASS | Marco and Metacity share this X11 backend. |
+| Cinnamon | X11 | Muffin | Muffin | `MuffinWindowBackend` | PASS | Uses the desktop-specific X11 backend. |
+| GNOME | X11 | Mutter / GNOME Shell | Mutter | `GnomeWaylandWindowBackend` | PASS | Uses the GNOME Shell extension bridge. |
+| GNOME | Wayland | Mutter / GNOME Shell | Mutter | `GnomeWaylandWindowBackend` | PASS | Uses the GNOME Shell extension bridge. |
+| LXDE | X11 | Openbox | compton or picom | `OpenboxWindowBackend` | PASS | A compositor is required for complete window previews. |
+| LXQt | X11 | Openbox | compton or picom | `OpenboxWindowBackend` | PENDING | Implemented; real-session verification remains. |
+| Other EWMH desktops | X11 | Other EWMH WM | Any or none | `EwmhFallbackWindowBackend` | PASS | Generic EWMH-compatible fallback. |
+| XFCE | Wayland | N/A | Varies | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
+| Sway | Wayland | N/A | Sway / wlroots | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
+| Hyprland | Wayland | N/A | Hyprland | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
+| Wayfire | Wayland | N/A | Wayfire / wlroots | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
+| labwc | Wayland | N/A | labwc / wlroots | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
+| COSMIC | Wayland | N/A | COSMIC compositor | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
+| Generic or other desktop | Wayland | N/A | Other Wayland compositor | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
 
 Important current-code details:
 
-- MATE/Marco, Cinnamon/Muffin, GNOME/Mutter, and Openbox have separate X11
-  backends.
+- KWin, xfwm4, Marco/Metacity, Muffin, Mutter, and Openbox have separate X11
+  backends. GNOME Shell sessions use `GnomeWaylandWindowBackend`; the X11
+  `MutterWindowBackend` is selected only when Mutter is detected outside a
+  GNOME Shell desktop identity.
 - Openbox window previews require an X11 compositor such as `compton` or
   `picom`. Without one, DockLight continues running, sets `display_preview`
   to `false`, and displays a warning.
-- KWin X11 currently deliberately selects `EwmhFallbackWindowBackend`, even
-  though a `KWinX11WindowBackend` class exists.
-- KDE Plasma/KWin is currently the only enabled Wayland environment.
-- Every non-KDE Wayland session exits window-integration startup without
-  creating a backend.
+- KWin on X11 selects `KWinX11WindowBackend`; unknown EWMH-compatible window
+  managers select `EwmhFallbackWindowBackend`.
+- KDE Plasma/KWin and GNOME Shell are the enabled Wayland environments.
+- Other Wayland sessions exit window-integration startup without creating a
+  backend.
 
 **Project status:** Feature complete. Development now focuses on maintenance,
 bug fixes, compatibility, and translations.

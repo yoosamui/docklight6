@@ -239,6 +239,8 @@ void DockSettingsDialog::show(
         _("Alignment"));
     Gtk::Label autohide_label(
         _("Autohide"));
+    Gtk::Label autohide_hide_delay_label(
+        _("Autohide Delay (ms)"));
 
     const std::vector<Gtk::Label *>
         labels = {
@@ -261,7 +263,8 @@ void DockSettingsDialog::show(
             &rounded_corners_label,
             &corner_radius_label,
             &alignment_label,
-            &autohide_label};
+            &autohide_label,
+            &autohide_hide_delay_label};
 
     for (auto *field_label : labels)
     {
@@ -583,6 +586,24 @@ void DockSettingsDialog::show(
         _("Delay before a window preview appears, "
           "from 0 to 5000 milliseconds"));
 
+    auto autohide_hide_delay_adjustment =
+        Gtk::Adjustment::create(
+            current.settings
+                .autohide_hide_delay(),
+            0.0,
+            5000.0,
+            10.0,
+            100.0);
+
+    Gtk::SpinButton autohide_hide_delay_spin(
+        autohide_hide_delay_adjustment,
+        1.0,
+        0);
+    autohide_hide_delay_spin.set_numeric(true);
+    autohide_hide_delay_spin.set_tooltip_text(
+        _("Delay before the dock hides, "
+          "from 0 to 5000 milliseconds"));
+
     Gtk::Box location_choices(
         Gtk::ORIENTATION_HORIZONTAL,
         6);
@@ -780,7 +801,8 @@ void DockSettingsDialog::show(
             &rounded_corners,
             &corner_radius_spin,
             &alignment_choices,
-            &autohide_choices};
+            &autohide_choices,
+            &autohide_hide_delay_spin};
 
     for (auto *field : fields)
     {
@@ -1044,6 +1066,18 @@ void DockSettingsDialog::show(
         autohide_choices,
         1,
         19,
+        1,
+        1);
+    grid.attach(
+        autohide_hide_delay_label,
+        0,
+        20,
+        1,
+        1);
+    grid.attach(
+        autohide_hide_delay_spin,
+        1,
+        20,
         1,
         1);
 
@@ -1496,6 +1530,20 @@ void DockSettingsDialog::show(
                     "preview_show_delay",
                     std::to_string(
                         preview_show_delay_spin
+                            .get_value_as_int()));
+            }));
+
+    settings_connections.push_back(
+        autohide_hide_delay_spin
+            .signal_value_changed()
+            .connect(
+            [&configuration,
+             &autohide_hide_delay_spin]()
+            {
+                configuration.save_setting(
+                    "autohide_hide_delay",
+                    std::to_string(
+                        autohide_hide_delay_spin
                             .get_value_as_int()));
             }));
 

@@ -45,6 +45,7 @@
 class DockWindowController;
 class DockAutohideController;
 class DockHomeItem;
+struct DockRuntimeInfo;
 class WindowRegistry;
 
 class DockSurfaceBox : public Gtk::Box
@@ -76,7 +77,8 @@ public:
         const DockConfiguration &configuration,
         const Glib::RefPtr<Gdk::Monitor>
             &monitor,
-        WindowRegistry *window_registry);
+        WindowRegistry *window_registry,
+        const DockRuntimeInfo &runtime_info);
     ~DockWindow() override;
     void apply_configuration(
         const DockConfiguration &configuration);
@@ -130,7 +132,8 @@ private:
     bool apply_dragged_item_order(
         const std::vector<
             DockItem *> &items);
-    void create_dock();
+    void create_dock(
+        const DockRuntimeInfo &runtime_info);
     void apply_dock_layout(
         const DockPlacement &placement,
         const MonitorGeometry &output,
