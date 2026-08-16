@@ -117,6 +117,25 @@ int capture_x_error_handler(
     return 0;
 }
 
+bool x11_compositor_owns_screen(
+    Display *display,
+    Screen *screen)
+{
+    if (!display || !screen)
+        return false;
+
+    const std::string selection_name =
+        "_NET_WM_CM_S" +
+        std::to_string(XScreenNumberOfScreen(screen));
+    const Atom selection = XInternAtom(
+        display,
+        selection_name.c_str(),
+        False);
+
+    return selection != None &&
+           XGetSelectionOwner(display, selection) != None;
+}
+
 struct PixelChannel
 {
     unsigned long mask = 0;
@@ -253,7 +272,19 @@ bool capture_x11_window(
                 display,
                 &event_base,
                 &error_base);
-        if (composite_available)
+        // Xfwm can expose the Composite extension while its compositor is
+        // disabled. NameWindowPixmap may still succeed in that state, but
+        // Firefox PiP can leave the returned pixmap at its first frame. A
+        // guarded native capture was explicitly requested for these mapped
+        // media windows, so prefer the live window drawable when no screen
+        // compositor owns the standard selection.
+        const bool prefer_native_drawable =
+            completion.x11_native_capture &&
+            !x11_compositor_owns_screen(
+                display,
+                attributes.screen);
+        if (composite_available &&
+            !prefer_native_drawable)
         {
             pixmap = XCompositeNameWindowPixmap(
                 display,
@@ -344,6 +375,7 @@ bool capture_x11_window(
         int render_event_base = 0;
         int render_error_base = 0;
         if (drawable_valid &&
+            !prefer_native_drawable &&
             (!completion.x11_native_capture ||
              completion.x11_strict_composite) &&
             completion.target_width > 0 &&

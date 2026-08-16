@@ -1224,6 +1224,8 @@ void DockPreviewWindow::prime_thumbnail_cache(
             uses_kde_session();
         const bool mapped_cache_session =
             uses_mapped_thumbnail_cache();
+        std::set<WindowId>
+            application_auxiliary_window_ids;
         if (uses_redirected_thumbnail_capture())
         {
             std::vector<WindowId> redirected_windows;
@@ -1248,6 +1250,12 @@ void DockPreviewWindow::prime_thumbnail_cache(
         {
             if (!entry.id.empty())
             {
+                if (entry.application_auxiliary)
+                {
+                    application_auxiliary_window_ids.insert(
+                        entry.id);
+                }
+
                 known_window_ids.insert(entry.id);
 
                 const auto visible_target =
@@ -1403,6 +1411,41 @@ void DockPreviewWindow::prime_thumbnail_cache(
         m_thumbnail_cache_active =
             std::move(active_window_ids);
 
+        // PiP and similar auxiliaries can be continuously animated. Requiring
+        // two identical post-map samples can therefore leave them in the
+        // Xfwm settle quarantine indefinitely and prevent the live refresh
+        // path from starting. Their live capture is already restricted to a
+        // mapped, recognized application auxiliary and uses strict identity
+        // validation, so remove any stale settle state immediately.
+        for (const auto &window_id :
+             application_auxiliary_window_ids)
+        {
+            const auto delay =
+                m_thumbnail_cache_settle_delays.find(
+                    window_id);
+            if (delay !=
+                m_thumbnail_cache_settle_delays.end())
+            {
+                delay->second.disconnect();
+                m_thumbnail_cache_settle_delays.erase(
+                    delay);
+            }
+
+            m_thumbnail_cache_settle_epochs.erase(
+                window_id);
+            m_thumbnail_candidate_signatures.erase(
+                window_id);
+
+            const auto retry =
+                m_thumbnail_cache_retries.find(
+                    window_id);
+            if (retry != m_thumbnail_cache_retries.end())
+            {
+                retry->second.disconnect();
+                m_thumbnail_cache_retries.erase(retry);
+            }
+        }
+
         // A newly redirected or mapped client can expose a named XComposite
         // pixmap before it has finished repainting. Quarantine newly eligible
         // windows until that transition settles, then require two matching
@@ -1412,7 +1455,9 @@ void DockPreviewWindow::prime_thumbnail_cache(
             for (const auto &window_id :
                  m_thumbnail_cache_eligible)
             {
-                if (previously_eligible.count(window_id) != 0 ||
+                if (application_auxiliary_window_ids.count(
+                        window_id) != 0 ||
+                    previously_eligible.count(window_id) != 0 ||
                     m_thumbnail_cache_settle_epochs.count(
                         window_id) != 0)
                 {
