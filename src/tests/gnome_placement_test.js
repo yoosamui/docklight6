@@ -22,6 +22,9 @@ const autohideControllerPath = path.resolve(
 const dockWindowControllerPath = path.resolve(
     __dirname,
     "../dock/dock_window_controller.cpp");
+const dockWindowPath = path.resolve(
+    __dirname,
+    "../dock/dock_window.cpp");
 const dockItemPath = path.resolve(
     __dirname,
     "../dock/dock_item.cpp");
@@ -51,6 +54,8 @@ const autohideControllerSource = fs.readFileSync(
     autohideControllerPath, "utf8");
 const dockWindowControllerSource = fs.readFileSync(
     dockWindowControllerPath, "utf8");
+const dockWindowSource = fs.readFileSync(
+    dockWindowPath, "utf8");
 const dockItemSource = fs.readFileSync(
     dockItemPath, "utf8");
 const registryChangedHandler = dockWindowControllerSource.match(
@@ -279,6 +284,10 @@ assert.match(
     dockWindowControllerSource,
     /GDK_IS_X11_DISPLAY[\s\S]*?capture_x11_base_workarea[\s\S]*?m_x11_base_workarea/,
     "X11 layout must not feed Docklight's own strut back into its edge margin");
+assert.match(
+    dockWindowSource,
+    /if \(is_gnome_wayland_session\(\) \|\|[\s\S]*?is_kde_wayland_session\(\) \|\|[\s\S]*?is_cinnamon_x11_session\(\)\)[\s\S]*?x11_scoped_monitor_workarea/,
+    "Cinnamon X11 must preserve Muffin's monitor-scoped GTK panel work area");
 assert.match(
     dockWindowControllerSource,
     /monitor_geometry_changed[\s\S]*?output_changed[\s\S]*?prepare_x11_monitor_change\(\)[\s\S]*?m_autohide_controller->set_monitor/,

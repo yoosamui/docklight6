@@ -327,11 +327,11 @@ inline MonitorGeometry x11_initial_monitor_workarea(
     return {left, top, right - left, bottom - top};
 }
 
-// Wayland compositors expose a monitor-scoped work area through GDK even when
-// DockLight is an XWayland client. Native shell panels are not X11 dock
-// clients, so this value is the only XWayland fallback for their reserved edge
-// on a multi-monitor session.
-inline MonitorGeometry x11_wayland_monitor_workarea(
+// Some compositors expose an authoritative monitor-scoped work area through
+// GDK. This includes Wayland compositors serving an XWayland client and
+// Cinnamon/Muffin publishing _GTK_WORKAREAS_Dn on X11. Native shell panels are
+// not X11 dock clients, so preserve this value on a multi-monitor session.
+inline MonitorGeometry x11_scoped_monitor_workarea(
     const MonitorGeometry &output,
     const MonitorGeometry &monitor_workarea)
 {

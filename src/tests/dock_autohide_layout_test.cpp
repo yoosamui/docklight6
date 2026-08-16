@@ -82,7 +82,7 @@ int main()
     // dock clients. Preserve their monitor-scoped GDK work area on XWayland
     // instead of replacing it merely because two monitors exist.
     const auto gnome_xwayland_workarea =
-        x11_wayland_monitor_workarea(
+        x11_scoped_monitor_workarea(
             {0, 0, 2560, 1440},
             {0, 29, 2560, 1411});
     assert(gnome_xwayland_workarea.x == 0);
@@ -91,13 +91,34 @@ int main()
     assert(gnome_xwayland_workarea.height == 1411);
 
     const auto plasma_xwayland_workarea =
-        x11_wayland_monitor_workarea(
+        x11_scoped_monitor_workarea(
             {0, 0, 2560, 1440},
             {0, 44, 2560, 1396});
     assert(plasma_xwayland_workarea.x == 0);
     assert(plasma_xwayland_workarea.y == 44);
     assert(plasma_xwayland_workarea.width == 2560);
     assert(plasma_xwayland_workarea.height == 1396);
+
+    // Muffin publishes one root-global work area on X11, but also exposes
+    // correct monitor-scoped GTK work areas. The primary Cinnamon panel must
+    // be retained without incorrectly applying it to the secondary output.
+    const auto cinnamon_primary_workarea =
+        x11_scoped_monitor_workarea(
+            {0, 0, 2560, 1440},
+            {0, 40, 2560, 1400});
+    assert(cinnamon_primary_workarea.x == 0);
+    assert(cinnamon_primary_workarea.y == 40);
+    assert(cinnamon_primary_workarea.width == 2560);
+    assert(cinnamon_primary_workarea.height == 1400);
+
+    const auto cinnamon_secondary_workarea =
+        x11_scoped_monitor_workarea(
+            {2560, 0, 1920, 1080},
+            {2560, 0, 1920, 1080});
+    assert(cinnamon_secondary_workarea.x == 2560);
+    assert(cinnamon_secondary_workarea.y == 0);
+    assert(cinnamon_secondary_workarea.width == 1920);
+    assert(cinnamon_secondary_workarea.height == 1080);
 
     request.location = DockLocation::bottom;
     request.alignment = DockAlignment::center;

@@ -108,6 +108,19 @@ bool is_kde_wayland_session()
                 "true"));
 }
 
+bool is_cinnamon_x11_session()
+{
+    return environment_contains(
+               "XDG_SESSION_TYPE",
+               "x11") &&
+           (environment_contains(
+                "XDG_CURRENT_DESKTOP",
+                "cinnamon") ||
+            environment_contains(
+                "XDG_SESSION_DESKTOP",
+                "cinnamon"));
+}
+
 }
 
 DockSurfaceBox::DockSurfaceBox()
@@ -1242,15 +1255,18 @@ void DockWindow::capture_x11_base_workarea(
             static_cast<int>(workareas[offset + 3])};
     }
 
-    // Under GNOME or KDE Wayland, the compositor's GDK monitor work area is
-    // authoritative. Native shell panels are not represented by X11 strut
+    // Under GNOME/KDE Wayland and Cinnamon X11, the compositor's GDK monitor
+    // work area is authoritative. Their native shell panels are not X11 dock
     // clients, while root-global _NET_WORKAREA cannot identify which monitor
-    // owns a panel. Dropping the GDK inset puts a top dock underneath it.
+    // owns a panel. Cinnamon exposes the required per-monitor rectangles via
+    // _GTK_WORKAREAS_Dn; dropping that GDK inset on a multi-monitor desktop
+    // puts a top dock underneath the panel.
     if (is_gnome_wayland_session() ||
-        is_kde_wayland_session())
+        is_kde_wayland_session() ||
+        is_cinnamon_x11_session())
     {
         m_x11_base_workarea =
-            x11_wayland_monitor_workarea(
+            x11_scoped_monitor_workarea(
                 output,
                 fallback);
     }
