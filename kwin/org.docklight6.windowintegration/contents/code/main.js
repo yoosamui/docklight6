@@ -20,6 +20,7 @@
     const trackedWindows = {};
     const workAreaWindows = {};
     let dockSurface = null;
+    let lastPublishedDockPointerInside = null;
 
     function windowId(window) {
         if (!window || !window.internalId)
@@ -723,6 +724,52 @@
             handlePublishReply);
     }
 
+    function dockPointerIsInside() {
+        if (!dockSurface ||
+            !isDocklightSurface(dockSurface)) {
+            return false;
+        }
+
+        const position = workspace.cursorPos || {};
+        const geometry =
+            dockSurface.frameGeometry || {};
+        const x = Number(position.x || 0);
+        const y = Number(position.y || 0);
+        const left = Number(geometry.x || 0);
+        const top = Number(geometry.y || 0);
+        const width = Number(geometry.width || 0);
+        const height = Number(geometry.height || 0);
+
+        return width > 0 &&
+            height > 0 &&
+            x >= left &&
+            y >= top &&
+            x < left + width &&
+            y < top + height;
+    }
+
+    function publishDockPointerInside() {
+        if (!connected) {
+            registerIntegration();
+            return;
+        }
+
+        const inside = dockPointerIsInside();
+        if (inside ===
+            lastPublishedDockPointerInside) {
+            return;
+        }
+
+        lastPublishedDockPointerInside = inside;
+        callDBus(
+            SERVICE_NAME,
+            OBJECT_PATH,
+            INTERFACE_NAME,
+            "PublishDockPointerInside",
+            inside,
+            handlePublishReply);
+    }
+
     function connectWorkAreaWindow(window) {
         if (!window ||
             !window.dock ||
@@ -775,6 +822,7 @@
                 if (dockSurface === window) {
                     publishDockSurfaceGeometry();
                     publishDockWorkAreaGeometry();
+                    publishDockPointerInside();
                 }
             });
 
@@ -1112,6 +1160,7 @@
 
         publishDockSurfaceGeometry();
         publishDockWorkAreaGeometry();
+        publishDockPointerInside();
     }
 
     function registerIntegration() {
@@ -1136,6 +1185,7 @@
                 }
 
                 revision = 0;
+                lastPublishedDockPointerInside = null;
                 waitForCommand();
                 publishSnapshot();
                 publishCurrentDesktop();
@@ -1205,8 +1255,10 @@
                 handlePublishReply);
         }
 
-        if (wasDockSurface)
+        if (wasDockSurface) {
             publishDockSurfaceGeometry();
+            publishDockPointerInside();
+        }
 
         if (wasDockSurface ||
             wasWorkAreaWindow) {
@@ -1241,6 +1293,9 @@
     connectSignal(
         workspace.currentDesktopChanged,
         publishCurrentDesktop);
+    connectSignal(
+        workspace.cursorPosChanged,
+        publishDockPointerInside);
     connectSignal(
         workspace.screenAdded,
         publishDockWorkAreaGeometry);

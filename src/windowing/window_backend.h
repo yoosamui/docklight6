@@ -56,6 +56,7 @@ struct WindowBackendCapabilities
     bool provides_icons = false;
     bool accepts_icon_geometry = false;
     bool provides_dock_reveal_trigger = false;
+    bool provides_dock_pointer_tracking = false;
     WindowThumbnailPolicy thumbnail_policy =
         WindowThumbnailPolicy::capture_on_demand;
     bool thumbnails_require_compositor = false;

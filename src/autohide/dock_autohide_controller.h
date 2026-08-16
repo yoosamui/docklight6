@@ -56,7 +56,7 @@ public:
     void finish_drag(bool pointer_inside);
     void refresh_mapped_surface();
     void request_reveal();
-    void set_shell_pointer_inside(bool inside);
+    void set_backend_pointer_inside(bool inside);
     void finish_shell_animation(bool hidden);
 
 private:
@@ -81,6 +81,7 @@ private:
     bool pointer_inside() const;
     bool has_shell_reveal_trigger() const;
     bool uses_shell_reveal_trigger() const;
+    bool uses_backend_pointer_tracking() const;
 
 private:
     DockWindow &m_window;
@@ -129,6 +130,7 @@ private:
     bool m_animation_scale_anchor_right = true;
     bool m_pointer_inside = false;
     bool m_shell_pointer_inside = false;
+    bool m_backend_pointer_inside = false;
     bool m_suppress_next_map_hide = false;
     bool m_pending_x11_reveal_animation = false;
     ShellDockState m_shell_state = ShellDockState::visible;

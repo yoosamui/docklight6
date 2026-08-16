@@ -430,7 +430,7 @@ void DockWindowController::initialize()
                     [this](bool inside)
                     {
                         m_autohide_controller
-                            ->set_shell_pointer_inside(inside);
+                            ->set_backend_pointer_inside(inside);
                     });
 
         m_preview_pointer_inside_changed =

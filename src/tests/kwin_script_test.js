@@ -177,6 +177,10 @@ const workspace = {
         x11DesktopNumber: 1
     },
     currentActivity: "activity,two",
+    cursorPos: {
+        x: 400,
+        y: 300
+    },
     clientArea(option, window) {
         assert.strictEqual(
             option,
@@ -191,6 +195,8 @@ const workspace = {
     windowRemoved: new Signal(),
     windowActivated: new Signal(),
     currentDesktopChanged:
+        new Signal(),
+    cursorPosChanged:
         new Signal(),
     activatedWindow: null,
     raisedWindow: null,
@@ -357,6 +363,12 @@ const dockWorkAreaGeometry =
             call.methodName ===
             "PublishDockWorkAreaGeometry");
 
+const initialDockPointerState =
+    calls.find(
+        call =>
+            call.methodName ===
+            "PublishDockPointerInside");
+
 assert(beginSnapshot);
 assert.strictEqual(
     stagedWindows.length,
@@ -364,6 +376,10 @@ assert.strictEqual(
 assert(commitSnapshot);
 assert(dockSurfaceGeometry);
 assert(dockWorkAreaGeometry);
+assert(initialDockPointerState);
+assert.deepStrictEqual(
+    initialDockPointerState.arguments,
+    [true]);
 assert.deepStrictEqual(
     dockSurfaceGeometry.arguments,
     [
@@ -382,6 +398,24 @@ assert.deepStrictEqual(
         1920,
         1028
     ]);
+
+workspace.cursorPos = {
+    x: 1800,
+    y: 900
+};
+workspace.cursorPosChanged.emit();
+
+const outsideDockPointerState =
+    calls
+        .filter(
+            call =>
+                call.methodName ===
+                "PublishDockPointerInside")
+        .at(-1);
+
+assert.deepStrictEqual(
+    outsideDockPointerState.arguments,
+    [false]);
 
 // A non-autohiding Docklight contributes its own far edge to MaximizeArea.
 // Remove that self-reservation before rebuilding the Plasma-panel-only area,

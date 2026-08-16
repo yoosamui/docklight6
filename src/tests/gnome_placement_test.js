@@ -381,12 +381,16 @@ assert.match(
     "placement completion must not reveal a dock that autohid while placement settled");
 assert.match(
     autohideControllerSource,
-    /set_shell_pointer_inside\([\s\S]*?m_shell_pointer_inside = inside[\s\S]*?ShellDockState::hiding[\s\S]*?reveal\(\)/,
+    /set_backend_pointer_inside\([\s\S]*?uses_shell_reveal_trigger\(\)[\s\S]*?m_shell_pointer_inside = inside[\s\S]*?ShellDockState::hiding[\s\S]*?reveal\(\)/,
     "authoritative Shell pointer entry must reverse an in-progress hide");
 assert.match(
     autohideControllerSource,
-    /pointer_inside\(\) const[\s\S]*?uses_shell_reveal_trigger\(\)[\s\S]*?\? m_shell_pointer_inside[\s\S]*?: m_pointer_inside/,
-    "Shell pointer ownership must replace stale GTK crossing state");
+    /pointer_inside\(\) const[\s\S]*?uses_shell_reveal_trigger\(\)[\s\S]*?return m_shell_pointer_inside[\s\S]*?uses_backend_pointer_tracking\(\)[\s\S]*?return m_backend_pointer_inside[\s\S]*?return m_pointer_inside/,
+    "Shell/backend pointer ownership must replace stale GTK crossing state");
+assert.match(
+    autohideControllerSource,
+    /set_backend_pointer_inside\([\s\S]*?uses_backend_pointer_tracking\(\)[\s\S]*?m_backend_pointer_inside = inside[\s\S]*?if \(m_hidden\)[\s\S]*?cancel_hide\(\)[\s\S]*?schedule_hide\(false\)/,
+    "authoritative backend pointer exit must schedule an XWayland hide");
 assert.match(
     autohideControllerSource,
     /reveal\(\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(false\);/,

@@ -355,22 +355,39 @@ void DockAutohideController::request_reveal()
     reveal();
 }
 
-void DockAutohideController::set_shell_pointer_inside(
+void DockAutohideController::set_backend_pointer_inside(
     bool inside)
 {
-    if (!uses_shell_reveal_trigger())
-        return;
-
-    m_shell_pointer_inside = inside;
-    if (inside)
+    if (uses_shell_reveal_trigger())
     {
-        cancel_hide();
-        if (m_shell_state == ShellDockState::hiding)
-            reveal();
+        m_shell_pointer_inside = inside;
+        if (inside)
+        {
+            cancel_hide();
+            if (m_shell_state == ShellDockState::hiding)
+                reveal();
+            return;
+        }
+
+        if (m_shell_state == ShellDockState::visible)
+            schedule_hide(false);
         return;
     }
 
-    if (m_shell_state == ShellDockState::visible)
+    if (!uses_backend_pointer_tracking())
+        return;
+
+    // KWin's workspace.cursorPos is authoritative under Wayland. The
+    // XWayland root cursor can remain at its last X surface indefinitely,
+    // making an absent cursor look as if it still hovered the dock.
+    m_backend_pointer_inside = inside;
+
+    if (m_hidden)
+        return;
+
+    if (inside)
+        cancel_hide();
+    else
         schedule_hide(false);
 }
 
@@ -423,6 +440,7 @@ void DockAutohideController::schedule_hide(
     // intellihide transition.
     if (refresh_pointer &&
         !uses_shell_reveal_trigger() &&
+        !uses_backend_pointer_tracking() &&
         m_window.get_mapped())
     {
         m_pointer_inside =
@@ -888,6 +906,7 @@ void DockAutohideController::hide_now(
 {
     if (refresh_pointer &&
         !uses_shell_reveal_trigger() &&
+        !uses_backend_pointer_tracking() &&
         m_window.get_mapped())
     {
         m_pointer_inside =
@@ -1021,9 +1040,13 @@ bool DockAutohideController::can_hide() const
 
 bool DockAutohideController::pointer_inside() const
 {
-    return uses_shell_reveal_trigger()
-        ? m_shell_pointer_inside
-        : m_pointer_inside;
+    if (uses_shell_reveal_trigger())
+        return m_shell_pointer_inside;
+
+    if (uses_backend_pointer_tracking())
+        return m_backend_pointer_inside;
+
+    return m_pointer_inside;
 }
 
 bool DockAutohideController::
@@ -1042,4 +1065,14 @@ bool DockAutohideController::uses_shell_reveal_trigger() const
            m_window.m_window_registry
                ->dock_surface_geometry()
                .has_value();
+}
+
+bool DockAutohideController::
+    uses_backend_pointer_tracking() const
+{
+    return m_window.m_window_registry &&
+           m_window.m_window_registry->connected() &&
+           m_window.m_window_registry
+               ->capabilities()
+               .provides_dock_pointer_tracking;
 }

@@ -162,6 +162,8 @@ void verifies_registration_and_snapshot()
                .provides_stacking_order);
     assert(capabilities
                .provides_frame_geometry);
+    assert(capabilities
+               .provides_dock_pointer_tracking);
 }
 
 void verifies_window_commands()
