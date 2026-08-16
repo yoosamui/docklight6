@@ -63,6 +63,8 @@ public:
     active_window() const;
     std::optional<WindowIconGeometry>
     dock_surface_geometry() const;
+    std::optional<WindowIconGeometry>
+    dock_workarea_geometry() const;
     void set_dock_placement_geometry(
         const std::optional<WindowIconGeometry>
             &geometry);
@@ -107,6 +109,8 @@ public:
     signal_connection_changed();
     sigc::signal<void> &
     signal_dock_surface_geometry_changed();
+    sigc::signal<void> &
+    signal_dock_workarea_geometry_changed();
     sigc::signal<void> &
     signal_window_geometry_changed();
     sigc::signal<void> &
@@ -185,6 +189,8 @@ private:
         m_signal_connection_changed;
     sigc::signal<void>
         m_signal_dock_surface_geometry_changed;
+    sigc::signal<void>
+        m_signal_dock_workarea_geometry_changed;
     sigc::signal<void>
         m_signal_window_geometry_changed;
     sigc::signal<void>

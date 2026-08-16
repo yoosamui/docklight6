@@ -228,6 +228,16 @@ void WindowRegistry::start()
 
     m_connections.push_back(
         m_backend
+            .signal_dock_workarea_geometry_changed()
+            .connect(
+                [this]()
+                {
+                    m_signal_dock_workarea_geometry_changed
+                        .emit();
+                }));
+
+    m_connections.push_back(
+        m_backend
             .signal_dock_reveal_requested()
             .connect(
                 [this]()
@@ -375,6 +385,12 @@ std::optional<WindowIconGeometry>
 WindowRegistry::dock_surface_geometry() const
 {
     return m_backend.dock_surface_geometry();
+}
+
+std::optional<WindowIconGeometry>
+WindowRegistry::dock_workarea_geometry() const
+{
+    return m_backend.dock_workarea_geometry();
 }
 
 void WindowRegistry::set_dock_placement_geometry(
@@ -651,6 +667,13 @@ WindowRegistry::
     signal_dock_surface_geometry_changed()
 {
     return m_signal_dock_surface_geometry_changed;
+}
+
+sigc::signal<void> &
+WindowRegistry::
+    signal_dock_workarea_geometry_changed()
+{
+    return m_signal_dock_workarea_geometry_changed;
 }
 
 sigc::signal<void> &

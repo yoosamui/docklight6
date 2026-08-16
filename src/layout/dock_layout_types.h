@@ -327,10 +327,11 @@ inline MonitorGeometry x11_initial_monitor_workarea(
     return {left, top, right - left, bottom - top};
 }
 
-// Mutter exposes a monitor-scoped work area through GDK even when DockLight
-// is an XWayland client. GNOME Shell panels are not X11 dock clients, so this
-// value is the only source for their reserved edge on a multi-monitor session.
-inline MonitorGeometry x11_gnome_monitor_workarea(
+// Wayland compositors expose a monitor-scoped work area through GDK even when
+// DockLight is an XWayland client. Native shell panels are not X11 dock
+// clients, so this value is the only XWayland fallback for their reserved edge
+// on a multi-monitor session.
+inline MonitorGeometry x11_wayland_monitor_workarea(
     const MonitorGeometry &output,
     const MonitorGeometry &monitor_workarea)
 {

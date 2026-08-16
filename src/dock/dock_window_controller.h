@@ -207,6 +207,8 @@ private:
     sigc::connection
         m_dock_surface_geometry_changed;
     sigc::connection
+        m_dock_workarea_geometry_changed;
+    sigc::connection
         m_dock_reveal_requested;
     sigc::connection
         m_dock_pointer_inside_changed;

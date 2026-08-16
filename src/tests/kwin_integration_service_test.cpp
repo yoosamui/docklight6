@@ -516,9 +516,29 @@ void verifies_dbus_state_transport()
     assert(accepted(
         call_method(
             client,
+            "PublishDockWorkAreaGeometry",
+            g_variant_new(
+                "(siiii)",
+                "12",
+                0,
+                44,
+                2560,
+                1396))));
+
+    const std::optional<WindowIconGeometry>
+        expected_workarea_geometry{
+            {0, 44, 2560, 1396}};
+
+    assert(
+        backend.dock_workarea_geometry() ==
+        expected_workarea_geometry);
+
+    assert(accepted(
+        call_method(
+            client,
             "PublishWindow",
             window_parameters(
-                12,
+                13,
                 "Downloads"))));
 
     assert(backend.windows()[0].caption ==
@@ -529,7 +549,7 @@ void verifies_dbus_state_transport()
             client,
             "PublishWindow",
             window_parameters(
-                12,
+                13,
                 "Stale"))));
 
     assert(accepted(
@@ -538,7 +558,7 @@ void verifies_dbus_state_transport()
             "PublishCurrentDesktop",
             g_variant_new(
                 "(ssi)",
-                "13",
+                "14",
                 "desktop-1",
                 2))));
     assert(backend.windows()[0]

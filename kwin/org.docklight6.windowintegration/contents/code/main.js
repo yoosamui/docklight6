@@ -7,7 +7,7 @@
         "/org/docklight6/WindowIntegration";
     const INTERFACE_NAME =
         "org.docklight6.WindowIntegration1";
-    const PROTOCOL_VERSION = "8";
+    const PROTOCOL_VERSION = "9";
 
     let connected = false;
     let registering = false;
@@ -18,6 +18,7 @@
     let lastPublishedStackingOrder = "";
 
     const trackedWindows = {};
+    const workAreaWindows = {};
     let dockSurface = null;
 
     function windowId(window) {
@@ -439,6 +440,323 @@
             handlePublishReply);
     }
 
+    function adjustedDockWorkArea(
+        workArea,
+        surface) {
+        if (!surface ||
+            !surface.output ||
+            !surface.output.geometry) {
+            return workArea;
+        }
+
+        const output = surface.output.geometry;
+        const surfaceGeometry =
+            surface.frameGeometry || {};
+        const outputLeft = Number(output.x || 0);
+        const outputTop = Number(output.y || 0);
+        const outputRight =
+            outputLeft + Number(output.width || 0);
+        const outputBottom =
+            outputTop + Number(output.height || 0);
+        let areaLeft = Number(workArea.x || 0);
+        let areaTop = Number(workArea.y || 0);
+        let areaRight =
+            areaLeft + Number(workArea.width || 0);
+        let areaBottom =
+            areaTop + Number(workArea.height || 0);
+        const leftInset = areaLeft - outputLeft;
+        const topInset = areaTop - outputTop;
+        const rightInset = outputRight - areaRight;
+        const bottomInset = outputBottom - areaBottom;
+        const surfaceX = Number(
+            surfaceGeometry.x || 0);
+        const surfaceY = Number(
+            surfaceGeometry.y || 0);
+        const surfaceWidth = Number(
+            surfaceGeometry.width || 0);
+        const surfaceHeight = Number(
+            surfaceGeometry.height || 0);
+        const horizontalSurface =
+            surfaceWidth >= surfaceHeight;
+        let ownTopReservation = false;
+        let ownBottomReservation = false;
+        let ownLeftReservation = false;
+        let ownRightReservation = false;
+
+        // MaximizeArea includes all current struts, including Docklight's
+        // when autohide is disabled. Recognize that contribution from the
+        // surface's far edge and remove it before applying other dock windows;
+        // otherwise each relayout feeds our own margin back into the next one.
+        if (horizontalSurface) {
+            const distanceTop =
+                Math.abs(surfaceY - outputTop);
+            const distanceBottom =
+                Math.abs(
+                    outputBottom -
+                    (surfaceY + surfaceHeight));
+
+            if (distanceTop <= distanceBottom) {
+                const ownInset =
+                    surfaceY + surfaceHeight -
+                    outputTop;
+                ownTopReservation =
+                    ownInset > 0 &&
+                    Math.abs(topInset - ownInset) <= 1;
+                if (ownTopReservation)
+                    areaTop = outputTop;
+            } else {
+                const ownInset =
+                    outputBottom - surfaceY;
+                ownBottomReservation =
+                    ownInset > 0 &&
+                    Math.abs(bottomInset - ownInset) <= 1;
+                if (ownBottomReservation)
+                    areaBottom = outputBottom;
+            }
+        } else {
+            const distanceLeft =
+                Math.abs(surfaceX - outputLeft);
+            const distanceRight =
+                Math.abs(
+                    outputRight -
+                    (surfaceX + surfaceWidth));
+
+            if (distanceLeft <= distanceRight) {
+                const ownInset =
+                    surfaceX + surfaceWidth -
+                    outputLeft;
+                ownLeftReservation =
+                    ownInset > 0 &&
+                    Math.abs(leftInset - ownInset) <= 1;
+                if (ownLeftReservation)
+                    areaLeft = outputLeft;
+            } else {
+                const ownInset =
+                    outputRight - surfaceX;
+                ownRightReservation =
+                    ownInset > 0 &&
+                    Math.abs(rightInset - ownInset) <= 1;
+                if (ownRightReservation)
+                    areaRight = outputRight;
+            }
+        }
+
+        function rangesOverlap(
+            firstStart,
+            firstEnd,
+            secondStart,
+            secondEnd) {
+            return firstStart < secondEnd &&
+                secondStart < firstEnd;
+        }
+
+        for (const window of
+             workspace.stackingOrder || []) {
+            if (!window ||
+                !window.dock ||
+                isDocklightSurface(window)) {
+                continue;
+            }
+
+            const frame = window.frameGeometry || {};
+            const x = Number(frame.x || 0);
+            const y = Number(frame.y || 0);
+            const width = Number(frame.width || 0);
+            const height = Number(frame.height || 0);
+            const right = x + width;
+            const bottom = y + height;
+
+            if (width <= 0 || height <= 0)
+                continue;
+
+            // Plasma can expose a shell-side companion for a layer surface.
+            // It has exactly Docklight's bounds and must not be mistaken for
+            // a desktop panel while refining KWin's reported strut area.
+            if (x === Number(
+                    surfaceGeometry.x || 0) &&
+                y === Number(
+                    surfaceGeometry.y || 0) &&
+                width === Number(
+                    surfaceGeometry.width || 0) &&
+                height === Number(
+                    surfaceGeometry.height || 0)) {
+                continue;
+            }
+
+            if ((topInset > 0 ||
+                 ownTopReservation) &&
+                y <= outputTop &&
+                bottom > outputTop &&
+                rangesOverlap(
+                    x,
+                    right,
+                    outputLeft,
+                    outputRight)) {
+                const outerGap = Math.max(
+                    0,
+                    ownTopReservation
+                        ? 0
+                        : (height - topInset) / 2);
+                areaTop = Math.max(
+                    areaTop,
+                    Math.min(
+                        outputBottom,
+                        Math.round(
+                            bottom - outerGap)));
+            }
+
+            if ((bottomInset > 0 ||
+                 ownBottomReservation) &&
+                bottom >= outputBottom &&
+                y < outputBottom &&
+                rangesOverlap(
+                    x,
+                    right,
+                    outputLeft,
+                    outputRight)) {
+                const outerGap = Math.max(
+                    0,
+                    ownBottomReservation
+                        ? 0
+                        : (height - bottomInset) / 2);
+                areaBottom = Math.min(
+                    areaBottom,
+                    Math.max(
+                        outputTop,
+                        Math.round(
+                            y + outerGap)));
+            }
+
+            if ((leftInset > 0 ||
+                 ownLeftReservation) &&
+                x <= outputLeft &&
+                right > outputLeft &&
+                rangesOverlap(
+                    y,
+                    bottom,
+                    outputTop,
+                    outputBottom)) {
+                const outerGap = Math.max(
+                    0,
+                    ownLeftReservation
+                        ? 0
+                        : (width - leftInset) / 2);
+                areaLeft = Math.max(
+                    areaLeft,
+                    Math.min(
+                        outputRight,
+                        Math.round(
+                            right - outerGap)));
+            }
+
+            if ((rightInset > 0 ||
+                 ownRightReservation) &&
+                right >= outputRight &&
+                x < outputRight &&
+                rangesOverlap(
+                    y,
+                    bottom,
+                    outputTop,
+                    outputBottom)) {
+                const outerGap = Math.max(
+                    0,
+                    ownRightReservation
+                        ? 0
+                        : (width - rightInset) / 2);
+                areaRight = Math.min(
+                    areaRight,
+                    Math.max(
+                        outputLeft,
+                        Math.round(
+                            x + outerGap)));
+            }
+        }
+
+        return {
+            x: areaLeft,
+            y: areaTop,
+            width: Math.max(
+                1,
+                areaRight - areaLeft),
+            height: Math.max(
+                1,
+                areaBottom - areaTop)
+        };
+    }
+
+    function publishDockWorkAreaGeometry() {
+        if (!connected) {
+            registerIntegration();
+            return;
+        }
+
+        let geometry = {};
+
+        if (dockSurface &&
+            isDocklightSurface(dockSurface) &&
+            workspace.clientArea &&
+            typeof workspace.clientArea ===
+                "function") {
+            // The Window overload selects this surface's current output and
+            // retains Plasma panel struts there. adjustedDockWorkArea removes
+            // Docklight's own strut when non-autohide mode has published one.
+            // GTK 3 reports the full output as GdkMonitor::workarea on native
+            // Plasma Wayland, so this is the authoritative per-output inset.
+            geometry =
+                adjustedDockWorkArea(
+                    workspace.clientArea(
+                        KWin.MaximizeArea,
+                        dockSurface) || {},
+                    dockSurface);
+        }
+
+        callDBus(
+            SERVICE_NAME,
+            OBJECT_PATH,
+            INTERFACE_NAME,
+            "PublishDockWorkAreaGeometry",
+            nextRevision(),
+            Number(geometry.x || 0),
+            Number(geometry.y || 0),
+            Number(geometry.width || 0),
+            Number(geometry.height || 0),
+            handlePublishReply);
+    }
+
+    function connectWorkAreaWindow(window) {
+        if (!window ||
+            !window.dock ||
+            isDocklightSurface(window)) {
+            return;
+        }
+
+        const identifier = windowId(window);
+
+        if (!identifier ||
+            workAreaWindows[identifier]) {
+            return;
+        }
+
+        workAreaWindows[identifier] = window;
+
+        const publish = function () {
+            publishDockWorkAreaGeometry();
+        };
+
+        connectSignal(
+            window.frameGeometryChanged,
+            publish);
+        connectSignal(
+            window.outputChanged,
+            publish);
+        connectSignal(
+            window.windowShown,
+            publish);
+        connectSignal(
+            window.windowHidden,
+            publish);
+    }
+
     function connectDockSurface(window) {
         if (!isDocklightSurface(window))
             return false;
@@ -454,8 +772,17 @@
         connectSignal(
             window.frameGeometryChanged,
             function () {
-                if (dockSurface === window)
+                if (dockSurface === window) {
                     publishDockSurfaceGeometry();
+                    publishDockWorkAreaGeometry();
+                }
+            });
+
+        connectSignal(
+            window.outputChanged,
+            function () {
+                if (dockSurface === window)
+                    publishDockWorkAreaGeometry();
             });
 
         return true;
@@ -784,6 +1111,7 @@
             stackingOrder();
 
         publishDockSurfaceGeometry();
+        publishDockWorkAreaGeometry();
     }
 
     function registerIntegration() {
@@ -818,6 +1146,8 @@
         const isDockSurface =
             connectDockSurface(window);
 
+        connectWorkAreaWindow(window);
+
         const trackable =
             connectWindow(window);
 
@@ -842,6 +1172,12 @@
             Boolean(trackedWindows[identifier]);
 
         delete trackedWindows[identifier];
+
+        const wasWorkAreaWindow =
+            Boolean(
+                workAreaWindows[identifier]);
+
+        delete workAreaWindows[identifier];
 
         const wasDockSurface =
             dockSurface === window;
@@ -872,6 +1208,11 @@
         if (wasDockSurface)
             publishDockSurfaceGeometry();
 
+        if (wasDockSurface ||
+            wasWorkAreaWindow) {
+            publishDockWorkAreaGeometry();
+        }
+
         publishStackingOrder();
     }
 
@@ -882,6 +1223,8 @@
          index < initialWindows.length;
          ++index) {
         connectDockSurface(
+            initialWindows[index]);
+        connectWorkAreaWindow(
             initialWindows[index]);
         connectWindow(initialWindows[index]);
     }
@@ -898,6 +1241,12 @@
     connectSignal(
         workspace.currentDesktopChanged,
         publishCurrentDesktop);
+    connectSignal(
+        workspace.screenAdded,
+        publishDockWorkAreaGeometry);
+    connectSignal(
+        workspace.screenRemoved,
+        publishDockWorkAreaGeometry);
 
     registerIntegration();
 }());

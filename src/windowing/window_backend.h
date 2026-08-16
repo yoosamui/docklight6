@@ -84,6 +84,12 @@ public:
     dock_surface_geometry() const = 0;
 
     std::optional<WindowIconGeometry>
+    dock_workarea_geometry() const;
+    void set_dock_workarea_geometry(
+        const std::optional<WindowIconGeometry>
+            &geometry);
+
+    std::optional<WindowIconGeometry>
     dock_placement_geometry() const;
     void set_dock_placement_geometry(
         const std::optional<WindowIconGeometry>
@@ -147,6 +153,8 @@ public:
     signal_snapshot_changed();
     sigc::signal<void> &
     signal_dock_surface_geometry_changed();
+    sigc::signal<void> &
+    signal_dock_workarea_geometry_changed();
     sigc::signal<void> &
     signal_dock_placement_geometry_changed();
     sigc::signal<void> &
@@ -213,6 +221,8 @@ private:
     sigc::signal<void>
         m_signal_dock_surface_geometry_changed;
     sigc::signal<void>
+        m_signal_dock_workarea_geometry_changed;
+    sigc::signal<void>
         m_signal_dock_placement_geometry_changed;
     sigc::signal<void>
         m_signal_dock_reveal_requested;
@@ -230,5 +240,7 @@ private:
         m_signal_dock_animation_completed;
     std::optional<WindowIconGeometry>
         m_dock_placement_geometry;
+    std::optional<WindowIconGeometry>
+        m_dock_workarea_geometry;
     bool m_dock_hidden = false;
 };

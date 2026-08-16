@@ -86,6 +86,28 @@ bool is_gnome_wayland_session()
                 "gnome"));
 }
 
+bool is_kde_wayland_session()
+{
+    return environment_contains(
+               "XDG_SESSION_TYPE",
+               "wayland") &&
+           (environment_contains(
+                "XDG_CURRENT_DESKTOP",
+                "kde") ||
+            environment_contains(
+                "XDG_CURRENT_DESKTOP",
+                "plasma") ||
+            environment_contains(
+                "XDG_SESSION_DESKTOP",
+                "kde") ||
+            environment_contains(
+                "XDG_SESSION_DESKTOP",
+                "plasma") ||
+            environment_contains(
+                "KDE_FULL_SESSION",
+                "true"));
+}
+
 }
 
 DockSurfaceBox::DockSurfaceBox()
@@ -1220,14 +1242,15 @@ void DockWindow::capture_x11_base_workarea(
             static_cast<int>(workareas[offset + 3])};
     }
 
-    // Under GNOME Wayland, Mutter's GDK monitor work area is authoritative.
-    // Its Shell panel is not represented by an X11 strut client, while the
-    // root-global _NET_WORKAREA cannot identify which monitor owns the panel.
-    // Dropping the GDK inset here put a top dock underneath the Shell panel.
-    if (is_gnome_wayland_session())
+    // Under GNOME or KDE Wayland, the compositor's GDK monitor work area is
+    // authoritative. Native shell panels are not represented by X11 strut
+    // clients, while root-global _NET_WORKAREA cannot identify which monitor
+    // owns a panel. Dropping the GDK inset puts a top dock underneath it.
+    if (is_gnome_wayland_session() ||
+        is_kde_wayland_session())
     {
         m_x11_base_workarea =
-            x11_gnome_monitor_workarea(
+            x11_wayland_monitor_workarea(
                 output,
                 fallback);
     }

@@ -19,25 +19,70 @@ is implemented but still needs real-session verification. `NOT IMPLEMENTED`
 means DockLight can start, but desktop-specific window integration is not
 available.
 
-| Desktops | Session | WM | Compositor | Selected backend | Result | Comments |
-|---|---|---|---|---|---|---|
-| KDE Plasma | Wayland | KWin | KWin | `KWinWindowBackend` | PASS | Uses the KWin script and D-Bus integration. |
-| KDE Plasma | X11 | KWin | KWin | `KWinX11WindowBackend` | PASS | Uses native X11/EWMH window integration. |
-| XFCE | X11 | xfwm4 | xfwm4 | `Xfwm4WindowBackend` | PASS | Uses the desktop-specific X11 backend. |
-| MATE | X11 | Marco or Metacity | Marco or Metacity | `MarcoWindowBackend` | PASS | Marco and Metacity share this X11 backend. |
-| Cinnamon | X11 | Muffin | Muffin | `MuffinWindowBackend` | PASS | Uses the desktop-specific X11 backend. |
-| GNOME | X11 | Mutter / GNOME Shell | Mutter | `GnomeWaylandWindowBackend` | PASS | Uses the GNOME Shell extension bridge. |
-| GNOME | Wayland | Mutter / GNOME Shell | Mutter | `GnomeWaylandWindowBackend` | PASS | Uses the GNOME Shell extension bridge. |
-| LXDE | X11 | Openbox | compton or picom | `OpenboxWindowBackend` | PASS | A compositor is required for complete window previews. |
-| LXQt | X11 | Openbox | compton or picom | `OpenboxWindowBackend` | PENDING | Implemented; real-session verification remains. |
-| Other EWMH desktops | X11 | Other EWMH WM | Any or none | `EwmhFallbackWindowBackend` | PASS | Generic EWMH-compatible fallback. |
-| XFCE | Wayland | N/A | Varies | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
-| Sway | Wayland | N/A | Sway / wlroots | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
-| Hyprland | Wayland | N/A | Hyprland | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
-| Wayfire | Wayland | N/A | Wayfire / wlroots | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
-| labwc | Wayland | N/A | labwc / wlroots | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
-| COSMIC | Wayland | N/A | COSMIC compositor | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
-| Generic or other desktop | Wayland | N/A | Other Wayland compositor | None | NOT IMPLEMENTED | No supported Wayland integration backend. |
+<table>
+  <thead>
+    <tr>
+      <th>Desktops</th>
+      <th>Session</th>
+      <th>WM</th>
+      <th>Compositor</th>
+      <th>Selected backend</th>
+      <th>Result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>KDE Plasma</td><td>Wayland</td><td>KWin</td><td>KWin</td><td><code>KWinWindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Uses the KWin script and D-Bus integration.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>KDE Plasma</td><td>X11</td><td>KWin</td><td>KWin</td><td><code>KWinX11WindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Uses native X11/EWMH window integration.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>XFCE</td><td>X11</td><td>xfwm4</td><td>xfwm4</td><td><code>Xfwm4WindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Uses the desktop-specific X11 backend.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>MATE</td><td>X11</td><td>Marco or Metacity</td><td>Marco or Metacity</td><td><code>MarcoWindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Marco and Metacity share this X11 backend.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>Cinnamon</td><td>X11</td><td>Muffin</td><td>Muffin</td><td><code>MuffinWindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Uses the desktop-specific X11 backend.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>GNOME</td><td>X11</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>GnomeWaylandWindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Uses the GNOME Shell extension bridge.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>GNOME</td><td>Wayland</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>GnomeWaylandWindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Uses the GNOME Shell extension bridge.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>LXDE</td><td>X11</td><td>Openbox</td><td>compton or picom</td><td><code>OpenboxWindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> A compositor is required for complete window previews.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>LXQt</td><td>X11</td><td>Openbox</td><td>compton or picom</td><td><code>OpenboxWindowBackend</code></td><td>PENDING</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Implemented; real-session verification remains.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>Other EWMH desktops</td><td>X11</td><td>Other EWMH WM</td><td>Any or none</td><td><code>EwmhFallbackWindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Generic EWMH-compatible fallback.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>XFCE</td><td>Wayland</td><td>N/A</td><td>Varies</td><td>None</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> No supported Wayland integration backend.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>Sway</td><td>Wayland</td><td>N/A</td><td>Sway / wlroots</td><td>None</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> No supported Wayland integration backend.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>Hyprland</td><td>Wayland</td><td>N/A</td><td>Hyprland</td><td>None</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> No supported Wayland integration backend.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>Wayfire</td><td>Wayland</td><td>N/A</td><td>Wayfire / wlroots</td><td>None</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> No supported Wayland integration backend.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>labwc</td><td>Wayland</td><td>N/A</td><td>labwc / wlroots</td><td>None</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> No supported Wayland integration backend.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>COSMIC</td><td>Wayland</td><td>N/A</td><td>COSMIC compositor</td><td>None</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> No supported Wayland integration backend.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
+    <tr><td>Generic or other desktop</td><td>Wayland</td><td>N/A</td><td>Other Wayland compositor</td><td>None</td><td>NOT IMPLEMENTED</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> No supported Wayland integration backend.</td></tr>
+  </tbody>
+</table>
 
 Important current-code details:
 

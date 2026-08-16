@@ -683,6 +683,24 @@ bool KWinWindowBackend::
     return true;
 }
 
+bool KWinWindowBackend::
+    publish_dock_workarea_geometry(
+        std::uint64_t revision,
+        const std::optional<
+            WindowIconGeometry> &geometry)
+{
+    if (!accepts_incremental_revision(
+            revision))
+    {
+        return false;
+    }
+
+    set_dock_workarea_geometry(geometry);
+    m_last_revision = revision;
+
+    return true;
+}
+
 std::uint64_t
 KWinWindowBackend::last_revision() const
 {
@@ -807,6 +825,7 @@ void KWinWindowBackend::clear_state()
 
     m_active_window.reset();
     m_dock_surface_geometry.reset();
+    set_dock_workarea_geometry(std::nullopt);
     m_staged_revision.reset();
     m_current_desktop_id.clear();
     m_current_desktop_number = 0;

@@ -148,6 +148,14 @@ constexpr char INTROSPECTION_XML[] = // D-Bus interface introspection document
     "      <arg type='i' direction='in' name='height'/>"
     "      <arg type='b' direction='out' name='accepted'/>"
     "    </method>"
+    "    <method name='PublishDockWorkAreaGeometry'>"
+    "      <arg type='s' direction='in' name='revision'/>"
+    "      <arg type='i' direction='in' name='x'/>"
+    "      <arg type='i' direction='in' name='y'/>"
+    "      <arg type='i' direction='in' name='width'/>"
+    "      <arg type='i' direction='in' name='height'/>"
+    "      <arg type='b' direction='out' name='accepted'/>"
+    "    </method>"
     "    <signal name='IconGeometryChanged'>"
     "      <arg type='s' name='internal_id'/>"
     "      <arg type='i' name='x'/>"
@@ -1833,6 +1841,49 @@ void KWinIntegrationService::
                 (empty || valid) &&
                 m_backend
                     .publish_dock_surface_geometry(
+                        revision,
+                        empty
+                            ? std::nullopt
+                            : std::optional<
+                                  WindowIconGeometry>{
+                                  geometry}));
+
+        return;
+    }
+
+    if (std::strcmp(
+            method_name,
+            "PublishDockWorkAreaGeometry") == 0)
+    {
+        const char *revision_text = nullptr;
+        std::uint64_t revision = 0;
+        WindowIconGeometry geometry;
+
+        g_variant_get(
+            parameters,
+            "(&siiii)",
+            &revision_text,
+            &geometry.x,
+            &geometry.y,
+            &geometry.width,
+            &geometry.height);
+
+        const bool empty =
+            geometry.width == 0 &&
+            geometry.height == 0;
+
+        const bool valid =
+            geometry.width > 0 &&
+            geometry.height > 0;
+
+        return_accepted(
+            invocation,
+            KWinProtocolCodec::parse_revision(
+                revision_text,
+                revision) &&
+                (empty || valid) &&
+                m_backend
+                    .publish_dock_workarea_geometry(
                         revision,
                         empty
                             ? std::nullopt

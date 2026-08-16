@@ -130,6 +130,10 @@ public:
         std::uint64_t revision,
         const std::optional<
             WindowIconGeometry> &geometry);
+    bool publish_dock_workarea_geometry(
+        std::uint64_t revision,
+        const std::optional<
+            WindowIconGeometry> &geometry);
 
     std::uint64_t last_revision() const;
 

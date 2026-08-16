@@ -20,6 +20,24 @@
 #include "window_backend.h"
 
 std::optional<WindowIconGeometry>
+WindowBackend::dock_workarea_geometry() const
+{
+    return m_dock_workarea_geometry;
+}
+
+void WindowBackend::set_dock_workarea_geometry(
+    const std::optional<WindowIconGeometry>
+        &geometry)
+{
+    if (m_dock_workarea_geometry == geometry)
+        return;
+
+    m_dock_workarea_geometry = geometry;
+    m_signal_dock_workarea_geometry_changed
+        .emit();
+}
+
+std::optional<WindowIconGeometry>
 WindowBackend::dock_placement_geometry() const
 {
     return m_dock_placement_geometry;
@@ -96,6 +114,13 @@ WindowBackend::
     signal_dock_surface_geometry_changed()
 {
     return m_signal_dock_surface_geometry_changed;
+}
+
+sigc::signal<void> &
+WindowBackend::
+    signal_dock_workarea_geometry_changed()
+{
+    return m_signal_dock_workarea_geometry_changed;
 }
 
 sigc::signal<void> &

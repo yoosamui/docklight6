@@ -59,6 +59,42 @@ bool same_monitor_geometry(
            left.height == right.height;
 }
 
+bool intersect_workarea_with_output(
+    const WindowIconGeometry &reported,
+    const MonitorGeometry &output,
+    MonitorGeometry &workarea)
+{
+    if (reported.width <= 0 ||
+        reported.height <= 0)
+    {
+        return false;
+    }
+
+    const int left =
+        std::max(output.x, reported.x);
+    const int top =
+        std::max(output.y, reported.y);
+    const int right =
+        std::min(
+            output.x + output.width,
+            reported.x + reported.width);
+    const int bottom =
+        std::min(
+            output.y + output.height,
+            reported.y + reported.height);
+
+    if (right <= left || bottom <= top)
+        return false;
+
+    workarea = {
+        left,
+        top,
+        right - left,
+        bottom - top};
+
+    return true;
+}
+
 }
 
 DockWindowController::DockWindowController(
@@ -169,6 +205,7 @@ DockWindowController::~DockWindowController()
     m_window_registry_connection_changed.disconnect();
     m_window_geometry_changed.disconnect();
     m_dock_surface_geometry_changed.disconnect();
+    m_dock_workarea_geometry_changed.disconnect();
     m_dock_reveal_requested.disconnect();
     m_dock_pointer_inside_changed.disconnect();
     m_preview_pointer_inside_changed.disconnect();
@@ -362,6 +399,16 @@ void DockWindowController::initialize()
                         m_autohide_controller->set_mode(
                             m_layout_request.autohide);
                         schedule_icon_geometry_update();
+                    });
+
+        m_dock_workarea_geometry_changed =
+            m_window
+                .m_window_registry
+                ->signal_dock_workarea_geometry_changed()
+                .connect(
+                    [this]()
+                    {
+                        schedule_layout_update();
                     });
 
         m_dock_reveal_requested =
@@ -872,11 +919,11 @@ void DockWindowController::update_dock_layout()
             output_geometry;
     }
 
+    auto display = m_window.get_display();
     // An X11 dock changes _NET_WORKAREA as soon as it publishes its strut.
     // Keep using the panel-only area captured before that first publication;
     // otherwise every work-area notification feeds Docklight's own thickness
     // back into its edge margin and walks the requested position inward.
-    auto display = m_window.get_display();
     const bool x11_dock =
         !m_window.m_uses_layer_shell &&
         display &&
@@ -890,6 +937,31 @@ void DockWindowController::update_dock_layout()
         {
             workarea_geometry =
                 m_window.m_x11_base_workarea;
+        }
+    }
+
+    // GTK 3 has no native Plasma Wayland work-area protocol. In native
+    // Wayland it reports the complete output, while an XWayland client may
+    // only see the panel's reserved content thickness. Apply KWin's
+    // monitor-scoped panel geometry after the X11 base-area capture so that
+    // neither path can overwrite the compositor integration's result.
+    if (m_window.m_window_registry)
+    {
+        const auto reported_workarea =
+            m_window.m_window_registry
+                ->dock_workarea_geometry();
+
+        if (reported_workarea)
+        {
+            MonitorGeometry kwin_workarea;
+            if (intersect_workarea_with_output(
+                    *reported_workarea,
+                    output_geometry,
+                    kwin_workarea))
+            {
+                workarea_geometry =
+                    kwin_workarea;
+            }
         }
     }
 

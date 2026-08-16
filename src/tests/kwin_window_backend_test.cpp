@@ -124,6 +124,32 @@ void verifies_registration_and_snapshot()
                "window-1",
                "window-2"}));
 
+    int workarea_changes = 0;
+    backend
+        .signal_dock_workarea_geometry_changed()
+        .connect(
+            [&workarea_changes]()
+            {
+                ++workarea_changes;
+            });
+
+    assert(backend.publish_dock_workarea_geometry(
+        11,
+        WindowIconGeometry{
+            0,
+            44,
+            2560,
+            1396}));
+    const std::optional<WindowIconGeometry>
+        expected_workarea{
+            {0, 44, 2560, 1396}};
+    assert(backend.dock_workarea_geometry() ==
+           expected_workarea);
+    assert(workarea_changes == 1);
+    assert(!backend.publish_dock_workarea_geometry(
+        11,
+        std::nullopt));
+
     const auto capabilities =
         backend.capabilities();
 

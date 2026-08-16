@@ -110,6 +110,14 @@ const dockWindow =
 
 dockWindow.resourceName = "docklight6";
 dockWindow.skipTaskbar = true;
+dockWindow.output = {
+    geometry: {
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080
+    }
+};
 
 const dockPopup =
     createWindow(
@@ -134,10 +142,34 @@ replacementDockWindow.frameGeometry = {
     width: 600,
     height: 64
 };
+replacementDockWindow.output =
+    dockWindow.output;
+
+const plasmaPanel =
+    createWindow(
+        "plasma-panel",
+        "org.kde.plasmashell");
+
+plasmaPanel.resourceName = "plasmashell";
+plasmaPanel.dock = true;
+plasmaPanel.frameGeometry = {
+    x: 0,
+    y: 0,
+    width: 1920,
+    height: 60
+};
+
+let clientAreaGeometry = {
+    x: 0,
+    y: 44,
+    width: 1920,
+    height: 1036
+};
 
 const workspace = {
     stackingOrder: [
         managedWindow,
+        plasmaPanel,
         dockWindow
     ],
     currentDesktop: {
@@ -145,6 +177,16 @@ const workspace = {
         x11DesktopNumber: 1
     },
     currentActivity: "activity,two",
+    clientArea(option, window) {
+        assert.strictEqual(
+            option,
+            3);
+        assert(
+            window === dockWindow ||
+            window === replacementDockWindow);
+
+        return clientAreaGeometry;
+    },
     windowAdded: new Signal(),
     windowRemoved: new Signal(),
     windowActivated: new Signal(),
@@ -253,6 +295,9 @@ const context = {
     String,
     encodeURIComponent,
     isFinite,
+    KWin: {
+        MaximizeArea: 3
+    },
     callDBus,
     print,
     workspace
@@ -276,11 +321,11 @@ assert.strictEqual(
     "Register");
 assert.deepStrictEqual(
     calls[0].arguments,
-    ["8"]);
+    ["9"]);
 
 calls[0].callback(
     true,
-    "8");
+    "9");
 
 const beginSnapshot =
     calls.find(
@@ -306,12 +351,19 @@ const dockSurfaceGeometry =
             call.methodName ===
             "PublishDockSurfaceGeometry");
 
+const dockWorkAreaGeometry =
+    calls.find(
+        call =>
+            call.methodName ===
+            "PublishDockWorkAreaGeometry");
+
 assert(beginSnapshot);
 assert.strictEqual(
     stagedWindows.length,
     1);
 assert(commitSnapshot);
 assert(dockSurfaceGeometry);
+assert(dockWorkAreaGeometry);
 assert.deepStrictEqual(
     dockSurfaceGeometry.arguments,
     [
@@ -321,6 +373,51 @@ assert.deepStrictEqual(
         800,
         600
     ]);
+assert.deepStrictEqual(
+    dockWorkAreaGeometry.arguments,
+    [
+        "3",
+        0,
+        52,
+        1920,
+        1028
+    ]);
+
+// A non-autohiding Docklight contributes its own far edge to MaximizeArea.
+// Remove that self-reservation before rebuilding the Plasma-panel-only area,
+// or each relayout would move the dock farther inward.
+clientAreaGeometry = {
+    x: 0,
+    y: 620,
+    width: 1920,
+    height: 460
+};
+dockWindow.frameGeometryChanged.emit();
+
+const workAreaWithoutOwnReservation =
+    calls
+        .filter(
+            call =>
+                call.methodName ===
+                "PublishDockWorkAreaGeometry")
+        .at(-1);
+
+assert.deepStrictEqual(
+    workAreaWithoutOwnReservation
+        .arguments.slice(1),
+    [
+        0,
+        60,
+        1920,
+        1020
+    ]);
+
+clientAreaGeometry = {
+    x: 0,
+    y: 44,
+    width: 1920,
+    height: 1036
+};
 
 const vlcWindow =
     createWindow(
