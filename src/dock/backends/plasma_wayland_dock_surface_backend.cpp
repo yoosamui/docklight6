@@ -16,8 +16,92 @@
 
 #include "dock/dock_window.h"
 #include "layout/dock_layout_geometry.h"
+#include "legacy_dock_surface_backend.h"
 
+#include <gdk/gdkwayland.h>
 #include <gtk-layer-shell.h>
+
+#include <algorithm>
+#include <cctype>
+#include <cstdlib>
+#include <memory>
+#include <string>
+
+namespace
+{
+
+bool environment_contains(
+    const char *name,
+    const std::string &needle)
+{
+    const auto value = std::getenv(name);
+    if (!value)
+        return false;
+
+    std::string normalized(value);
+    std::transform(
+        normalized.begin(),
+        normalized.end(),
+        normalized.begin(),
+        [](unsigned char character)
+        {
+            return static_cast<char>(
+                std::tolower(character));
+        });
+
+    return normalized.find(needle) !=
+           std::string::npos;
+}
+
+bool is_kde_wayland_session()
+{
+    return environment_contains(
+               "XDG_SESSION_TYPE",
+               "wayland") &&
+           (environment_contains(
+                "XDG_CURRENT_DESKTOP",
+                "kde") ||
+            environment_contains(
+                "XDG_CURRENT_DESKTOP",
+                "plasma") ||
+            environment_contains(
+                "XDG_SESSION_DESKTOP",
+                "kde") ||
+            environment_contains(
+                "XDG_SESSION_DESKTOP",
+                "plasma") ||
+            environment_contains(
+                "KDE_FULL_SESSION",
+                "true"));
+}
+
+}
+
+std::unique_ptr<IDockSurfaceBackend>
+create_dock_surface_backend(
+    DockWindow &window,
+    const Glib::RefPtr<Gdk::Monitor> &monitor)
+{
+    auto *display = gdk_display_get_default();
+    const bool plasma_wayland_surface =
+        display &&
+        GDK_IS_WAYLAND_DISPLAY(display) &&
+        is_kde_wayland_session() &&
+        gtk_layer_is_supported();
+
+    if (plasma_wayland_surface)
+    {
+        return std::make_unique<
+            PlasmaWaylandDockSurfaceBackend>(
+                window,
+                monitor);
+    }
+
+    return std::make_unique<
+        LegacyDockSurfaceBackend>(
+            window,
+            monitor);
+}
 
 PlasmaWaylandDockSurfaceBackend::
     PlasmaWaylandDockSurfaceBackend(
@@ -72,16 +156,20 @@ PlasmaWaylandDockSurfaceBackend::work_area() const
     return geometry.monitor_geometry(m_monitor);
 }
 
+MonitorGeometry
+PlasmaWaylandDockSurfaceBackend::effective_work_area(
+    const MonitorGeometry &,
+    const MonitorGeometry &work_area)
+{
+    return work_area;
+}
+
 void PlasmaWaylandDockSurfaceBackend::
     apply_dock_placement(
         const DockPlacement &placement,
-        const MonitorGeometry &,
-        const MonitorGeometry &)
+    const MonitorGeometry &,
+    const MonitorGeometry &)
 {
-    m_window.apply_visual_style();
-    m_window.apply_dock_orientation(
-        placement.orientation);
-
     auto *gtk_window =
         GTK_WINDOW(m_window.gobj());
 
@@ -155,4 +243,33 @@ void PlasmaWaylandDockSurfaceBackend::
     gtk_layer_set_exclusive_zone(
         GTK_WINDOW(m_window.gobj()),
         0);
+}
+
+bool PlasmaWaylandDockSurfaceBackend::
+    uses_native_placement() const
+{
+    return true;
+}
+
+bool PlasmaWaylandDockSurfaceBackend::
+    is_native_x11() const
+{
+    return false;
+}
+
+bool PlasmaWaylandDockSurfaceBackend::
+    is_ordinary_wayland() const
+{
+    return false;
+}
+
+bool PlasmaWaylandDockSurfaceBackend::
+    initial_placement_pending() const
+{
+    return false;
+}
+
+void PlasmaWaylandDockSurfaceBackend::
+    complete_initial_placement()
+{
 }

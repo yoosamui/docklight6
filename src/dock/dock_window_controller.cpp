@@ -33,8 +33,6 @@
 #include "windowing/window_icon_geometry.h"
 #include "windowing/window_registry.h"
 
-#include <gdk/gdkwayland.h>
-#include <gdk/gdkx.h>
 #include <gtkmm/settings.h>
 
 #include <algorithm>
@@ -219,11 +217,8 @@ DockWindowController::~DockWindowController()
 
 void DockWindowController::initialize()
 {
-    auto *display = gdk_display_get_default();
     const bool native_x11_window =
-        !m_window.m_uses_layer_shell &&
-        display &&
-        GDK_IS_X11_DISPLAY(display);
+        m_window.surface_is_native_x11();
 
     if (native_x11_window)
     {
@@ -389,11 +384,10 @@ void DockWindowController::initialize()
                         // opacity until Shell confirms its first committed
                         // edge placement. Later geometry publications must
                         // not overwrite Shell's reveal/hide animation frames.
-                        if (m_window.m_initial_gnome_placement_pending)
+                        if (m_window.surface_initial_placement_pending())
                         {
-                            m_window.m_initial_gnome_placement_pending = false;
                             m_gnome_placement_fallback.disconnect();
-                            m_window.set_opacity(1.0);
+                            m_window.complete_surface_initial_placement();
                         }
                         m_autohide_controller->set_mode(
                             m_layout_request.autohide);
@@ -495,17 +489,16 @@ void DockWindowController::initialize()
                     });
     }
 
-    if (m_window.m_initial_gnome_placement_pending)
+    if (m_window.surface_initial_placement_pending())
     {
         m_gnome_placement_fallback =
             Glib::signal_timeout().connect(
                 [this]()
                 {
-                    if (!m_window.m_initial_gnome_placement_pending)
+                    if (!m_window.surface_initial_placement_pending())
                         return false;
 
-                    m_window.m_initial_gnome_placement_pending = false;
-                    m_window.set_opacity(1.0);
+                    m_window.complete_surface_initial_placement();
                     m_autohide_controller->set_mode(
                         m_layout_request.autohide);
                     g_warning(
@@ -575,9 +568,7 @@ void DockWindowController::initialize()
     // position. Reassert the calculated dock coordinates once the X11
     // window is managed; the coalesced update is harmless on layer-shell.
     const bool ordinary_wayland_window =
-        !m_window.m_uses_layer_shell &&
-        display &&
-        GDK_IS_WAYLAND_DISPLAY(display);
+        m_window.surface_is_ordinary_wayland();
 
     if (!ordinary_wayland_window)
     {
@@ -735,7 +726,7 @@ void DockWindowController::apply_configuration(
     {
         // The existing X11 base area may describe a panel which occupied the
         // previous edge. Re-sample dock clients before placing the new edge.
-        m_window.prepare_x11_monitor_change();
+        m_window.prepare_surface_change();
     }
 
     m_settings =
@@ -845,7 +836,7 @@ void DockWindowController::set_monitor(
         // output or a moved/resized selected output. Work-area-only signals
         // do not enter this branch, so DockLight's own strut cannot feed back
         // into its position.
-        m_window.prepare_x11_monitor_change();
+        m_window.prepare_surface_change();
 
         if (monitor_changed)
             m_window.set_surface_monitor(
@@ -912,26 +903,16 @@ void DockWindowController::update_dock_layout()
             output_geometry;
     }
 
-    auto display = m_window.get_display();
     // An X11 dock changes _NET_WORKAREA as soon as it publishes its strut.
     // Keep using the panel-only area captured before that first publication;
     // otherwise every work-area notification feeds Docklight's own thickness
     // back into its edge margin and walks the requested position inward.
     const bool x11_dock =
-        !m_window.m_uses_layer_shell &&
-        display &&
-        GDK_IS_X11_DISPLAY(display->gobj());
-    if (x11_dock)
-    {
-        m_window.capture_x11_base_workarea(
+        m_window.surface_is_native_x11();
+    workarea_geometry =
+        m_window.surface_effective_work_area(
             output_geometry,
             workarea_geometry);
-        if (m_window.m_has_x11_base_workarea)
-        {
-            workarea_geometry =
-                m_window.m_x11_base_workarea;
-        }
-    }
 
     // GTK 3 has no native Plasma Wayland work-area protocol. In native
     // Wayland it reports the complete output, while an XWayland client may
@@ -1049,7 +1030,7 @@ void DockWindowController::update_dock_layout()
     // earlier exclusive zones. Adding the same compositor work-area inset as
     // a margin would count a Plasma panel twice. X11 and ordinary Wayland
     // windows still need explicit output-relative margins.
-    if (!m_window.m_uses_layer_shell)
+    if (!m_window.surface_uses_native_placement())
     {
         m_layout_engine.apply_workarea_insets(
             placement,
@@ -1110,7 +1091,7 @@ void DockWindowController::update_dock_layout()
     schedule_intellihide_update();
 
     if (edge_changed &&
-        m_window.m_uses_layer_shell)
+        m_window.surface_uses_native_placement())
     {
         m_edge_layout_update.disconnect();
 
@@ -1420,13 +1401,7 @@ DockWindowController::dock_screen_position(
     // so its mapped root coordinates can differ from the layer-shell-style
     // position implied by output-edge margins. Auxiliary windows must follow
     // the actual dock surface on every edge.
-    auto *display = gdk_display_get_default();
-    const bool wayland_display =
-        display &&
-        GDK_IS_WAYLAND_DISPLAY(display);
-
-    if (!m_window.m_uses_layer_shell &&
-        !wayland_display)
+    if (m_window.surface_is_native_x11())
     {
         auto gdk_window = m_window.get_window();
         if (gdk_window)

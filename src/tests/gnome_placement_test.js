@@ -280,6 +280,18 @@ assert.match(
     "GNOME preview color updates must not be skipped when the window set is unchanged");
 assert.match(
     previewWindowSource,
+    /if \(!m_uses_layer_shell \|\|[\s\S]*?uses_mapped_thumbnail_cache\(\)\)[\s\S]*?m_thumbnail_cache_eligible/,
+    "mapped-window thumbnail caching must remain active for native layer-shell previews");
+assert.match(
+    previewWindowSource,
+    /!uses_mapped_thumbnail_cache\(\) &&[\s\S]*?m_uses_layer_shell[\s\S]*?m_thumbnail_cache_eligible\.count/,
+    "a minimized native preview must not accept an in-flight compositor transition frame");
+assert.match(
+    previewWindowSource,
+    /validated_capture_session[\s\S]*?uses_settled_thumbnail_capture\(\)[\s\S]*?m_thumbnail_cache_settle_epochs[\s\S]*?THUMBNAIL_RECOVERY_SETTLE_MS/,
+    "a restored native preview must retain its cached frame until compositor effects settle");
+assert.match(
+    previewWindowSource,
     /if \(uses_gnome_live_previews\)[\s\S]*?desired_windows\.insert\(entry\.first\);[\s\S]*?if \(!entry\.second\.minimized/,
     "GNOME live previews must include fully minimized window groups");
 assert.match(
@@ -291,7 +303,7 @@ assert.match(
     /set_dock_placement_geometry[\s\S]*?calculated_dock_screen_position|calculated_dock_screen_position[\s\S]*?set_dock_placement_geometry/,
     "XWayland monitor changes must publish calculated target geometry, not a stale mapped origin");
 assert.match(
-    dockWindowControllerSource,
+    legacySurfaceBackendSource,
     /GDK_IS_X11_DISPLAY[\s\S]*?capture_x11_base_workarea[\s\S]*?m_x11_base_workarea/,
     "X11 layout must not feed Docklight's own strut back into its edge margin");
 assert.match(
@@ -300,20 +312,24 @@ assert.match(
     "KWin reports must not replace the authoritative XWayland work area");
 assert.match(
     dockWindowControllerSource,
-    /if \(!m_window\.m_uses_layer_shell\)[\s\S]*?apply_workarea_insets/,
+    /if \(!m_window\.surface_uses_native_placement\(\)\)[\s\S]*?apply_workarea_insets/,
     "layer-shell placement must not count compositor work-area insets twice");
 assert.match(
-    dockWindowSource,
+    plasmaSurfaceBackendSource,
     /GDK_IS_WAYLAND_DISPLAY[\s\S]*?is_kde_wayland_session\(\)[\s\S]*?gtk_layer_is_supported\(\)[\s\S]*?PlasmaWaylandDockSurfaceBackend/,
     "the Plasma surface backend requires an actual native Wayland display and layer-shell support");
 assert.match(
-    dockWindowSource,
-    /else[\s\S]*?LegacyDockSurfaceBackend/,
+    plasmaSurfaceBackendSource,
+    /return std::make_unique<[\s\S]*?LegacyDockSurfaceBackend/,
     "X11 and ordinary Wayland must remain on the legacy surface backend");
 assert.doesNotMatch(
     dockWindowSource,
     /gtk_layer_(?:init_for_window|set_monitor|set_anchor|set_margin|set_exclusive_zone|auto_exclusive_zone_enable)/,
     "DockWindow must delegate native Plasma layer-surface operations");
+assert.doesNotMatch(
+    dockWindowSource,
+    /(?:PlasmaWayland|Legacy)DockSurfaceBackend|GDK_IS_WAYLAND_DISPLAY|XDG_CURRENT_DESKTOP/,
+    "DockWindow must not select or identify platform surface implementations");
 assert.doesNotMatch(
     dockWindowControllerSource,
     /gtk_layer_set_monitor/,
@@ -335,12 +351,12 @@ for (const operation of [
         `the Plasma surface backend must own ${operation}`);
 }
 assert.match(
-    dockWindowSource,
+    legacySurfaceBackendSource,
     /if \(is_gnome_wayland_session\(\) \|\|[\s\S]*?is_kde_wayland_session\(\) \|\|[\s\S]*?is_cinnamon_x11_session\(\)\)[\s\S]*?x11_scoped_monitor_workarea/,
     "Cinnamon X11 must preserve Muffin's monitor-scoped GTK panel work area");
 assert.match(
     dockWindowControllerSource,
-    /monitor_geometry_changed[\s\S]*?output_changed[\s\S]*?prepare_x11_monitor_change\(\)[\s\S]*?m_autohide_controller->set_monitor/,
+    /monitor_geometry_changed[\s\S]*?output_changed[\s\S]*?prepare_surface_change\(\)[\s\S]*?m_autohide_controller->set_monitor/,
     "moving or resizing the selected output must invalidate cached X11 placement state");
 assert.match(
     dockWindowControllerSource,

@@ -170,6 +170,7 @@ private:
         const WindowId &window_id,
         unsigned int generation);
     bool uses_mapped_thumbnail_cache() const;
+    bool uses_settled_thumbnail_capture() const;
     bool uses_redirected_thumbnail_capture() const;
     bool uses_strict_x11_capture() const;
     void start_live_streams();

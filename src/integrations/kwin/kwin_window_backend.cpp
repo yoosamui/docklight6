@@ -67,6 +67,12 @@ KWinWindowBackend::capabilities() const
         true;
     capabilities.provides_dock_pointer_tracking =
         true;
+    // ScreenShot2 can include compositor transforms while a window is
+    // minimizing. Keep the last frame captured while the window was mapped
+    // instead of replacing it with an animation frame.
+    capabilities.thumbnail_policy =
+        WindowThumbnailPolicy::
+            cache_mapped_windows_after_settle;
 
     return capabilities;
 }

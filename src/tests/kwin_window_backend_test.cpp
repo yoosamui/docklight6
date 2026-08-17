@@ -164,6 +164,9 @@ void verifies_registration_and_snapshot()
                .provides_frame_geometry);
     assert(capabilities
                .provides_dock_pointer_tracking);
+    assert(capabilities.thumbnail_policy ==
+           WindowThumbnailPolicy::
+               cache_mapped_windows_after_settle);
 }
 
 void verifies_window_commands()

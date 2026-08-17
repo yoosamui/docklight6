@@ -7,11 +7,12 @@
 // dock_window.h
 //
 // Purpose:
-// Declares the main GTK layer-shell surface and its dock-item container.
+// Declares the main GTK dock window and its dock-item container.
 //
 // Responsibilities:
 // - Own and synchronize launcher, running-app, and home widgets.
-// - Apply calculated dock placement, orientation, and visual styling.
+// - Apply logical orientation and visual styling.
+// - Delegate calculated surface placement to DockSurfaceBackend.
 // - Coordinate item ordering, attachment, drag-and-drop, and tooltips.
 // - Provide the GTK surface used by DockWindowController.
 //
@@ -21,7 +22,7 @@
 //
 // Design notes:
 // Layout calculations and timing policy are delegated to the controller
-// and layout engine; this class applies results to GTK and layer-shell.
+// and layout engine; native placement is delegated to DockSurfaceBackend.
 //
 // ------------------------------------------------------------
 
@@ -45,8 +46,6 @@
 
 class DockWindowController;
 class DockAutohideController;
-class LegacyDockSurfaceBackend;
-class PlasmaWaylandDockSurfaceBackend;
 class DockHomeItem;
 struct DockRuntimeInfo;
 class WindowRegistry;
@@ -141,28 +140,23 @@ private:
         const DockPlacement &placement,
         const MonitorGeometry &output,
         const MonitorGeometry &workarea);
-    void apply_legacy_dock_layout(
-        const DockPlacement &placement,
-        const MonitorGeometry &output,
-        const MonitorGeometry &workarea);
     MonitorGeometry
     surface_output_geometry() const;
     MonitorGeometry
     surface_work_area() const;
+    MonitorGeometry
+    surface_effective_work_area(
+        const MonitorGeometry &output,
+        const MonitorGeometry &workarea);
     void set_surface_monitor(
         const Glib::RefPtr<Gdk::Monitor>
             &monitor);
-    void apply_x11_strut(
-        const DockPlacement &placement,
-        int x,
-        int y,
-        int width,
-        int height);
-    void prepare_x11_monitor_change();
-    void clear_legacy_reserved_space();
-    void capture_x11_base_workarea(
-        const MonitorGeometry &output,
-        const MonitorGeometry &fallback);
+    void prepare_surface_change();
+    bool surface_uses_native_placement() const;
+    bool surface_is_native_x11() const;
+    bool surface_is_ordinary_wayland() const;
+    bool surface_initial_placement_pending() const;
+    void complete_surface_initial_placement();
     void apply_dock_orientation(
         DockOrientation orientation);
     void apply_visual_style();
@@ -185,8 +179,6 @@ private:
 private:
     friend class DockWindowController;
     friend class DockAutohideController;
-    friend class LegacyDockSurfaceBackend;
-    friend class PlasmaWaylandDockSurfaceBackend;
 
     Glib::RefPtr<Gtk::CssProvider> m_visual_css;
 
@@ -228,8 +220,4 @@ private:
     bool m_item_drop_accepted = false;
 
     bool m_has_synchronized_items = false;
-    bool m_uses_layer_shell = false;
-    bool m_initial_gnome_placement_pending = false;
-    bool m_has_x11_base_workarea = false;
-    MonitorGeometry m_x11_base_workarea;
 };

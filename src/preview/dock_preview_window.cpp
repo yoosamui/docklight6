@@ -40,7 +40,7 @@ namespace
     constexpr unsigned int X11_STATIC_RETRY_MS = 80;
     constexpr unsigned int X11_STATIC_RETRY_COUNT = 8;
     constexpr unsigned int GNOME_FALLBACK_CAPTURE_DELAY_MS = 180;
-    constexpr unsigned int XFWM_RECOVERY_SETTLE_MS = 500;
+    constexpr unsigned int THUMBNAIL_RECOVERY_SETTLE_MS = 500;
     constexpr unsigned int X11_CHANGE_PROBE_MS = 200;
     constexpr std::int64_t X11_LIVE_GRACE_US = 750000;
     constexpr int X11_PROBE_WIDTH = 96;
@@ -1189,6 +1189,14 @@ bool DockPreviewWindow::uses_mapped_thumbnail_cache() const
 }
 
 bool DockPreviewWindow::
+    uses_settled_thumbnail_capture() const
+{
+    return m_thumbnail_policy ==
+           WindowThumbnailPolicy::
+               cache_mapped_windows_after_settle;
+}
+
+bool DockPreviewWindow::
     uses_redirected_thumbnail_capture() const
 {
     return m_thumbnail_policy ==
@@ -1213,14 +1221,20 @@ void DockPreviewWindow::prime_thumbnail_cache(
     if (uses_gnome_wayland_session())
         return;
 
-    if (!m_uses_layer_shell)
+    // The window backend decides whether previews need a last-known mapped
+    // frame. This is independent of whether the preview surface itself uses
+    // layer-shell.
+    if (!m_uses_layer_shell ||
+        uses_mapped_thumbnail_cache())
     {
         const bool xfwm_session =
             uses_xfwm_session();
-        const bool validated_x11_session =
+        const bool validated_capture_session =
             xfwm_session ||
-            uses_redirected_thumbnail_capture();
+            uses_redirected_thumbnail_capture() ||
+            uses_settled_thumbnail_capture();
         const bool kde_x11_session =
+            !m_uses_layer_shell &&
             uses_kde_session();
         const bool mapped_cache_session =
             uses_mapped_thumbnail_cache();
@@ -1446,11 +1460,11 @@ void DockPreviewWindow::prime_thumbnail_cache(
             }
         }
 
-        // A newly redirected or mapped client can expose a named XComposite
-        // pixmap before it has finished repainting. Quarantine newly eligible
-        // windows until that transition settles, then require two matching
-        // samples before replacing the last good cache entry.
-        if (validated_x11_session)
+        // A newly mapped client can expose an XComposite pixmap or KWin
+        // ScreenShot2 image before repainting and compositor effects finish.
+        // Quarantine newly eligible windows until that transition settles,
+        // then require two matching samples before replacing the cache.
+        if (validated_capture_session)
         {
             for (const auto &window_id :
                  m_thumbnail_cache_eligible)
@@ -1524,7 +1538,7 @@ void DockPreviewWindow::prime_thumbnail_cache(
                             settle_epoch);
                         return false;
                     },
-                    XFWM_RECOVERY_SETTLE_MS);
+                    THUMBNAIL_RECOVERY_SETTLE_MS);
             }
         }
 
@@ -2843,8 +2857,9 @@ void DockPreviewWindow::request_thumbnail(
         return;
     }
 
-    // Minimized X11 pixmaps can contain compositor garbage. Keep the last
-    // frame captured while mapped; only use the icon when no cache exists.
+    // Minimized captures can contain unmapped storage or compositor effects.
+    // Keep the last frame captured while mapped; only use the icon when no
+    // cache exists.
     const bool kde_x11_session =
         !m_uses_layer_shell &&
         uses_kde_session();
@@ -2892,10 +2907,10 @@ void DockPreviewWindow::request_thumbnail(
             if (thumbnail &&
                 m_thumbnail_cache_settle_epochs.count(
                     window_id) == 0 &&
-                (m_uses_layer_shell ||
-                 (!uses_xfwm_session() &&
-                  !uses_kde_session() &&
-                  !uses_mapped_thumbnail_cache()) ||
+                ((!uses_mapped_thumbnail_cache() &&
+                  (m_uses_layer_shell ||
+                   (!uses_xfwm_session() &&
+                    !uses_kde_session()))) ||
                  m_thumbnail_cache_eligible.count(
                      window_id) != 0))
             {
@@ -3042,7 +3057,7 @@ void DockPreviewWindow::start_next_thumbnail_recovery()
                         X11_STATIC_RETRY_COUNT);
                     return false;
                 },
-                XFWM_RECOVERY_SETTLE_MS);
+                THUMBNAIL_RECOVERY_SETTLE_MS);
         return;
     }
 }

@@ -37,6 +37,11 @@ public:
     MonitorGeometry
     work_area() const override;
 
+    MonitorGeometry
+    effective_work_area(
+        const MonitorGeometry &output,
+        const MonitorGeometry &work_area) override;
+
     void apply_dock_placement(
         const DockPlacement &placement,
         const MonitorGeometry &output,
@@ -46,6 +51,12 @@ public:
         const DockPlacement &placement) override;
 
     void clear_reserved_space() override;
+
+    bool uses_native_placement() const override;
+    bool is_native_x11() const override;
+    bool is_ordinary_wayland() const override;
+    bool initial_placement_pending() const override;
+    void complete_initial_placement() override;
 
 private:
     DockWindow &m_window;

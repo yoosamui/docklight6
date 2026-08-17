@@ -520,10 +520,7 @@ void DockAutohideController::request_shell_visibility(
 
 bool DockAutohideController::can_animate_x11() const
 {
-    const auto display = m_window.get_display();
-    return !m_window.m_uses_layer_shell &&
-           display &&
-           GDK_IS_X11_DISPLAY(display->gobj()) &&
+    return m_window.surface_is_native_x11() &&
            m_has_placement;
 }
 

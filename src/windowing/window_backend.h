@@ -39,6 +39,7 @@ enum class WindowThumbnailPolicy
 {
     capture_on_demand,
     cache_mapped_windows,
+    cache_mapped_windows_after_settle,
     redirect_and_cache_mapped_windows
 };
 

@@ -7,8 +7,8 @@
 // legacy_dock_surface_backend.h
 //
 // Purpose:
-// Adapts the existing DockWindow placement implementation to the dock
-// surface backend interface during incremental migration.
+// Owns ordinary GTK toplevel placement plus the existing X11 work-area and
+// strut behavior behind the dock-surface backend interface.
 //
 // ------------------------------------------------------------
 
@@ -37,6 +37,11 @@ public:
     MonitorGeometry
     work_area() const override;
 
+    MonitorGeometry
+    effective_work_area(
+        const MonitorGeometry &output,
+        const MonitorGeometry &work_area) override;
+
     void apply_dock_placement(
         const DockPlacement &placement,
         const MonitorGeometry &output,
@@ -47,7 +52,29 @@ public:
 
     void clear_reserved_space() override;
 
+    bool uses_native_placement() const override;
+    bool is_native_x11() const override;
+    bool is_ordinary_wayland() const override;
+    bool initial_placement_pending() const override;
+    void complete_initial_placement() override;
+
+private:
+    void capture_x11_base_workarea(
+        const MonitorGeometry &output,
+        const MonitorGeometry &fallback);
+    void apply_x11_strut(
+        const DockPlacement &placement,
+        int x,
+        int y,
+        int width,
+        int height);
+
 private:
     DockWindow &m_window;
     Glib::RefPtr<Gdk::Monitor> m_monitor;
+    bool m_native_x11 = false;
+    bool m_ordinary_wayland = false;
+    bool m_initial_placement_pending = false;
+    bool m_has_x11_base_workarea = false;
+    MonitorGeometry m_x11_base_workarea;
 };
