@@ -35,7 +35,6 @@
 
 #include <gdk/gdkwayland.h>
 #include <gdk/gdkx.h>
-#include <gtk-layer-shell.h>
 #include <gtkmm/settings.h>
 
 #include <algorithm>
@@ -816,7 +815,10 @@ void DockWindowController::set_monitor(
     const bool monitor_changed =
         monitor != m_monitor;
     const auto next_output_geometry =
-        m_window.surface_output_geometry();
+        monitor_changed
+            ? m_layout_geometry.output_geometry(
+                  monitor)
+            : m_window.surface_output_geometry();
     const bool monitor_geometry_changed =
         m_output_geometry.width > 0 &&
         m_output_geometry.height > 0 &&
@@ -845,13 +847,9 @@ void DockWindowController::set_monitor(
         // into its position.
         m_window.prepare_x11_monitor_change();
 
-        if (monitor_changed &&
-            m_window.m_uses_layer_shell)
-        {
-            gtk_layer_set_monitor(
-                GTK_WINDOW(m_window.gobj()),
-                m_monitor->gobj());
-        }
+        if (monitor_changed)
+            m_window.set_surface_monitor(
+                m_monitor);
 
         m_window.m_overlay_window.set_monitor(
             m_monitor);

@@ -114,6 +114,8 @@ docklight6_SOURCES = \
     autohide/dock_autohide_controller.h \
     autohide/dock_autohide_controller.cpp \
     dock/backends/dock_surface_backend.h \
+    dock/backends/plasma_wayland_dock_surface_backend.h \
+    dock/backends/plasma_wayland_dock_surface_backend.cpp \
     dock/backends/legacy_dock_surface_backend.h \
     dock/backends/legacy_dock_surface_backend.cpp \
     dock/dock_constants.h \

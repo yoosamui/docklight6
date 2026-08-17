@@ -24,6 +24,7 @@
 
 #include "application/dock_runtime_info.h"
 #include "backends/legacy_dock_surface_backend.h"
+#include "backends/plasma_wayland_dock_surface_backend.h"
 #include "dock_constants.h"
 #include "layout/dock_layout_metrics.h"
 #include "dock_window_controller.h"
@@ -212,12 +213,6 @@ DockWindow::DockWindow(
     const DockRuntimeInfo &runtime_info)
     : m_window_registry(window_registry)
 {
-    m_surface_backend =
-        std::make_unique<
-            LegacyDockSurfaceBackend>(
-                *this,
-                monitor);
-
     m_controller =
         std::make_unique<DockWindowController>(
             *this,
@@ -278,32 +273,32 @@ DockWindow::DockWindow(
         gtk_win,
         "docklight6-dock");
 
-    m_uses_layer_shell =
+    auto display = get_display();
+    const bool plasma_wayland_surface =
+        display &&
+        GDK_IS_WAYLAND_DISPLAY(display->gobj()) &&
+        is_kde_wayland_session() &&
         gtk_layer_is_supported();
 
-    if (m_uses_layer_shell)
+    m_uses_layer_shell =
+        plasma_wayland_surface;
+
+    if (plasma_wayland_surface)
     {
-        gtk_layer_init_for_window(gtk_win);
-        gtk_layer_set_keyboard_mode(
-            gtk_win,
-            GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
-
-        gtk_layer_set_monitor(
-            gtk_win,
-            monitor
-                ? monitor->gobj()
-                : nullptr);
-
-        gtk_layer_set_namespace(
-            gtk_win,
-            "docklight6");
-
-        gtk_layer_set_layer(
-            gtk_win,
-            GTK_LAYER_SHELL_LAYER_TOP);
+        m_surface_backend =
+            std::make_unique<
+                PlasmaWaylandDockSurfaceBackend>(
+                    *this,
+                    monitor);
     }
     else
     {
+        m_surface_backend =
+            std::make_unique<
+                LegacyDockSurfaceBackend>(
+                    *this,
+                    monitor);
+
         // On X11, Muffin and other EWMH window managers place an ordinary
         // undecorated window like an application (often at screen centre).
         // Mark it as a dock before realization so explicit edge coordinates
@@ -320,7 +315,6 @@ DockWindow::DockWindow(
     // centred position before the Shell integration can move its actor. The
     // integration publishes geometry only after placement is committed; the
     // controller restores opacity when that notification arrives.
-    auto display = get_display();
     const bool ordinary_gnome_wayland_window =
         is_gnome_wayland_session() &&
         !m_uses_layer_shell &&
@@ -422,10 +416,14 @@ void DockWindow::set_monitor(
     const Glib::RefPtr<Gdk::Monitor>
         &monitor)
 {
-    if (monitor)
-        m_surface_backend->set_monitor(monitor);
-
     m_controller->set_monitor(monitor);
+}
+
+void DockWindow::set_surface_monitor(
+    const Glib::RefPtr<Gdk::Monitor>
+        &monitor)
+{
+    m_surface_backend->set_monitor(monitor);
 }
 
 void DockWindow::request_reveal()
@@ -964,196 +962,75 @@ void DockWindow::apply_legacy_dock_layout(
     GtkWindow *gtk_win =
         GTK_WINDOW(gobj());
 
-    if (!m_uses_layer_shell)
-    {
-        // Capture the work area before this window publishes its own strut.
-        // This matters for compositor-owned panels (notably Cinnamon's),
-        // which reserve space in _NET_WORKAREA without owning an X11 client
-        // window whose _NET_WM_STRUT_PARTIAL we could inspect. Reading the
-        // work area again after our strut is installed would only see the
-        // larger of the panel and DockLight reservations.
-        capture_x11_base_workarea(
-            output,
-            workarea);
+    // Capture the work area before this window publishes its own strut.
+    // This matters for compositor-owned panels (notably Cinnamon's), which
+    // reserve space in _NET_WORKAREA without owning an X11 client window
+    // whose _NET_WM_STRUT_PARTIAL we could inspect.
+    capture_x11_base_workarea(
+        output,
+        workarea);
 
-        // DockPlacement margins are output-relative: apply_workarea_insets()
-        // has already converted every panel reservation into an edge margin.
-        // Starting from the work-area edge here would count that reservation
-        // twice (for example, a 32 px Cinnamon top panel produced y = 64).
-
-        gtk_widget_set_size_request(
-            GTK_WIDGET(gtk_win),
-            placement.width,
-            placement.height);
-
-        const int width =
-            placement.width > 0
-                ? placement.width
-                : std::max(
-                      1,
-                      output.width -
-                          placement.margin_left -
-                          placement.margin_right);
-        const int height =
-            placement.height > 0
-                ? placement.height
-                : std::max(
-                      1,
-                      output.height -
-                          placement.margin_top -
-                          placement.margin_bottom);
-        int x = output.x + (output.width - width) / 2;
-        int y = output.y + (output.height - height) / 2;
-
-        if (placement.is_vertical() &&
-            placement.anchor_left)
-        {
-            x = output.x + placement.margin_left;
-        }
-        else if (placement.is_vertical() &&
-                 placement.anchor_right)
-        {
-            x = output.x + output.width -
-                placement.margin_right - width;
-        }
-        else if (placement.anchor_left)
-            x = output.x + placement.margin_left;
-        else if (placement.anchor_right)
-            x = output.x + output.width - placement.margin_right - width;
-
-        if (placement.is_horizontal() &&
-            placement.anchor_top)
-        {
-            y = output.y + placement.margin_top;
-        }
-        else if (placement.is_horizontal() &&
-                 placement.anchor_bottom)
-        {
-            y = output.y + output.height -
-                placement.margin_bottom - height;
-        }
-        else if (placement.anchor_top)
-            y = output.y + placement.margin_top;
-        else if (placement.anchor_bottom)
-            y = output.y + output.height - placement.margin_bottom - height;
-
-        resize(width, height);
-        move(x, y);
-        apply_x11_strut(placement, x, y, width, height);
-        return;
-    }
-
-    bool anchor_left =
-        placement.anchor_left;
-    bool anchor_right =
-        placement.anchor_right;
-    bool anchor_top =
-        placement.anchor_top;
-    bool anchor_bottom =
-        placement.anchor_bottom;
-
-    int margin_left =
-        placement.margin_left;
-    int margin_right =
-        placement.margin_right;
-    int margin_top =
-        placement.margin_top;
-    int margin_bottom =
-        placement.margin_bottom;
-
-    // Mutter stretches a layer surface between opposite anchors even when
-    // GTK supplies an explicit main-axis size. For centered, non-fill docks,
-    // leave that axis unanchored; the layer-shell protocol then centers the
-    // compact surface. KWin retains its dual-anchor/equal-margin workaround.
-    if (is_gnome_wayland_session())
-    {
-        if (placement.is_horizontal() &&
-            placement.width > 0 &&
-            anchor_left &&
-            anchor_right &&
-            margin_left == margin_right)
-        {
-            anchor_left = false;
-            anchor_right = false;
-            margin_left = 0;
-            margin_right = 0;
-        }
-        else if (placement.is_vertical() &&
-                 placement.height > 0 &&
-                 anchor_top &&
-                 anchor_bottom &&
-                 margin_top == margin_bottom)
-        {
-            anchor_top = false;
-            anchor_bottom = false;
-            margin_top = 0;
-            margin_bottom = 0;
-        }
-    }
-
-    gtk_layer_set_anchor(
-        gtk_win,
-        GTK_LAYER_SHELL_EDGE_LEFT,
-        anchor_left);
-
-    gtk_layer_set_anchor(
-        gtk_win,
-        GTK_LAYER_SHELL_EDGE_RIGHT,
-        anchor_right);
-
-    gtk_layer_set_anchor(
-        gtk_win,
-        GTK_LAYER_SHELL_EDGE_TOP,
-        anchor_top);
-
-    gtk_layer_set_anchor(
-        gtk_win,
-        GTK_LAYER_SHELL_EDGE_BOTTOM,
-        anchor_bottom);
-
-    gtk_layer_set_margin(
-        gtk_win,
-        GTK_LAYER_SHELL_EDGE_LEFT,
-        margin_left);
-
-    gtk_layer_set_margin(
-        gtk_win,
-        GTK_LAYER_SHELL_EDGE_RIGHT,
-        margin_right);
-
-    gtk_layer_set_margin(
-        gtk_win,
-        GTK_LAYER_SHELL_EDGE_TOP,
-        margin_top);
-
-    gtk_layer_set_margin(
-        gtk_win,
-        GTK_LAYER_SHELL_EDGE_BOTTOM,
-        margin_bottom);
-
-    // gtk-layer-shell uses the GTK widget request as the surface's natural
-    // size. set_default_size() alone does not reliably resize an already
-    // mapped layer surface, particularly on the vertical main axis.
+    // DockPlacement margins are output-relative: apply_workarea_insets()
+    // has already converted every panel reservation into an edge margin.
     gtk_widget_set_size_request(
         GTK_WIDGET(gtk_win),
         placement.width,
         placement.height);
 
-    // Request a fresh configure after changing the size request. The actual
-    // size remains compositor-controlled when opposite anchors are active.
-    gtk_window_resize(gtk_win, 1, 1);
+    const int width =
+        placement.width > 0
+            ? placement.width
+            : std::max(
+                  1,
+                  output.width -
+                      placement.margin_left -
+                      placement.margin_right);
+    const int height =
+        placement.height > 0
+            ? placement.height
+            : std::max(
+                  1,
+                  output.height -
+                      placement.margin_top -
+                      placement.margin_bottom);
+    int x = output.x + (output.width - width) / 2;
+    int y = output.y + (output.height - height) / 2;
 
-    if (placement.exclusive_zone < 0)
+    if (placement.is_vertical() &&
+        placement.anchor_left)
     {
-        gtk_layer_auto_exclusive_zone_enable(
-            gtk_win);
+        x = output.x + placement.margin_left;
     }
-    else
+    else if (placement.is_vertical() &&
+             placement.anchor_right)
     {
-        gtk_layer_set_exclusive_zone(
-            gtk_win,
-            placement.exclusive_zone);
+        x = output.x + output.width -
+            placement.margin_right - width;
     }
+    else if (placement.anchor_left)
+        x = output.x + placement.margin_left;
+    else if (placement.anchor_right)
+        x = output.x + output.width - placement.margin_right - width;
+
+    if (placement.is_horizontal() &&
+        placement.anchor_top)
+    {
+        y = output.y + placement.margin_top;
+    }
+    else if (placement.is_horizontal() &&
+             placement.anchor_bottom)
+    {
+        y = output.y + output.height -
+            placement.margin_bottom - height;
+    }
+    else if (placement.anchor_top)
+        y = output.y + placement.margin_top;
+    else if (placement.anchor_bottom)
+        y = output.y + output.height - placement.margin_bottom - height;
+
+    resize(width, height);
+    move(x, y);
+    apply_x11_strut(placement, x, y, width, height);
 }
 
 void DockWindow::capture_x11_base_workarea(

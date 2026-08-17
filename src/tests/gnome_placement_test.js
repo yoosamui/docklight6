@@ -25,6 +25,12 @@ const dockWindowControllerPath = path.resolve(
 const dockWindowPath = path.resolve(
     __dirname,
     "../dock/dock_window.cpp");
+const legacySurfaceBackendPath = path.resolve(
+    __dirname,
+    "../dock/backends/legacy_dock_surface_backend.cpp");
+const plasmaSurfaceBackendPath = path.resolve(
+    __dirname,
+    "../dock/backends/plasma_wayland_dock_surface_backend.cpp");
 const dockItemPath = path.resolve(
     __dirname,
     "../dock/dock_item.cpp");
@@ -56,6 +62,10 @@ const dockWindowControllerSource = fs.readFileSync(
     dockWindowControllerPath, "utf8");
 const dockWindowSource = fs.readFileSync(
     dockWindowPath, "utf8");
+const legacySurfaceBackendSource = fs.readFileSync(
+    legacySurfaceBackendPath, "utf8");
+const plasmaSurfaceBackendSource = fs.readFileSync(
+    plasmaSurfaceBackendPath, "utf8");
 const dockItemSource = fs.readFileSync(
     dockItemPath, "utf8");
 const registryChangedHandler = dockWindowControllerSource.match(
@@ -292,6 +302,38 @@ assert.match(
     dockWindowControllerSource,
     /if \(!m_window\.m_uses_layer_shell\)[\s\S]*?apply_workarea_insets/,
     "layer-shell placement must not count compositor work-area insets twice");
+assert.match(
+    dockWindowSource,
+    /GDK_IS_WAYLAND_DISPLAY[\s\S]*?is_kde_wayland_session\(\)[\s\S]*?gtk_layer_is_supported\(\)[\s\S]*?PlasmaWaylandDockSurfaceBackend/,
+    "the Plasma surface backend requires an actual native Wayland display and layer-shell support");
+assert.match(
+    dockWindowSource,
+    /else[\s\S]*?LegacyDockSurfaceBackend/,
+    "X11 and ordinary Wayland must remain on the legacy surface backend");
+assert.doesNotMatch(
+    dockWindowSource,
+    /gtk_layer_(?:init_for_window|set_monitor|set_anchor|set_margin|set_exclusive_zone|auto_exclusive_zone_enable)/,
+    "DockWindow must delegate native Plasma layer-surface operations");
+assert.doesNotMatch(
+    dockWindowControllerSource,
+    /gtk_layer_set_monitor/,
+    "DockWindowController must delegate main-surface monitor assignment");
+assert.doesNotMatch(
+    legacySurfaceBackendSource,
+    /gtk_layer_/,
+    "the legacy X11 and ordinary-Wayland backend must not apply Plasma layer-surface operations");
+for (const operation of [
+    "gtk_layer_init_for_window",
+    "gtk_layer_set_monitor",
+    "gtk_layer_set_anchor",
+    "gtk_layer_set_margin",
+    "gtk_layer_set_exclusive_zone",
+    "gtk_layer_auto_exclusive_zone_enable"
+]) {
+    assert.ok(
+        plasmaSurfaceBackendSource.includes(operation),
+        `the Plasma surface backend must own ${operation}`);
+}
 assert.match(
     dockWindowSource,
     /if \(is_gnome_wayland_session\(\) \|\|[\s\S]*?is_kde_wayland_session\(\) \|\|[\s\S]*?is_cinnamon_x11_session\(\)\)[\s\S]*?x11_scoped_monitor_workarea/,

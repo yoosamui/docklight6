@@ -46,6 +46,7 @@
 class DockWindowController;
 class DockAutohideController;
 class LegacyDockSurfaceBackend;
+class PlasmaWaylandDockSurfaceBackend;
 class DockHomeItem;
 struct DockRuntimeInfo;
 class WindowRegistry;
@@ -148,6 +149,9 @@ private:
     surface_output_geometry() const;
     MonitorGeometry
     surface_work_area() const;
+    void set_surface_monitor(
+        const Glib::RefPtr<Gdk::Monitor>
+            &monitor);
     void apply_x11_strut(
         const DockPlacement &placement,
         int x,
@@ -182,6 +186,7 @@ private:
     friend class DockWindowController;
     friend class DockAutohideController;
     friend class LegacyDockSurfaceBackend;
+    friend class PlasmaWaylandDockSurfaceBackend;
 
     Glib::RefPtr<Gtk::CssProvider> m_visual_css;
 
