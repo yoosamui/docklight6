@@ -264,6 +264,41 @@ bool PlasmaWaylandDockSurfaceBackend::
     return false;
 }
 
+DockAutohideEffect
+PlasmaWaylandDockSurfaceBackend::
+    default_autohide_effect() const
+{
+    return DockAutohideEffect::plasma;
+}
+
+bool PlasmaWaylandDockSurfaceBackend::
+    delegates_autohide_effect(
+        DockAutohideEffect) const
+{
+    return false;
+}
+
+double PlasmaWaylandDockSurfaceBackend::
+    autohide_fade_opacity() const
+{
+    return m_window.get_opacity();
+}
+
+void PlasmaWaylandDockSurfaceBackend::
+    set_autohide_fade_opacity(
+        double opacity)
+{
+    m_window.set_opacity(opacity);
+}
+
+void PlasmaWaylandDockSurfaceBackend::
+    finish_autohide_fade(
+        bool hidden)
+{
+    if (hidden)
+        m_window.hide();
+}
+
 bool PlasmaWaylandDockSurfaceBackend::
     initial_placement_pending() const
 {

@@ -83,6 +83,18 @@ void DockSettings::set_autohide_hide_delay(
         std::clamp(delay_ms, 0, 5000);
 }
 
+std::optional<DockAutohideEffect>
+DockSettings::autohide_effect() const
+{
+    return m_autohide_effect;
+}
+
+void DockSettings::set_autohide_effect(
+    std::optional<DockAutohideEffect> effect)
+{
+    m_autohide_effect = effect;
+}
+
 DockHoverEffect DockSettings::hover_effect() const
 {
     return m_hover_effect;

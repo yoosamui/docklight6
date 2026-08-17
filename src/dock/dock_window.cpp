@@ -848,6 +848,40 @@ bool DockWindow::surface_is_ordinary_wayland() const
     return m_surface_backend->is_ordinary_wayland();
 }
 
+DockAutohideEffect
+DockWindow::surface_default_autohide_effect() const
+{
+    return m_surface_backend
+        ->default_autohide_effect();
+}
+
+bool DockWindow::surface_delegates_autohide_effect(
+    DockAutohideEffect effect) const
+{
+    return m_surface_backend
+        ->delegates_autohide_effect(effect);
+}
+
+double DockWindow::surface_autohide_fade_opacity() const
+{
+    return m_surface_backend
+        ->autohide_fade_opacity();
+}
+
+void DockWindow::set_surface_autohide_fade_opacity(
+    double opacity)
+{
+    m_surface_backend
+        ->set_autohide_fade_opacity(opacity);
+}
+
+void DockWindow::finish_surface_autohide_fade(
+    bool hidden)
+{
+    m_surface_backend
+        ->finish_autohide_fade(hidden);
+}
+
 bool DockWindow::surface_initial_placement_pending() const
 {
     return m_surface_backend->initial_placement_pending();
@@ -857,6 +891,7 @@ void DockWindow::complete_surface_initial_placement()
 {
     m_surface_backend->complete_initial_placement();
 }
+
 void DockWindow::apply_dock_orientation(
     DockOrientation orientation)
 {

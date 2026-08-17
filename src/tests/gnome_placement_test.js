@@ -22,6 +22,9 @@ const autohideControllerPath = path.resolve(
 const dockWindowControllerPath = path.resolve(
     __dirname,
     "../dock/dock_window_controller.cpp");
+const dockTooltipWindowPath = path.resolve(
+    __dirname,
+    "../dock/dock_tooltip_window.cpp");
 const dockWindowPath = path.resolve(
     __dirname,
     "../dock/dock_window.cpp");
@@ -31,6 +34,9 @@ const legacySurfaceBackendPath = path.resolve(
 const plasmaSurfaceBackendPath = path.resolve(
     __dirname,
     "../dock/backends/plasma_wayland_dock_surface_backend.cpp");
+const dockLayoutTypesPath = path.resolve(
+    __dirname,
+    "../layout/dock_layout_types.h");
 const dockItemPath = path.resolve(
     __dirname,
     "../dock/dock_item.cpp");
@@ -60,12 +66,16 @@ const autohideControllerSource = fs.readFileSync(
     autohideControllerPath, "utf8");
 const dockWindowControllerSource = fs.readFileSync(
     dockWindowControllerPath, "utf8");
+const dockTooltipWindowSource = fs.readFileSync(
+    dockTooltipWindowPath, "utf8");
 const dockWindowSource = fs.readFileSync(
     dockWindowPath, "utf8");
 const legacySurfaceBackendSource = fs.readFileSync(
     legacySurfaceBackendPath, "utf8");
 const plasmaSurfaceBackendSource = fs.readFileSync(
     plasmaSurfaceBackendPath, "utf8");
+const dockLayoutTypesSource = fs.readFileSync(
+    dockLayoutTypesPath, "utf8");
 const dockItemSource = fs.readFileSync(
     dockItemPath, "utf8");
 const registryChangedHandler = dockWindowControllerSource.match(
@@ -264,6 +274,18 @@ assert.match(
     "a stable GNOME preview must cache a delayed fallback without capturing during transient hover");
 assert.match(
     previewWindowSource,
+    /DockPreviewWindow::show_preview[\s\S]*?cancel_opacity_animation\(\);[\s\S]*?set_opacity\(0\.0\);[\s\S]*?rebuild\(entries, size\)[\s\S]*?m_presentation_pending = true;[\s\S]*?show_all\(\);[\s\S]*?queue_resize\(\);/,
+    "a mapped preview must become transparent before its content and geometry are replaced");
+assert.match(
+    previewWindowSource,
+    /signal_size_allocate[\s\S]*?apply_allocated_position\([\s\S]*?complete_presentation\(\)[\s\S]*?DockPreviewWindow::complete_presentation[\s\S]*?start_live_streams\(\);[\s\S]*?start_opacity_animation\(false\);/,
+    "preview thumbnails and fade-in must start only after final allocated positioning");
+assert.match(
+    previewWindowSource,
+    /DockPreviewWindow::apply_position[\s\S]*?if \(!m_uses_layer_shell\)[\s\S]*?get_window\(\)[\s\S]*?move_resize\([\s\S]*?global_x,[\s\S]*?global_y,[\s\S]*?width,[\s\S]*?height\)/,
+    "an X11 or XWayland preview must move and resize atomically");
+assert.match(
+    previewWindowSource,
     /stop_live_streams\(\)[\s\S]*?hide_gnome_live_previews\(\);[\s\S]*?m_gnome_thumbnail_fallback\.disconnect\(\)/,
     "hiding a GNOME preview must cancel its delayed fallback capture");
 assert.match(
@@ -378,6 +400,26 @@ assert.match(
     /DockItem::on_enter_notify_event[\s\S]*?schedule_show_tooltip[\s\S]*?DockItem::on_leave_notify_event[\s\S]*?schedule_hide_tooltip/,
     "each item must start and cancel tooltip timing from its own crossing events");
 assert.match(
+    dockWindowControllerSource,
+    /DockWindowController::schedule_show_tooltip[\s\S]*?hide_tooltip\(\);[\s\S]*?start_tooltip_show_timer\(item, text\)/,
+    "adjacent dock items must fade the previous tooltip before the delayed reveal");
+assert.match(
+    dockTooltipWindowSource,
+    /update_mapped_tooltip\s*=\s*[\s\S]*?m_has_request && get_mapped\(\)[\s\S]*?if \(!update_mapped_tooltip\)[\s\S]*?hide\(\);[\s\S]*?apply_position\([\s\S]*?if \(update_mapped_tooltip\)[\s\S]*?set_opacity\(1\.0\);[\s\S]*?return;[\s\S]*?m_reveal_timer/,
+    "a mapped tooltip update must not unmap or replay its reveal animation");
+assert.match(
+    dockTooltipWindowSource,
+    /DockTooltipWindow::apply_position[\s\S]*?if \(!m_uses_layer_shell\)[\s\S]*?get_window\(\)[\s\S]*?move_resize\([\s\S]*?global_x,[\s\S]*?global_y,[\s\S]*?width,[\s\S]*?height\)/,
+    "an XWayland tooltip must move and resize atomically between differently sized labels");
+assert.match(
+    dockTooltipWindowSource,
+    /smootherstep\([\s\S]*?progress \* progress \* progress \*[\s\S]*?progress \* 6\.0 - 15\.0[\s\S]*?TOOLTIP_MIN_SCALE[\s\S]*?m_visual_scale/,
+    "tooltip hide and reveal effects must use centred scale with smooth endpoint easing");
+assert.match(
+    dockWindowControllerSource,
+    /DockWindowController::schedule_show_preview[\s\S]*?hide_tooltip\(\);[\s\S]*?start_tooltip_show_timer\([\s\S]*?item\.tooltip_text\(\),[\s\S]*?true\);[\s\S]*?m_preview_show_timer/,
+    "grouped items must preserve the tooltip hide and delayed reveal effects before preview");
+assert.match(
     dockItemSource,
     /signal_button_press_event[\s\S]*?GDK_BUTTON_SECONDARY[\s\S]*?outside_menu[\s\S]*?m_context_menu\.popdown\(\)/,
     "the context menu must catch an outside secondary press consumed by its pointer grab");
@@ -417,6 +459,58 @@ assert.match(
     autohideControllerSource,
     /hide_now\([\s\S]*?\)[\s\S]*?if \(uses_shell_reveal_trigger\(\)\)[\s\S]*?request_shell_visibility\(true\);\s*return;/,
     "GNOME autohide must keep the placed dock mapped instead of remapping at the centre");
+assert.match(
+    dockLayoutTypesSource,
+    /enum class DockAutohideEffect[\s\S]*?plasma[\s\S]*?gnome[\s\S]*?slide[\s\S]*?fade[\s\S]*?scale[\s\S]*?slide_fade/,
+    "autohide effect selection must use one desktop-neutral common type");
+assert.match(
+    plasmaSurfaceBackendSource,
+    /default_autohide_effect\(\) const[\s\S]*?DockAutohideEffect::plasma/,
+    "Plasma Wayland must retain its current surface effect");
+assert.match(
+    legacySurfaceBackendSource,
+    /default_autohide_effect\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?DockAutohideEffect::slide/,
+    "GNOME Wayland must retain its Shell effect while other legacy surfaces retain the X11 slide");
+assert.match(
+    dockWindowControllerSource,
+    /set_effect\([\s\S]*?surface_default_autohide_effect\(\)[\s\S]*?m_autohide_controller->initialize\(\)/,
+    "the shared autohide controller must own the selected backend default");
+assert.match(
+    autohideControllerSource,
+    /can_animate_x11\(\) const[\s\S]*?m_effect == DockAutohideEffect::slide[\s\S]*?m_effect == DockAutohideEffect::gnome[\s\S]*?!has_shell_reveal_trigger\(\)[\s\S]*?surface_is_native_x11\(\)/,
+    "native X11 must retain its slide, including the safe GNOME fallback without Shell integration");
+assert.match(
+    autohideControllerSource,
+    /uses_shell_reveal_trigger\(\) const[\s\S]*?surface_delegates_autohide_effect\([\s\S]*?m_effect[\s\S]*?has_shell_reveal_trigger\(\)/,
+    "compositor-owned effects must remain routed through the active surface backend and Shell integration");
+assert.match(
+    dockWindowControllerSource,
+    /autohide_effect\(\)\.value_or\([\s\S]*?surface_default_autohide_effect\(\)/,
+    "an empty effect setting must preserve the active backend default");
+assert.match(
+    autohideControllerSource,
+    /case DockAutohideEffect::fade:[\s\S]*?animate_fade\(hiding\)/,
+    "fade must have an explicit visual-transition dispatch");
+assert.match(
+    autohideControllerSource,
+    /animate_fade\([\s\S]*?cancel_animation\(\)[\s\S]*?surface_autohide_fade_opacity\(\)[\s\S]*?advance_fade_animation[\s\S]*?set_surface_input_passthrough\(true\)[\s\S]*?finish_surface_autohide_fade\(true\)/,
+    "local fade must reverse from current opacity and preserve each backend's final hidden state");
+assert.match(
+    legacySurfaceBackendSource,
+    /delegates_autohide_effect\([\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::fade[\s\S]*?finish_autohide_fade\([\s\S]*?!m_native_x11[\s\S]*?m_window\.hide\(\)/,
+    "the legacy backend must delegate GNOME fade while retaining X11's mapped hidden surface");
+assert.match(
+    plasmaSurfaceBackendSource,
+    /set_autohide_fade_opacity\([\s\S]*?m_window\.set_opacity\(opacity\)[\s\S]*?finish_autohide_fade\([\s\S]*?m_window\.hide\(\)/,
+    "Plasma fade must use layer-surface opacity before its existing unmapped hidden state");
+assert.match(
+    extensionSource,
+    /get_string\([\s\S]*?'dock', 'autohide_effect'[\s\S]*?configuredEffect === 'fade'[\s\S]*?this\._dockAutohideEffect = autohideEffect/,
+    "GNOME must consume the same fade selection as the application");
+assert.match(
+    extensionSource,
+    /_dockAutohideEffect === 'fade'[\s\S]*?_startDockFadeTransition\(hidden, actor\)[\s\S]*?_startDockFadeTransition\(hidden, actor\)[\s\S]*?actor\.remove_all_transitions\(\)[\s\S]*?const startOpacity = actor\.get_opacity\(\)[\s\S]*?actor\.ease\(\{[\s\S]*?opacity: targetOpacity/,
+    "GNOME fade must use its compositor actor and reverse from the current opacity");
 assert.match(
     autohideControllerSource,
     /finish_shell_animation\([\s\S]*?hidden[\s\S]*?ShellDockState::hidden[\s\S]*?set_surface_input_passthrough\(true\)/,

@@ -55,6 +55,15 @@ public:
     bool uses_native_placement() const override;
     bool is_native_x11() const override;
     bool is_ordinary_wayland() const override;
+    DockAutohideEffect
+    default_autohide_effect() const override;
+    bool delegates_autohide_effect(
+        DockAutohideEffect effect) const override;
+    double autohide_fade_opacity() const override;
+    void set_autohide_fade_opacity(
+        double opacity) override;
+    void finish_autohide_fade(
+        bool hidden) override;
     bool initial_placement_pending() const override;
     void complete_initial_placement() override;
 

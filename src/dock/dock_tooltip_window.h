@@ -12,7 +12,7 @@
 // Responsibilities:
 // - Measure text before layout placement is calculated.
 // - Apply a calculated position without deriving screen geometry.
-// - Manage tooltip styling, remapping, and input transparency.
+// - Manage tooltip styling, visual transitions, and input transparency.
 //
 // Dependencies and ownership:
 // The GTK window owns its child widgets, CSS provider reference, and
@@ -68,9 +68,9 @@ public:
 
 private:
     void cancel_reveal();
-    void cancel_opacity_animation();
-    void start_opacity_animation(bool hiding);
-    bool advance_opacity_animation();
+    void cancel_visual_animation();
+    void start_visual_animation(bool hiding);
+    bool advance_visual_animation();
     void make_input_transparent();
     void apply_position(
         DockLocation location,
@@ -92,7 +92,7 @@ private:
     Gtk::EventBox m_event_box;
 
     sigc::connection m_reveal_timer;
-    sigc::connection m_opacity_timer;
+    sigc::connection m_visual_animation_timer;
 
     DockLocation m_request_location =
         DockLocation::bottom;
@@ -105,16 +105,12 @@ private:
     int m_tooltip_distance = DockLayoutMetrics::TOOLTIP_DISTANCE;
     int m_icon_size = DockLayoutMetrics::BASE_ICON_SIZE;
     int m_request_width = 0;
-    gint64 m_opacity_animation_start_us = 0;
-    double m_opacity_animation_start = 1.0;
-    double m_opacity_animation_target = 1.0;
-    int m_animation_start_x = 0;
-    int m_animation_start_y = 0;
-    int m_animation_target_x = 0;
-    int m_animation_target_y = 0;
+    gint64 m_visual_animation_start_us = 0;
+    double m_animation_start_opacity = 1.0;
+    double m_animation_target_opacity = 1.0;
+    double m_visual_scale = 1.0;
 
     bool m_has_request = false;
-    bool m_animation_moves_window = false;
-    bool m_opacity_animation_hiding = false;
+    bool m_visual_animation_hiding = false;
     bool m_uses_layer_shell = false;
 };

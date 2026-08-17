@@ -71,6 +71,22 @@ public:
     virtual bool is_native_x11() const = 0;
     virtual bool is_ordinary_wayland() const = 0;
 
+    // The shared controller owns the selected effect. Each surface backend
+    // supplies the default which preserves its current visual behavior.
+    virtual DockAutohideEffect
+    default_autohide_effect() const = 0;
+
+    // Physical effect ownership stays at the surface boundary. A delegated
+    // effect is animated by the compositor integration; otherwise fade uses
+    // the backend's native surface opacity and hidden-state operation.
+    virtual bool delegates_autohide_effect(
+        DockAutohideEffect effect) const = 0;
+    virtual double autohide_fade_opacity() const = 0;
+    virtual void set_autohide_fade_opacity(
+        double opacity) = 0;
+    virtual void finish_autohide_fade(
+        bool hidden) = 0;
+
     virtual bool initial_placement_pending() const = 0;
     virtual void complete_initial_placement() = 0;
 };

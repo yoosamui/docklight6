@@ -163,6 +163,14 @@ autohide_hide_delay = 1200
 
 )";
 
+// Configuration block added when the autohide-effect setting is missing.
+const char *AUTOHIDE_EFFECT_SETTING_TEMPLATE = R"(# Autohide visual effect.
+# Empty keeps the current platform-specific effect.
+# Valid additional effect: fade
+autohide_effect =
+
+)";
+
 // Complete configuration written when no user configuration exists.
 const char *CONFIG_TEMPLATE = R"([dock]
 # Internal configuration schema version.
@@ -266,6 +274,11 @@ autohide =
 # Delay before hiding the dock, in milliseconds.
 # Valid range: 0 to 5000
 autohide_hide_delay = 1200
+
+# Autohide visual effect.
+# Empty keeps the current platform-specific effect.
+# Valid additional effect: fade
+autohide_effect =
 )";
 
 std::string trimmed(const Glib::ustring &input)
@@ -400,6 +413,8 @@ bool same_configuration(
                right.settings.preview_show_delay() &&
            left.settings.autohide_hide_delay() ==
                right.settings.autohide_hide_delay() &&
+           left.settings.autohide_effect() ==
+               right.settings.autohide_effect() &&
            left.settings.hover_effect() ==
                right.settings.hover_effect() &&
            left.settings.indicator() ==
@@ -504,6 +519,9 @@ DockConfigurationManager::DockConfigurationManager(
     ensure_setting(
         "autohide_hide_delay",
         AUTOHIDE_HIDE_DELAY_SETTING_TEMPLATE);
+    ensure_setting(
+        "autohide_effect",
+        AUTOHIDE_EFFECT_SETTING_TEMPLATE);
     reload();
 }
 
@@ -963,6 +981,33 @@ void DockConfigurationManager::reload()
             value_for(
                 key_file,
                 "autohide_hide_delay");
+
+        const auto autohide_effect =
+            value_for(
+                key_file,
+                "autohide_effect");
+
+        if (autohide_effect.empty())
+        {
+            candidate.settings
+                .set_autohide_effect({});
+        }
+        else if (autohide_effect == "fade")
+        {
+            candidate.settings
+                .set_autohide_effect(
+                    DockAutohideEffect::fade);
+        }
+        else
+        {
+            g_warning(
+                "Invalid [dock] autohide_effect '%s'; "
+                "expected empty or fade; keeping the "
+                "platform default",
+                autohide_effect.c_str());
+            candidate.settings
+                .set_autohide_effect({});
+        }
 
         const auto home_icon_enabled =
             value_for(

@@ -375,6 +375,7 @@ export default class DocklightWindowIntegration extends Extension {
 
     _loadDockPlacement() {
         let autohide = 'none';
+        let autohideEffect = 'gnome';
         let alignment = 'center';
         let location = 'bottom';
 
@@ -391,6 +392,14 @@ export default class DocklightWindowIntegration extends Extension {
                     autohide = configuredAutohide;
             } catch (_error) {
                 // Older configuration files use the non-hiding default.
+            }
+            try {
+                const configuredEffect = keyFile.get_string(
+                    'dock', 'autohide_effect').trim();
+                if (configuredEffect === 'fade')
+                    autohideEffect = configuredEffect;
+            } catch (_error) {
+                // Missing and empty values retain the GNOME effect.
             }
             try {
                 const configuredAlignment = keyFile.get_string('dock', 'alignment').trim();
@@ -411,9 +420,11 @@ export default class DocklightWindowIntegration extends Extension {
         }
 
         const changed = this._dockAutohide !== autohide ||
+            this._dockAutohideEffect !== autohideEffect ||
             this._dockAlignment !== alignment ||
             this._dockLocation !== location;
         this._dockAutohide = autohide;
+        this._dockAutohideEffect = autohideEffect;
         this._dockAlignment = alignment;
         this._dockLocation = location;
         return changed;
@@ -993,6 +1004,11 @@ export default class DocklightWindowIntegration extends Extension {
             return;
         }
 
+        if (this._dockAutohideEffect === 'fade') {
+            this._startDockFadeTransition(hidden, actor);
+            return;
+        }
+
         const base = this._dockActorBaseTranslation ?? {x: 0, y: 0};
         const monitorIndex = this._dockMonitorIndex();
         const positioned = placeDockInWorkArea(
@@ -1129,6 +1145,79 @@ export default class DocklightWindowIntegration extends Extension {
                     return GLib.SOURCE_CONTINUE;
                 });
         }
+    }
+
+    _startDockFadeTransition(hidden, actor) {
+        const serial = ++this._dockVisibilityAnimationSerial;
+        this._cancelDockAnimationClip(false);
+        actor.remove_all_transitions();
+
+        // Shell owns the compositor actor for both native Wayland and
+        // XWayland dock surfaces. Keep the committed surface in place and
+        // animate only opacity; the existing reveal actor and the C++ input
+        // pass-through state remain responsible for the final hidden state.
+        const base = this._dockActorBaseTranslation ?? {x: 0, y: 0};
+        actor.translation_x = base.x;
+        actor.translation_y = base.y;
+        actor.scale_x = 1;
+        actor.scale_y = 1;
+        actor.set_pivot_point(0.5, 0.5);
+        actor.remove_clip();
+
+        const targetOpacity = hidden ? 0 : this._dockActorOpacity;
+        const startOpacity = actor.get_opacity();
+        const fullOpacity = Math.max(1, this._dockActorOpacity);
+        const remainingAmount = Math.abs(targetOpacity - startOpacity);
+        const remainingFraction = Math.min(
+            1, remainingAmount / fullOpacity);
+        const fullDuration = hidden
+            ? DOCK_HIDE_ANIMATION_MS
+            : DOCK_REVEAL_ANIMATION_MS;
+        const duration = Math.max(60,
+            Math.round(fullDuration * remainingFraction));
+
+        this._dockVisibilityState = hidden ? 'hiding' : 'revealing';
+        this._updateDockRevealActor();
+        this._publishDockPointerInside(true);
+
+        let completed = false;
+        let completionSource = 0;
+        const completeTransition = () => {
+            if (completed || serial !== this._dockVisibilityAnimationSerial)
+                return;
+
+            completed = true;
+            if (completionSource) {
+                GLib.source_remove(completionSource);
+                completionSource = 0;
+            }
+            this._dockVisibilityState = hidden ? 'hidden' : 'visible';
+            actor.set_opacity(targetOpacity);
+            this._updateDockRevealActor();
+            this._publishDockPointerInside(true);
+            this._call(
+                'PublishDockAnimationCompleted', '(b)', [hidden]);
+        };
+
+        if (remainingAmount < 1) {
+            completeTransition();
+            return;
+        }
+
+        completionSource = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            duration + 32,
+            () => {
+                completionSource = 0;
+                completeTransition();
+                return GLib.SOURCE_REMOVE;
+            });
+        actor.ease({
+            opacity: targetOpacity,
+            duration,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: completeTransition,
+        });
     }
 
     _dockPointerIsInside() {

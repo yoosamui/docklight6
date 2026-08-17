@@ -236,6 +236,9 @@ void DockWindowController::initialize()
                 INITIAL_X11_WORKAREA_SAMPLE_INTERVAL_MS);
     }
 
+    m_autohide_controller->set_effect(
+        m_settings.autohide_effect().value_or(
+            m_window.surface_default_autohide_effect()));
     m_autohide_controller->initialize();
     m_autohide_controller->set_monitor(
         m_monitor);
@@ -768,6 +771,9 @@ void DockWindowController::apply_configuration(
 
     m_autohide_controller->set_hide_delay(
         m_settings.autohide_hide_delay());
+    m_autohide_controller->set_effect(
+        m_settings.autohide_effect().value_or(
+            m_window.surface_default_autohide_effect()));
     m_autohide_controller->set_mode(
         m_layout_request.autohide);
 
@@ -1581,8 +1587,9 @@ void DockWindowController::schedule_show_tooltip(
     cancel_preview_show_timer();
     m_pending_preview_desktop_id.clear();
 
-    // The label from the previous item no longer belongs to the pointer.
-    // Fade it now while this item's independent reveal delay runs.
+    // Fade the previous label while the new item earns its normal hover
+    // delay. Fast crossings replace the pending request, and a surviving
+    // request uses the existing reveal effect.
     hide_tooltip();
     start_tooltip_show_timer(item, text);
 }
@@ -1659,8 +1666,8 @@ void DockWindowController::schedule_show_preview(
     }
 
     // Populated groups still own the same application-name tooltip as empty
-    // launchers. Keep the preview request alive while that label is shown,
-    // then replace the label with the window cards.
+    // launchers. Fade the previous label, reveal this group's delayed label,
+    // then replace it with the window cards.
     hide_tooltip();
     m_pending_item = nullptr;
     m_pending_tooltip_text.clear();

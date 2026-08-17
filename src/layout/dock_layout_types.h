@@ -56,6 +56,19 @@ enum class DockAutohide : int
     intellihide = 1
 };
 
+// Selects the visual transition without changing the shared autohide policy.
+// Plasma and GNOME retain their current compositor-specific implementations;
+// the remaining values reserve common choices for incremental follow-up work.
+enum class DockAutohideEffect : unsigned int
+{
+    plasma = 0,
+    gnome,
+    slide,
+    fade,
+    scale,
+    slide_fade
+};
+
 enum class DockHoverEffect : unsigned int
 {
     standard = 0,

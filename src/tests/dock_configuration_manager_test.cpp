@@ -54,6 +54,8 @@ int main()
                    .preview_card_height() == 512);
         assert(initial_configuration.current().settings
                    .autohide_hide_delay() == 1200);
+        assert(!initial_configuration.current().settings
+                    .autohide_effect().has_value());
         assert(initial_configuration.current().settings
                    .display_preview());
         assert(!initial_configuration.current().settings
@@ -168,6 +170,9 @@ int main()
         "autohide_hide_delay",
         "2500"));
     assert(configuration.save_setting(
+        "autohide_effect",
+        "fade"));
+    assert(configuration.save_setting(
         "location",
         "top"));
     assert(configuration.save_setting(
@@ -198,6 +203,9 @@ int main()
            std::string::npos);
     assert(contents.find(
                "autohide_hide_delay=2500") !=
+           std::string::npos);
+    assert(contents.find(
+               "autohide_effect=fade") !=
            std::string::npos);
     assert(contents.find(
                "preview_color=#445566") !=
@@ -260,6 +268,9 @@ int main()
                .preview_show_delay() == 5000);
     assert(current.settings
                .autohide_hide_delay() == 2500);
+    assert(current.settings
+               .autohide_effect() ==
+           DockAutohideEffect::fade);
     assert(current.layout_request.location ==
            DockLocation::top);
     assert(!current.layout_request
@@ -270,6 +281,14 @@ int main()
            DockAlignment::end);
     assert(current.layout_request.autohide ==
            DockAutohide::intellihide);
+
+    assert(configuration.save_setting(
+        "autohide_effect",
+        "scale"));
+    DockConfigurationManager unsupported_effect(
+        config_home);
+    assert(!unsupported_effect.current().settings
+                .autohide_effect().has_value());
 
     std::filesystem::remove_all(
         config_home);

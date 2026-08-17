@@ -155,6 +155,15 @@ private:
     bool surface_uses_native_placement() const;
     bool surface_is_native_x11() const;
     bool surface_is_ordinary_wayland() const;
+    DockAutohideEffect
+    surface_default_autohide_effect() const;
+    bool surface_delegates_autohide_effect(
+        DockAutohideEffect effect) const;
+    double surface_autohide_fade_opacity() const;
+    void set_surface_autohide_fade_opacity(
+        double opacity);
+    void finish_surface_autohide_fade(
+        bool hidden);
     bool surface_initial_placement_pending() const;
     void complete_surface_initial_placement();
     void apply_dock_orientation(

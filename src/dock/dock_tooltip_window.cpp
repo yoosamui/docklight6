@@ -7,14 +7,14 @@
 // dock_tooltip_window.cpp
 //
 // Implementation overview:
-// Implements tooltip measurement, styling, delayed remapping, and
+// Implements tooltip measurement, styling, visual transitions, and
 // application of precomputed layer-shell margins.
 //
 // Important implementation decisions:
 // - Text is measured before the layout engine chooses a position.
 // - Repeated identical requests do not restart visible tooltip state.
 // - Input is transparent so the overlay never interrupts dock hovering.
-// - Remapping is delayed briefly to replay compositor show animation.
+// - Mapping is delayed briefly before the centred fade-and-scale reveal.
 //
 // ------------------------------------------------------------
 
@@ -35,39 +35,22 @@
 namespace
 {
 
-double ease_opacity(
-    double progress,
-    bool /* hiding */)
+constexpr double TOOLTIP_MIN_SCALE = 0.96;
+constexpr double TOOLTIP_INITIAL_OPACITY = 0.18;
+
+double smootherstep(double progress)
 {
     progress = std::clamp(
         progress,
         0.0,
         1.0);
 
-    // Match the preview's fade-only transition: smoothstep gives appearing
-    // and disappearing tooltips the same gentle start and finish.
-    return progress * progress *
-           (3.0 - 2.0 * progress);
-}
-
-ScreenPosition animation_offset(
-    DockLocation location)
-{
-    constexpr int distance = 3;
-
-    switch (location)
-    {
-    case DockLocation::top:
-        return {0, -distance};
-    case DockLocation::bottom:
-        return {0, distance};
-    case DockLocation::left:
-        return {-distance, 0};
-    case DockLocation::right:
-        return {distance, 0};
-    }
-
-    return {};
+    // Zero velocity at both endpoints keeps reversal smooth if hover state
+    // changes while the transition is running.
+    return progress * progress * progress *
+           (progress *
+                (progress * 6.0 - 15.0) +
+            10.0);
 }
 
 }
@@ -102,13 +85,37 @@ DockTooltipWindow::DockTooltipWindow()
     }
 
     signal_draw().connect(
-        [](const Cairo::RefPtr<Cairo::Context> &context)
+        [this](const Cairo::RefPtr<Cairo::Context> &context)
         {
             context->save();
             context->set_operator(Cairo::OPERATOR_SOURCE);
             context->set_source_rgba(0.0, 0.0, 0.0, 0.0);
             context->paint();
             context->restore();
+
+            // Keep the native surface at its final geometry and scale only
+            // the painted tooltip around its centre. This avoids issuing a
+            // stream of XWayland resizes during the animation.
+            if (m_visual_scale < 0.9999)
+            {
+                const auto allocation =
+                    get_allocation();
+                const double center_x =
+                    allocation.get_width() / 2.0;
+                const double center_y =
+                    allocation.get_height() / 2.0;
+
+                context->translate(
+                    center_x,
+                    center_y);
+                context->scale(
+                    m_visual_scale,
+                    m_visual_scale);
+                context->translate(
+                    -center_x,
+                    -center_y);
+            }
+
             return false;
         },
         false);
@@ -323,13 +330,18 @@ void DockTooltipWindow::show_tooltip(
         return;
     }
 
-    cancel_reveal();
-    cancel_opacity_animation();
+    // Crossing directly to another dock item only changes this mapped
+    // surface's content and placement. Unmapping it would introduce a blank
+    // compositor frame and replay the reveal animation between every pair of
+    // adjacent items.
+    const bool update_mapped_tooltip =
+        m_has_request && get_mapped();
 
-    // A request that survives the controller's hover delay gets a complete
-    // hide/remap/reveal transition. Fast item crossings replace the pending
-    // request before reaching this point, so their labels are never shown.
-    hide();
+    cancel_reveal();
+    cancel_visual_animation();
+
+    if (!update_mapped_tooltip)
+        hide();
 
     m_has_request = true;
     m_request_text = text;
@@ -350,13 +362,28 @@ void DockTooltipWindow::show_tooltip(
         position,
         tooltip_width,
         m_tooltip_height);
+
+    if (update_mapped_tooltip)
+    {
+        // A new hover can arrive while an earlier fade is still active.
+        // Restore the stable visible state without remapping the surface.
+        set_opacity(1.0);
+        m_visual_scale = 1.0;
+        queue_draw();
+        return;
+    }
+
     m_reveal_timer =
         Glib::signal_timeout().connect(
             [this]()
             {
                 // Start partly visible so xfwm4 maps the overlay reliably,
-                // then ease both opacity and position into the final state.
-                set_opacity(0.18);
+                // then ease opacity and centred scale into the final state.
+                set_opacity(TOOLTIP_INITIAL_OPACITY);
+                m_visual_scale =
+                    TOOLTIP_MIN_SCALE +
+                    (1.0 - TOOLTIP_MIN_SCALE) *
+                        TOOLTIP_INITIAL_OPACITY;
                 show_all();
 
                 apply_position(
@@ -364,7 +391,7 @@ void DockTooltipWindow::show_tooltip(
                     m_request_position,
                     m_request_width,
                     m_tooltip_height);
-                start_opacity_animation(false);
+                start_visual_animation(false);
                 return false;
             },
             DockConstants::TOOLTIP_REMAP_DELAY_MS);
@@ -377,22 +404,24 @@ void DockTooltipWindow::hide_tooltip()
 
     if (!get_mapped())
     {
-        cancel_opacity_animation();
+        cancel_visual_animation();
         hide();
         set_opacity(1.0);
+        m_visual_scale = 1.0;
         return;
     }
 
-    start_opacity_animation(true);
+    start_visual_animation(true);
 }
 
 void DockTooltipWindow::hide_tooltip_immediately()
 {
     cancel_reveal();
-    cancel_opacity_animation();
+    cancel_visual_animation();
     m_has_request = false;
     hide();
     set_opacity(1.0);
+    m_visual_scale = 1.0;
 }
 
 void DockTooltipWindow::cancel_reveal()
@@ -401,91 +430,56 @@ void DockTooltipWindow::cancel_reveal()
         m_reveal_timer.disconnect();
 }
 
-void DockTooltipWindow::cancel_opacity_animation()
+void DockTooltipWindow::cancel_visual_animation()
 {
-    if (m_opacity_timer.connected())
-        m_opacity_timer.disconnect();
+    if (m_visual_animation_timer.connected())
+        m_visual_animation_timer.disconnect();
 }
 
-void DockTooltipWindow::start_opacity_animation(
+void DockTooltipWindow::start_visual_animation(
     bool hiding)
 {
-    cancel_opacity_animation();
+    cancel_visual_animation();
 
-    m_opacity_animation_hiding = hiding;
-    m_opacity_animation_start =
+    m_visual_animation_hiding = hiding;
+    m_animation_start_opacity =
         std::clamp(
             get_opacity(),
             0.0,
             1.0);
-    m_opacity_animation_target =
+    m_animation_target_opacity =
         hiding ? 0.0 : 1.0;
-    m_opacity_animation_start_us =
+    m_visual_animation_start_us =
         g_get_monotonic_time();
-    m_animation_moves_window =
-        !m_uses_layer_shell;
-
-    if (m_animation_moves_window)
-    {
-        const auto offset =
-            animation_offset(
-                m_request_location);
-        const int visible_x =
-            m_monitor_geometry.x +
-            m_request_position.x;
-        const int visible_y =
-            m_monitor_geometry.y +
-            m_request_position.y;
-        const int hidden_x =
-            visible_x + offset.x;
-        const int hidden_y =
-            visible_y + offset.y;
-
-        if (hiding)
-        {
-            int current_x = visible_x;
-            int current_y = visible_y;
-            get_position(current_x, current_y);
-            m_animation_start_x = current_x;
-            m_animation_start_y = current_y;
-            m_animation_target_x = hidden_x;
-            m_animation_target_y = hidden_y;
-        }
-        else
-        {
-            m_animation_start_x = hidden_x;
-            m_animation_start_y = hidden_y;
-            m_animation_target_x = visible_x;
-            m_animation_target_y = visible_y;
-            move(
-                m_animation_start_x,
-                m_animation_start_y);
-        }
-    }
+    m_visual_scale =
+        TOOLTIP_MIN_SCALE +
+        (1.0 - TOOLTIP_MIN_SCALE) *
+            m_animation_start_opacity;
+    queue_draw();
 
     if (std::abs(
-            m_opacity_animation_target -
-            m_opacity_animation_start) < 0.01)
+            m_animation_target_opacity -
+            m_animation_start_opacity) < 0.01)
     {
-        advance_opacity_animation();
+        advance_visual_animation();
         return;
     }
 
-    m_opacity_timer =
+    m_visual_animation_timer =
         Glib::signal_timeout().connect(
             sigc::mem_fun(
                 *this,
                 &DockTooltipWindow::
-                    advance_opacity_animation),
+                    advance_visual_animation),
             DockConstants::OVERLAY_ANIMATION_FRAME_MS);
 }
 
-bool DockTooltipWindow::advance_opacity_animation()
+bool DockTooltipWindow::advance_visual_animation()
 {
     const double elapsed_ms =
         static_cast<double>(
             g_get_monotonic_time() -
-            m_opacity_animation_start_us) /
+            m_visual_animation_start_us) /
         1000.0;
     const double progress =
         std::clamp(
@@ -497,13 +491,11 @@ bool DockTooltipWindow::advance_opacity_animation()
             0.0,
             1.0);
     const double eased =
-        ease_opacity(
-            progress,
-            m_opacity_animation_hiding);
+        smootherstep(progress);
     const double opacity =
-        m_opacity_animation_start +
-        (m_opacity_animation_target -
-         m_opacity_animation_start) *
+        m_animation_start_opacity +
+        (m_animation_target_opacity -
+         m_animation_start_opacity) *
             eased;
 
     set_opacity(
@@ -511,41 +503,30 @@ bool DockTooltipWindow::advance_opacity_animation()
             opacity,
             0.0,
             1.0));
-
-    if (m_animation_moves_window)
-    {
-        const int x = static_cast<int>(
-            std::lround(
-                m_animation_start_x +
-                (m_animation_target_x -
-                 m_animation_start_x) *
-                    eased));
-        const int y = static_cast<int>(
-            std::lround(
-                m_animation_start_y +
-                (m_animation_target_y -
-                 m_animation_start_y) *
-                    eased));
-        move(x, y);
-    }
+    m_visual_scale =
+        TOOLTIP_MIN_SCALE +
+        (1.0 - TOOLTIP_MIN_SCALE) *
+            std::clamp(opacity, 0.0, 1.0);
+    queue_draw();
 
     if (progress < 1.0)
         return true;
 
-    cancel_opacity_animation();
-    set_opacity(m_opacity_animation_target);
+    cancel_visual_animation();
+    set_opacity(m_animation_target_opacity);
 
-    if (m_opacity_animation_hiding)
+    if (m_visual_animation_hiding)
     {
         hide();
         set_opacity(1.0);
+        m_visual_scale = 1.0;
     }
-    else if (m_animation_moves_window)
+    else
     {
-        move(
-            m_animation_target_x,
-            m_animation_target_y);
+        m_visual_scale = 1.0;
     }
+
+    queue_draw();
 
     return false;
 }
@@ -604,7 +585,25 @@ void DockTooltipWindow::apply_position(
             "Docklight 6 Tooltip@" +
             std::to_string(global_x) + "," +
             std::to_string(global_y));
-        move(global_x, global_y);
+
+        // Adjacent labels usually have different widths. Moving the mapped
+        // XWayland surface and letting GTK resize it in a later configure
+        // exposes a transparent intermediate frame, which is particularly
+        // visible over light windows. Apply both geometry changes atomically.
+        auto gdk_window = get_window();
+
+        if (gdk_window)
+        {
+            gdk_window->move_resize(
+                global_x,
+                global_y,
+                width,
+                height);
+        }
+        else
+        {
+            move(global_x, global_y);
+        }
         return;
     }
 

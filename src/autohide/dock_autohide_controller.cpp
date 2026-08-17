@@ -195,6 +195,28 @@ void DockAutohideController::set_mode(
         schedule_hide();
 }
 
+void DockAutohideController::set_effect(
+    DockAutohideEffect effect)
+{
+    if (m_effect == effect)
+        return;
+
+    if (!m_initialized)
+    {
+        m_effect = effect;
+        return;
+    }
+
+    const bool resume_hiding =
+        m_mode != DockAutohide::none &&
+        can_hide();
+    reveal_immediately();
+    m_effect = effect;
+
+    if (resume_hiding && !pointer_inside())
+        schedule_hide(false);
+}
+
 void DockAutohideController::set_hide_delay(
     int delay_ms)
 {
@@ -518,9 +540,140 @@ void DockAutohideController::request_shell_visibility(
         m_window.m_window_registry->set_dock_hidden(hidden);
 }
 
+void DockAutohideController::animate_effect(
+    bool hiding)
+{
+    switch (m_effect)
+    {
+        case DockAutohideEffect::fade:
+            animate_fade(hiding);
+            return;
+
+        case DockAutohideEffect::plasma:
+        case DockAutohideEffect::gnome:
+        case DockAutohideEffect::slide:
+            // Preserve the three baseline implementations. Plasma keeps its
+            // layer-shell map/unmap transition, GNOME is dispatched to Shell
+            // before reaching here, and legacy X11 keeps its slide.
+            animate_x11(hiding);
+            return;
+
+        case DockAutohideEffect::scale:
+        case DockAutohideEffect::slide_fade:
+            g_warning(
+                "Requested autohide effect is not implemented");
+            return;
+    }
+}
+
+void DockAutohideController::animate_fade(
+    bool hiding)
+{
+    cancel_animation();
+
+    // Shell-owned GNOME surfaces are dispatched before this point. GTK
+    // opacity is reliable for native X11 and for Plasma's layer-shell
+    // surface, so both can share the controller's existing frame timer.
+    m_window.set_x11_horizontal_scale(
+        1.0,
+        m_placement.anchor_right);
+    m_window.set_x11_vertical_offset(0.0);
+
+    if (!hiding)
+        set_surface_input_passthrough(false);
+
+    m_animation_start_opacity =
+        std::clamp(
+            m_window.surface_autohide_fade_opacity(),
+            0.0,
+            1.0);
+    m_animation_target_opacity =
+        hiding ? 0.0 : 1.0;
+    m_animating_to_hidden = hiding;
+
+    const double remaining =
+        std::abs(
+            m_animation_target_opacity -
+            m_animation_start_opacity);
+    m_animation_duration_ms = std::max(
+        DockConstants::AUTOHIDE_ANIMATION_FRAME_MS,
+        static_cast<int>(std::lround(
+            DockConstants::AUTOHIDE_ANIMATION_DURATION_MS *
+            remaining)));
+    m_animation_start_time_us =
+        g_get_monotonic_time();
+
+    if (remaining < 0.001)
+    {
+        advance_fade_animation();
+        return;
+    }
+
+    m_animation_timer =
+        Glib::signal_timeout().connect(
+            sigc::mem_fun(
+                *this,
+                &DockAutohideController::
+                    advance_fade_animation),
+            DockConstants::
+                AUTOHIDE_ANIMATION_FRAME_MS);
+}
+
+bool DockAutohideController::advance_fade_animation()
+{
+    const double elapsed_ms =
+        static_cast<double>(
+            g_get_monotonic_time() -
+            m_animation_start_time_us) /
+        1000.0;
+    const double progress = std::clamp(
+        elapsed_ms /
+            std::max(1, m_animation_duration_ms),
+        0.0,
+        1.0);
+    const double eased =
+        1.0 - std::pow(1.0 - progress, 2.0);
+
+    m_window.set_surface_autohide_fade_opacity(
+        m_animation_start_opacity +
+        (m_animation_target_opacity -
+         m_animation_start_opacity) *
+            eased);
+
+    if (progress < 1.0)
+        return true;
+
+    m_animation_timer.disconnect();
+    m_window.set_surface_autohide_fade_opacity(
+        m_animation_target_opacity);
+
+    if (m_animating_to_hidden)
+    {
+        set_surface_input_passthrough(true);
+
+        // X11 retains the existing mapped, transparent hidden surface to
+        // avoid compositor map flashes. Wayland/layer-shell completes the
+        // fade by entering its existing unmapped hidden state.
+        m_window.finish_surface_autohide_fade(true);
+    }
+    else
+    {
+        m_window.finish_surface_autohide_fade(false);
+        set_surface_input_passthrough(false);
+    }
+
+    return false;
+}
+
 bool DockAutohideController::can_animate_x11() const
 {
-    return m_window.surface_is_native_x11() &&
+    const bool use_legacy_slide =
+        m_effect == DockAutohideEffect::slide ||
+        (m_effect == DockAutohideEffect::gnome &&
+         !has_shell_reveal_trigger());
+
+    return use_legacy_slide &&
+           m_window.surface_is_native_x11() &&
            m_has_placement;
 }
 
@@ -595,9 +748,9 @@ void DockAutohideController::animate_x11(
     bool hiding,
     bool start_at_hidden_edge)
 {
-    // Layer-shell surfaces are positioned by the Wayland compositor and
-    // cannot be moved one frame at a time. Xfce's X11 dock window, however,
-    // has stable global coordinates and can slide cleanly through its edge.
+    // Compositor-owned Plasma and GNOME effects cannot be moved one frame at
+    // a time here. Native X11 dock windows retain their existing slide using
+    // stable global coordinates.
     if (!can_animate_x11())
     {
         if (hiding)
@@ -932,7 +1085,7 @@ void DockAutohideController::hide_now(
     }
 
     m_reveal_window.show();
-    animate_x11(true);
+    animate_effect(true);
 }
 
 void DockAutohideController::reveal()
@@ -1002,6 +1155,9 @@ void DockAutohideController::reveal()
                 }
             }
 
+            if (m_effect == DockAutohideEffect::fade)
+                m_window.set_opacity(0.0);
+
             m_window.show();
 
             if (defer_x11_reveal)
@@ -1011,10 +1167,11 @@ void DockAutohideController::reveal()
             }
         }
 
-        if (can_animate_x11())
+        if (can_animate_x11() ||
+            m_effect == DockAutohideEffect::fade)
             set_surface_input_passthrough(false);
 
-        animate_x11(false);
+        animate_effect(false);
     }
 
     m_reveal_window.hide();
@@ -1057,7 +1214,9 @@ bool DockAutohideController::
 
 bool DockAutohideController::uses_shell_reveal_trigger() const
 {
-    return has_shell_reveal_trigger() &&
+    return m_window.surface_delegates_autohide_effect(
+               m_effect) &&
+           has_shell_reveal_trigger() &&
            m_window.m_window_registry->connected() &&
            m_window.m_window_registry
                ->dock_surface_geometry()

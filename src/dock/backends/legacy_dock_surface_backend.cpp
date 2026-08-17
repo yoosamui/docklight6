@@ -69,6 +69,29 @@ bool is_gnome_wayland_session()
                 "gnome"));
 }
 
+bool uses_gnome_wayland_autohide_effect()
+{
+    if (!environment_contains(
+            "XDG_SESSION_TYPE",
+            "wayland"))
+    {
+        return false;
+    }
+
+    // XDG_CURRENT_DESKTOP describes the active desktop. Consult the session
+    // fallback only when it is absent, because inherited session metadata can
+    // otherwise misclassify an explicit Plasma XWayland presentation.
+    const auto current_desktop =
+        std::getenv("XDG_CURRENT_DESKTOP");
+    return current_desktop && *current_desktop
+               ? environment_contains(
+                     "XDG_CURRENT_DESKTOP",
+                     "gnome")
+               : environment_contains(
+                     "XDG_SESSION_DESKTOP",
+                     "gnome");
+}
+
 bool is_kde_wayland_session()
 {
     return environment_contains(
@@ -317,6 +340,48 @@ bool LegacyDockSurfaceBackend::
     is_ordinary_wayland() const
 {
     return m_ordinary_wayland;
+}
+
+DockAutohideEffect
+LegacyDockSurfaceBackend::
+    default_autohide_effect() const
+{
+    return uses_gnome_wayland_autohide_effect()
+               ? DockAutohideEffect::gnome
+               : DockAutohideEffect::slide;
+}
+
+bool LegacyDockSurfaceBackend::
+    delegates_autohide_effect(
+        DockAutohideEffect effect) const
+{
+    return uses_gnome_wayland_autohide_effect() &&
+           (effect == DockAutohideEffect::gnome ||
+            effect == DockAutohideEffect::fade);
+}
+
+double LegacyDockSurfaceBackend::
+    autohide_fade_opacity() const
+{
+    return m_window.get_opacity();
+}
+
+void LegacyDockSurfaceBackend::
+    set_autohide_fade_opacity(
+        double opacity)
+{
+    m_window.set_opacity(opacity);
+}
+
+void LegacyDockSurfaceBackend::
+    finish_autohide_fade(
+        bool hidden)
+{
+    // Native X11 keeps its transparent hidden surface mapped to avoid a
+    // compositor map flash. Ordinary Wayland completes in the same unmapped
+    // state used by the existing legacy autohide path.
+    if (hidden && !m_native_x11)
+        m_window.hide();
 }
 
 bool LegacyDockSurfaceBackend::

@@ -28,6 +28,7 @@
 
 #include "layout/dock_layout_types.h"
 
+#include <optional>
 #include <string>
 
 class DockSettings
@@ -39,6 +40,8 @@ public:
     void set_preview_card_height(int height);
     void set_preview_show_delay(int delay_ms);
     void set_autohide_hide_delay(int delay_ms);
+    void set_autohide_effect(
+        std::optional<DockAutohideEffect> effect);
     void set_hover_effect(
         DockHoverEffect effect);
     void set_indicator(
@@ -71,6 +74,8 @@ public:
     int preview_card_height() const;
     int preview_show_delay() const;
     int autohide_hide_delay() const;
+    std::optional<DockAutohideEffect>
+    autohide_effect() const;
     int minimum_bottom_workarea_inset() const;
     bool home_icon_enabled() const;
     const std::string &home_icon_path() const;
@@ -92,6 +97,8 @@ private:
     int m_preview_card_height = 200;
     int m_preview_show_delay = 500;
     int m_autohide_hide_delay = 1200;
+    std::optional<DockAutohideEffect>
+        m_autohide_effect;
 
     // Some Wayland compositors report the full output as the work area even
     // when a panel occludes the bottom edge. This is the minimum hidden

@@ -44,6 +44,7 @@ public:
 
     void initialize();
     void set_mode(DockAutohide mode);
+    void set_effect(DockAutohideEffect effect);
     void set_hide_delay(int delay_ms);
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor> &monitor);
@@ -68,6 +69,9 @@ private:
     void reset_x11_visual_transform();
     void request_shell_visibility(bool hidden);
     void set_surface_input_passthrough(bool passthrough);
+    void animate_effect(bool hiding);
+    void animate_fade(bool hiding);
+    bool advance_fade_animation();
     bool can_animate_x11() const;
     bool should_collapse_x11_horizontally() const;
     void animate_x11(
@@ -104,6 +108,8 @@ private:
     };
 
     DockAutohide m_mode = DockAutohide::none;
+    DockAutohideEffect m_effect =
+        DockAutohideEffect::slide;
     int m_hide_delay_ms = 0;
     int m_inhibit_count = 0;
     bool m_intellihide_overlap = false;
@@ -119,6 +125,8 @@ private:
     double m_animation_target_scale = 1.0;
     double m_animation_start_vertical_offset = 0.0;
     double m_animation_target_vertical_offset = 0.0;
+    double m_animation_start_opacity = 1.0;
+    double m_animation_target_opacity = 1.0;
     gint64 m_animation_start_time_us = 0;
     int m_animation_duration_ms = 0;
     bool m_initialized = false;

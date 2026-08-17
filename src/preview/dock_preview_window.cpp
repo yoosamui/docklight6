@@ -50,50 +50,18 @@ namespace
     constexpr double CARD_CORNER_RADIUS = 7.0;
     constexpr double PREVIEW_PI =
         3.14159265358979323846;
-    // Temporary test: keep preview transitions as a pure fade, without the
-    // directional slide used by the normal overlay animation.
-    constexpr bool TEST_PREVIEW_FADE_ONLY = true;
 
-    double ease_opacity(
-        double progress,
-        bool hiding)
+    double ease_opacity(double progress)
     {
         progress = std::clamp(
             progress,
             0.0,
             1.0);
 
-        if (TEST_PREVIEW_FADE_ONLY)
-        {
-            // Smoothstep gives both fade-in and fade-out a gentle start and
-            // finish instead of accelerating at only one end.
-            return progress * progress *
-                   (3.0 - 2.0 * progress);
-        }
-
-        return hiding
-            ? progress * progress * progress
-            : 1.0 - std::pow(1.0 - progress, 3.0);
-    }
-
-    ScreenPosition animation_offset(
-        DockLocation location)
-    {
-        constexpr int distance = 28;
-
-        switch (location)
-        {
-        case DockLocation::top:
-            return {0, -distance};
-        case DockLocation::bottom:
-            return {0, distance};
-        case DockLocation::left:
-            return {-distance, 0};
-        case DockLocation::right:
-            return {distance, 0};
-        }
-
-        return {};
+        // Symmetric smoothstep keeps both fade directions gentle at their
+        // start and finish.
+        return progress * progress *
+               (3.0 - 2.0 * progress);
     }
 
     struct PersistentThumbnailPaths
@@ -1057,6 +1025,8 @@ DockPreviewWindow::DockPreviewWindow()
                 std::max(
                     1,
                     allocation.get_height()));
+
+            complete_presentation();
         });
 }
 
@@ -2128,6 +2098,11 @@ void DockPreviewWindow::show_preview(
     }
 
     cancel_opacity_animation();
+
+    // A preview can still be mapped while the pointer moves between grouped
+    // items. Make that surface transparent before replacing its children or
+    // requesting new geometry so GTK cannot paint an intermediate frame.
+    set_opacity(0.0);
     stop_live_streams();
     m_media_title.clear();
     m_live_window_ids.clear();
@@ -2153,30 +2128,14 @@ void DockPreviewWindow::show_preview(
     // calculated monitor-constrained allocation so the window itself, not
     // only its thumbnail children, shrinks or grows.
     resize(size.width, size.height);
-    apply_position(
-        location,
-        position,
-        size.width,
-        size.height);
 
-    // For the fade-only test, begin fully transparent. The normal animation
-    // keeps a faint first frame so xfwm4 maps the moving overlay reliably.
-    set_opacity(
-        TEST_PREVIEW_FADE_ONLY
-            ? 0.0
-            : 0.18);
-
+    // The allocation callback applies the actual allocated geometry before
+    // starting thumbnails or opacity. This prevents Shell live-preview
+    // actors from being created at provisional coordinates and then replaced
+    // when GTK reports the final size.
+    m_presentation_pending = true;
     show_all();
     queue_resize();
-
-    // GNOME Shell can render the compositor's live window textures directly
-    // over these non-reactive image rectangles. Start that zero-copy path for
-    // every visible GNOME preview; it is cheap at idle and avoids treating
-    // smoothness as a media-player-only feature.
-    if (m_thumbnail_provider.supports_gnome_live_previews())
-        start_live_streams();
-
-    start_opacity_animation(false);
 }
 
 void DockPreviewWindow::hide_preview()
@@ -2185,6 +2144,7 @@ void DockPreviewWindow::hide_preview()
     m_media_title.clear();
     m_live_window_ids.clear();
     m_dynamic_refresh = false;
+    m_presentation_pending = false;
 
     for (const auto &window_id : m_window_ids)
     {
@@ -2221,6 +2181,7 @@ void DockPreviewWindow::hide_preview_immediately()
     m_media_title.clear();
     m_live_window_ids.clear();
     m_dynamic_refresh = false;
+    m_presentation_pending = false;
 
     for (const auto &window_id : m_window_ids)
     {
@@ -2250,6 +2211,22 @@ void DockPreviewWindow::cancel_opacity_animation()
         m_opacity_timer.disconnect();
 }
 
+void DockPreviewWindow::complete_presentation()
+{
+    if (!m_presentation_pending)
+        return;
+
+    m_presentation_pending = false;
+
+    // GNOME Shell can render the compositor's live window textures directly
+    // over these non-reactive image rectangles. Start that zero-copy path
+    // only after GTK has applied the final card allocation.
+    if (m_thumbnail_provider.supports_gnome_live_previews())
+        start_live_streams();
+
+    start_opacity_animation(false);
+}
+
 void DockPreviewWindow::start_opacity_animation(
     bool hiding)
 {
@@ -2265,48 +2242,6 @@ void DockPreviewWindow::start_opacity_animation(
         hiding ? 0.0 : 1.0;
     m_opacity_animation_start_us =
         g_get_monotonic_time();
-    m_animation_moves_window =
-        !TEST_PREVIEW_FADE_ONLY &&
-        !m_uses_layer_shell &&
-        m_has_position;
-
-    if (m_animation_moves_window)
-    {
-        const auto offset =
-            animation_offset(
-                m_location);
-        const int visible_x =
-            m_monitor_geometry.x +
-            m_applied_position.x;
-        const int visible_y =
-            m_monitor_geometry.y +
-            m_applied_position.y;
-        const int hidden_x =
-            visible_x + offset.x;
-        const int hidden_y =
-            visible_y + offset.y;
-
-        if (hiding)
-        {
-            int current_x = visible_x;
-            int current_y = visible_y;
-            get_position(current_x, current_y);
-            m_animation_start_x = current_x;
-            m_animation_start_y = current_y;
-            m_animation_target_x = hidden_x;
-            m_animation_target_y = hidden_y;
-        }
-        else
-        {
-            m_animation_start_x = hidden_x;
-            m_animation_start_y = hidden_y;
-            m_animation_target_x = visible_x;
-            m_animation_target_y = visible_y;
-            move(
-                m_animation_start_x,
-                m_animation_start_y);
-        }
-    }
 
     if (std::abs(
             m_opacity_animation_target -
@@ -2341,10 +2276,7 @@ bool DockPreviewWindow::advance_opacity_animation()
                         PREVIEW_FADE_DURATION_MS),
             0.0,
             1.0);
-    const double eased =
-        ease_opacity(
-            progress,
-            m_opacity_animation_hiding);
+    const double eased = ease_opacity(progress);
     const double opacity =
         m_opacity_animation_start +
         (m_opacity_animation_target -
@@ -2356,23 +2288,6 @@ bool DockPreviewWindow::advance_opacity_animation()
             opacity,
             0.0,
             1.0));
-
-    if (m_animation_moves_window)
-    {
-        const int x = static_cast<int>(
-            std::lround(
-                m_animation_start_x +
-                (m_animation_target_x -
-                 m_animation_start_x) *
-                    eased));
-        const int y = static_cast<int>(
-            std::lround(
-                m_animation_start_y +
-                (m_animation_target_y -
-                 m_animation_start_y) *
-                    eased));
-        move(x, y);
-    }
 
     if (progress < 1.0)
         return true;
@@ -2386,13 +2301,6 @@ bool DockPreviewWindow::advance_opacity_animation()
         clear_cards();
         set_opacity(1.0);
     }
-    else if (m_animation_moves_window)
-    {
-        move(
-            m_animation_target_x,
-            m_animation_target_y);
-    }
-
     return false;
 }
 
@@ -3251,6 +3159,9 @@ void DockPreviewWindow::request_live_x11_thumbnail(
 
 void DockPreviewWindow::start_live_streams()
 {
+    if (m_presentation_pending)
+        return;
+
     const auto generation = m_generation;
     std::set<WindowId> desired_windows;
     const bool uses_gnome_live_previews =
@@ -3587,7 +3498,23 @@ void DockPreviewWindow::apply_position(
             "Docklight 6 Preview@" +
             std::to_string(global_x) + "," +
             std::to_string(global_y));
-        move(global_x, global_y);
+
+        // Apply mapped X11/XWayland geometry atomically. Separate move and
+        // resize requests can expose the previous allocation for one frame.
+        const auto gdk_window = get_window();
+
+        if (gdk_window)
+        {
+            gdk_window->move_resize(
+                global_x,
+                global_y,
+                width,
+                height);
+        }
+        else
+        {
+            move(global_x, global_y);
+        }
         return;
     }
 

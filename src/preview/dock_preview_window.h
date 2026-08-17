@@ -178,6 +178,7 @@ private:
     void start_live_streams();
     void stop_live_streams();
     void clear_cards();
+    void complete_presentation();
     void cancel_opacity_animation();
     void start_opacity_animation(bool hiding);
     bool advance_opacity_animation();
@@ -270,10 +271,6 @@ private:
     gint64 m_opacity_animation_start_us = 0;
     double m_opacity_animation_start = 1.0;
     double m_opacity_animation_target = 1.0;
-    int m_animation_start_x = 0;
-    int m_animation_start_y = 0;
-    int m_animation_target_x = 0;
-    int m_animation_target_y = 0;
     std::string m_media_title;
     std::set<WindowId> m_live_window_ids;
     MonitorGeometry m_monitor_geometry;
@@ -284,7 +281,7 @@ private:
     DockPreviewSize m_size;
     bool m_dynamic_refresh = false;
     bool m_has_position = false;
-    bool m_animation_moves_window = false;
+    bool m_presentation_pending = false;
     bool m_opacity_animation_hiding = false;
     bool m_uses_layer_shell = false;
 };
