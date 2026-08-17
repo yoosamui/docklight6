@@ -19,6 +19,7 @@ TESTS = \
     tests/gnome_placement_test.js \
     tests/kwin_minimize_effect_test.js \
     tests/kwin_script_test.js \
+    tests/kwin_surface_identity_test.js \
     tests/plasma_geometry_bridge_test.js
 
 AM_CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic
@@ -46,6 +47,7 @@ docklight6_SOURCES = \
     main.cpp \
     docklight_log.h \
     docklight_log.cpp \
+    presentation/docklight_surface_identity.h \
     presentation/presentation_selector.h \
     presentation/presentation_selector.cpp \
     windowing/managed_window.h \
@@ -351,4 +353,5 @@ EXTRA_DIST = \
     tests/gnome_placement_test.js \
     tests/kwin_minimize_effect_test.js \
     tests/kwin_script_test.js \
+    tests/kwin_surface_identity_test.js \
     tests/plasma_geometry_bridge_test.js

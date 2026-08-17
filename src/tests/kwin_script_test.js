@@ -109,6 +109,7 @@ const dockWindow =
         "org.docklight6");
 
 dockWindow.resourceName = "docklight6";
+dockWindow.windowRole = "docklight6-dock";
 dockWindow.skipTaskbar = true;
 dockWindow.x11Client = true;
 dockWindow.output = {
@@ -126,6 +127,7 @@ const dockPopup =
         "org.docklight6");
 
 dockPopup.resourceName = "docklight6";
+dockPopup.windowRole = "docklight6-popup";
 dockPopup.skipTaskbar = true;
 dockPopup.popupWindow = true;
 
@@ -136,7 +138,10 @@ const replacementDockWindow =
 
 replacementDockWindow.resourceName =
     "docklight6";
+replacementDockWindow.windowRole =
+    "docklight6-dock";
 replacementDockWindow.skipTaskbar = true;
+replacementDockWindow.x11Client = true;
 replacementDockWindow.frameGeometry = {
     x: 100,
     y: 700,

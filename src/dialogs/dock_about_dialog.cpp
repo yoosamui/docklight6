@@ -17,6 +17,7 @@
 // ------------------------------------------------------------
 
 #include "dock_about_dialog.h"
+#include "presentation/docklight_surface_identity.h"
 #include "config.h"
 
 #include <glibmm/i18n.h>
@@ -129,12 +130,12 @@ void DockAboutDialog::show(
 
     gtk_window_set_role(
         GTK_WINDOW(dialog.gobj()),
-        "docklight6-about");
+        DocklightSurfaceIdentity::ABOUT_ROLE);
 
     keep_dialog_above(
         dialog,
         parent,
-        "docklight6-about");
+        DocklightSurfaceIdentity::ABOUT_NAMESPACE);
     dialog.set_decorated(true);
     dialog.set_resizable(false);
     dialog.property_destroy_with_parent() =

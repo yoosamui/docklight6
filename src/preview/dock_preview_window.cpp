@@ -19,6 +19,7 @@
 // ------------------------------------------------------------
 
 #include "dock_preview_window.h"
+#include "presentation/docklight_surface_identity.h"
 
 #include "dock/dock_constants.h"
 
@@ -897,6 +898,9 @@ DockPreviewWindow::DockPreviewWindow()
     set_app_paintable(true);
     set_accept_focus(false);
     set_focus_on_map(false);
+    gtk_window_set_role(
+        GTK_WINDOW(gobj()),
+        DocklightSurfaceIdentity::PREVIEW_ROLE);
 
     // CSS rounds the child surface, not the native X11 toplevel. Ensure the
     // pixels outside that surface can actually be transparent on X11 by
@@ -1003,7 +1007,8 @@ DockPreviewWindow::DockPreviewWindow()
         gtk_layer_init_for_window(window);
         gtk_layer_set_namespace(
             window,
-            "docklight6-preview");
+            DocklightSurfaceIdentity::
+                PREVIEW_NAMESPACE);
         gtk_layer_set_layer(
             window,
             GTK_LAYER_SHELL_LAYER_OVERLAY);
@@ -1100,6 +1105,11 @@ void DockPreviewWindow::set_monitor(
             geometry.get_y(),
             geometry.get_width(),
             geometry.get_height()};
+        m_workarea_geometry = {
+            0,
+            0,
+            geometry.get_width(),
+            geometry.get_height()};
     }
 
     if (m_uses_layer_shell)
@@ -1107,6 +1117,16 @@ void DockPreviewWindow::set_monitor(
         gtk_layer_set_monitor(
             GTK_WINDOW(gobj()),
             monitor ? monitor->gobj() : nullptr);
+    }
+}
+
+void DockPreviewWindow::set_workarea_geometry(
+    const MonitorGeometry &geometry)
+{
+    if (geometry.width > 0 &&
+        geometry.height > 0)
+    {
+        m_workarea_geometry = geometry;
     }
 }
 
@@ -3572,6 +3592,10 @@ void DockPreviewWindow::apply_position(
     }
 
     auto *window = GTK_WINDOW(gobj());
+    const auto layer_position =
+        overlay_position_in_workarea(
+            position,
+            m_workarea_geometry);
     const bool right =
         location == DockLocation::right;
     const bool bottom =
@@ -3597,28 +3621,32 @@ void DockPreviewWindow::apply_position(
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_LEFT,
-        right ? 0 : position.x);
+        right
+            ? 0
+            : std::max(0, layer_position.x));
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_RIGHT,
         right
             ? std::max(
                   0,
-                  m_monitor_geometry.width -
-                      position.x - width)
+                  m_workarea_geometry.width -
+                      layer_position.x - width)
             : 0);
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_TOP,
-        bottom ? 0 : position.y);
+        bottom
+            ? 0
+            : std::max(0, layer_position.y));
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_BOTTOM,
         bottom
             ? std::max(
                   0,
-                  m_monitor_geometry.height -
-                      position.y - height)
+                  m_workarea_geometry.height -
+                      layer_position.y - height)
             : 0);
 }
 

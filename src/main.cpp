@@ -44,6 +44,7 @@
 #include "docklight_log.h"
 #include "integrations/window_system_controller.h"
 #include "presentation/presentation_selector.h"
+#include "presentation/docklight_surface_identity.h"
 #include "config.h"
 
 #include <gtkmm.h>
@@ -344,6 +345,11 @@ int main(int argc, char *argv[])
                 false);
         compositor_warning->set_title(
             _("DockLight"));
+        gtk_window_set_role(
+            GTK_WINDOW(
+                compositor_warning->gobj()),
+            DocklightSurfaceIdentity::
+                COMPOSITOR_WARNING_ROLE);
         compositor_warning->set_secondary_text(
             _("Openbox requires an X11 compositor for complete window "
               "previews. Display Preview is disabled. Start compton or "

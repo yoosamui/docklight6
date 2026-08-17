@@ -20,6 +20,7 @@
 // ------------------------------------------------------------
 
 #include "dock_window.h"
+#include "presentation/docklight_surface_identity.h"
 #include "dock_home_item.h"
 
 #include "application/dock_runtime_info.h"
@@ -184,7 +185,7 @@ DockWindow::DockWindow(
 
     gtk_window_set_role(
         gtk_win,
-        "docklight6-dock");
+        DocklightSurfaceIdentity::DOCK_ROLE);
 
     m_surface_backend =
         create_dock_surface_backend(

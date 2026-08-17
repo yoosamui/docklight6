@@ -8,6 +8,19 @@
     const INTERFACE_NAME =
         "org.docklight6.WindowIntegration1";
     const PROTOCOL_VERSION = "9";
+    const DOCKLIGHT_APPLICATION_RESOURCE =
+        "docklight6";
+    const DOCKLIGHT_MAIN_ROLE =
+        "docklight6-dock";
+    const DOCKLIGHT_RESOURCE_PREFIX =
+        "docklight6-";
+    const DOCKLIGHT_ROLE_PREFIX =
+        "docklight6-";
+    // KWin's script API exposes Window.layer as a number but does not expose
+    // the Layer enum constants. The main layer-shell surface uses DockLayer
+    // (3); reveal, tooltip, and preview surfaces use the overlay layer and
+    // must never become the dock geometry source.
+    const KWIN_DOCK_LAYER = 3;
 
     let connected = false;
     let registering = false;
@@ -22,6 +35,7 @@
     const workAreaWindows = {};
     const baseDockWorkAreas = {};
     let dockSurface = null;
+    let lastDockWorkAreaGeometry = null;
     let lastPublishedDockPointerInside = null;
 
     function windowId(window) {
@@ -46,19 +60,45 @@
             !window.outline &&
             !window.desktopWindow &&
             !window.dock &&
-            !isDocklightSurface(window) &&
+            !isDocklightWindow(window) &&
             windowId(window));
     }
 
     function isDocklightWindow(window) {
+        const resourceName = String(
+            window && window.resourceName || "");
+        const windowRole = String(
+            window && window.windowRole || "");
+
         return Boolean(
             window &&
-            String(
-                window.resourceName || "") ===
-                "docklight6");
+            (resourceName ===
+                DOCKLIGHT_APPLICATION_RESOURCE ||
+             resourceName.startsWith(
+                 DOCKLIGHT_RESOURCE_PREFIX) ||
+             windowRole.startsWith(
+                 DOCKLIGHT_ROLE_PREFIX)));
     }
 
-    function isDocklightSurface(window) {
+    function isDocklightDockSurface(window) {
+        const resourceName = String(
+            window && window.resourceName || "");
+        const windowRole = String(
+            window && window.windowRole || "");
+
+        // X11/XWayland surfaces share the application's resource name, so
+        // WM_WINDOW_ROLE is the semantic discriminator there. KWin exposes
+        // the same application resource for native layer surfaces; their
+        // configured layer distinguishes the main dock from its overlays.
+        const hasMainDockIdentity =
+            window && window.x11Client === true
+                ? windowRole ===
+                    DOCKLIGHT_MAIN_ROLE
+                : resourceName ===
+                    DOCKLIGHT_APPLICATION_RESOURCE &&
+                  Number(window.layer) ===
+                    KWIN_DOCK_LAYER;
+
         return Boolean(
             window &&
             !window.deleted &&
@@ -67,7 +107,7 @@
             !window.outline &&
             !window.desktopWindow &&
             window.skipTaskbar &&
-            isDocklightWindow(window));
+            hasMainDockIdentity);
     }
 
     function findDocklightSurface(
@@ -80,7 +120,7 @@
              ++index) {
             if (windows[index] !==
                     excludedWindow &&
-                isDocklightSurface(
+                isDocklightDockSurface(
                     windows[index])) {
                 return windows[index];
             }
@@ -426,7 +466,7 @@
 
         const geometry =
             dockSurface &&
-            isDocklightSurface(dockSurface)
+            isDocklightDockSurface(dockSurface)
                 ? dockSurface.frameGeometry || {}
                 : {};
 
@@ -453,7 +493,7 @@
         // area edge. Native layer surfaces remain compositor-positioned.
         if (!connected ||
             dockPlacementRequestPending ||
-            !isDocklightSurface(surface) ||
+            !isDocklightDockSurface(surface) ||
             surface.x11Client !== true) {
             return;
         }
@@ -686,7 +726,7 @@
              workspace.stackingOrder || []) {
             if (!window ||
                 !window.dock ||
-                isDocklightSurface(window)) {
+                isDocklightWindow(window)) {
                 continue;
             }
 
@@ -822,10 +862,14 @@
             return;
         }
 
-        let geometry = {};
+        // Native autohide temporarily unmaps the main dock. Preserve its
+        // authoritative KDE work area until it remaps; publishing an empty
+        // area here would recenter a vertical dock and interrupt the hide.
+        let geometry =
+            lastDockWorkAreaGeometry || {};
 
         if (dockSurface &&
-            isDocklightSurface(dockSurface) &&
+            isDocklightDockSurface(dockSurface) &&
             workspace.clientArea &&
             typeof workspace.clientArea ===
                 "function") {
@@ -840,6 +884,16 @@
                         KWin.MaximizeArea,
                         dockSurface) || {},
                     dockSurface);
+
+            if (Number(geometry.width) > 0 &&
+                Number(geometry.height) > 0) {
+                lastDockWorkAreaGeometry = {
+                    x: Number(geometry.x || 0),
+                    y: Number(geometry.y || 0),
+                    width: Number(geometry.width || 0),
+                    height: Number(geometry.height || 0)
+                };
+            }
         }
 
         callDBus(
@@ -857,7 +911,7 @@
 
     function dockPointerIsInside() {
         if (!dockSurface ||
-            !isDocklightSurface(dockSurface)) {
+            !isDocklightDockSurface(dockSurface)) {
             return false;
         }
 
@@ -904,7 +958,7 @@
     function connectWorkAreaWindow(window) {
         if (!window ||
             !window.dock ||
-            isDocklightSurface(window)) {
+            isDocklightWindow(window)) {
             return;
         }
 
@@ -936,13 +990,13 @@
     }
 
     function connectDockSurface(window) {
-        if (!isDocklightSurface(window))
+        if (!isDocklightDockSurface(window))
             return false;
 
         if (dockSurface === window)
             return true;
 
-        if (isDocklightSurface(dockSurface))
+        if (isDocklightDockSurface(dockSurface))
             return false;
 
         dockSurface = window;

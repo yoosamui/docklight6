@@ -987,6 +987,15 @@ void DockWindowController::update_dock_layout()
         workarea_geometry.width,
         workarea_geometry.height};
 
+    // Tooltip and preview layout remains output-relative. Native layer-shell
+    // overlays are arranged inside this usable area, so their surface classes
+    // need its origin and size to translate margins exactly once.
+    m_window.m_overlay_window
+        .set_workarea_geometry(
+            m_usable_monitor_geometry);
+    m_preview_window->set_workarea_geometry(
+        m_usable_monitor_geometry);
+
     // Apply orientation before measuring the dock. A vertical dock has a
     // different natural size than a horizontal one.
     auto placement =
@@ -1871,6 +1880,20 @@ void DockWindowController::show_tooltip(
             m_window.m_overlay_window
                 .tooltip_distance());
 
+    if (m_window.surface_uses_native_placement())
+    {
+        m_window.m_overlay_window
+            .set_workarea_geometry(
+                overlay_workarea_for_dock(
+                    monitor_geometry,
+                    m_layout_request.location,
+                    m_layout_request.autohide,
+                    dock_geometry.x,
+                    dock_geometry.y,
+                    dock_geometry.width,
+                    dock_geometry.height));
+    }
+
     m_tooltip_item = &item;
     m_window.m_overlay_window.show_tooltip(
         text,
@@ -2032,6 +2055,19 @@ void DockWindowController::show_preview(
                 preview_width,
                 preview_height,
                 preview_distance);
+
+    if (m_window.surface_uses_native_placement())
+    {
+        m_preview_window->set_workarea_geometry(
+            overlay_workarea_for_dock(
+                monitor_geometry,
+                m_layout_request.location,
+                m_layout_request.autohide,
+                dock_geometry.x,
+                dock_geometry.y,
+                dock_geometry.width,
+                dock_geometry.height));
+    }
 
     m_preview_desktop_id = item.desktop_id();
 

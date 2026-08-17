@@ -22,6 +22,7 @@
 
 #include "dock_constants.h"
 #include "layout/dock_layout_metrics.h"
+#include "presentation/docklight_surface_identity.h"
 
 #include <gtk-layer-shell.h>
 
@@ -77,6 +78,9 @@ DockTooltipWindow::DockTooltipWindow()
     set_resizable(false);
     set_app_paintable(true);
     set_accept_focus(false);
+    gtk_window_set_role(
+        GTK_WINDOW(gobj()),
+        DocklightSurfaceIdentity::TOOLTIP_ROLE);
 
     // X11 otherwise commonly realizes this undecorated toplevel with an
     // opaque visual. In that case GTK clips the tooltip background to its
@@ -142,7 +146,10 @@ DockTooltipWindow::DockTooltipWindow()
     {
         gtk_layer_init_for_window(window);
         gtk_layer_set_keyboard_interactivity(window, FALSE);
-        gtk_layer_set_namespace(window, "docklight6-tooltip");
+        gtk_layer_set_namespace(
+            window,
+            DocklightSurfaceIdentity::
+                TOOLTIP_NAMESPACE);
         gtk_layer_set_layer(window, GTK_LAYER_SHELL_LAYER_OVERLAY);
         gtk_layer_set_exclusive_zone(window, 0);
     }
@@ -180,6 +187,11 @@ void DockTooltipWindow::set_monitor(
             geometry.get_y(),
             geometry.get_width(),
             geometry.get_height()};
+        m_workarea_geometry = {
+            0,
+            0,
+            geometry.get_width(),
+            geometry.get_height()};
     }
 
     if (m_uses_layer_shell)
@@ -189,6 +201,16 @@ void DockTooltipWindow::set_monitor(
             monitor
                 ? monitor->gobj()
                 : nullptr);
+    }
+}
+
+void DockTooltipWindow::set_workarea_geometry(
+    const MonitorGeometry &geometry)
+{
+    if (geometry.width > 0 &&
+        geometry.height > 0)
+    {
+        m_workarea_geometry = geometry;
     }
 }
 
@@ -588,6 +610,11 @@ void DockTooltipWindow::apply_position(
 
     auto window = GTK_WINDOW(gobj());
 
+    const auto layer_position =
+        overlay_position_in_workarea(
+            position,
+            m_workarea_geometry);
+
     const bool right =
         location == DockLocation::right;
 
@@ -617,7 +644,9 @@ void DockTooltipWindow::apply_position(
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_LEFT,
-        right ? 0 : position.x);
+        right
+            ? 0
+            : std::max(0, layer_position.x));
 
     gtk_layer_set_margin(
         window,
@@ -625,14 +654,16 @@ void DockTooltipWindow::apply_position(
         right
             ? std::max(
                   0,
-                  m_monitor_geometry.width -
-                      position.x - width)
+                  m_workarea_geometry.width -
+                      layer_position.x - width)
             : 0);
 
     gtk_layer_set_margin(
         window,
         GTK_LAYER_SHELL_EDGE_TOP,
-        anchor_bottom ? 0 : position.y);
+        anchor_bottom
+            ? 0
+            : std::max(0, layer_position.y));
 
     gtk_layer_set_margin(
         window,
@@ -640,7 +671,7 @@ void DockTooltipWindow::apply_position(
         anchor_bottom
             ? std::max(
                   0,
-                  m_monitor_geometry.height -
-                      position.y - height)
+                  m_workarea_geometry.height -
+                      layer_position.y - height)
             : 0);
 }

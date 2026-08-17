@@ -564,5 +564,167 @@ int main()
     assert(allocated_top_preview.x == 294);
     assert(allocated_top_preview.y == 500);
 
+    // Plasma arranges zero-exclusive-zone overlay surfaces inside the usable
+    // work area. A top panel's offset must therefore be removed from the
+    // output-relative tooltip/preview position before it becomes a native
+    // layer-shell margin.
+    const MonitorGeometry plasma_workarea{
+        0,
+        44,
+        2560,
+        1396};
+    const auto native_overlay_position =
+        overlay_position_in_workarea(
+            {62, 459},
+            plasma_workarea);
+    assert(native_overlay_position.x == 62);
+    assert(native_overlay_position.y == 415);
+
+    // The same translation covers panels on the left edge and composes with
+    // the reduced work-area dimensions used for right/bottom margins.
+    const auto inset_overlay_position =
+        overlay_position_in_workarea(
+            {250, 1300},
+            {100, 44, 2400, 1396});
+    assert(inset_overlay_position.x == 150);
+    assert(inset_overlay_position.y == 1256);
+
+    // KWin can report the reserved right work-area edge one pixel before the
+    // mapped dock's inner edge. Use that mapped edge so a right-anchored
+    // overlay receives the same exact 12 px gap as a left-anchored overlay.
+    const auto right_overlay_workarea =
+        overlay_workarea_for_dock(
+            {0, 44, 2506, 1396},
+            DockLocation::right,
+            DockAutohide::none,
+            2507,
+            44,
+            53,
+            1396);
+    assert(right_overlay_workarea.x == 0);
+    assert(right_overlay_workarea.width == 2507);
+
+    const ScreenPosition right_tooltip_position{
+        2507 - 120 - 12,
+        400};
+    const auto right_layer_position =
+        overlay_position_in_workarea(
+            right_tooltip_position,
+            right_overlay_workarea);
+    const int right_margin =
+        right_overlay_workarea.width -
+        right_layer_position.x - 120;
+    assert(right_margin == 12);
+
+    // Autohide docks reserve no layer-shell work area. The bottom dock's
+    // layout rectangle can nevertheless contain Docklight's sizing-only
+    // compatibility inset; recover KWin's real bottom edge from the mapped
+    // dock so its overlay margin is symmetric with TOP.
+    const auto autohide_overlay_workarea =
+        overlay_workarea_for_dock(
+            {0, 44, 2560, 1360},
+            DockLocation::bottom,
+            DockAutohide::autohide,
+            1080,
+            1380,
+            400,
+            60);
+    assert(autohide_overlay_workarea.y == 44);
+    assert(autohide_overlay_workarea.height == 1396);
+
+    DockLayoutRequest top_overlay_request;
+    top_overlay_request.location = DockLocation::top;
+    top_overlay_request.autohide = DockAutohide::autohide;
+    DockLayoutRequest bottom_overlay_request =
+        top_overlay_request;
+    bottom_overlay_request.location =
+        DockLocation::bottom;
+
+    const MonitorGeometry full_overlay_workarea{
+        0,
+        44,
+        2560,
+        1396};
+    const DockWindowGeometry top_dock{
+        1080,
+        44,
+        400,
+        60,
+        true};
+    const DockWindowGeometry bottom_dock{
+        1080,
+        1380,
+        400,
+        60,
+        true};
+    const ItemGeometry horizontal_item{
+        168,
+        0,
+        64,
+        60,
+        200,
+        30};
+    constexpr int overlay_width = 120;
+    constexpr int overlay_height = 40;
+    constexpr int overlay_distance = 12;
+
+    const auto top_overlay_position =
+        engine.calculate_tooltip_position(
+            top_overlay_request,
+            full_overlay_workarea,
+            top_dock,
+            horizontal_item,
+            overlay_width,
+            overlay_height,
+            overlay_distance);
+    const auto bottom_overlay_position =
+        engine.calculate_tooltip_position(
+            bottom_overlay_request,
+            full_overlay_workarea,
+            bottom_dock,
+            horizontal_item,
+            overlay_width,
+            overlay_height,
+            overlay_distance);
+
+    const int top_gap =
+        top_overlay_position.y -
+        (top_dock.y + top_dock.height);
+    const int bottom_gap =
+        bottom_dock.y -
+        (bottom_overlay_position.y +
+         overlay_height);
+    assert(top_gap == overlay_distance);
+    assert(bottom_gap == top_gap);
+
+    const auto bottom_layer_position =
+        overlay_position_in_workarea(
+            bottom_overlay_position,
+            autohide_overlay_workarea);
+    const int bottom_layer_margin =
+        autohide_overlay_workarea.height -
+        bottom_layer_position.y -
+        overlay_height;
+    const int top_layer_margin =
+        top_overlay_position.y -
+        full_overlay_workarea.y;
+    assert(bottom_layer_margin == top_layer_margin);
+
+    // Other autohide edges do not use the bottom-only sizing inset and retain
+    // their compositor-provided work area unchanged.
+    const auto right_autohide_workarea =
+        overlay_workarea_for_dock(
+            full_overlay_workarea,
+            DockLocation::right,
+            DockAutohide::autohide,
+            2507,
+            44,
+            53,
+            1396);
+    assert(right_autohide_workarea.x == 0);
+    assert(right_autohide_workarea.width == 2560);
+    assert(right_autohide_workarea.y == 44);
+    assert(right_autohide_workarea.height == 1396);
+
     return 0;
 }

@@ -18,6 +18,7 @@
 // ------------------------------------------------------------
 
 #include "dock_reveal_window.h"
+#include "presentation/docklight_surface_identity.h"
 #include "dock/dock_constants.h"
 
 #include <gtk-layer-shell.h>
@@ -49,7 +50,7 @@ DockRevealWindow::DockRevealWindow()
     set_title("Docklight 6 Reveal@0,0");
     gtk_window_set_role(
         GTK_WINDOW(gobj()),
-        "docklight6-reveal");
+        DocklightSurfaceIdentity::REVEAL_ROLE);
 
     add_events(Gdk::ENTER_NOTIFY_MASK);
 
@@ -79,7 +80,8 @@ DockRevealWindow::DockRevealWindow()
         gtk_layer_init_for_window(window);
         gtk_layer_set_namespace(
             window,
-            "docklight6-autohide-reveal");
+            DocklightSurfaceIdentity::
+                REVEAL_NAMESPACE);
         gtk_layer_set_layer(
             window,
             GTK_LAYER_SHELL_LAYER_OVERLAY);

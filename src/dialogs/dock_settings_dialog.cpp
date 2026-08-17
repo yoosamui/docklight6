@@ -20,6 +20,7 @@
 #include "dock_settings_dialog.h"
 #include "config/dock_configuration_manager.h"
 #include "monitors/dock_monitor_manager.h"
+#include "presentation/docklight_surface_identity.h"
 
 #include <glibmm/i18n.h>
 #include <gdk/gdkwayland.h>
@@ -140,12 +141,13 @@ void DockSettingsDialog::show(
 
     gtk_window_set_role(
         GTK_WINDOW(dialog.gobj()),
-        "docklight6-settings");
+        DocklightSurfaceIdentity::SETTINGS_ROLE);
 
     keep_dialog_above(
         dialog,
         parent,
-        "docklight6-settings");
+        DocklightSurfaceIdentity::
+            SETTINGS_NAMESPACE);
     dialog.set_decorated(true);
     dialog.set_resizable(false);
     dialog.property_destroy_with_parent() =
@@ -1303,10 +1305,16 @@ void DockSettingsDialog::show(
                     Gtk::RESPONSE_OK);
                 icon_dialog.set_type_hint(
                     Gdk::WINDOW_TYPE_HINT_DIALOG);
+                gtk_window_set_role(
+                    GTK_WINDOW(
+                        icon_dialog.gobj()),
+                    DocklightSurfaceIdentity::
+                        ICON_CHOOSER_ROLE);
                 keep_dialog_above(
                     icon_dialog,
                     dialog,
-                    "docklight6-icon-chooser");
+                    DocklightSurfaceIdentity::
+                        ICON_CHOOSER_NAMESPACE);
                 icon_dialog.set_decorated(true);
                 icon_dialog.set_resizable(true);
                 icon_dialog

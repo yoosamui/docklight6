@@ -295,6 +295,97 @@ struct MonitorGeometry
     int height = 0;
 };
 
+// A layer-shell surface with exclusive zone zero is arranged inside the
+// usable area left by panels. Layout positions remain output-relative so the
+// same values work for X11 and ordinary Wayland windows; translate them only
+// when applying native layer-shell margins.
+inline ScreenPosition overlay_position_in_workarea(
+    const ScreenPosition &output_position,
+    const MonitorGeometry &output_local_workarea)
+{
+    return {
+        output_position.x - output_local_workarea.x,
+        output_position.y - output_local_workarea.y};
+}
+
+// Resolve the actual layer-shell work area around the mapped dock. A
+// non-autohiding dock contributes its inner edge through its exclusive zone,
+// while a bottom autohide dock can carry a sizing-only compatibility inset
+// that must not affect overlay margins.
+inline MonitorGeometry overlay_workarea_for_dock(
+    const MonitorGeometry &workarea,
+    DockLocation location,
+    DockAutohide autohide,
+    int dock_x,
+    int dock_y,
+    int dock_width,
+    int dock_height)
+{
+    if (dock_width <= 0 ||
+        dock_height <= 0)
+    {
+        return workarea;
+    }
+
+    MonitorGeometry result = workarea;
+    const int right = workarea.x + workarea.width;
+    const int bottom = workarea.y + workarea.height;
+
+    if (autohide != DockAutohide::none)
+    {
+        if (location == DockLocation::bottom)
+        {
+            const int dock_outer_edge =
+                dock_y + dock_height;
+
+            if (dock_outer_edge > workarea.y)
+            {
+                result.height =
+                    dock_outer_edge - workarea.y;
+            }
+        }
+
+        return result;
+    }
+
+    switch (location)
+    {
+    case DockLocation::left:
+    {
+        const int inner_edge = dock_x + dock_width;
+        if (inner_edge < right)
+        {
+            result.x = inner_edge;
+            result.width = right - inner_edge;
+        }
+        break;
+    }
+
+    case DockLocation::right:
+        if (dock_x > workarea.x)
+            result.width = dock_x - workarea.x;
+        break;
+
+    case DockLocation::top:
+    {
+        const int inner_edge = dock_y + dock_height;
+        if (inner_edge < bottom)
+        {
+            result.y = inner_edge;
+            result.height = bottom - inner_edge;
+        }
+        break;
+    }
+
+    case DockLocation::bottom:
+        if (dock_y > workarea.y)
+            result.height = dock_y - workarea.y;
+        break;
+    }
+
+    return result;
+}
+
 // _NET_WORKAREA is one root-window rectangle per desktop, not one rectangle
 // per monitor. On a multi-monitor X11 desktop, a panel on one output can
 // therefore shrink the work area reported for every output. Begin with the

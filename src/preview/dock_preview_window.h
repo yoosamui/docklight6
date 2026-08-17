@@ -70,6 +70,8 @@ public:
 
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor> &monitor);
+    void set_workarea_geometry(
+        const MonitorGeometry &geometry);
     void set_card_user_height(int height);
     void set_preview_color(
         const std::string &color);
@@ -275,6 +277,7 @@ private:
     std::string m_media_title;
     std::set<WindowId> m_live_window_ids;
     MonitorGeometry m_monitor_geometry;
+    MonitorGeometry m_workarea_geometry;
     ScreenPosition m_position;
     ScreenPosition m_applied_position;
     DockLocation m_location = DockLocation::bottom;

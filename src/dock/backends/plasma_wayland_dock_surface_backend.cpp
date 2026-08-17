@@ -13,6 +13,7 @@
 // ------------------------------------------------------------
 
 #include "plasma_wayland_dock_surface_backend.h"
+#include "presentation/docklight_surface_identity.h"
 
 #include "dock/dock_window.h"
 #include "layout/dock_layout_geometry.h"
@@ -120,7 +121,7 @@ PlasmaWaylandDockSurfaceBackend::
         GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
     gtk_layer_set_namespace(
         gtk_window,
-        "docklight6");
+        DocklightSurfaceIdentity::DOCK_NAMESPACE);
     gtk_layer_set_layer(
         gtk_window,
         GTK_LAYER_SHELL_LAYER_TOP);
