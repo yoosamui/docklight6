@@ -110,6 +110,7 @@ const dockWindow =
 
 dockWindow.resourceName = "docklight6";
 dockWindow.skipTaskbar = true;
+dockWindow.x11Client = true;
 dockWindow.output = {
     geometry: {
         x: 0,
@@ -333,6 +334,41 @@ calls[0].callback(
     true,
     "9");
 
+const dockPlacementRequest =
+    calls.find(
+        call =>
+            call.methodName ===
+            "GetDockPlacementGeometry");
+
+assert(dockPlacementRequest);
+
+dockPlacementRequest.callback(
+    true,
+    100,
+    44,
+    800,
+    600);
+
+assert.strictEqual(
+    dockWindow.frameGeometry.x,
+    100);
+assert.strictEqual(
+    dockWindow.frameGeometry.y,
+    44);
+assert.strictEqual(
+    dockWindow.frameGeometry.width,
+    800);
+assert.strictEqual(
+    dockWindow.frameGeometry.height,
+    600);
+
+dockWindow.frameGeometry = {
+    x: 10,
+    y: 20,
+    width: 800,
+    height: 600
+};
+
 const beginSnapshot =
     calls.find(
         call =>
@@ -394,9 +430,9 @@ assert.deepStrictEqual(
     [
         "3",
         0,
-        52,
+        44,
         1920,
-        1028
+        1036
     ]);
 
 workspace.cursorPos = {
@@ -441,9 +477,9 @@ assert.deepStrictEqual(
         .arguments.slice(1),
     [
         0,
-        60,
+        44,
         1920,
-        1020
+        1036
     ]);
 
 clientAreaGeometry = {

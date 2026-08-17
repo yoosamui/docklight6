@@ -16,9 +16,11 @@
     let commandTransactionDepth = 0;
     let stackingOrderDirty = false;
     let lastPublishedStackingOrder = "";
+    let dockPlacementRequestPending = false;
 
     const trackedWindows = {};
     const workAreaWindows = {};
+    const baseDockWorkAreas = {};
     let dockSurface = null;
     let lastPublishedDockPointerInside = null;
 
@@ -439,6 +441,66 @@
             Number(geometry.width || 0),
             Number(geometry.height || 0),
             handlePublishReply);
+
+        applyDockPlacementGeometry();
+    }
+
+    function applyDockPlacementGeometry() {
+        const surface = dockSurface;
+
+        // KWin can constrain an XWayland dock against the full frame of an
+        // existing Plasma panel after GTK has moved it to the reserved work
+        // area edge. Native layer surfaces remain compositor-positioned.
+        if (!connected ||
+            dockPlacementRequestPending ||
+            !isDocklightSurface(surface) ||
+            surface.x11Client !== true) {
+            return;
+        }
+
+        dockPlacementRequestPending = true;
+
+        callDBus(
+            SERVICE_NAME,
+            OBJECT_PATH,
+            INTERFACE_NAME,
+            "GetDockPlacementGeometry",
+            function (
+                valid,
+                x,
+                y,
+                width,
+                height) {
+                dockPlacementRequestPending = false;
+
+                if (!connected ||
+                    dockSurface !== surface ||
+                    valid !== true ||
+                    Number(width) <= 0 ||
+                    Number(height) <= 0) {
+                    return;
+                }
+
+                const current =
+                    surface.frameGeometry || {};
+                const target = {
+                    x: Number(x),
+                    y: Number(y),
+                    width: Number(width),
+                    height: Number(height)
+                };
+
+                if (Number(current.x) === target.x &&
+                    Number(current.y) === target.y &&
+                    Number(current.width) ===
+                        target.width &&
+                    Number(current.height) ===
+                        target.height) {
+                    return;
+                }
+
+                surface.frameGeometry = target;
+            });
     }
 
     function adjustedDockWorkArea(
@@ -540,6 +602,75 @@
                 if (ownRightReservation)
                     areaRight = outputRight;
             }
+        }
+
+        const outputKey = [
+            outputLeft,
+            outputTop,
+            outputRight,
+            outputBottom
+        ].join(",");
+        const hasOwnReservation =
+            ownTopReservation ||
+            ownBottomReservation ||
+            ownLeftReservation ||
+            ownRightReservation;
+        const cached =
+            baseDockWorkAreas[outputKey];
+
+        // Preserve KWin's raw MaximizeArea before Docklight publishes its
+        // own exclusive zone. Once that zone appears, update every unaffected
+        // edge but retain the cached value at Docklight's edge. This keeps the
+        // Plasma panel's actual reserved content area (not its larger floating
+        // frame or Docklight's own reservation) as the placement contract.
+        if (!hasOwnReservation) {
+            const base = {
+                x: Number(workArea.x || 0),
+                y: Number(workArea.y || 0),
+                width: Number(workArea.width || 0),
+                height: Number(workArea.height || 0)
+            };
+
+            baseDockWorkAreas[outputKey] = base;
+            return base;
+        }
+
+        if (cached) {
+            const cachedRight =
+                Number(cached.x || 0) +
+                Number(cached.width || 0);
+            const cachedBottom =
+                Number(cached.y || 0) +
+                Number(cached.height || 0);
+
+            areaLeft = ownLeftReservation
+                ? Number(cached.x || 0)
+                : Number(workArea.x || 0);
+            areaTop = ownTopReservation
+                ? Number(cached.y || 0)
+                : Number(workArea.y || 0);
+            areaRight = ownRightReservation
+                ? cachedRight
+                : Number(workArea.x || 0) +
+                    Number(workArea.width || 0);
+            areaBottom = ownBottomReservation
+                ? cachedBottom
+                : Number(workArea.y || 0) +
+                    Number(workArea.height || 0);
+
+            const base = {
+                x: areaLeft,
+                y: areaTop,
+                width: Math.max(
+                    1,
+                    areaRight - areaLeft),
+                height: Math.max(
+                    1,
+                    areaBottom - areaTop)
+            };
+
+            baseDockWorkAreas[outputKey] = base;
+            return base;
         }
 
         function rangesOverlap(

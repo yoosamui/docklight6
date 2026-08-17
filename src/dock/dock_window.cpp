@@ -23,6 +23,7 @@
 #include "dock_home_item.h"
 
 #include "application/dock_runtime_info.h"
+#include "backends/legacy_dock_surface_backend.h"
 #include "dock_constants.h"
 #include "layout/dock_layout_metrics.h"
 #include "dock_window_controller.h"
@@ -211,6 +212,12 @@ DockWindow::DockWindow(
     const DockRuntimeInfo &runtime_info)
     : m_window_registry(window_registry)
 {
+    m_surface_backend =
+        std::make_unique<
+            LegacyDockSurfaceBackend>(
+                *this,
+                monitor);
+
     m_controller =
         std::make_unique<DockWindowController>(
             *this,
@@ -415,6 +422,9 @@ void DockWindow::set_monitor(
     const Glib::RefPtr<Gdk::Monitor>
         &monitor)
 {
+    if (monitor)
+        m_surface_backend->set_monitor(monitor);
+
     m_controller->set_monitor(monitor);
 }
 
@@ -920,6 +930,29 @@ DockWindow::content_geometry() const
 // This function performs compositor-facing side effects but does not derive
 // geometry or monitor policy.
 void DockWindow::apply_dock_layout(
+    const DockPlacement &placement,
+    const MonitorGeometry &output,
+    const MonitorGeometry &workarea)
+{
+    m_surface_backend->apply_dock_placement(
+        placement,
+        output,
+        workarea);
+}
+
+MonitorGeometry
+DockWindow::surface_output_geometry() const
+{
+    return m_surface_backend->output_geometry();
+}
+
+MonitorGeometry
+DockWindow::surface_work_area() const
+{
+    return m_surface_backend->work_area();
+}
+
+void DockWindow::apply_legacy_dock_layout(
     const DockPlacement &placement,
     const MonitorGeometry &output,
     const MonitorGeometry &workarea)
@@ -1614,6 +1647,11 @@ void DockWindow::capture_x11_base_workarea(
 }
 
 void DockWindow::prepare_x11_monitor_change()
+{
+    m_surface_backend->clear_reserved_space();
+}
+
+void DockWindow::clear_legacy_reserved_space()
 {
     if (m_uses_layer_shell)
         return;

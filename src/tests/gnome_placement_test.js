@@ -285,6 +285,14 @@ assert.match(
     /GDK_IS_X11_DISPLAY[\s\S]*?capture_x11_base_workarea[\s\S]*?m_x11_base_workarea/,
     "X11 layout must not feed Docklight's own strut back into its edge margin");
 assert.match(
+    dockWindowControllerSource,
+    /if \(reported_workarea && !x11_dock\)/,
+    "KWin reports must not replace the authoritative XWayland work area");
+assert.match(
+    dockWindowControllerSource,
+    /if \(!m_window\.m_uses_layer_shell\)[\s\S]*?apply_workarea_insets/,
+    "layer-shell placement must not count compositor work-area insets twice");
+assert.match(
     dockWindowSource,
     /if \(is_gnome_wayland_session\(\) \|\|[\s\S]*?is_kde_wayland_session\(\) \|\|[\s\S]*?is_cinnamon_x11_session\(\)\)[\s\S]*?x11_scoped_monitor_workarea/,
     "Cinnamon X11 must preserve Muffin's monitor-scoped GTK panel work area");

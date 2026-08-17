@@ -113,6 +113,9 @@ docklight6_SOURCES = \
     autohide/dock_reveal_window.cpp \
     autohide/dock_autohide_controller.h \
     autohide/dock_autohide_controller.cpp \
+    dock/backends/dock_surface_backend.h \
+    dock/backends/legacy_dock_surface_backend.h \
+    dock/backends/legacy_dock_surface_backend.cpp \
     dock/dock_constants.h \
     dock/dock_window.h \
     dock/dock_window.cpp \

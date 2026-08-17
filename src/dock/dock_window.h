@@ -28,6 +28,7 @@
 #pragma once
 
 #include "config/dock_configuration.h"
+#include "backends/dock_surface_backend.h"
 #include "dock_item.h"
 #include "layout/dock_layout_metrics.h"
 #include "layout/dock_layout_types.h"
@@ -44,6 +45,7 @@
 
 class DockWindowController;
 class DockAutohideController;
+class LegacyDockSurfaceBackend;
 class DockHomeItem;
 struct DockRuntimeInfo;
 class WindowRegistry;
@@ -138,6 +140,14 @@ private:
         const DockPlacement &placement,
         const MonitorGeometry &output,
         const MonitorGeometry &workarea);
+    void apply_legacy_dock_layout(
+        const DockPlacement &placement,
+        const MonitorGeometry &output,
+        const MonitorGeometry &workarea);
+    MonitorGeometry
+    surface_output_geometry() const;
+    MonitorGeometry
+    surface_work_area() const;
     void apply_x11_strut(
         const DockPlacement &placement,
         int x,
@@ -145,6 +155,7 @@ private:
         int width,
         int height);
     void prepare_x11_monitor_change();
+    void clear_legacy_reserved_space();
     void capture_x11_base_workarea(
         const MonitorGeometry &output,
         const MonitorGeometry &fallback);
@@ -170,6 +181,7 @@ private:
 private:
     friend class DockWindowController;
     friend class DockAutohideController;
+    friend class LegacyDockSurfaceBackend;
 
     Glib::RefPtr<Gtk::CssProvider> m_visual_css;
 
@@ -203,6 +215,8 @@ private:
     std::vector<std::string>
         m_synchronized_running_ids;
 
+    std::unique_ptr<IDockSurfaceBackend>
+        m_surface_backend;
     std::unique_ptr<DockWindowController> m_controller;
 
     DockItem *m_dragged_item = nullptr;

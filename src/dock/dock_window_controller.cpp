@@ -596,11 +596,9 @@ void DockWindowController::initialize()
 bool DockWindowController::sample_initial_x11_workarea()
 {
     const auto output_geometry =
-        m_layout_geometry.output_geometry(
-            m_monitor);
+        m_window.surface_output_geometry();
     const auto workarea_geometry =
-        m_layout_geometry.monitor_geometry(
-            m_monitor);
+        m_window.surface_work_area();
 
     ++m_initial_x11_workarea_sample_attempt_count;
 
@@ -818,8 +816,7 @@ void DockWindowController::set_monitor(
     const bool monitor_changed =
         monitor != m_monitor;
     const auto next_output_geometry =
-        m_layout_geometry.output_geometry(
-            monitor);
+        m_window.surface_output_geometry();
     const bool monitor_geometry_changed =
         m_output_geometry.width > 0 &&
         m_output_geometry.height > 0 &&
@@ -894,8 +891,7 @@ void DockWindowController::update_dock_layout()
         return;
 
     auto output_geometry =
-        m_layout_geometry.output_geometry(
-            m_monitor);
+        m_window.surface_output_geometry();
 
     if (output_geometry.width <= 0 ||
         output_geometry.height <= 0)
@@ -909,8 +905,7 @@ void DockWindowController::update_dock_layout()
         output_geometry;
 
     auto workarea_geometry =
-        m_layout_geometry.monitor_geometry(
-            m_monitor);
+        m_window.surface_work_area();
 
     if (workarea_geometry.width <= 0 ||
         workarea_geometry.height <= 0)
@@ -951,7 +946,7 @@ void DockWindowController::update_dock_layout()
             m_window.m_window_registry
                 ->dock_workarea_geometry();
 
-        if (reported_workarea)
+        if (reported_workarea && !x11_dock)
         {
             MonitorGeometry kwin_workarea;
             if (intersect_workarea_with_output(
@@ -1052,10 +1047,17 @@ void DockWindowController::update_dock_layout()
             workarea_geometry,
             dock_geometry);
 
-    m_layout_engine.apply_workarea_insets(
-        placement,
-        output_geometry,
-        native_workarea_geometry);
+    // Layer-shell positions anchored surfaces from the usable edge left by
+    // earlier exclusive zones. Adding the same compositor work-area inset as
+    // a margin would count a Plasma panel twice. X11 and ordinary Wayland
+    // windows still need explicit output-relative margins.
+    if (!m_window.m_uses_layer_shell)
+    {
+        m_layout_engine.apply_workarea_insets(
+            placement,
+            output_geometry,
+            native_workarea_geometry);
+    }
 
     m_window.apply_dock_layout(
         placement,
