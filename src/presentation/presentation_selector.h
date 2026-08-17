@@ -12,6 +12,7 @@
 
 enum class PresentationMode
 {
+    automatic,
     native,
     xwayland
 };
@@ -19,7 +20,7 @@ enum class PresentationMode
 struct PresentationSelection
 {
     PresentationMode mode =
-        PresentationMode::native;
+        PresentationMode::automatic;
     std::string source = "default";
 };
 

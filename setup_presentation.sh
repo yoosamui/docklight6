@@ -15,7 +15,7 @@ the GNOME, Plasma, or X11 window-integration backend.
 
   native     Use the desktop session's native GTK presentation
   xwayland   Use X11 dock windows through XWayland in a Wayland session
-  auto       Prefer XWayland when available, otherwise use native presentation
+  auto       Use XWayland on GNOME Wayland and native presentation elsewhere
   status     Report configuration and current-session availability
 
 The setting is stored per user and does not modify Docklight's desktop entry.
@@ -43,13 +43,60 @@ configured_modes()
     local mode=""
     IFS=',' read -r -a configured <<<"${modes}"
     for mode in "${configured[@]}"; do
-        [[ ${mode} == native || ${mode} == xwayland ]] || {
-            echo native
+        [[ ${mode} == auto ||
+           ${mode} == native ||
+           ${mode} == xwayland ]] || {
+            echo auto
             return
         }
     done
 
-    [[ -n ${modes} ]] && echo "${modes}" || echo native
+    [[ -n ${modes} ]] && echo "${modes}" || echo auto
+}
+
+automatic_mode()
+{
+    local session="${XDG_SESSION_TYPE:-}"
+    local desktop="${XDG_CURRENT_DESKTOP:-${XDG_SESSION_DESKTOP:-}}"
+    session="${session,,}"
+    desktop="${desktop,,}"
+
+    if { [[ ${session} == wayland ]] ||
+         { [[ -z ${session} ]] && [[ -n ${WAYLAND_DISPLAY:-} ]]; }; } &&
+       [[ ${desktop} == *gnome* ]] &&
+       [[ -n ${DISPLAY:-} ]]
+    then
+        echo xwayland
+    else
+        echo native
+    fi
+}
+
+resolved_mode()
+{
+    local mode="$1"
+
+    local session="${XDG_SESSION_TYPE:-}"
+    session="${session,,}"
+
+    local configured_mode=""
+    IFS=',' read -r -a configured <<<"${mode}"
+    for configured_mode in "${configured[@]}"; do
+        if [[ ${configured_mode} == auto ]]; then
+            automatic_mode
+            return
+        elif [[ ${configured_mode} == native ]] ||
+             { [[ ${configured_mode} == xwayland ]] &&
+               [[ -n ${DISPLAY:-} ]] &&
+               { [[ ${session} == wayland ]] ||
+                 [[ -n ${WAYLAND_DISPLAY:-} ]]; }; }
+        then
+            echo "${configured_mode}"
+            return
+        fi
+    done
+
+    echo "${mode%%,*}"
 }
 
 write_mode()
@@ -103,11 +150,14 @@ running_mode()
 print_status()
 {
     local mode=""
+    local resolved=""
     mode="$(configured_modes)"
+    resolved="$(resolved_mode "${mode}")"
 
     echo "Docklight presentation"
     echo "  Config path: ${CONFIGURATION_PATH}"
     echo "  Configured mode: ${mode}"
+    echo "  Resolved mode: ${resolved}"
     echo "  Current session: $(session_backend)"
     echo "  Wayland display available: $(
         [[ -n ${WAYLAND_DISPLAY:-} ]] && echo yes || echo no
@@ -117,8 +167,8 @@ print_status()
     )"
     echo "  Running mode: $(running_mode)"
 
-    if [[ ,${mode}, == *,native,* ]] ||
-        { [[ ,${mode}, == *,xwayland,* ]] &&
+    if [[ ${resolved} == native ]] ||
+        { [[ ${resolved} == xwayland ]] &&
           [[ -n ${DISPLAY:-} ]] &&
           { [[ ${XDG_SESSION_TYPE:-} == wayland ]] ||
             [[ -n ${WAYLAND_DISPLAY:-} ]]; }; }
@@ -150,8 +200,8 @@ xwayland)
     echo "Restart Docklight to apply the change."
     ;;
 auto)
-    write_mode xwayland,native
-    echo "Docklight presentation configured: xwayland,native"
+    write_mode auto
+    echo "Docklight presentation configured: auto"
     echo "Restart Docklight to apply the change."
     ;;
 status)

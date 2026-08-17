@@ -331,12 +331,19 @@ Presentation controls how DockLight's GTK windows appear and is independent of
 the window-integration backend:
 
 ```sh
+./setup_presentation.sh auto
 ./setup_presentation.sh native
 ./setup_presentation.sh xwayland
 ./setup_presentation.sh status
 ```
 
-The per-user choice is stored in
+`auto` is the default and recommended mode. It selects XWayland on GNOME
+Wayland when an XWayland display is available, and selects native presentation
+on Plasma Wayland, X11, and other sessions. `native` and `xwayland` remain
+explicit overrides for testing or compatibility.
+
+The per-user choice is stored as `mode=auto`, `mode=native`, or
+`mode=xwayland` in
 `${XDG_CONFIG_HOME:-$HOME/.config}/docklight6/presentation.conf`. Restart
 DockLight after changing it.
 
@@ -422,7 +429,7 @@ make -C build-debug clean
 | `build.sh` | Build, test, clean, install, run, or debug | Depends on options |
 | `install_dependencies.sh` | Install Debian/Ubuntu dependencies | System packages |
 | `setup_backend.sh` | Install or inspect desktop integration | Per-user |
-| `setup_presentation.sh` | Save native/XWayland presentation | Per-user config |
+| `setup_presentation.sh` | Save automatic/native/XWayland presentation | Per-user config |
 | `run_xwayland_prototype.sh` | Run one XWayland test instance | Process only |
 | `validate_presentation.sh` | Diagnose XWayland presentation | Read-only |
 | `createpo.sh` | Create missing translation catalogs | Source files |

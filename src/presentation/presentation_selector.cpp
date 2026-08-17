@@ -109,7 +109,7 @@ std::string environment_value(
 bool presentation_mode_available(
     PresentationMode mode)
 {
-    if (mode == PresentationMode::native)
+    if (mode != PresentationMode::xwayland)
         return true;
 
     const auto session_type = normalized(
@@ -120,14 +120,65 @@ bool presentation_mode_available(
            !environment_value("DISPLAY").empty();
 }
 
+bool is_gnome_wayland_session()
+{
+    const auto session_type = normalized(
+        environment_value("XDG_SESSION_TYPE"));
+    const bool wayland =
+        session_type == "wayland" ||
+        (session_type.empty() &&
+         !environment_value("WAYLAND_DISPLAY").empty());
+    auto desktop = environment_value(
+        "XDG_CURRENT_DESKTOP");
+    if (desktop.empty())
+    {
+        desktop = environment_value(
+            "XDG_SESSION_DESKTOP");
+    }
+    desktop = normalized(desktop);
+
+    return wayland &&
+           desktop.find("gnome") !=
+               std::string::npos;
+}
+
+PresentationMode resolve_automatic_mode()
+{
+    return is_gnome_wayland_session() &&
+                   presentation_mode_available(
+                       PresentationMode::xwayland)
+               ? PresentationMode::xwayland
+               : PresentationMode::native;
+}
+
+PresentationSelection resolved_selection(
+    PresentationMode mode,
+    const std::string &source)
+{
+    if (mode != PresentationMode::automatic)
+        return {mode, source};
+
+    return {
+        resolve_automatic_mode(),
+        source + " auto"};
+}
+
 }
 
 const char *presentation_mode_name(
     PresentationMode mode)
 {
-    return mode == PresentationMode::xwayland
-               ? "xwayland"
-               : "native";
+    switch (mode)
+    {
+    case PresentationMode::automatic:
+        return "auto";
+    case PresentationMode::xwayland:
+        return "xwayland";
+    case PresentationMode::native:
+        return "native";
+    }
+
+    return "native";
 }
 
 std::optional<PresentationMode>
@@ -135,6 +186,8 @@ parse_presentation_mode(
     const std::string &value)
 {
     const auto mode = normalized(value);
+    if (mode == "auto")
+        return PresentationMode::automatic;
     if (mode == "native")
         return PresentationMode::native;
     if (mode == "xwayland")
@@ -180,7 +233,7 @@ bool take_presentation_option(
             if (!requested_mode)
             {
                 error =
-                    "invalid presentation mode; use native or xwayland";
+                    "invalid presentation mode; use auto, native, or xwayland";
                 return false;
             }
             continue;
@@ -202,9 +255,9 @@ PresentationSelection select_presentation(
 {
     if (requested_mode)
     {
-        return {
+        return resolved_selection(
             *requested_mode,
-            "command line"};
+            "command line");
     }
 
     const auto path =
@@ -217,7 +270,11 @@ PresentationSelection select_presentation(
     for (const auto mode : configured_modes)
     {
         if (presentation_mode_available(mode))
-            return {mode, "configuration"};
+        {
+            return resolved_selection(
+                mode,
+                "configuration");
+        }
     }
 
     // Preserve the useful startup error for a configuration containing only
@@ -225,14 +282,22 @@ PresentationSelection select_presentation(
     if (!configured_modes.empty())
         return {configured_modes.front(), "configuration"};
 
-    return {};
+    return resolved_selection(
+        PresentationMode::automatic,
+        "default");
 }
 
 bool prepare_presentation(
     const PresentationSelection &selection,
     std::string &error)
 {
-    if (selection.mode ==
+    const auto mode =
+        selection.mode ==
+                PresentationMode::automatic
+            ? resolve_automatic_mode()
+            : selection.mode;
+
+    if (mode ==
         PresentationMode::native)
     {
         g_unsetenv(

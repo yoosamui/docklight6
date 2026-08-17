@@ -10,18 +10,22 @@ retaining the GNOME Wayland extension for window discovery and actions:
 ```
 
 Close the normally running Docklight instance first. The launcher passes the
-opt-in `--presentation=xwayland` switch, which selects `GDK_BACKEND=x11` only
-for that process. It does not change the desktop entry, configuration, backend
-installation, or the default native Wayland presentation path.
+explicit `--presentation=xwayland` switch, which selects `GDK_BACKEND=x11`
+only for that process. It does not change the desktop entry, configuration, or
+backend installation.
 
 After validating the prototype, persist or reverse the presentation choice
 without changing the GNOME integration:
 
 ```bash
+./setup_presentation.sh auto
 ./setup_presentation.sh xwayland
 ./setup_presentation.sh status
 ./setup_presentation.sh native
 ```
+
+`auto` is recommended: it selects XWayland in a GNOME Wayland session when
+available, while retaining native presentation on Plasma Wayland and X11.
 
 Validate a running GNOME/XWayland instance and its EWMH dock contract with:
 

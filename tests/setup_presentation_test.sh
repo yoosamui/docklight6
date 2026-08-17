@@ -41,10 +41,11 @@ grep -Fqx 'mode=native' \
     "${TEST_DIRECTORY}/config/docklight6/presentation.conf"
 
 run_setup auto >/dev/null
-grep -Fqx 'mode=xwayland,native' \
+grep -Fqx 'mode=auto' \
     "${TEST_DIRECTORY}/config/docklight6/presentation.conf"
-grep -Fq 'Configured mode: xwayland,native' \
-    <<<"$(run_setup status)"
+auto_status="$(run_setup status)"
+grep -Fq 'Configured mode: auto' <<<"${auto_status}"
+grep -Fq 'Resolved mode: xwayland' <<<"${auto_status}"
 
 x11_status="$(env \
     XDG_CONFIG_HOME="${TEST_DIRECTORY}/config" \
@@ -54,6 +55,29 @@ x11_status="$(env \
     XDG_CURRENT_DESKTOP=KDE \
     "${SOURCE_DIRECTORY}/setup_presentation.sh" status)"
 grep -Fq 'Configuration usable now: yes' <<<"${x11_status}"
+grep -Fq 'Resolved mode: native' <<<"${x11_status}"
+
+plasma_status="$(env \
+    XDG_CONFIG_HOME="${TEST_DIRECTORY}/config" \
+    XDG_SESSION_TYPE=wayland \
+    WAYLAND_DISPLAY=wayland-test \
+    DISPLAY=:99 \
+    XDG_CURRENT_DESKTOP=KDE \
+    "${SOURCE_DIRECTORY}/setup_presentation.sh" status)"
+grep -Fq 'Resolved mode: native' <<<"${plasma_status}"
+
+mkdir -p "${TEST_DIRECTORY}/invalid/docklight6"
+printf 'mode=invalid\n' > \
+    "${TEST_DIRECTORY}/invalid/docklight6/presentation.conf"
+invalid_status="$(env \
+    XDG_CONFIG_HOME="${TEST_DIRECTORY}/invalid" \
+    XDG_SESSION_TYPE=wayland \
+    WAYLAND_DISPLAY=wayland-test \
+    DISPLAY=:99 \
+    XDG_CURRENT_DESKTOP=GNOME \
+    "${SOURCE_DIRECTORY}/setup_presentation.sh" status)"
+grep -Fq 'Configured mode: auto' <<<"${invalid_status}"
+grep -Fq 'Resolved mode: xwayland' <<<"${invalid_status}"
 
 if env \
     XDG_CONFIG_HOME="${TEST_DIRECTORY}/invalid" \

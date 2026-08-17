@@ -20,6 +20,9 @@ namespace
 
 void verifies_command_line_selection()
 {
+    assert(parse_presentation_mode("auto") ==
+           PresentationMode::automatic);
+
     char program[] = "docklight6";
     char option[] = "--presentation=xwayland";
     char retained[] = "--retained";
@@ -124,6 +127,88 @@ void verifies_configuration_and_precedence()
     g_rmdir(directory.c_str());
 }
 
+void verifies_automatic_desktop_selection()
+{
+    GError *error = nullptr;
+    auto *temporary_directory =
+        g_dir_make_tmp(
+            "docklight-presentation-auto-XXXXXX",
+            &error);
+    assert(temporary_directory);
+    assert(!error);
+
+    const std::string directory =
+        temporary_directory;
+    g_free(temporary_directory);
+    const auto path =
+        directory + "/presentation.conf";
+
+    {
+        std::ofstream output(path);
+        output << "mode=auto\n";
+        assert(output);
+    }
+
+    g_setenv("XDG_SESSION_TYPE", "wayland", true);
+    g_setenv("WAYLAND_DISPLAY", "wayland-test", true);
+    g_setenv("DISPLAY", ":99", true);
+    g_setenv("XDG_CURRENT_DESKTOP", "GNOME", true);
+    g_unsetenv("XDG_SESSION_DESKTOP");
+
+    auto selection = select_presentation(
+        std::nullopt,
+        path);
+    assert(selection.mode ==
+           PresentationMode::xwayland);
+    assert(selection.source ==
+           "configuration auto");
+
+    g_setenv("XDG_CURRENT_DESKTOP", "KDE", true);
+    g_setenv("XDG_SESSION_DESKTOP", "GNOME", true);
+    selection = select_presentation(
+        std::nullopt,
+        path);
+    assert(selection.mode ==
+           PresentationMode::native);
+
+    g_setenv("XDG_CURRENT_DESKTOP", "GNOME", true);
+    g_unsetenv("DISPLAY");
+    selection = select_presentation(
+        std::nullopt,
+        path);
+    assert(selection.mode ==
+           PresentationMode::native);
+
+    g_setenv("XDG_SESSION_TYPE", "x11", true);
+    g_setenv("DISPLAY", ":99", true);
+    selection = select_presentation(
+        std::nullopt,
+        path);
+    assert(selection.mode ==
+           PresentationMode::native);
+
+    g_setenv("XDG_SESSION_TYPE", "wayland", true);
+    g_setenv("XDG_CURRENT_DESKTOP", "KDE", true);
+    selection = select_presentation(
+        PresentationMode::xwayland,
+        path);
+    assert(selection.mode ==
+           PresentationMode::xwayland);
+
+    g_remove(path.c_str());
+
+    g_setenv("XDG_CURRENT_DESKTOP", "GNOME", true);
+    selection = select_presentation(
+        std::nullopt,
+        path);
+    assert(selection.mode ==
+           PresentationMode::xwayland);
+    assert(selection.source ==
+           "default auto");
+
+    g_rmdir(directory.c_str());
+}
+
 void verifies_xwayland_environment()
 {
     g_setenv(
@@ -162,6 +247,7 @@ int main()
 {
     verifies_command_line_selection();
     verifies_configuration_and_precedence();
+    verifies_automatic_desktop_selection();
     verifies_xwayland_environment();
     return 0;
 }
