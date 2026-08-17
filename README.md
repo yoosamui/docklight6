@@ -132,6 +132,11 @@ window-system integration, and creates the dock window. The UI talks to
 applications through `DockApplicationController` and `WindowRegistry`, so
 desktop-specific KWin code remains isolated from the dock widgets.
 
+See the
+[frontend and backend architecture diagrams](docs/frontend-backend-architecture.md)
+for the component boundaries, runtime backend selection, desktop bridges,
+and preview data paths.
+
 ## Installation
 
 ### Debian and Ubuntu based systems
