@@ -163,6 +163,8 @@ void verifies_registration_and_snapshot()
     assert(capabilities
                .provides_frame_geometry);
     assert(capabilities
+               .supports_kwin_minimize_effect);
+    assert(capabilities
                .provides_dock_pointer_tracking);
     assert(capabilities.thumbnail_policy ==
            WindowThumbnailPolicy::

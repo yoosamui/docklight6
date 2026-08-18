@@ -65,6 +65,8 @@ KWinWindowBackend::capabilities() const
     capabilities.provides_icons = true;
     capabilities.accepts_icon_geometry =
         true;
+    capabilities.supports_kwin_minimize_effect =
+        true;
     capabilities.provides_dock_pointer_tracking =
         true;
     // ScreenShot2 can include compositor transforms while a window is

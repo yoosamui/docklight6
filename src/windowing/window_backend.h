@@ -56,6 +56,7 @@ struct WindowBackendCapabilities
     bool provides_frame_geometry = false;
     bool provides_icons = false;
     bool accepts_icon_geometry = false;
+    bool supports_kwin_minimize_effect = false;
     bool provides_dock_reveal_trigger = false;
     bool provides_dock_pointer_tracking = false;
     WindowThumbnailPolicy thumbnail_policy =

@@ -55,6 +55,7 @@ private:
     void prepare_reconfiguration();
     void apply_wayland_toplevel_placement();
     void apply_x11_placement();
+    bool x11_reveal_surface_is_inset() const;
     void start_x11_edge_poll();
     void stop_x11_edge_poll();
     bool poll_x11_physical_edge();

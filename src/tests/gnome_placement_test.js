@@ -406,6 +406,10 @@ assert.match(
     /GnomeWaylandWindowBackend>\(\s*!x11\s*\)/,
     "native GNOME X11 must not advertise the Shell-only dock reveal trigger");
 assert.match(
+    windowSystemControllerSource,
+    /detected_window_manager[\s\S]*?identifies_gnome\(desktop\)[\s\S]*?return "Mutter";[\s\S]*?wnck_handle_new/,
+    "known GNOME sessions must not initialize libwnck only to identify Mutter");
+assert.match(
     dockWindowControllerSource,
     /requested_item == m_hovered_item/,
     "a delayed tooltip must still belong to the currently hovered item");
@@ -468,6 +472,10 @@ assert.match(
     revealWindowSource,
     /DockRevealWindow::set_monitor[\s\S]*?m_monitor_geometry[\s\S]*?m_has_placement[\s\S]*?apply_x11_placement\(\)/,
     "an X11 reveal strip must reapply its placement after its monitor geometry changes");
+assert.match(
+    revealWindowSource,
+    /DockRevealWindow::start_x11_edge_poll[\s\S]*?if \(!x11_reveal_surface_is_inset\(\)\)[\s\S]*?return;[\s\S]*?signal_timeout/,
+    "an X11 reveal strip at the physical edge must use enter events without an idle poll");
 assert.match(
     extensionSource,
     /_isX11DockWindow\(window\)[\s\S]*?_removeDockStrut\(\)[\s\S]*?_publishDockSurfaceGeometry\(rect\)/,

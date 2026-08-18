@@ -299,12 +299,47 @@ void DockRevealWindow::apply_x11_placement()
     move(geometry.x, geometry.y);
 }
 
+bool DockRevealWindow::
+    x11_reveal_surface_is_inset() const
+{
+    if (m_backend != SurfaceBackend::x11 ||
+        !m_has_placement ||
+        m_monitor_geometry.width <= 0 ||
+        m_monitor_geometry.height <= 0)
+    {
+        return false;
+    }
+
+    const auto geometry =
+        edge_reveal_geometry(
+            m_placement,
+            m_monitor_geometry,
+            DockConstants::AUTOHIDE_REVEAL_SIZE);
+
+    if (m_placement.is_horizontal())
+    {
+        return m_placement.anchor_top
+                   ? geometry.y > m_monitor_geometry.y
+                   : geometry.y + geometry.height <
+                         m_monitor_geometry.y +
+                             m_monitor_geometry.height;
+    }
+
+    return m_placement.anchor_left
+               ? geometry.x > m_monitor_geometry.x
+               : geometry.x + geometry.width <
+                     m_monitor_geometry.x +
+                         m_monitor_geometry.width;
+}
+
 void DockRevealWindow::start_x11_edge_poll()
 {
     stop_x11_edge_poll();
 
-    if (m_backend != SurfaceBackend::x11 ||
-        !m_has_placement)
+    // When the reveal surface already touches the physical edge, X11 enter
+    // events provide an immediate, idle-free trigger. Poll only when a panel
+    // inset keeps that surface away from the edge it represents.
+    if (!x11_reveal_surface_is_inset())
         return;
 
     m_pointer_was_on_physical_edge = false;
@@ -325,8 +360,7 @@ void DockRevealWindow::stop_x11_edge_poll()
 bool DockRevealWindow::poll_x11_physical_edge()
 {
     if (!get_mapped() ||
-        m_backend != SurfaceBackend::x11 ||
-        !m_has_placement)
+        !x11_reveal_surface_is_inset())
         return false;
 
     auto *display = gdk_display_get_default();

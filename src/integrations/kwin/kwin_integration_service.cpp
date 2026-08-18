@@ -392,12 +392,7 @@ bool KWinIntegrationService::start()
 
     m_available = true;
 
-    if (m_backend
-            .capabilities()
-            .accepts_icon_geometry)
-    {
-        schedule_effect_geometry_update();
-    }
+    schedule_effect_geometry_update();
 
     return true;
 }
@@ -853,6 +848,9 @@ void KWinIntegrationService::
     schedule_effect_geometry_update()
 {
     if (m_effect_geometry_update_id != 0 ||
+        !m_backend
+             .capabilities()
+             .supports_kwin_minimize_effect ||
         !minimize_effect_is_installed())
     {
         return;
@@ -925,6 +923,9 @@ bool KWinIntegrationService::
     if ((m_effect_geometries_initialized &&
          geometries ==
              m_published_effect_geometries) ||
+        !m_backend
+             .capabilities()
+             .supports_kwin_minimize_effect ||
         !minimize_effect_is_installed())
     {
         return true;

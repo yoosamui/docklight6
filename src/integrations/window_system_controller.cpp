@@ -126,6 +126,13 @@ std::string detected_window_manager(
             environment_value(
                 "XDG_SESSION_TYPE"));
 
+    // GNOME's window manager is Mutter. Avoid initializing libwnck merely to
+    // read GNOME Shell's EWMH display name: libwnck subscribes the shared X11
+    // connection to property changes from every client window, which keeps an
+    // otherwise idle native-X11 dock awake.
+    if (identifies_gnome(desktop))
+        return "Mutter";
+
     if (session_type != "wayland")
     {
         auto *handle =
@@ -163,12 +170,6 @@ std::string detected_window_manager(
 
     const auto normalized =
         lowercase(desktop);
-
-    if (normalized.find("gnome") !=
-        std::string::npos)
-    {
-        return "Mutter";
-    }
 
     if (normalized.find("cinnamon") !=
         std::string::npos)
