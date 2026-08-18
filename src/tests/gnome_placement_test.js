@@ -295,8 +295,8 @@ assert.match(
     "a mapped preview must become transparent before its content and geometry are replaced");
 assert.match(
     previewWindowSource,
-    /signal_size_allocate[\s\S]*?apply_allocated_position\([\s\S]*?complete_presentation\(\)[\s\S]*?DockPreviewWindow::complete_presentation[\s\S]*?start_live_streams\(\);[\s\S]*?start_opacity_animation\(false\);/,
-    "preview thumbnails and fade-in must start only after final allocated positioning");
+    /signal_size_allocate[\s\S]*?apply_allocated_position\([\s\S]*?complete_presentation\(\)[\s\S]*?DockPreviewWindow::complete_presentation[\s\S]*?supports_gnome_live_previews\(\) \|\|[\s\S]*?m_dynamic_refresh[\s\S]*?start_live_streams\(\);[\s\S]*?start_opacity_animation\(false\);/,
+    "GNOME and requested dynamic previews must start after final allocated positioning");
 assert.match(
     previewWindowSource,
     /DockPreviewWindow::apply_position[\s\S]*?if \(!m_uses_layer_shell\)[\s\S]*?get_window\(\)[\s\S]*?move_resize\([\s\S]*?global_x,[\s\S]*?global_y,[\s\S]*?width,[\s\S]*?height\)/,

@@ -2196,10 +2196,11 @@ void DockPreviewWindow::complete_presentation()
 
     m_presentation_pending = false;
 
-    // GNOME Shell can render the compositor's live window textures directly
-    // over these non-reactive image rectangles. Start that zero-copy path
-    // only after GTK has applied the final card allocation.
-    if (m_thumbnail_provider.supports_gnome_live_previews())
+    // Live previews need the final card allocation. A dynamic-refresh request
+    // can arrive while presentation is pending, so honor it now instead of
+    // waiting for another playback-state notification.
+    if (m_thumbnail_provider.supports_gnome_live_previews() ||
+        m_dynamic_refresh)
         start_live_streams();
 
     start_opacity_animation(false);
