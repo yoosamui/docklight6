@@ -1347,6 +1347,7 @@ void DockWindowThumbnailProvider::
     g_variant_builder_init(
         &builder,
         G_VARIANT_TYPE("a(siiii)"));
+    bool has_preview = false;
 
     for (const auto &preview : previews)
     {
@@ -1365,7 +1366,13 @@ void DockWindowThumbnailProvider::
             preview.y,
             preview.width,
             preview.height);
+        has_preview = true;
     }
+
+    if (!has_preview)
+        return;
+
+    m_gnome_live_previews_requested = true;
 
     g_dbus_connection_call(
         m_state->connection,
@@ -1416,6 +1423,11 @@ void DockWindowThumbnailProvider::
 void DockWindowThumbnailProvider::
     hide_gnome_live_previews()
 {
+    if (!m_gnome_live_previews_requested)
+        return;
+
+    m_gnome_live_previews_requested = false;
+
     if (!supports_gnome_live_previews())
         return;
 

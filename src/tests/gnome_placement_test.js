@@ -259,6 +259,10 @@ assert.match(
     "Docklight must publish live preview rectangles through the GNOME service");
 assert.match(
     thumbnailProviderSource,
+    /m_gnome_live_previews_requested = true;[\s\S]*?hide_gnome_live_previews\(\)[\s\S]*?if \(!m_gnome_live_previews_requested\)[\s\S]*?m_gnome_live_previews_requested = false;/,
+    "GNOME live-preview teardown must be idempotent");
+assert.match(
+    thumbnailProviderSource,
     /gnome_shell_capture\s*=\s*normalized_desktop\.find\("gnome"\) != std::string::npos/,
     "GNOME X11 stable window ids must use Shell compositor thumbnail capture");
 assert.match(
@@ -275,8 +279,16 @@ assert.match(
     "GNOME live previews must not queue immediate parallel screenshot captures");
 assert.match(
     previewWindowSource,
+    /DockPreviewWindow::prime_thumbnail_cache[\s\S]*?m_thumbnail_provider\s*\.supports_gnome_live_previews\(\)[\s\S]*?return;/,
+    "all GNOME live-preview sessions must skip eager thumbnail capture");
+assert.match(
+    previewWindowSource,
     /GNOME_FALLBACK_CAPTURE_DELAY_MS[\s\S]*?show_gnome_live_previews[\s\S]*?m_gnome_thumbnail_fallback[\s\S]*?generation != m_generation[\s\S]*?!get_visible\(\)[\s\S]*?!entry\.second\.has_thumbnail[\s\S]*?request_thumbnail\([\s\S]*?GNOME_FALLBACK_CAPTURE_DELAY_MS/,
     "a stable GNOME preview must cache a delayed fallback without capturing during transient hover");
+assert.match(
+    previewWindowSource,
+    /GNOME_FALLBACK_CAPTURE_DELAY_MS = 500;/,
+    "GNOME fallback capture must start after the preview entrance fade settles");
 assert.match(
     previewWindowSource,
     /DockPreviewWindow::show_preview[\s\S]*?cancel_opacity_animation\(\);[\s\S]*?set_opacity\(0\.0\);[\s\S]*?rebuild\(entries, size\)[\s\S]*?m_presentation_pending = true;[\s\S]*?show_all\(\);[\s\S]*?queue_resize\(\);/,

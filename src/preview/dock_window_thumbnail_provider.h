@@ -102,6 +102,7 @@ public:
 
 private:
     std::shared_ptr<State> m_state;
+    bool m_gnome_live_previews_requested = false;
     void *m_x11_redirect_display = nullptr;
     std::set<unsigned long>
         m_x11_redirected_windows;

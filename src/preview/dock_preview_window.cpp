@@ -40,7 +40,7 @@ namespace
     constexpr unsigned int X11_LIVE_REFRESH_MS = 33;
     constexpr unsigned int X11_STATIC_RETRY_MS = 80;
     constexpr unsigned int X11_STATIC_RETRY_COUNT = 8;
-    constexpr unsigned int GNOME_FALLBACK_CAPTURE_DELAY_MS = 180;
+    constexpr unsigned int GNOME_FALLBACK_CAPTURE_DELAY_MS = 500;
     constexpr unsigned int THUMBNAIL_RECOVERY_SETTLE_MS = 500;
     constexpr unsigned int X11_CHANGE_PROBE_MS = 200;
     constexpr std::int64_t X11_LIVE_GRACE_US = 750000;
@@ -274,29 +274,6 @@ namespace
                  std::string::npos ||
              std::string(normalized).find("plasma") !=
                  std::string::npos);
-        g_free(normalized);
-        return result;
-    }
-
-    bool uses_gnome_wayland_session()
-    {
-        const char *desktop =
-            g_getenv("XDG_CURRENT_DESKTOP");
-        const char *session_type =
-            g_getenv("XDG_SESSION_TYPE");
-        if (!desktop || !session_type ||
-            g_ascii_strcasecmp(
-                session_type,
-                "wayland") != 0)
-        {
-            return false;
-        }
-
-        auto *normalized = g_ascii_strdown(desktop, -1);
-        const bool result =
-            normalized &&
-            std::string(normalized).find("gnome") !=
-                std::string::npos;
         g_free(normalized);
         return result;
     }
@@ -1208,7 +1185,8 @@ void DockPreviewWindow::prime_thumbnail_cache(
     // demand, including for minimized or obscured windows. Avoid eagerly
     // transferring every application's full-size PNG when the preview is
     // closed; request only the cards the user actually opens.
-    if (uses_gnome_wayland_session())
+    if (m_thumbnail_provider
+            .supports_gnome_live_previews())
         return;
 
     // The window backend decides whether previews need a last-known mapped
