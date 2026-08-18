@@ -55,7 +55,7 @@ available.
     <tr><td>LXDE</td><td>X11</td><td>Openbox</td><td>compton or picom</td><td><code>OpenboxWindowBackend</code></td><td>PASS</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> A compositor is required for complete window previews.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
-    <tr><td>LXQt</td><td>X11</td><td>Openbox</td><td>compton or picom</td><td><code>OpenboxWindowBackend</code></td><td>PENDING</td></tr>
+    <tr><td>LXQt</td><td>X11</td><td>Openbox</td><td>compton or picom</td><td><code>OpenboxWindowBackend</code></td><td>PASS</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> Implemented; real-session verification remains.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
     <tr><td>Other EWMH desktops</td><td>X11</td><td>Other EWMH WM</td><td>Any or none</td><td><code>EwmhFallbackWindowBackend</code></td><td>PASS</td></tr>
