@@ -446,8 +446,8 @@ assert.match(
     "tooltip hide and reveal effects must use centred scale with smooth endpoint easing");
 assert.match(
     dockWindowControllerSource,
-    /DockWindowController::schedule_show_preview[\s\S]*?hide_tooltip\(\);[\s\S]*?start_tooltip_show_timer\([\s\S]*?item\.tooltip_text\(\),[\s\S]*?true\);[\s\S]*?m_preview_show_timer/,
-    "grouped items must preserve the tooltip hide and delayed reveal effects before preview");
+    /DockWindowController::schedule_show_preview[\s\S]*?hide_tooltip\(\);[\s\S]*?m_settings\.display_tooltips\(\) &&[\s\S]*?!m_settings\.display_preview\(\)[\s\S]*?start_tooltip_show_timer/,
+    "populated groups must only show a tooltip when previews are disabled");
 assert.match(
     dockItemSource,
     /signal_button_press_event[\s\S]*?GDK_BUTTON_SECONDARY[\s\S]*?outside_menu[\s\S]*?m_context_menu\.popdown\(\)/,
@@ -457,13 +457,13 @@ assert.match(
     /signal_unmap[\s\S]*?m_context_menu_secondary_dismissed[\s\S]*?schedule_show_tooltip[\s\S]*?uninhibit_autohide\(true\)/,
     "a secondary-button menu dismissal must restore preview and pointer-inside autohide state");
 assert.match(
-    dockWindowControllerSource,
-    /DockWindowController::schedule_show_preview[\s\S]*?start_tooltip_show_timer\([\s\S]*?item\.tooltip_text\(\)[\s\S]*?m_preview_show_timer/,
-    "grouped dock items must show a delayed label before their preview");
+    dockWindowSource,
+    /DockWindow::schedule_show_tooltip[\s\S]*?window_entries\(\)\.empty\(\)[\s\S]*?schedule_show_tooltip/,
+    "empty dock-item groups must keep their tooltip path");
 assert.match(
     dockWindowControllerSource,
-    /m_settings\.preview_show_delay\(\) \+[\s\S]*?TOOLTIP_SHOW_DELAY_MS[\s\S]*?TOOLTIP_REMAP_DELAY_MS[\s\S]*?TOOLTIP_FADE_DURATION_MS/,
-    "the preview delay must begin after the grouped-item tooltip is fully visible");
+    /m_preview_show_timer[\s\S]*?m_settings\.preview_show_delay\(\)\);/,
+    "populated dock items must use only the configured preview delay");
 assert.match(
     dockWindowControllerSource,
     /DockWindowController::hide_tooltip_immediately[\s\S]*?hide_preview\(\)[\s\S]*?hide_preview_immediately\(\)/,

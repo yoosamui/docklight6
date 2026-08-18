@@ -1665,14 +1665,14 @@ void DockWindowController::schedule_show_preview(
         return;
     }
 
-    // Populated groups still own the same application-name tooltip as empty
-    // launchers. Fade the previous label, reveal this group's delayed label,
-    // then replace it with the window cards.
+    // Populated groups use the preview directly when previews are enabled.
+    // When previews are disabled, keep their application-name tooltip.
     hide_tooltip();
     m_pending_item = nullptr;
     m_pending_tooltip_text.clear();
 
-    if (m_settings.display_tooltips())
+    if (m_settings.display_tooltips() &&
+        !m_settings.display_preview())
     {
         start_tooltip_show_timer(
             item,
@@ -1713,12 +1713,7 @@ void DockWindowController::schedule_show_preview(
 
                 return false;
             },
-            m_settings.preview_show_delay() +
-                (m_settings.display_tooltips()
-                     ? DockConstants::TOOLTIP_SHOW_DELAY_MS +
-                           DockConstants::TOOLTIP_REMAP_DELAY_MS +
-                           DockConstants::TOOLTIP_FADE_DURATION_MS
-                     : 0));
+            m_settings.preview_show_delay());
 }
 
 void DockWindowController::schedule_hide_tooltip(
