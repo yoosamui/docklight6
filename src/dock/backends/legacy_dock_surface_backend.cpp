@@ -69,6 +69,19 @@ bool is_gnome_wayland_session()
                 "gnome"));
 }
 
+bool is_gnome_x11_session()
+{
+    return environment_contains(
+               "XDG_SESSION_TYPE",
+               "x11") &&
+           (environment_contains(
+                "XDG_CURRENT_DESKTOP",
+                "gnome") ||
+            environment_contains(
+                "XDG_SESSION_DESKTOP",
+                "gnome"));
+}
+
 bool uses_gnome_wayland_autohide_effect()
 {
     if (!environment_contains(
@@ -419,6 +432,15 @@ void LegacyDockSurfaceBackend::capture_x11_base_workarea(
     const ::Window root =
         DefaultRootWindow(xdisplay);
 
+    const bool reusable_gnome_x11_workarea =
+        is_gnome_x11_session() &&
+        m_x11_base_workarea.width > 0 &&
+        m_x11_base_workarea.height > 0 &&
+        m_x11_base_output.x == output.x &&
+        m_x11_base_output.y == output.y &&
+        m_x11_base_output.width == output.width &&
+        m_x11_base_output.height == output.height;
+
     auto read_cardinals =
         [xdisplay, root](
             const char *property_name,
@@ -532,20 +554,28 @@ void LegacyDockSurfaceBackend::capture_x11_base_workarea(
             static_cast<int>(workareas[offset + 3])};
     }
 
-    // Under GNOME/KDE Wayland and Cinnamon X11, the compositor's GDK monitor
+    // Under GNOME, KDE Wayland, and Cinnamon X11, the compositor's GDK monitor
     // work area is authoritative. Their native shell panels are not X11 dock
     // clients, while root-global _NET_WORKAREA cannot identify which monitor
-    // owns a panel. Cinnamon exposes the required per-monitor rectangles via
-    // _GTK_WORKAREAS_Dn; dropping that GDK inset on a multi-monitor desktop
-    // puts a top dock underneath the panel.
+    // owns a panel. GNOME and Cinnamon expose the required per-monitor
+    // rectangles through GDK; dropping that inset on a multi-monitor desktop
+    // puts a top dock underneath the panel and mis-centres vertical docks.
     if (is_gnome_wayland_session() ||
+        is_gnome_x11_session() ||
         is_kde_wayland_session() ||
         is_cinnamon_x11_session())
     {
-        m_x11_base_workarea =
-            x11_scoped_monitor_workarea(
-                output,
-                fallback);
+        // Mutter updates GDK's work area asynchronously after a client
+        // deletes its strut. During an edge change, reuse the panel-only
+        // area already captured for this unchanged output instead of
+        // treating DockLight's previous reservation as a native panel.
+        if (!reusable_gnome_x11_workarea)
+        {
+            m_x11_base_workarea =
+                x11_scoped_monitor_workarea(
+                    output,
+                    fallback);
+        }
     }
     else
     {
@@ -881,6 +911,7 @@ void LegacyDockSurfaceBackend::capture_x11_base_workarea(
     gdk_x11_display_error_trap_pop_ignored(display->gobj());
 
     m_has_x11_base_workarea = true;
+    m_x11_base_output = output;
 
     g_message(
         "X11 base work area: %d,%d %dx%d",

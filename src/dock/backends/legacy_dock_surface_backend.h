@@ -86,4 +86,5 @@ private:
     bool m_initial_placement_pending = false;
     bool m_has_x11_base_workarea = false;
     MonitorGeometry m_x11_base_workarea;
+    MonitorGeometry m_x11_base_output;
 };

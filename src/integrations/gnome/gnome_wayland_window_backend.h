@@ -15,8 +15,14 @@ class GnomeWaylandWindowBackend final :
     public KWinWindowBackend
 {
 public:
+    explicit GnomeWaylandWindowBackend(
+        bool provides_dock_reveal_trigger = true);
+
     std::string name() const override;
 
     WindowBackendCapabilities
     capabilities() const override;
+
+private:
+    bool m_provides_dock_reveal_trigger = true;
 };

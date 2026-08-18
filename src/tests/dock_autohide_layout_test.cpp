@@ -79,16 +79,17 @@ int main()
     assert(single_monitor_workarea.height == 1048);
 
     // Native GNOME and Plasma panels are compositor chrome rather than X11
-    // dock clients. Preserve their monitor-scoped GDK work area on XWayland
-    // instead of replacing it merely because two monitors exist.
-    const auto gnome_xwayland_workarea =
+    // dock clients. Preserve their monitor-scoped GDK work area on native
+    // GNOME X11 and XWayland instead of replacing it merely because two
+    // monitors exist.
+    const auto gnome_scoped_workarea =
         x11_scoped_monitor_workarea(
             {0, 0, 2560, 1440},
             {0, 29, 2560, 1411});
-    assert(gnome_xwayland_workarea.x == 0);
-    assert(gnome_xwayland_workarea.y == 29);
-    assert(gnome_xwayland_workarea.width == 2560);
-    assert(gnome_xwayland_workarea.height == 1411);
+    assert(gnome_scoped_workarea.x == 0);
+    assert(gnome_scoped_workarea.y == 29);
+    assert(gnome_scoped_workarea.width == 2560);
+    assert(gnome_scoped_workarea.height == 1411);
 
     const auto plasma_xwayland_workarea =
         x11_scoped_monitor_workarea(

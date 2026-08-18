@@ -324,7 +324,8 @@ void WindowSystemController::start()
         m_details.backend = "GNOME Shell";
         m_backend =
             std::make_unique<
-                GnomeWaylandWindowBackend>();
+                GnomeWaylandWindowBackend>(
+                    !x11);
 
         DocklightLog::startup(
             "selected backend: GNOME Shell");

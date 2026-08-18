@@ -49,6 +49,9 @@ const previewWindowPath = path.resolve(
 const thumbnailProviderPath = path.resolve(
     __dirname,
     "../preview/dock_window_thumbnail_provider.cpp");
+const windowSystemControllerPath = path.resolve(
+    __dirname,
+    "../integrations/window_system_controller.cpp");
 
 // gnome-extensions pack only bundles its conventional entry points unless
 // imported modules are explicitly listed as extra sources. Keep the package
@@ -86,6 +89,8 @@ const previewWindowSource = fs.readFileSync(
     previewWindowPath, "utf8");
 const thumbnailProviderSource = fs.readFileSync(
     thumbnailProviderPath, "utf8");
+const windowSystemControllerSource = fs.readFileSync(
+    windowSystemControllerPath, "utf8");
 
 assert.match(
     extensionSource,
@@ -374,12 +379,20 @@ for (const operation of [
 }
 assert.match(
     legacySurfaceBackendSource,
-    /if \(is_gnome_wayland_session\(\) \|\|[\s\S]*?is_kde_wayland_session\(\) \|\|[\s\S]*?is_cinnamon_x11_session\(\)\)[\s\S]*?x11_scoped_monitor_workarea/,
-    "Cinnamon X11 must preserve Muffin's monitor-scoped GTK panel work area");
+    /if \(is_gnome_wayland_session\(\) \|\|[\s\S]*?is_gnome_x11_session\(\) \|\|[\s\S]*?is_kde_wayland_session\(\) \|\|[\s\S]*?is_cinnamon_x11_session\(\)\)[\s\S]*?x11_scoped_monitor_workarea/,
+    "GNOME and Cinnamon X11 must preserve their monitor-scoped GTK panel work areas");
+assert.match(
+    legacySurfaceBackendSource,
+    /reusable_gnome_x11_workarea[\s\S]*?m_x11_base_output[\s\S]*?if \(!reusable_gnome_x11_workarea\)[\s\S]*?x11_scoped_monitor_workarea/,
+    "a GNOME X11 edge change must not recapture DockLight's previous strut as native work area");
 assert.match(
     dockWindowControllerSource,
     /monitor_geometry_changed[\s\S]*?output_changed[\s\S]*?prepare_surface_change\(\)[\s\S]*?m_autohide_controller->set_monitor/,
     "moving or resizing the selected output must invalidate cached X11 placement state");
+assert.match(
+    windowSystemControllerSource,
+    /GnomeWaylandWindowBackend>\(\s*!x11\s*\)/,
+    "native GNOME X11 must not advertise the Shell-only dock reveal trigger");
 assert.match(
     dockWindowControllerSource,
     /requested_item == m_hovered_item/,
