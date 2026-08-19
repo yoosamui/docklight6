@@ -291,20 +291,32 @@ assert.match(
     "GNOME fallback capture must start after the preview entrance fade settles");
 assert.match(
     previewWindowSource,
-    /DockPreviewWindow::show_preview[\s\S]*?cancel_opacity_animation\(\);[\s\S]*?set_opacity\(0\.0\);[\s\S]*?rebuild\(entries, size\)[\s\S]*?m_presentation_pending = true;[\s\S]*?show_all\(\);[\s\S]*?queue_resize\(\);/,
-    "a mapped preview must become transparent before its content and geometry are replaced");
+    /GNOME_PREVIEW_REMAP_DELAY_MS = 34[\s\S]*?uses_wayland_session\(\)[\s\S]*?XDG_SESSION_TYPE[\s\S]*?wayland[\s\S]*?DockPreviewWindow::show_preview[\s\S]*?remap_was_pending[\s\S]*?m_replacing_gnome_wayland_preview\s*=[\s\S]*?get_mapped\(\) \|\| remap_was_pending[\s\S]*?uses_wayland_session\(\)[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?if \(m_replacing_gnome_wayland_preview\)[\s\S]*?set_opacity\(0\.01\);[\s\S]*?hide\(\);[\s\S]*?m_gnome_preview_remap_delay[\s\S]*?present_preview\([\s\S]*?GNOME_PREVIEW_REMAP_DELAY_MS[\s\S]*?return;[\s\S]*?set_opacity\(0\.0\);[\s\S]*?present_preview\(entries, location, position, size\)/,
+    "mapped GNOME XWayland replacements must unmap before resizing so Mutter cannot tile the previous backing store");
 assert.match(
     previewWindowSource,
-    /signal_size_allocate[\s\S]*?apply_allocated_position\([\s\S]*?complete_presentation\(\)[\s\S]*?DockPreviewWindow::complete_presentation[\s\S]*?supports_gnome_live_previews\(\) \|\|[\s\S]*?m_dynamic_refresh[\s\S]*?start_live_streams\(\);[\s\S]*?start_opacity_animation\(false\);/,
-    "GNOME and requested dynamic previews must start after final allocated positioning");
+    /DockPreviewWindow::present_preview[\s\S]*?stop_live_streams\(\);[\s\S]*?rebuild\(entries, size\)[\s\S]*?resize\(size\.width, size\.height\)[\s\S]*?m_presentation_pending = true;[\s\S]*?show_all\(\);/,
+    "the replacement must rebuild and remap only after its unmap settle phase");
+assert.match(
+    previewWindowSource,
+    /GNOME_PREVIEW_REVEAL_DELAY_MS = 50[\s\S]*?signal_size_allocate[\s\S]*?complete_presentation\(\)[\s\S]*?DockPreviewWindow::complete_presentation[\s\S]*?if \(m_replacing_gnome_wayland_preview\)[\s\S]*?start_live_streams\([\s\S]*?generation != m_generation[\s\S]*?!get_visible\(\)[\s\S]*?queue_draw\(\);[\s\S]*?m_gnome_preview_reveal_delay[\s\S]*?generation == m_generation[\s\S]*?set_opacity\(1\.0\);[\s\S]*?GNOME_PREVIEW_REVEAL_DELAY_MS[\s\S]*?m_replacing_gnome_wayland_preview = false;[\s\S]*?return;[\s\S]*?start_opacity_animation\(false\);/,
+    "GNOME Wayland replacements must repaint and settle after Shell acknowledgement before GTK is revealed");
+assert.match(
+    thumbnailProviderSource,
+    /LivePreviewsCompletion[\s\S]*?g_dbus_connection_call_finish[\s\S]*?callback\(success\)[\s\S]*?show_gnome_live_previews[\s\S]*?ready = complete_gnome_live_previews[\s\S]*?g_dbus_connection_call\([\s\S]*?ready,[\s\S]*?completion_data/,
+    "ShowLivePreviews must report its asynchronous Shell acknowledgement to the preview handoff");
 assert.match(
     previewWindowSource,
     /DockPreviewWindow::apply_position[\s\S]*?if \(!m_uses_layer_shell\)[\s\S]*?get_window\(\)[\s\S]*?move_resize\([\s\S]*?global_x,[\s\S]*?global_y,[\s\S]*?width,[\s\S]*?height\)/,
     "an X11 or XWayland preview must move and resize atomically");
 assert.match(
     previewWindowSource,
-    /stop_live_streams\(\)[\s\S]*?hide_gnome_live_previews\(\);[\s\S]*?m_gnome_thumbnail_fallback\.disconnect\(\)/,
-    "hiding a GNOME preview must cancel its delayed fallback capture");
+    /DockPreviewWindow::stop_live_streams\(\)[\s\S]*?if \(!m_replacing_gnome_wayland_preview\)[\s\S]*?hide_gnome_live_previews\(\);[\s\S]*?m_gnome_thumbnail_fallback\.disconnect\(\)/,
+    "an adjacent GNOME Wayland update must preserve live actors while a real hide still tears them down");
+assert.match(
+    previewWindowSource,
+    /DockPreviewWindow::hide_preview\(\)[\s\S]*?m_replacing_gnome_wayland_preview = false;[\s\S]*?stop_live_streams\(\)[\s\S]*?DockPreviewWindow::hide_preview_immediately\(\)[\s\S]*?m_replacing_gnome_wayland_preview = false;[\s\S]*?stop_live_streams\(\)/,
+    "both normal and immediate Preview closure must still hide GNOME live actors");
 assert.match(
     previewWindowSource,
     /DockPreviewCardCanvas\([\s\S]*?preview_color[\s\S]*?m_preview_color\.get_red\(\)[\s\S]*?set_preview_color[\s\S]*?new DockPreviewCardCanvas\([\s\S]*?m_preview_color/,

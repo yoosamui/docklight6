@@ -148,6 +148,12 @@ private:
         const std::vector<ApplicationWindowEntry>
             &entries,
         const DockPreviewSize &size);
+    void present_preview(
+        const std::vector<ApplicationWindowEntry>
+            &entries,
+        DockLocation location,
+        const ScreenPosition &position,
+        const DockPreviewSize &size);
     void request_thumbnail(
         const WindowId &window_id,
         unsigned int generation);
@@ -175,7 +181,9 @@ private:
     bool uses_settled_thumbnail_capture() const;
     bool uses_redirected_thumbnail_capture() const;
     bool uses_strict_x11_capture() const;
-    void start_live_streams();
+    void start_live_streams(
+        DockWindowThumbnailProvider::LivePreviewsCallback
+            callback = {});
     void stop_live_streams();
     void clear_cards();
     void complete_presentation();
@@ -251,6 +259,8 @@ private:
     sigc::connection m_x11_live_refresh;
     sigc::connection m_x11_probe_refresh;
     sigc::connection m_opacity_timer;
+    sigc::connection m_gnome_preview_remap_delay;
+    sigc::connection m_gnome_preview_reveal_delay;
 
     sigc::signal<void> m_pointer_entered;
     sigc::signal<void> m_pointer_left;
@@ -282,6 +292,7 @@ private:
     bool m_dynamic_refresh = false;
     bool m_has_position = false;
     bool m_presentation_pending = false;
+    bool m_replacing_gnome_wayland_preview = false;
     bool m_opacity_animation_hiding = false;
     bool m_uses_layer_shell = false;
 };

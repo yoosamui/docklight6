@@ -77,6 +77,36 @@ struct Completion
     DockWindowThumbnailProvider::Callback callback;
 };
 
+struct LivePreviewsCompletion
+{
+    std::weak_ptr<DockWindowThumbnailProvider::State> state;
+    DockWindowThumbnailProvider::LivePreviewsCallback callback;
+};
+
+void complete_gnome_live_previews(
+    GObject *source,
+    GAsyncResult *result,
+    gpointer user_data)
+{
+    std::unique_ptr<LivePreviewsCompletion> completion(
+        static_cast<LivePreviewsCompletion *>(user_data));
+    GError *error = nullptr;
+    auto *reply = g_dbus_connection_call_finish(
+        G_DBUS_CONNECTION(source),
+        result,
+        &error);
+    const bool success = reply != nullptr;
+
+    if (reply)
+        g_variant_unref(reply);
+
+    const auto state = completion->state.lock();
+    if (state && state->alive && completion->callback)
+        completion->callback(success);
+
+    g_clear_error(&error);
+}
+
 std::mutex x_error_handler_mutex;
 thread_local bool x_capture_error = false;
 
@@ -1335,11 +1365,14 @@ void DockWindowThumbnailProvider::
 void DockWindowThumbnailProvider::
     show_gnome_live_previews(
         const std::vector<GnomeLivePreviewRect>
-            &previews)
+            &previews,
+        LivePreviewsCallback callback)
 {
     if (!supports_gnome_live_previews() ||
         previews.empty())
     {
+        if (callback)
+            callback(false);
         return;
     }
 
@@ -1370,9 +1403,25 @@ void DockWindowThumbnailProvider::
     }
 
     if (!has_preview)
+    {
+        if (callback)
+            callback(false);
         return;
+    }
 
     m_gnome_live_previews_requested = true;
+
+    GAsyncReadyCallback ready = nullptr;
+    gpointer completion_data = nullptr;
+    if (callback)
+    {
+        auto completion =
+            std::make_unique<LivePreviewsCompletion>();
+        completion->state = m_state;
+        completion->callback = std::move(callback);
+        ready = complete_gnome_live_previews;
+        completion_data = completion.release();
+    }
 
     g_dbus_connection_call(
         m_state->connection,
@@ -1385,8 +1434,8 @@ void DockWindowThumbnailProvider::
         G_DBUS_CALL_FLAGS_NONE,
         1000,
         nullptr,
-        nullptr,
-        nullptr);
+        ready,
+        completion_data);
 }
 
 void DockWindowThumbnailProvider::

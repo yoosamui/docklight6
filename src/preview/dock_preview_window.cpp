@@ -41,6 +41,8 @@ namespace
     constexpr unsigned int X11_STATIC_RETRY_MS = 80;
     constexpr unsigned int X11_STATIC_RETRY_COUNT = 8;
     constexpr unsigned int GNOME_FALLBACK_CAPTURE_DELAY_MS = 500;
+    constexpr unsigned int GNOME_PREVIEW_REMAP_DELAY_MS = 34;
+    constexpr unsigned int GNOME_PREVIEW_REVEAL_DELAY_MS = 50;
     constexpr unsigned int THUMBNAIL_RECOVERY_SETTLE_MS = 500;
     constexpr unsigned int X11_CHANGE_PROBE_MS = 200;
     constexpr std::int64_t X11_LIVE_GRACE_US = 750000;
@@ -276,6 +278,16 @@ namespace
                  std::string::npos);
         g_free(normalized);
         return result;
+    }
+
+    bool uses_wayland_session()
+    {
+        const char *session_type =
+            g_getenv("XDG_SESSION_TYPE");
+        return session_type &&
+               g_ascii_strcasecmp(
+                   session_type,
+                   "wayland") == 0;
     }
 
     void append_rounded_rectangle(
@@ -1010,6 +1022,8 @@ DockPreviewWindow::DockPreviewWindow()
 DockPreviewWindow::~DockPreviewWindow()
 {
     cancel_opacity_animation();
+    m_gnome_preview_remap_delay.disconnect();
+    m_gnome_preview_reveal_delay.disconnect();
     m_thumbnail_cache_refresh.disconnect();
     m_thumbnail_recovery_delay.disconnect();
     for (auto &retry : m_thumbnail_cache_retries)
@@ -1018,6 +1032,7 @@ DockPreviewWindow::~DockPreviewWindow()
     for (auto &delay : m_thumbnail_cache_settle_delays)
         delay.second.disconnect();
     m_thumbnail_cache_settle_delays.clear();
+    m_replacing_gnome_wayland_preview = false;
     stop_live_streams();
     ++m_generation;
 
@@ -2075,17 +2090,71 @@ void DockPreviewWindow::show_preview(
         return;
     }
 
-    cancel_opacity_animation();
+    const bool remap_was_pending =
+        m_gnome_preview_remap_delay.connected();
 
-    // A preview can still be mapped while the pointer moves between grouped
-    // items. Make that surface transparent before replacing its children or
-    // requesting new geometry so GTK cannot paint an intermediate frame.
+    cancel_opacity_animation();
+    m_gnome_preview_remap_delay.disconnect();
+    m_gnome_preview_reveal_delay.disconnect();
+
+    m_replacing_gnome_wayland_preview =
+        (get_mapped() || remap_was_pending) &&
+        uses_wayland_session() &&
+        m_thumbnail_provider
+            .supports_gnome_live_previews();
+
+    ++m_generation;
+
+    if (m_replacing_gnome_wayland_preview)
+    {
+        // Resizing a mapped XWayland surface can make Mutter tile its previous
+        // backing pixels across the new allocation before GTK repaints. That
+        // is the visible phantom card. Keep the GTK surface unmapped across
+        // compositor frame boundaries while retaining Shell's clone actors,
+        // then rebuild and remap it with a freshly painted backing buffer.
+        set_opacity(0.01);
+        hide();
+
+        const auto generation = m_generation;
+        m_gnome_preview_remap_delay =
+            Glib::signal_timeout().connect(
+                [this,
+                 entries,
+                 location,
+                 position,
+                 size,
+                 generation]()
+                {
+                    if (generation == m_generation)
+                    {
+                        present_preview(
+                            entries,
+                            location,
+                            position,
+                            size);
+                    }
+
+                    return false;
+                },
+                GNOME_PREVIEW_REMAP_DELAY_MS);
+        return;
+    }
+
     set_opacity(0.0);
+    present_preview(entries, location, position, size);
+}
+
+void DockPreviewWindow::present_preview(
+    const std::vector<ApplicationWindowEntry>
+        &entries,
+    DockLocation location,
+    const ScreenPosition &position,
+    const DockPreviewSize &size)
+{
     stop_live_streams();
     m_media_title.clear();
     m_live_window_ids.clear();
     m_dynamic_refresh = false;
-    ++m_generation;
     rebuild(entries, size);
     set_size_request(size.width, size.height);
     set_default_size(size.width, size.height);
@@ -2118,6 +2187,9 @@ void DockPreviewWindow::show_preview(
 
 void DockPreviewWindow::hide_preview()
 {
+    m_gnome_preview_remap_delay.disconnect();
+    m_gnome_preview_reveal_delay.disconnect();
+    m_replacing_gnome_wayland_preview = false;
     stop_live_streams();
     m_media_title.clear();
     m_live_window_ids.clear();
@@ -2155,6 +2227,9 @@ void DockPreviewWindow::hide_preview()
 
 void DockPreviewWindow::hide_preview_immediately()
 {
+    m_gnome_preview_remap_delay.disconnect();
+    m_gnome_preview_reveal_delay.disconnect();
+    m_replacing_gnome_wayland_preview = false;
     stop_live_streams();
     m_media_title.clear();
     m_live_window_ids.clear();
@@ -2199,10 +2274,54 @@ void DockPreviewWindow::complete_presentation()
     // Live previews need the final card allocation. A dynamic-refresh request
     // can arrive while presentation is pending, so honor it now instead of
     // waiting for another playback-state notification.
+    if (m_replacing_gnome_wayland_preview)
+    {
+        const auto generation = m_generation;
+        start_live_streams(
+            [this, generation](bool installed)
+            {
+                if (generation != m_generation ||
+                    !get_visible())
+                {
+                    return;
+                }
+
+                queue_draw();
+
+                if (!installed)
+                {
+                    set_opacity(1.0);
+                    return;
+                }
+
+                // Shell installed the new clone set, but GTK and Mutter can
+                // still be one paint cycle behind the allocation. Keep the
+                // old clones visible until the staged GTK buffer has reached
+                // Mutter, then reveal the surface.
+                m_gnome_preview_reveal_delay.disconnect();
+                m_gnome_preview_reveal_delay =
+                    Glib::signal_timeout().connect(
+                        [this, generation]()
+                        {
+                            if (generation == m_generation &&
+                                get_visible())
+                            {
+                                set_opacity(1.0);
+                            }
+
+                            return false;
+                        },
+                        GNOME_PREVIEW_REVEAL_DELAY_MS);
+            });
+        m_replacing_gnome_wayland_preview = false;
+        return;
+    }
+
     if (m_thumbnail_provider.supports_gnome_live_previews() ||
         m_dynamic_refresh)
         start_live_streams();
 
+    m_replacing_gnome_wayland_preview = false;
     start_opacity_animation(false);
 }
 
@@ -3136,10 +3255,16 @@ void DockPreviewWindow::request_live_x11_thumbnail(
         uses_strict_x11_capture());
 }
 
-void DockPreviewWindow::start_live_streams()
+void DockPreviewWindow::start_live_streams(
+    DockWindowThumbnailProvider::LivePreviewsCallback
+        callback)
 {
     if (m_presentation_pending)
+    {
+        if (callback)
+            callback(false);
         return;
+    }
 
     const auto generation = m_generation;
     std::set<WindowId> desired_windows;
@@ -3181,7 +3306,11 @@ void DockPreviewWindow::start_live_streams()
     }
 
     if (desired_windows == m_live_window_ids)
+    {
+        if (callback)
+            callback(true);
         return;
+    }
 
     stop_live_streams();
 
@@ -3219,7 +3348,8 @@ void DockPreviewWindow::start_live_streams()
         }
 
         m_thumbnail_provider.show_gnome_live_previews(
-            previews);
+            previews,
+            std::move(callback));
         m_live_window_ids = desired_windows;
 
         // Most previews are painted directly by Shell. A compositor actor can
@@ -3414,7 +3544,8 @@ void DockPreviewWindow::start_live_streams()
 
 void DockPreviewWindow::stop_live_streams()
 {
-    m_thumbnail_provider.hide_gnome_live_previews();
+    if (!m_replacing_gnome_wayland_preview)
+        m_thumbnail_provider.hide_gnome_live_previews();
     m_gnome_thumbnail_fallback.disconnect();
     m_x11_live_refresh.disconnect();
     m_x11_probe_refresh.disconnect();

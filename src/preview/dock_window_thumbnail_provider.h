@@ -67,6 +67,8 @@ public:
         void(
             const WindowId &,
             const Glib::RefPtr<Gdk::Pixbuf> &)>;
+    using LivePreviewsCallback =
+        std::function<void(bool)>;
 
     DockWindowThumbnailProvider();
     ~DockWindowThumbnailProvider();
@@ -93,7 +95,8 @@ public:
         double alpha);
     void show_gnome_live_previews(
         const std::vector<GnomeLivePreviewRect>
-            &previews);
+            &previews,
+        LivePreviewsCallback callback = {});
     void forward_gnome_preview_primary_click(
         const WindowId &window_id,
         double normalized_x,
