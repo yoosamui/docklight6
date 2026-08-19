@@ -1937,6 +1937,10 @@ export default class DocklightWindowIntegration extends Extension {
 
         let previewCount = 0;
         const previewRects = [];
+        // Mutter can expose an intermediate clone frame when opacity is
+        // animated on Wayland. Show those previews immediately; retain the
+        // existing entrance effect for GNOME X11.
+        const animatePreviews = !Meta.is_wayland_compositor();
         const previewFadeActors = [];
         for (const [windowId, x, y, width, height] of previews) {
             if (width <= 0 || height <= 0)
@@ -1962,7 +1966,7 @@ export default class DocklightWindowIntegration extends Extension {
             const preview = new Clutter.Actor({
                 reactive: false,
                 clip_to_allocation: true,
-                opacity: 0,
+                opacity: animatePreviews ? 0 : 255,
                 x: previewOffsetX,
                 y: previewOffsetY,
                 width: previewWidth,
@@ -2028,7 +2032,8 @@ export default class DocklightWindowIntegration extends Extension {
                 selectionOutline,
                 selected: false,
             });
-            previewFadeActors.push(preview);
+            if (animatePreviews)
+                previewFadeActors.push(preview);
             previewCount++;
         }
 
@@ -2037,10 +2042,8 @@ export default class DocklightWindowIntegration extends Extension {
             this._livePreviewOverlay = overlay;
             this._livePreviewRects = previewRects;
             this._publishPreviewPointerInside(true);
-            // Fading the full-stage overlay makes Mutter allocate and blend
-            // a screen-sized offscreen surface just to reveal thumbnail-sized
-            // clones. Animate each small clone instead so video keeps the
-            // compositor's normal frame cadence while the preview appears.
+            // On X11, fade only the thumbnail-sized clones. Animating the
+            // full-stage overlay would require a screen-sized blended surface.
             for (const preview of previewFadeActors) {
                 preview.ease({
                     opacity: 255,

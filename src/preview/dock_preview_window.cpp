@@ -2328,6 +2328,22 @@ void DockPreviewWindow::complete_presentation()
 void DockPreviewWindow::start_opacity_animation(
     bool hiding)
 {
+    // Opacity animation can expose an intermediate XWayland surface frame in
+    // Mutter. Complete the transition immediately on GNOME Wayland while
+    // retaining the existing effect on the other presentation backends.
+    if (uses_wayland_session() &&
+        m_thumbnail_provider.supports_gnome_live_previews())
+    {
+        cancel_opacity_animation();
+        if (hiding)
+        {
+            hide();
+            clear_cards();
+        }
+        set_opacity(1.0);
+        return;
+    }
+
     cancel_opacity_animation();
 
     m_opacity_animation_hiding = hiding;
