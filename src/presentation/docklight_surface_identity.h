@@ -45,10 +45,6 @@ namespace DocklightSurfaceIdentity
         "docklight6-tooltip";
     constexpr char PREVIEW_NAMESPACE[] =
         "docklight6-preview";
-    constexpr char SETTINGS_NAMESPACE[] =
-        "docklight6-settings";
     constexpr char ABOUT_NAMESPACE[] =
         "docklight6-about";
-    constexpr char ICON_CHOOSER_NAMESPACE[] =
-        "docklight6-icon-chooser";
 }

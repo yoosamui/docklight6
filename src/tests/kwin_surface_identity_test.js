@@ -224,8 +224,6 @@ for (const [relativePath, constant] of [
     ["autohide/dock_reveal_window.cpp", "REVEAL_NAMESPACE"],
     ["dock/dock_tooltip_window.cpp", "TOOLTIP_NAMESPACE"],
     ["preview/dock_preview_window.cpp", "PREVIEW_NAMESPACE"],
-    ["dialogs/dock_settings_dialog.cpp", "SETTINGS_NAMESPACE"],
-    ["dialogs/dock_settings_dialog.cpp", "ICON_CHOOSER_NAMESPACE"],
     ["dialogs/dock_about_dialog.cpp", "ABOUT_NAMESPACE"]
 ]) {
     const source = fs.readFileSync(
@@ -237,6 +235,25 @@ for (const [relativePath, constant] of [
             "DocklightSurfaceIdentity::\\s*" +
             constant));
 }
+
+const settingsDialogSource = fs.readFileSync(
+    path.resolve(
+        sourceDirectory,
+        "dialogs/dock_settings_dialog.cpp"),
+    "utf8");
+
+// Settings must remain an ordinary decorated toplevel. A layer-shell parent
+// prevents GtkColorButton's native chooser from establishing real transient
+// modality and allows a second chooser to be opened behind the first.
+assert.doesNotMatch(
+    settingsDialogSource,
+    /gtk_layer_init_for_window/);
+assert.match(
+    settingsDialogSource,
+    /Gtk::ColorButton\s+indicator_color\s*;/);
+assert.match(
+    settingsDialogSource,
+    /Gtk::ColorButton\s+preview_color\s*;/);
 
 assert.match(
     scriptSource,

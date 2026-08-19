@@ -13,7 +13,7 @@
 // Important implementation decisions:
 // - Controls are initialized from the current configuration snapshot.
 // - User changes are written through DockConfigurationManager.
-// - Layer-shell integration keeps the dialog usable above the dock.
+// - Settings remains a decorated toplevel so nested choosers retain modality.
 //
 // ------------------------------------------------------------
 
@@ -24,7 +24,6 @@
 
 #include <glibmm/i18n.h>
 #include <gdk/gdkwayland.h>
-#include <gtk-layer-shell.h>
 #include <gtkmm.h>
 
 #include <algorithm>
@@ -34,49 +33,15 @@
 namespace
 {
 void keep_dialog_above(
-    Gtk::Window &dialog,
-    Gtk::Window &parent,
-    const char *name_space)
+    Gtk::Window &dialog)
 {
     dialog.set_keep_above(true);
-
-    if (!gtk_layer_is_supported())
-        return;
-
-    auto *window = GTK_WINDOW(dialog.gobj());
-    gtk_layer_init_for_window(window);
-    gtk_layer_set_namespace(window, name_space);
-    gtk_layer_set_layer(
-        window,
-        GTK_LAYER_SHELL_LAYER_OVERLAY);
-    gtk_layer_set_exclusive_zone(window, 0);
-    gtk_layer_set_keyboard_mode(
-        window,
-        GTK_LAYER_SHELL_KEYBOARD_MODE_ON_DEMAND);
-
-    const auto parent_window = parent.get_window();
-    if (!parent_window)
-        return;
-
-    auto *display =
-        gdk_window_get_display(parent_window->gobj());
-    auto *monitor =
-        gdk_display_get_monitor_at_window(
-            display,
-            parent_window->gobj());
-    gtk_layer_set_monitor(window, monitor);
 }
 
 void center_dialog_on_parent_monitor(
     Gtk::Window &dialog,
     Gtk::Window &parent)
 {
-    // Layer-shell surfaces are positioned by their compositor backend. This
-    // explicit path is for X11, where CENTER_ON_PARENT would center around
-    // the edge dock instead of around the monitor containing it.
-    if (gtk_layer_is_supported())
-        return;
-
     const auto parent_window = parent.get_window();
     if (!parent_window)
         return;
@@ -127,14 +92,12 @@ void DockSettingsDialog::show(
     dialog.set_type_hint(
         Gdk::WINDOW_TYPE_HINT_DIALOG);
 
-    // Mutter attaches modal dialogs to their transient parent. Since the
-    // parent is the edge dock, changing the dock location would drag this
-    // dialog away from the monitor centre. GNOME's integration positions the
-    // ordinary Wayland dialog explicitly, so do not attach it to the dock.
+    // A normal dialog cannot be transient for the layer-shell dock on
+    // Wayland. Keeping Settings as an independent decorated toplevel also
+    // lets its own native chooser dialogs use normal transient modality.
     auto *display = gdk_display_get_default();
     if (display &&
-        GDK_IS_WAYLAND_DISPLAY(display) &&
-        !gtk_layer_is_supported())
+        GDK_IS_WAYLAND_DISPLAY(display))
     {
         dialog.unset_transient_for();
     }
@@ -143,11 +106,7 @@ void DockSettingsDialog::show(
         GTK_WINDOW(dialog.gobj()),
         DocklightSurfaceIdentity::SETTINGS_ROLE);
 
-    keep_dialog_above(
-        dialog,
-        parent,
-        DocklightSurfaceIdentity::
-            SETTINGS_NAMESPACE);
+    keep_dialog_above(dialog);
     dialog.set_decorated(true);
     dialog.set_resizable(false);
     dialog.property_destroy_with_parent() =
@@ -1310,11 +1269,7 @@ void DockSettingsDialog::show(
                         icon_dialog.gobj()),
                     DocklightSurfaceIdentity::
                         ICON_CHOOSER_ROLE);
-                keep_dialog_above(
-                    icon_dialog,
-                    dialog,
-                    DocklightSurfaceIdentity::
-                        ICON_CHOOSER_NAMESPACE);
+                keep_dialog_above(icon_dialog);
                 icon_dialog.set_decorated(true);
                 icon_dialog.set_resizable(true);
                 icon_dialog
