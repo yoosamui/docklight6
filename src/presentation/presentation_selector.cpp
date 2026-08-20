@@ -338,6 +338,27 @@ bool prepare_presentation(
     return true;
 }
 
+void prepare_application_launch_context(
+    GAppLaunchContext *context)
+{
+    if (!context ||
+        !g_getenv(
+            "DOCKLIGHT_XWAYLAND_PRESENTATION"))
+    {
+        return;
+    }
+
+    // GAppInfo inherits the launcher's complete environment. Keep the
+    // XWayland selection private to Docklight so applications launched from
+    // the dock can choose the session's native GDK backend.
+    g_app_launch_context_unsetenv(
+        context,
+        "GDK_BACKEND");
+    g_app_launch_context_unsetenv(
+        context,
+        "DOCKLIGHT_XWAYLAND_PRESENTATION");
+}
+
 std::string presentation_configuration_path()
 {
     return std::string(

@@ -10,6 +10,8 @@
 #include <optional>
 #include <string>
 
+typedef struct _GAppLaunchContext GAppLaunchContext;
+
 enum class PresentationMode
 {
     automatic,
@@ -46,6 +48,9 @@ PresentationSelection select_presentation(
 bool prepare_presentation(
     const PresentationSelection &selection,
     std::string &error);
+
+void prepare_application_launch_context(
+    GAppLaunchContext *context);
 
 std::string presentation_configuration_path();
 const char *actual_presentation_backend_name();

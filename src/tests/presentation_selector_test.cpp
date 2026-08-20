@@ -7,6 +7,7 @@
 
 #include "presentation/presentation_selector.h"
 
+#include <gio/gio.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 
@@ -241,6 +242,64 @@ void verifies_xwayland_environment()
     assert(!error.empty());
 }
 
+void verifies_application_launch_environment()
+{
+    g_setenv("GDK_BACKEND", "x11", true);
+    g_setenv(
+        "DOCKLIGHT_XWAYLAND_PRESENTATION",
+        "1",
+        true);
+    g_setenv(
+        "DOCKLIGHT_LAUNCH_TEST_VALUE",
+        "preserved",
+        true);
+
+    auto *context =
+        g_app_launch_context_new();
+    prepare_application_launch_context(
+        context);
+
+    auto *environment =
+        g_app_launch_context_get_environment(
+            context);
+    assert(!g_environ_getenv(
+        environment,
+        "GDK_BACKEND"));
+    assert(!g_environ_getenv(
+        environment,
+        "DOCKLIGHT_XWAYLAND_PRESENTATION"));
+    assert(std::string(g_environ_getenv(
+               environment,
+               "DOCKLIGHT_LAUNCH_TEST_VALUE")) ==
+           "preserved");
+
+    g_strfreev(environment);
+    g_object_unref(context);
+
+    // A native presentation must preserve an explicit backend selection
+    // supplied by the user's session rather than treating it as Docklight's
+    // private XWayland override.
+    g_unsetenv(
+        "DOCKLIGHT_XWAYLAND_PRESENTATION");
+    g_setenv("GDK_BACKEND", "wayland", true);
+
+    context = g_app_launch_context_new();
+    prepare_application_launch_context(
+        context);
+    environment =
+        g_app_launch_context_get_environment(
+            context);
+    assert(std::string(g_environ_getenv(
+               environment,
+               "GDK_BACKEND")) ==
+           "wayland");
+
+    g_strfreev(environment);
+    g_object_unref(context);
+    g_unsetenv(
+        "DOCKLIGHT_LAUNCH_TEST_VALUE");
+}
+
 }
 
 int main()
@@ -249,5 +308,6 @@ int main()
     verifies_configuration_and_precedence();
     verifies_automatic_desktop_selection();
     verifies_xwayland_environment();
+    verifies_application_launch_environment();
     return 0;
 }

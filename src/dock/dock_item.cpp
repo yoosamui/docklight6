@@ -23,6 +23,7 @@
 #include "rendering/dock_icon_renderer.h"
 #include "layout/dock_layout_metrics.h"
 #include "dock_window.h"
+#include "presentation/presentation_selector.h"
 #include "windowing/window_registry.h"
 
 #include <gio/gdesktopappinfo.h>
@@ -222,6 +223,10 @@ namespace
 
         if (app)
             context->set_icon(app->get_icon());
+
+        prepare_application_launch_context(
+            G_APP_LAUNCH_CONTEXT(
+                context->gobj()));
 
         return context;
     }
