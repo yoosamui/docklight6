@@ -125,6 +125,12 @@ docklight6_SOURCES = \
     dock/dock_window.cpp \
     dock/dock_window_controller.h \
     dock/dock_window_controller.cpp \
+    dock/tooltip_manager.h \
+    dock/tooltip_manager.cpp \
+    dock/preview_manager.h \
+    dock/preview_manager.cpp \
+    dock/layout_coordinator.h \
+    dock/layout_coordinator.cpp \
     dock/dock_home_item.h \
     dock/dock_home_item.cpp \
     dock/dock_item.h \

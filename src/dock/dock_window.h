@@ -46,6 +46,9 @@
 
 class DockWindowController;
 class DockAutohideController;
+class TooltipManager;
+class PreviewManager;
+class LayoutCoordinator;
 class DockHomeItem;
 struct DockRuntimeInfo;
 class WindowRegistry;
@@ -177,21 +180,31 @@ private:
     double x11_vertical_offset() const;
     void apply_main_axis_end_margins(
         DockOrientation orientation);
+    void register_dock_item(DockItem *item);
+    void unregister_dock_item(DockItem *item);
     void synchronize_dock_items();
     void schedule_dock_item_sync();
     Glib::RefPtr<Gio::AppInfo>
     application_for_running(
         const std::string &desktop_id) const;
-    std::vector<DockItem *> dock_items();
+    const std::vector<DockItem *> &
+    dock_items() const;
     DockWindowGeometry content_geometry() const;
 
 private:
     friend class DockWindowController;
     friend class DockAutohideController;
+    friend class TooltipManager;
+    friend class PreviewManager;
+    friend class LayoutCoordinator;
 
     Glib::RefPtr<Gtk::CssProvider> m_visual_css;
 
     DockSurfaceBox m_dock_box;
+    // Authoritative typed view of the DockItem children. It is updated
+    // before GTK add/remove signals fire and kept in visual order.
+    std::vector<DockItem *>
+        m_dock_items_cache;
     Gtk::Box m_leading_margin;
     Gtk::Box m_trailing_margin;
 

@@ -39,6 +39,26 @@ namespace DockConstants
     constexpr int PREVIEW_FADE_DURATION_MS = 220;
     constexpr int OVERLAY_ANIMATION_FRAME_MS = 16;
 
+    // Preview input forwarding safety
+
+    constexpr int PREVIEW_INPUT_FORWARDING_RESET_MS = 500;
+
+    // X11 startup stabilization
+
+    constexpr unsigned int
+        INITIAL_X11_WORKAREA_SAMPLE_INTERVAL_MS = 300;
+    constexpr int
+        INITIAL_X11_WORKAREA_REQUIRED_STABLE_SAMPLES = 3;
+    constexpr int
+        INITIAL_X11_WORKAREA_MAX_SAMPLE_ATTEMPTS = 7;
+    constexpr unsigned int
+        INITIAL_X11_PLACEMENT_POLL_INTERVAL_MS = 16;
+    constexpr int
+        INITIAL_X11_PLACEMENT_MAX_ATTEMPTS = 30;
+
+    // Native edge changes need one short allocation-settling pass.
+    constexpr int EDGE_LAYOUT_SETTLE_DELAY_MS = 10;
+
     // Autohide behaviour
 
     constexpr int AUTOHIDE_REVEAL_SIZE = 2;

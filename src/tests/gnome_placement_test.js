@@ -22,6 +22,18 @@ const autohideControllerPath = path.resolve(
 const dockWindowControllerPath = path.resolve(
     __dirname,
     "../dock/dock_window_controller.cpp");
+const dockConstantsPath = path.resolve(
+    __dirname,
+    "../dock/dock_constants.h");
+const tooltipManagerPath = path.resolve(
+    __dirname,
+    "../dock/tooltip_manager.cpp");
+const previewManagerPath = path.resolve(
+    __dirname,
+    "../dock/preview_manager.cpp");
+const layoutCoordinatorPath = path.resolve(
+    __dirname,
+    "../dock/layout_coordinator.cpp");
 const dockTooltipWindowPath = path.resolve(
     __dirname,
     "../dock/dock_tooltip_window.cpp");
@@ -69,6 +81,14 @@ const autohideControllerSource = fs.readFileSync(
     autohideControllerPath, "utf8");
 const dockWindowControllerSource = fs.readFileSync(
     dockWindowControllerPath, "utf8");
+const dockConstantsSource = fs.readFileSync(
+    dockConstantsPath, "utf8");
+const tooltipManagerSource = fs.readFileSync(
+    tooltipManagerPath, "utf8");
+const previewManagerSource = fs.readFileSync(
+    previewManagerPath, "utf8");
+const layoutCoordinatorSource = fs.readFileSync(
+    layoutCoordinatorPath, "utf8");
 const dockTooltipWindowSource = fs.readFileSync(
     dockTooltipWindowPath, "utf8");
 const dockWindowSource = fs.readFileSync(
@@ -350,8 +370,8 @@ assert.match(
     /if \(uses_gnome_live_previews\)[\s\S]*?desired_windows\.insert\(entry\.first\);[\s\S]*?if \(!entry\.second\.minimized/,
     "GNOME live previews must include fully minimized window groups");
 assert.match(
-    dockWindowControllerSource,
-    /set_preview_color\([\s\S]*?m_settings\.preview_color\(\)/,
+    previewManagerSource,
+    /set_preview_color\(settings\.preview_color\(\)\)/,
     "preview rendering must receive the configured preview color");
 assert.match(
     dockWindowControllerSource,
@@ -362,8 +382,8 @@ assert.match(
     /GDK_IS_X11_DISPLAY[\s\S]*?capture_x11_base_workarea[\s\S]*?m_x11_base_workarea/,
     "X11 layout must not feed Docklight's own strut back into its edge margin");
 assert.match(
-    dockWindowControllerSource,
-    /if \(reported_workarea && !x11_dock\)/,
+    layoutCoordinatorSource,
+    /if \(m_window\.m_window_registry && !x11_dock\)/,
     "KWin reports must not replace the authoritative XWayland work area");
 assert.match(
     dockWindowControllerSource,
@@ -423,10 +443,30 @@ assert.match(
     "native GNOME X11 must not advertise the Shell-only dock reveal trigger");
 assert.match(
     windowSystemControllerSource,
+    /std::optional<bool> g_x11_compositor_cache[\s\S]*?x11_compositor_is_running_cached\(\)[\s\S]*?g_x11_compositor_cache\.has_value\(\)[\s\S]*?XOpenDisplay\(nullptr\)[\s\S]*?g_x11_compositor_cache = running/,
+    "X11 compositor detection must open DISPLAY at most once per process");
+assert.match(
+    windowSystemControllerSource,
+    /x11 && x11_compositor_is_running_cached\(\)/,
+    "generic startup must use the cached X11 compositor result");
+assert.match(
+    dockConstantsSource,
+    /PREVIEW_INPUT_FORWARDING_RESET_MS[\s\S]*?INITIAL_X11_WORKAREA_SAMPLE_INTERVAL_MS[\s\S]*?INITIAL_X11_PLACEMENT_POLL_INTERVAL_MS[\s\S]*?EDGE_LAYOUT_SETTLE_DELAY_MS/,
+    "dock timing policy must remain centralized under semantic names");
+assert.match(
+    dockWindowControllerSource,
+    /DockConstants::[\s\S]*?INITIAL_X11_WORKAREA_SAMPLE_INTERVAL_MS[\s\S]*?DockConstants::[\s\S]*?INITIAL_X11_PLACEMENT_POLL_INTERVAL_MS[\s\S]*?DockConstants::[\s\S]*?EDGE_LAYOUT_SETTLE_DELAY_MS/,
+    "controller timers must consume centralized dock timing constants");
+assert.match(
+    previewManagerSource,
+    /DockConstants::[\s\S]*?PREVIEW_INPUT_FORWARDING_RESET_MS/,
+    "preview input forwarding must consume its centralized reset timeout");
+assert.match(
+    windowSystemControllerSource,
     /detected_window_manager[\s\S]*?identifies_gnome\(desktop\)[\s\S]*?return "Mutter";[\s\S]*?wnck_handle_new/,
     "known GNOME sessions must not initialize libwnck only to identify Mutter");
 assert.match(
-    dockWindowControllerSource,
+    tooltipManagerSource,
     /requested_item == m_hovered_item/,
     "a delayed tooltip must still belong to the currently hovered item");
 assert.ok(
@@ -437,16 +477,16 @@ assert.doesNotMatch(
     /cancel_show_timer\(\)/,
     "mapping an X11 tooltip must not cancel the next item's reveal timer");
 assert.match(
-    dockWindowControllerSource,
-    /m_hovered_item == &item &&[\s\S]*?m_pending_item == &item[\s\S]*?m_tooltip_item == &item/,
+    tooltipManagerSource,
+    /m_hovered_item == &item &&[\s\S]*?m_pending_item == &item[\s\S]*?m_visible_item == &item/,
     "a stale hovered-item pointer must not suppress a new tooltip request");
 assert.match(
     dockItemSource,
     /DockItem::on_enter_notify_event[\s\S]*?schedule_show_tooltip[\s\S]*?DockItem::on_leave_notify_event[\s\S]*?schedule_hide_tooltip/,
     "each item must start and cancel tooltip timing from its own crossing events");
 assert.match(
-    dockWindowControllerSource,
-    /DockWindowController::schedule_show_tooltip[\s\S]*?hide_tooltip\(\);[\s\S]*?start_tooltip_show_timer\(item, text\)/,
+    tooltipManagerSource,
+    /TooltipManager::schedule_show[\s\S]*?hide\(\);[\s\S]*?start_show_timer\(item, text/,
     "adjacent dock items must fade the previous tooltip before the delayed reveal");
 assert.match(
     dockTooltipWindowSource,
@@ -461,8 +501,8 @@ assert.match(
     /smootherstep\([\s\S]*?progress \* progress \* progress \*[\s\S]*?progress \* 6\.0 - 15\.0[\s\S]*?TOOLTIP_MIN_SCALE[\s\S]*?m_visual_scale/,
     "tooltip hide and reveal effects must use centred scale with smooth endpoint easing");
 assert.match(
-    dockWindowControllerSource,
-    /DockWindowController::schedule_show_preview[\s\S]*?hide_tooltip\(\);[\s\S]*?m_settings\.display_tooltips\(\) &&[\s\S]*?!m_settings\.display_preview\(\)[\s\S]*?start_tooltip_show_timer/,
+    previewManagerSource,
+    /PreviewManager::schedule_show[\s\S]*?m_tooltips\.hide\(\);[\s\S]*?m_settings\.display_tooltips\(\) &&[\s\S]*?!m_settings\.display_preview\(\)[\s\S]*?m_tooltips\.schedule_show/,
     "populated groups must only show a tooltip when previews are disabled");
 assert.match(
     dockItemSource,
@@ -477,12 +517,36 @@ assert.match(
     /DockWindow::schedule_show_tooltip[\s\S]*?window_entries\(\)\.empty\(\)[\s\S]*?schedule_show_tooltip/,
     "empty dock-item groups must keep their tooltip path");
 assert.match(
-    dockWindowControllerSource,
-    /m_preview_show_timer[\s\S]*?m_settings\.preview_show_delay\(\)\);/,
+    dockWindowSource,
+    /DockWindow::dock_items\(\) const[\s\S]*?return m_dock_items_cache;/,
+    "DockWindow must return its typed DockItem cache without traversing GTK children");
+assert.doesNotMatch(
+    dockWindowSource,
+    /dynamic_cast<DockItem/,
+    "DockWindow must not rediscover typed items with repeated dynamic casts");
+assert.match(
+    dockWindowSource,
+    /DockWindow::register_dock_item[\s\S]*?m_dock_items_cache\.push_back\(item\)[\s\S]*?m_dock_box\.pack_start[\s\S]*?DockWindow::unregister_dock_item[\s\S]*?m_dock_items_cache\.erase\(item_position\)[\s\S]*?m_dock_box\.remove/,
+    "DockItem container mutations must update the typed cache before GTK signals fire");
+assert.match(
+    dockWindowSource,
+    /DockWindow::apply_dragged_item_order[\s\S]*?m_dock_items_cache = items;[\s\S]*?DockWindow::synchronize_dock_items[\s\S]*?register_dock_item\(item\)[\s\S]*?unregister_dock_item\(item\)[\s\S]*?m_dock_items_cache = ordered_items;/,
+    "drag and synchronization reorder operations must preserve visual cache order");
+assert.match(
+    dockWindowSource,
+    /normalized_attached_ids ==[\s\S]*?m_synchronized_attached_ids[\s\S]*?normalized_running_ids ==[\s\S]*?m_synchronized_running_ids[\s\S]*?dock_structure_changed[\s\S]*?current_items\.size\(\) != desired_items\.size\(\)[\s\S]*?current_id != desired_id[\s\S]*?refresh_indicator\(\);[\s\S]*?return;/,
+    "dock synchronization must avoid GTK mutations for both title-only and structurally identical updates");
+assert.match(
+    dockWindowSource,
+    /gtk_widget_freeze_child_notify[\s\S]*?m_dock_box\.reorder_child[\s\S]*?gtk_widget_thaw_child_notify/,
+    "bulk dock reordering must coalesce GTK child-property notifications");
+assert.match(
+    dockWindowControllerSource + previewManagerSource,
+    /schedule_show\([\s\S]*?m_settings\.preview_show_delay\(\)[\s\S]*?m_show_timer[\s\S]*?show_delay_ms\);/,
     "populated dock items must use only the configured preview delay");
 assert.match(
-    dockWindowControllerSource,
-    /DockWindowController::hide_tooltip_immediately[\s\S]*?hide_preview\(\)[\s\S]*?hide_preview_immediately\(\)/,
+    dockWindowControllerSource + previewManagerSource,
+    /DockWindowController::hide_tooltip_immediately[\s\S]*?m_preview_manager->hide_immediately[\s\S]*?PreviewManager::hide_immediately[\s\S]*?hide\(\)[\s\S]*?hide_preview_immediately\(\)/,
     "immediate preview closure must clear controller state before hiding the surface");
 assert.match(
     revealWindowSource,
@@ -657,12 +721,12 @@ assert.match(
     /target\.type === 'reveal'[\s\S]*?clampAuxiliaryToWorkArea\([\s\S]*?_workAreaForMonitor/,
     "GNOME previews and tooltips must clamp to the Shell work area without moving the reveal strip");
 assert.match(
-    dockWindowControllerSource,
-    /show_tooltip\([\s\S]*?dock_screen_position\(true\)[\s\S]*?show_tooltip\(/,
+    dockWindowControllerSource + tooltipManagerSource,
+    /dock_screen_position\(true\)[\s\S]*?TooltipManager::show_now[\s\S]*?m_dock_position\(\)[\s\S]*?show_tooltip\(/,
     "GNOME tooltips must follow the compositor-confirmed dock surface origin");
 assert.match(
-    dockWindowControllerSource,
-    /show_preview\([\s\S]*?dock_screen_position\(true\)[\s\S]*?show_preview\(/,
+    dockWindowControllerSource + previewManagerSource,
+    /dock_screen_position\(true\)[\s\S]*?PreviewManager::show_now[\s\S]*?m_dock_position\(\)[\s\S]*?show_preview\(/,
     "GNOME previews must centre on the compositor-confirmed dock surface origin");
 assert.match(
     extensionSource,

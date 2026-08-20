@@ -45,10 +45,16 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <optional>
 #include <string>
 
 namespace
 {
+
+// X11 composition is a session-level property for Docklight's lifetime. A
+// process cache avoids reopening a potentially remote DISPLAY when controller
+// instances are stopped and recreated.
+std::optional<bool> g_x11_compositor_cache;
 
 std::string environment_value(
     const char *name)
@@ -200,11 +206,17 @@ std::string detected_window_manager(
     return "unknown";
 }
 
-bool x11_compositor_is_running()
+bool x11_compositor_is_running_cached()
 {
+    if (g_x11_compositor_cache.has_value())
+        return *g_x11_compositor_cache;
+
     auto *display = XOpenDisplay(nullptr);
     if (!display)
+    {
+        g_x11_compositor_cache = false;
         return false;
+    }
 
     const auto selection_name =
         "_NET_WM_CM_S" +
@@ -218,7 +230,8 @@ bool x11_compositor_is_running()
         XGetSelectionOwner(display, selection) != None;
 
     XCloseDisplay(display);
-    return running;
+    g_x11_compositor_cache = running;
+    return *g_x11_compositor_cache;
 }
 
 std::string detected_compositor(
@@ -291,7 +304,7 @@ void WindowSystemController::start()
 
     const bool x11 = is_x11_session();
     const bool x11_compositor_running =
-        x11 && x11_compositor_is_running();
+        x11 && x11_compositor_is_running_cached();
     const auto compositor =
         detected_compositor(
             x11_compositor_running);

@@ -7,15 +7,15 @@
 // dock_window_controller.cpp
 //
 // Implementation overview:
-// Coordinates dock layout, work-area adjustments, tooltip scheduling,
-// icon refreshes, and publication of compositor effect geometry.
+// Coordinates focused layout, autohide, tooltip, and preview managers with
+// icon refresh and publication of compositor effect geometry.
 //
 // Important implementation decisions:
 // - Expensive GTK reactions are coalesced through idle callbacks.
 // - Pure placement is calculated before DockWindow applies side effects.
 // - Effective icon size is derived from available monitor space.
 // - Published icon geometry prefers compositor surface coordinates.
-// - Timers enforce tooltip intent without embedding timing in widgets.
+// - Tooltip and preview timers are owned by their focused managers.
 //
 // ------------------------------------------------------------
 
@@ -27,8 +27,9 @@
 #include "autohide/dock_intellihide_policy.h"
 #include "dock_item.h"
 #include "layout/dock_layout_metrics.h"
-#include "media/dock_media_playback_monitor.h"
-#include "preview/dock_preview_window.h"
+#include "preview_manager.h"
+#include "tooltip_manager.h"
+#include "layout_coordinator.h"
 #include "dock_window.h"
 #include "windowing/window_icon_geometry.h"
 #include "windowing/window_registry.h"
@@ -40,12 +41,6 @@
 namespace
 {
 
-constexpr unsigned int INITIAL_X11_WORKAREA_SAMPLE_INTERVAL_MS = 300;
-constexpr int INITIAL_X11_WORKAREA_REQUIRED_STABLE_SAMPLES = 3;
-constexpr int INITIAL_X11_WORKAREA_MAX_SAMPLE_ATTEMPTS = 7;
-constexpr unsigned int INITIAL_X11_PLACEMENT_POLL_INTERVAL_MS = 16;
-constexpr int INITIAL_X11_PLACEMENT_MAX_ATTEMPTS = 30;
-
 bool same_monitor_geometry(
     const MonitorGeometry &left,
     const MonitorGeometry &right)
@@ -54,42 +49,6 @@ bool same_monitor_geometry(
            left.y == right.y &&
            left.width == right.width &&
            left.height == right.height;
-}
-
-bool intersect_workarea_with_output(
-    const WindowIconGeometry &reported,
-    const MonitorGeometry &output,
-    MonitorGeometry &workarea)
-{
-    if (reported.width <= 0 ||
-        reported.height <= 0)
-    {
-        return false;
-    }
-
-    const int left =
-        std::max(output.x, reported.x);
-    const int top =
-        std::max(output.y, reported.y);
-    const int right =
-        std::min(
-            output.x + output.width,
-            reported.x + reported.width);
-    const int bottom =
-        std::min(
-            output.y + output.height,
-            reported.y + reported.height);
-
-    if (right <= left || bottom <= top)
-        return false;
-
-    workarea = {
-        left,
-        top,
-        right - left,
-        bottom - top};
-
-    return true;
 }
 
 }
@@ -106,78 +65,50 @@ DockWindowController::DockWindowController(
               window,
               configuration.settings
                   .autohide_hide_delay())),
-      m_preview_window(
-          std::make_unique<DockPreviewWindow>()),
-      m_media_playback_monitor(
-          std::make_unique<
-              DockMediaPlaybackMonitor>()),
       m_monitor(monitor),
       m_settings(configuration.settings),
       m_layout_request(
           configuration.layout_request)
 {
-    m_preview_window->set_monitor(monitor);
-    m_preview_window->set_card_user_height(
-        m_settings.preview_card_height());
-    m_preview_window->set_preview_color(
-        m_settings.preview_color());
+    m_layout_coordinator =
+        std::make_unique<LayoutCoordinator>(m_window);
+    m_tooltip_manager = std::make_unique<TooltipManager>(
+        m_window,
+        [this]() { return dock_screen_position(true); });
+    m_tooltip_manager->apply_configuration(m_settings);
+    m_tooltip_manager->set_layout_request(m_layout_request);
+    m_tooltip_manager->set_monitor(monitor);
+
+    m_preview_manager = std::make_unique<PreviewManager>(
+        m_window,
+        *m_autohide_controller,
+        *m_tooltip_manager,
+        m_settings,
+        m_layout_request,
+        monitor,
+        [this]() { return dock_screen_position(true); });
 
     apply_thumbnail_policy();
 
-    m_preview_window
-        ->signal_pointer_entered()
-        .connect(
-            sigc::mem_fun(
-                *this,
-                &DockWindowController::
-                    preview_pointer_entered));
-    m_preview_window
-        ->signal_pointer_left()
-        .connect(
-            sigc::mem_fun(
-                *this,
-                &DockWindowController::
-                    preview_pointer_left));
-    m_preview_window
-        ->signal_activate_window()
-        .connect(
-            sigc::mem_fun(
-                *this,
-                &DockWindowController::
-                    activate_preview_window));
-    m_preview_window
-        ->signal_reload_thumbnail()
-        .connect(
-            sigc::mem_fun(
-                *this,
-                &DockWindowController::
-                    reload_preview_thumbnail));
-    m_preview_window
-        ->signal_close_window()
-        .connect(
-            sigc::mem_fun(
-                *this,
-                &DockWindowController::
-                    close_preview_window));
-
-    m_media_playback_changed =
-        m_media_playback_monitor
-            ->signal_changed()
-            .connect(
-                [this]()
-                {
-                    if (m_preview_desktop_id.empty())
-                        return;
-
-                    m_preview_window
-                        ->set_dynamic_refresh(
-                            m_media_playback_monitor
-                                ->should_stream(
-                                    m_preview_desktop_id),
-                            m_media_playback_monitor
-                                ->playing_title(
-                                    m_preview_desktop_id));
-                });
+    m_tooltip_will_show =
+        m_tooltip_manager->signal_will_show().connect(
+            [this](bool preserve_pending_preview)
+            {
+                hide_preview(!preserve_pending_preview);
+            });
+    m_tooltip_hide_requested =
+        m_tooltip_manager->signal_hide_requested().connect(
+            [this]()
+            {
+                hide_tooltip();
+                hide_preview();
+            });
+    m_preview_pointer_entered =
+        m_preview_manager->signal_pointer_entered().connect(
+            [this]() { cancel_hide_timer(); });
+    m_preview_pointer_left =
+        m_preview_manager->signal_pointer_left().connect(
+            [this]() { start_hide_timer(); });
 }
 
 DockWindowController::~DockWindowController()
@@ -192,7 +123,6 @@ DockWindowController::~DockWindowController()
     m_edge_layout_update.disconnect();
     m_icon_theme_changed.disconnect();
     m_icon_refresh.disconnect();
-    m_media_playback_changed.disconnect();
     m_realize.disconnect();
     m_map.disconnect();
     m_initial_x11_workarea_timer.disconnect();
@@ -207,12 +137,15 @@ DockWindowController::~DockWindowController()
     m_dock_pointer_inside_changed.disconnect();
     m_preview_pointer_inside_changed.disconnect();
     m_preview_input_forwarding_changed.disconnect();
-    m_preview_input_forwarding_reset.disconnect();
     m_preview_window_activated.disconnect();
     m_dock_animation_completed.disconnect();
     m_gnome_placement_fallback.disconnect();
     m_dock_add.disconnect();
     m_dock_remove.disconnect();
+    m_tooltip_will_show.disconnect();
+    m_tooltip_hide_requested.disconnect();
+    m_preview_pointer_entered.disconnect();
+    m_preview_pointer_left.disconnect();
 }
 
 void DockWindowController::initialize()
@@ -233,7 +166,8 @@ void DockWindowController::initialize()
                     *this,
                     &DockWindowController::
                         sample_initial_x11_workarea),
-                INITIAL_X11_WORKAREA_SAMPLE_INTERVAL_MS);
+                DockConstants::
+                    INITIAL_X11_WORKAREA_SAMPLE_INTERVAL_MS);
     }
 
     m_autohide_controller->set_effect(
@@ -324,9 +258,9 @@ void DockWindowController::initialize()
                         m_window
                             .synchronize_dock_items();
 
-                        if (!m_preview_desktop_id.empty())
+                        if (!m_preview_manager->desktop_id().empty())
                         {
-                            const auto items =
+                            const auto &items =
                                 m_window.dock_items();
                             const bool preview_item_exists =
                                 std::any_of(
@@ -336,7 +270,8 @@ void DockWindowController::initialize()
                                     {
                                         return item &&
                                                item->desktop_id() ==
-                                                   m_preview_desktop_id;
+                                                   m_preview_manager
+                                                       ->desktop_id();
                                     });
 
                             if (!preview_item_exists)
@@ -358,9 +293,8 @@ void DockWindowController::initialize()
                                 entries.end());
                         }
 
-                        m_preview_window
-                            ->prime_thumbnail_cache(
-                                all_window_entries);
+                        m_preview_manager->prime_cache(
+                            all_window_entries);
 
                         schedule_icon_geometry_update();
                         schedule_intellihide_update();
@@ -447,27 +381,8 @@ void DockWindowController::initialize()
                 .connect(
                     [this](bool forwarding)
                     {
-                        m_preview_input_forwarding_reset.disconnect();
-                        m_preview_input_forwarding = forwarding;
-                        m_preview_window->set_input_forwarding(
+                        m_preview_manager->set_input_forwarding(
                             forwarding);
-                        if (forwarding)
-                        {
-                            cancel_hide_timer();
-                            // Never leave Docklight's real pointer handling
-                            // frozen if Shell is disabled or restarted in the
-                            // middle of its short virtual-click sequence.
-                            m_preview_input_forwarding_reset =
-                                Glib::signal_timeout().connect(
-                                    [this]()
-                                    {
-                                        m_preview_input_forwarding = false;
-                                        m_preview_window
-                                            ->set_input_forwarding(false);
-                                        return false;
-                                    },
-                                    500);
-                        }
                     });
 
         m_preview_window_activated =
@@ -527,8 +442,7 @@ void DockWindowController::initialize()
             entries.end());
     }
 
-    m_preview_window->prime_thumbnail_cache(
-        all_window_entries);
+    m_preview_manager->prime_cache(all_window_entries);
 
     m_icon_theme =
         Gtk::IconTheme::get_default();
@@ -627,10 +541,12 @@ bool DockWindowController::sample_initial_x11_workarea()
 
     const bool stable =
         m_initial_x11_workarea_stable_sample_count >=
-            INITIAL_X11_WORKAREA_REQUIRED_STABLE_SAMPLES;
+            DockConstants::
+                INITIAL_X11_WORKAREA_REQUIRED_STABLE_SAMPLES;
     const bool exhausted =
         m_initial_x11_workarea_sample_attempt_count >=
-            INITIAL_X11_WORKAREA_MAX_SAMPLE_ATTEMPTS;
+            DockConstants::
+                INITIAL_X11_WORKAREA_MAX_SAMPLE_ATTEMPTS;
 
     if (!stable && !exhausted)
         return true;
@@ -672,7 +588,8 @@ bool DockWindowController::sample_initial_x11_workarea()
                 *this,
                 &DockWindowController::
                     finish_initial_x11_placement),
-            INITIAL_X11_PLACEMENT_POLL_INTERVAL_MS);
+            DockConstants::
+                INITIAL_X11_PLACEMENT_POLL_INTERVAL_MS);
     return false;
 }
 
@@ -691,7 +608,8 @@ bool DockWindowController::finish_initial_x11_placement()
 
     ++m_initial_x11_placement_attempt_count;
     if (m_initial_x11_placement_attempt_count <
-        INITIAL_X11_PLACEMENT_MAX_ATTEMPTS)
+        DockConstants::
+            INITIAL_X11_PLACEMENT_MAX_ATTEMPTS)
     {
         return true;
     }
@@ -716,9 +634,6 @@ void DockWindowController::apply_configuration(
     cancel_show_timer();
     cancel_preview_show_timer();
     cancel_hide_timer();
-    m_pending_item = nullptr;
-    m_pending_preview_desktop_id.clear();
-    m_pending_tooltip_text.clear();
     hide_tooltip();
 
     const bool location_changed =
@@ -736,11 +651,9 @@ void DockWindowController::apply_configuration(
         configuration.settings;
 
     hide_preview();
+    m_tooltip_manager->apply_configuration(m_settings);
+    m_preview_manager->apply_configuration(m_settings);
     apply_thumbnail_policy();
-    m_preview_window->set_card_user_height(
-        m_settings.preview_card_height());
-    m_preview_window->set_preview_color(
-        m_settings.preview_color());
 
     if (m_window.m_home_item)
     {
@@ -768,6 +681,8 @@ void DockWindowController::apply_configuration(
 
     m_layout_request =
         configuration.layout_request;
+    m_tooltip_manager->set_layout_request(m_layout_request);
+    m_preview_manager->set_layout_request(m_layout_request);
 
     m_autohide_controller->set_hide_delay(
         m_settings.autohide_hide_delay());
@@ -798,8 +713,7 @@ void DockWindowController::apply_thumbnail_policy()
                      .thumbnail_policy;
     }
 
-    m_preview_window->set_thumbnail_policy(
-        policy);
+    m_preview_manager->set_thumbnail_policy(policy);
 }
 
 void DockWindowController::set_monitor(
@@ -848,11 +762,8 @@ void DockWindowController::set_monitor(
             m_window.set_surface_monitor(
                 m_monitor);
 
-        m_window.m_overlay_window.set_monitor(
-            m_monitor);
-
-        m_preview_window->set_monitor(
-            m_monitor);
+        m_tooltip_manager->set_monitor(m_monitor);
+        m_preview_manager->set_monitor(m_monitor);
 
         m_autohide_controller->set_monitor(
             m_monitor);
@@ -872,7 +783,7 @@ void DockWindowController::set_preview_rounded_corners(
     bool enabled,
     int radius)
 {
-    m_preview_window->set_rounded_corners(
+    m_preview_manager->set_rounded_corners(
         enabled,
         radius);
 }
@@ -885,122 +796,35 @@ void DockWindowController::update_dock_layout()
     if (m_initial_x11_workarea_pending)
         return;
 
-    auto output_geometry =
-        m_window.surface_output_geometry();
-
-    if (output_geometry.width <= 0 ||
-        output_geometry.height <= 0)
+    const auto monitor_layout =
+        m_layout_coordinator->resolve_monitor_layout(
+            m_settings,
+            m_layout_request);
+    if (!monitor_layout.valid())
     {
         // Never submit the unconstrained natural size to layer-shell. The
         // realize callback will retry once GDK can identify the output.
         return;
     }
 
-    m_output_geometry =
-        output_geometry;
-
-    auto workarea_geometry =
-        m_window.surface_work_area();
-
-    if (workarea_geometry.width <= 0 ||
-        workarea_geometry.height <= 0)
-    {
-        workarea_geometry =
-            output_geometry;
-    }
-
-    // An X11 dock changes _NET_WORKAREA as soon as it publishes its strut.
-    // Keep using the panel-only area captured before that first publication;
-    // otherwise every work-area notification feeds Docklight's own thickness
-    // back into its edge margin and walks the requested position inward.
-    const bool x11_dock =
-        m_window.surface_is_native_x11();
-    workarea_geometry =
-        m_window.surface_effective_work_area(
-            output_geometry,
-            workarea_geometry);
-
-    // GTK 3 has no native Plasma Wayland work-area protocol. In native
-    // Wayland it reports the complete output, while an XWayland client may
-    // only see the panel's reserved content thickness. Apply KWin's
-    // monitor-scoped panel geometry after the X11 base-area capture so that
-    // neither path can overwrite the compositor integration's result.
-    if (m_window.m_window_registry)
-    {
-        const auto reported_workarea =
-            m_window.m_window_registry
-                ->dock_workarea_geometry();
-
-        if (reported_workarea && !x11_dock)
-        {
-            MonitorGeometry kwin_workarea;
-            if (intersect_workarea_with_output(
-                    *reported_workarea,
-                    output_geometry,
-                    kwin_workarea))
-            {
-                workarea_geometry =
-                    kwin_workarea;
-            }
-        }
-    }
-
-    // Preserve the compositor's native EWMH work area for X11 placement.
-    // The adjusted copy below contains Docklight's sizing-only bottom inset
-    // and must not shift the actual dock surface away from its screen edge.
+    const auto output_geometry = monitor_layout.output;
     const auto native_workarea_geometry =
-        workarea_geometry;
-
-    const int reported_bottom_inset =
-        std::max(
-            0,
-            output_geometry.y +
-                output_geometry.height -
-                workarea_geometry.y -
-                workarea_geometry.height);
-
-    // The compositor inset keeps the dock out of an occluded screen region.
-    // DOCK_MARGIN is a main-axis content margin; adding it here creates an
-    // unrelated 8 px cross-axis gap when GNOME reports Docklight's own strut
-    // through the monitor work area.
-    const int required_bottom_inset =
-        std::max(
-            reported_bottom_inset,
-            m_settings.minimum_bottom_workarea_inset());
-
-    // This compatibility inset exists to keep a bottom-positioned dock out
-    // of desktop environments that under-report their bottom reservation.
-    // Applying it to a vertical dock shortens the main-axis work area and
-    // shifts its centre upward, cancelling a real top-panel inset.
-    const int missing_bottom_inset =
-        m_layout_request.location ==
-                DockLocation::bottom
-            ? std::max(
-                  0,
-                  required_bottom_inset -
-                      reported_bottom_inset)
-            : 0;
-
-    workarea_geometry.height =
-        std::max(
-            1,
-            workarea_geometry.height -
-                missing_bottom_inset);
-
-    m_usable_monitor_geometry = {
-        workarea_geometry.x - output_geometry.x,
-        workarea_geometry.y - output_geometry.y,
-        workarea_geometry.width,
-        workarea_geometry.height};
+        monitor_layout.native_workarea;
+    const auto workarea_geometry =
+        monitor_layout.sizing_workarea;
+    m_output_geometry = output_geometry;
+    m_usable_monitor_geometry =
+        monitor_layout.usable_monitor;
 
     // Tooltip and preview layout remains output-relative. Native layer-shell
     // overlays are arranged inside this usable area, so their surface classes
     // need its origin and size to translate margins exactly once.
-    m_window.m_overlay_window
-        .set_workarea_geometry(
-            m_usable_monitor_geometry);
-    m_preview_window->set_workarea_geometry(
-        m_usable_monitor_geometry);
+    m_tooltip_manager->set_layout_geometry(
+        m_usable_monitor_geometry,
+        m_output_geometry);
+    m_preview_manager->set_layout_geometry(
+        m_usable_monitor_geometry,
+        m_output_geometry);
 
     // Apply orientation before measuring the dock. A vertical dock has a
     // different natural size than a horizontal one.
@@ -1121,7 +945,8 @@ void DockWindowController::update_dock_layout()
                     update_dock_layout();
                     return false;
                 },
-                10);
+                DockConstants::
+                    EDGE_LAYOUT_SETTLE_DELAY_MS);
     }
 
     schedule_icon_geometry_update();
@@ -1150,7 +975,7 @@ void DockWindowController::update_effective_icon_size(
     const MonitorGeometry &monitor,
     DockOrientation orientation)
 {
-    auto items =
+    const auto &items =
         m_window.dock_items();
 
     const int item_count =
@@ -1531,7 +1356,7 @@ void DockWindowController::schedule_icon_refresh()
 
 void DockWindowController::reload_icons()
 {
-    auto items =
+    const auto &items =
         m_window.dock_items();
 
     for (auto *item : items)
@@ -1564,196 +1389,33 @@ void DockWindowController::schedule_show_tooltip(
     Gtk::Widget &item,
     const Glib::ustring &text)
 {
-    if (m_hovered_item == &item &&
-        (m_pending_item == &item ||
-         m_tooltip_item == &item))
-        return;
-
-    // Item crossing state remains authoritative while a preview layer is
-    // unmapped and replaced by a tooltip. During that surface handoff GDK can
-    // briefly report the physical pointer outside the dock even though it is
-    // already over the newly entered item.
-    m_dock_item_pointer_inside = true;
-    m_hovered_item = &item;
-
-    if (!m_settings.display_tooltips())
-    {
-        hide_tooltip_immediately();
-        return;
-    }
-
-    cancel_hide_timer();
-    cancel_show_timer();
-    cancel_preview_show_timer();
-    m_pending_preview_desktop_id.clear();
-
-    // Fade the previous label while the new item earns its normal hover
-    // delay. Fast crossings replace the pending request, and a surviving
-    // request uses the existing reveal effect.
-    hide_tooltip();
-    start_tooltip_show_timer(item, text);
+    m_preview_manager->cancel_show_timer();
+    m_tooltip_manager->schedule_show(item, text);
 }
 
-void DockWindowController::start_tooltip_show_timer(
-    Gtk::Widget &item,
-    const Glib::ustring &text,
-    bool preserve_pending_preview)
+void DockWindowController::schedule_show_preview(DockItem &item)
 {
-    m_pending_item = &item;
-    m_pending_tooltip_text = text;
-
-    auto *requested_item = &item;
-    const auto requested_text = text;
-    const auto request_generation =
-        m_tooltip_request_generation;
-
-    m_show_timer =
-        Glib::signal_timeout().connect(
-            [this,
-             requested_item,
-             requested_text,
-             request_generation,
-             preserve_pending_preview]()
-            {
-                if (request_generation ==
-                        m_tooltip_request_generation &&
-                    requested_item == m_hovered_item)
-                {
-                    show_tooltip(
-                        *requested_item,
-                        requested_text,
-                        preserve_pending_preview);
-                }
-
-                if (request_generation ==
-                    m_tooltip_request_generation)
-                {
-                    m_pending_item = nullptr;
-                    m_pending_tooltip_text.clear();
-                }
-                return false;
-            },
-            DockConstants::TOOLTIP_SHOW_DELAY_MS);
+    m_preview_manager->schedule_show(
+        item,
+        m_settings.preview_show_delay());
 }
 
-void DockWindowController::schedule_show_preview(
-    DockItem &item)
+void DockWindowController::schedule_hide_tooltip(Gtk::Widget &item)
 {
-    if (m_hovered_item == &item &&
-        (m_pending_item == &item ||
-         m_tooltip_item == &item ||
-         m_pending_preview_desktop_id ==
-             item.desktop_id() ||
-         m_preview_desktop_id ==
-             item.desktop_id()))
+    const bool was_hovered =
+        m_tooltip_manager->hovered_item() == &item;
+    m_tooltip_manager->schedule_hide(item);
+    if (!was_hovered)
         return;
 
-    cancel_hide_timer();
-    cancel_show_timer();
-    cancel_preview_show_timer();
-    m_dock_item_pointer_inside = true;
-    m_hovered_item = &item;
-
-    // Returning from an existing preview to its owning icon must not rebuild
-    // and remap the same surface.
-    if (!m_preview_desktop_id.empty() &&
-        m_preview_desktop_id == item.desktop_id())
-    {
-        m_pending_item = nullptr;
-        m_pending_preview_desktop_id.clear();
-        m_pending_tooltip_text.clear();
-        return;
-    }
-
-    // Populated groups use the preview directly when previews are enabled.
-    // When previews are disabled, keep their application-name tooltip.
-    hide_tooltip();
-    m_pending_item = nullptr;
-    m_pending_tooltip_text.clear();
-
-    if (m_settings.display_tooltips() &&
-        !m_settings.display_preview())
-    {
-        start_tooltip_show_timer(
-            item,
-            item.tooltip_text(),
-            true);
-    }
-
-    if (!m_settings.display_preview())
-    {
-        m_pending_preview_desktop_id.clear();
-        return;
-    }
-
-    m_pending_preview_desktop_id =
-        item.desktop_id();
-
-    m_preview_show_timer =
-        Glib::signal_timeout().connect(
-            [this]()
-            {
-                cancel_show_timer();
-                m_pending_item = nullptr;
-                m_pending_tooltip_text.clear();
-
-                const auto desktop_id =
-                    m_pending_preview_desktop_id;
-                m_pending_preview_desktop_id.clear();
-
-                for (auto *item : m_window.dock_items())
-                {
-                    if (item &&
-                        item->desktop_id() == desktop_id)
-                    {
-                        show_preview(*item);
-                        break;
-                    }
-                }
-
-                return false;
-            },
-            m_settings.preview_show_delay());
-}
-
-void DockWindowController::schedule_hide_tooltip(
-    Gtk::Widget &item)
-{
-    // An out-of-order leave from the previous item must not cancel the timer
-    // started by the newly entered item.
-    if (m_hovered_item != &item)
-        return;
-
-    m_hovered_item = nullptr;
-    m_dock_item_pointer_inside = false;
-    cancel_show_timer();
-    cancel_preview_show_timer();
-    m_pending_item = nullptr;
-    m_pending_preview_desktop_id.clear();
-    m_pending_tooltip_text.clear();
+    m_preview_manager->cancel_show_timer();
     start_hide_timer();
 }
 
 void DockWindowController::hide_tooltip_immediately()
 {
-    m_hovered_item = nullptr;
-    m_dock_item_pointer_inside = false;
-    cancel_show_timer();
-    cancel_preview_show_timer();
-    cancel_hide_timer();
-    m_pending_item = nullptr;
-    m_pending_preview_desktop_id.clear();
-    m_pending_tooltip_text.clear();
-    m_tooltip_item = nullptr;
-    m_window.m_overlay_window.hide_tooltip_immediately();
-
-    // Keep the preview surface and its controller identity in one state.
-    // Hiding only the surface leaves m_preview_desktop_id populated, causing
-    // the next hover to be mistaken for an already-visible preview.
-    hide_preview();
-
-    if (m_preview_window)
-        m_preview_window->hide_preview_immediately();
+    m_tooltip_manager->hide_immediately();
+    m_preview_manager->hide_immediately();
 }
 
 void DockWindowController::dock_items_reordered()
@@ -1764,515 +1426,80 @@ void DockWindowController::dock_items_reordered()
 
 void DockWindowController::dock_items_changed()
 {
-    std::vector<ApplicationWindowEntry>
-        all_window_entries;
-
+    std::vector<ApplicationWindowEntry> all_window_entries;
     for (auto *item : m_window.dock_items())
     {
-        if (item)
-        {
-            const auto entries = item->window_entries();
-            all_window_entries.insert(
-                all_window_entries.end(),
-                entries.begin(),
-                entries.end());
-        }
+        if (!item)
+            continue;
+        const auto entries = item->window_entries();
+        all_window_entries.insert(
+            all_window_entries.end(),
+            entries.begin(),
+            entries.end());
     }
+    m_preview_manager->prime_cache(all_window_entries);
 
-    m_preview_window->prime_thumbnail_cache(
-        all_window_entries);
-
-    // Fit the children immediately so a newly added item cannot overflow a
-    // full-height dock. Defer layer-shell surface changes until the current
-    // window-registry callback has returned; resizing the surface here can
-    // re-enter compositor and GTK processing while the child list is changing.
     const auto orientation =
-        m_layout_request.location ==
-                    DockLocation::left ||
-                m_layout_request.location ==
-                    DockLocation::right
+        m_layout_request.location == DockLocation::left ||
+                m_layout_request.location == DockLocation::right
             ? DockOrientation::vertical
             : DockOrientation::horizontal;
-
     auto monitor = m_usable_monitor_geometry;
+    if (monitor.width <= 0 || monitor.height <= 0)
+        monitor = m_layout_geometry.output_geometry(m_monitor);
 
-    if (monitor.width <= 0 ||
-        monitor.height <= 0)
-    {
-        monitor =
-            m_layout_geometry.output_geometry(
-                m_monitor);
-    }
-
-    update_effective_icon_size(
-        monitor,
-        orientation);
+    update_effective_icon_size(monitor, orientation);
     schedule_layout_update();
-}
-
-void DockWindowController::show_tooltip(
-    Gtk::Widget &item,
-    const Glib::ustring &text,
-    bool preserve_pending_preview)
-{
-    if (!m_settings.display_tooltips())
-        return;
-
-    hide_preview(
-        !preserve_pending_preview);
-
-    const int tooltip_width =
-        m_window.m_overlay_window
-            .preferred_width_for(
-                text);
-
-    auto item_geometry =
-        m_layout_geometry.item_geometry(
-            item,
-            m_window);
-
-    auto dock_geometry =
-        m_layout_geometry.dock_geometry(
-            m_window);
-
-    // KWin can publish a resized surface before its new centred position.
-    // Use the synchronous layout placement for tooltips so adding or
-    // removing a dock item cannot shift them to a stale surface origin.
-    const auto dock_position =
-        // GNOME moves the ordinary Wayland dock surface into Shell's real
-        // work area after GTK has calculated its full-output placement.
-        // Tooltips must follow that compositor-confirmed origin.
-        dock_screen_position(true);
-
-    // The calculated dock position is global, while tooltip layer-shell
-    // margins are relative to the selected output.
-    dock_geometry.x =
-        dock_position.x -
-        m_output_geometry.x;
-    dock_geometry.y =
-        dock_position.y -
-        m_output_geometry.y;
-    dock_geometry.has_position = true;
-
-    auto monitor_geometry =
-        m_usable_monitor_geometry;
-
-    if (monitor_geometry.width <= 0 ||
-        monitor_geometry.height <= 0)
-    {
-        monitor_geometry =
-            m_layout_geometry.output_geometry(
-                m_monitor);
-
-        // Layer-shell margins are relative to the selected output, not the
-        // global desktop coordinate space.
-        monitor_geometry.x = 0;
-        monitor_geometry.y = 0;
-    }
-
-    auto position =
-        m_layout_engine.calculate_tooltip_position(
-            m_layout_request,
-            monitor_geometry,
-            dock_geometry,
-            item_geometry,
-            tooltip_width,
-            m_window.m_overlay_window
-                .tooltip_height(),
-            m_window.m_overlay_window
-                .tooltip_distance());
-
-    if (m_window.surface_uses_native_placement())
-    {
-        m_window.m_overlay_window
-            .set_workarea_geometry(
-                overlay_workarea_for_dock(
-                    monitor_geometry,
-                    m_layout_request.location,
-                    m_layout_request.autohide,
-                    dock_geometry.x,
-                    dock_geometry.y,
-                    dock_geometry.width,
-                    dock_geometry.height));
-    }
-
-    m_tooltip_item = &item;
-    m_window.m_overlay_window.show_tooltip(
-        text,
-        m_layout_request.location,
-        tooltip_width,
-        position);
 }
 
 void DockWindowController::hide_tooltip()
 {
-    m_tooltip_item = nullptr;
-    m_window.m_overlay_window.hide_tooltip();
+    m_tooltip_manager->hide();
 }
 
-void DockWindowController::show_preview(
-    DockItem &item,
-    const WindowId &excluded_window_id)
+void DockWindowController::hide_preview(bool cancel_pending_show)
 {
-    auto entries = item.window_entries();
-
-    std::stable_sort(
-        entries.begin(),
-        entries.end(),
-        [](const ApplicationWindowEntry &left,
-           const ApplicationWindowEntry &right)
-        {
-            // Browser PiP and similar application-owned utility windows are
-            // the media surfaces users expect to find first in the group.
-            if (left.application_auxiliary !=
-                right.application_auxiliary)
-            {
-                return left.application_auxiliary;
-            }
-
-            const auto &left_label =
-                left.caption.empty()
-                    ? left.id
-                    : left.caption;
-            const auto &right_label =
-                right.caption.empty()
-                    ? right.id
-                    : right.caption;
-
-            return Glib::ustring(left_label)
-                       .casefold_collate_key() <
-                   Glib::ustring(right_label)
-                       .casefold_collate_key();
-        });
-
-    if (!excluded_window_id.empty())
-    {
-        entries.erase(
-            std::remove_if(
-                entries.begin(),
-                entries.end(),
-                [&excluded_window_id](
-                    const ApplicationWindowEntry
-                        &entry)
-                {
-                    return entry.id ==
-                           excluded_window_id;
-                }),
-            entries.end());
-    }
-
-    if (entries.empty())
-    {
-        hide_preview();
-
-        if (excluded_window_id.empty())
-            show_tooltip(
-                item,
-                item.tooltip_text());
-
-        return;
-    }
-
-    hide_tooltip();
-
-    auto item_geometry =
-        m_layout_geometry.item_geometry(
-            item,
-            m_window);
-    auto dock_geometry =
-        m_layout_geometry.dock_geometry(
-            m_window);
-    const auto dock_position =
-        // Keep the preview centred on the icon's actual Shell-positioned
-        // surface, not GTK's provisional full-output dock origin.
-        dock_screen_position(true);
-
-    dock_geometry.x =
-        dock_position.x -
-        m_output_geometry.x;
-    dock_geometry.y =
-        dock_position.y -
-        m_output_geometry.y;
-    dock_geometry.has_position = true;
-
-    auto monitor_geometry =
-        m_usable_monitor_geometry;
-
-    if (monitor_geometry.width <= 0 ||
-        monitor_geometry.height <= 0)
-    {
-        monitor_geometry =
-            m_layout_geometry.output_geometry(
-                m_monitor);
-        monitor_geometry.x = 0;
-        monitor_geometry.y = 0;
-    }
-
-    const bool vertical_dock =
-        m_layout_request.location ==
-            DockLocation::left ||
-        m_layout_request.location ==
-            DockLocation::right;
-    const int preview_distance =
-        m_window.m_overlay_window
-            .tooltip_distance();
-    const bool dock_reserves_space =
-        m_layout_request.autohide ==
-            DockAutohide::none;
-    const int dock_side_offset =
-        vertical_dock
-            ? (dock_reserves_space
-                   ? 0
-                   : dock_geometry.width) +
-                  preview_distance
-            : 0;
-    const int preview_available_width =
-        std::max(
-            1,
-            monitor_geometry.width -
-                dock_side_offset -
-                (vertical_dock
-                     ? DockLayoutMetrics::
-                           TOOLTIP_EDGE_MARGIN
-                     : 2 * DockLayoutMetrics::
-                           TOOLTIP_EDGE_MARGIN));
-
-    const auto preview_size =
-        m_preview_window->preferred_size(
-            entries,
-            preview_available_width,
-            monitor_geometry.height);
-    const int preview_width =
-        preview_size.width;
-    const int preview_height =
-        preview_size.height;
-
-    const auto position =
-        m_layout_engine
-            .calculate_tooltip_position(
-                m_layout_request,
-                monitor_geometry,
-                dock_geometry,
-                item_geometry,
-                preview_width,
-                preview_height,
-                preview_distance);
-
-    if (m_window.surface_uses_native_placement())
-    {
-        m_preview_window->set_workarea_geometry(
-            overlay_workarea_for_dock(
-                monitor_geometry,
-                m_layout_request.location,
-                m_layout_request.autohide,
-                dock_geometry.x,
-                dock_geometry.y,
-                dock_geometry.width,
-                dock_geometry.height));
-    }
-
-    m_preview_desktop_id = item.desktop_id();
-
-    if (!m_preview_inhibits_autohide)
-    {
-        m_autohide_controller->inhibit();
-        m_preview_inhibits_autohide = true;
-    }
-
-    m_preview_window->show_preview(
-        entries,
-        m_layout_request.location,
-        position,
-        preview_size);
-    m_preview_window->set_dynamic_refresh(
-        m_media_playback_monitor->should_stream(
-            m_preview_desktop_id),
-        m_media_playback_monitor->playing_title(
-            m_preview_desktop_id));
+    m_preview_manager->hide(cancel_pending_show);
 }
 
-void DockWindowController::hide_preview(
-    bool cancel_pending_show)
+void DockWindowController::shell_preview_pointer_changed(bool inside)
 {
-    if (cancel_pending_show)
-    {
-        cancel_preview_show_timer();
-        m_pending_preview_desktop_id.clear();
-    }
-
-    m_preview_desktop_id.clear();
-    m_preview_pointer_inside = false;
-    m_shell_preview_pointer_inside = false;
-
-    if (m_preview_window)
-        m_preview_window->hide_preview();
-
-    if (m_preview_inhibits_autohide)
-    {
-        m_preview_inhibits_autohide = false;
-        m_autohide_controller->uninhibit(
-            m_dock_item_pointer_inside ||
-            m_window.pointer_is_inside());
-    }
-}
-
-void DockWindowController::preview_pointer_entered()
-{
-    m_preview_pointer_inside = true;
-    cancel_hide_timer();
-}
-
-void DockWindowController::preview_pointer_left()
-{
-    m_preview_pointer_inside = false;
-    start_hide_timer();
-}
-
-void DockWindowController::shell_preview_pointer_changed(
-    bool inside)
-{
-    m_shell_preview_pointer_inside = inside;
-
-    if (inside)
-        cancel_hide_timer();
-    else
-        start_hide_timer();
+    m_preview_manager->set_shell_pointer_inside(inside);
 }
 
 void DockWindowController::activate_preview_window(
     const WindowId &window_id)
 {
-    const auto desktop_id =
-        m_preview_desktop_id;
-
-    for (auto *item : m_window.dock_items())
-    {
-        if (item &&
-            item->desktop_id() == desktop_id)
-        {
-            const auto entries =
-                item->window_entries();
-            const auto selected =
-                std::find_if(
-                    entries.begin(),
-                    entries.end(),
-                    [&window_id](
-                        const ApplicationWindowEntry
-                            &entry)
-                    {
-                        return entry.id == window_id;
-                    });
-
-            // Run the window action while GTK still exposes the button event
-            // timestamp. PiP uses show/raise semantics because Mutter can
-            // ignore minimize for an unfocusable utility window.
-            if (selected != entries.end())
-            {
-                item->toggle_window(window_id);
-            }
-
-            break;
-        }
-    }
-
-    // Destroying preview-card widgets from their own release handler is
-    // unsafe, so only the optional teardown remains deferred. PiP previews
-    // follow the same configured lifetime as ordinary window previews.
-    if (m_settings.close_preview_after_activation())
-    {
-        Glib::signal_idle().connect_once(
-            [this]()
-            {
-                hide_preview();
-            });
-    }
-}
-
-void DockWindowController::reload_preview_thumbnail(
-    const WindowId &window_id)
-{
-    if (!m_window.m_window_registry ||
-        window_id.empty())
-    {
-        return;
-    }
-
-    // On Xfwm, presenting an off-workspace or minimized window first visits
-    // its workspace and maps it. The registry update then primes the cache
-    // from the readable composite pixmap. This path is requested only by an
-    // actual icon fallback in DockPreviewWindow.
-    m_window.m_window_registry->present_windows(
-        {window_id});
-}
-
-void DockWindowController::close_preview_window(
-    const WindowId &window_id)
-{
-    const auto desktop_id =
-        m_preview_desktop_id;
-
-    Glib::signal_idle().connect_once(
-        [this, desktop_id, window_id]()
-        {
-            for (auto *item : m_window.dock_items())
-            {
-                if (item &&
-                    item->desktop_id() == desktop_id)
-                {
-                    if (item->close_window(window_id))
-                    {
-                        // Keep the mapped preview and rebuild it without the
-                        // window whose close request was accepted. Hiding is
-                        // reserved for the final window in the group.
-                        show_preview(
-                            *item,
-                            window_id);
-                    }
-                    break;
-                }
-            }
-        });
+    m_preview_manager->activate_window(window_id);
 }
 
 void DockWindowController::start_hide_timer()
 {
-    cancel_hide_timer();
-
-    m_hide_timer =
-        Glib::signal_timeout().connect(
-            [this]()
-            {
-                if (m_dock_item_pointer_inside ||
-                    m_window.pointer_is_inside() ||
-                    m_preview_pointer_inside ||
-                    m_shell_preview_pointer_inside)
-                {
-                    return false;
-                }
-
-                hide_tooltip();
-                hide_preview();
-                return false;
-            },
-            DockConstants::TOOLTIP_HIDE_DELAY_MS);
+    m_tooltip_manager->start_hide_timer(
+        [this]()
+        {
+            return m_tooltip_manager->pointer_inside() ||
+                   m_window.pointer_is_inside() ||
+                   m_preview_manager->pointer_inside();
+        });
 }
 
 void DockWindowController::cancel_show_timer()
 {
-    ++m_tooltip_request_generation;
-
-    if (m_show_timer.connected())
-        m_show_timer.disconnect();
+    m_tooltip_manager->cancel_show_timer();
 }
 
 void DockWindowController::cancel_preview_show_timer()
 {
-    if (m_preview_show_timer.connected())
-        m_preview_show_timer.disconnect();
+    m_preview_manager->cancel_show_timer();
 }
 
 void DockWindowController::cancel_hide_timer()
 {
-    if (m_hide_timer.connected())
-        m_hide_timer.disconnect();
+    m_tooltip_manager->cancel_hide_timer();
+}
+
+bool DockWindowController::preview_input_forwarding() const
+{
+    return m_preview_manager->input_forwarding();
 }

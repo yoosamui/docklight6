@@ -7,13 +7,14 @@
 // dock_window_controller.h
 //
 // Purpose:
-// Declares orchestration between configuration, geometry calculation,
-// GTK lifecycle events, tooltip timing, and icon-geometry publication.
+// Declares the façade coordinating dock layout, autohide, tooltip, preview,
+// and icon-geometry services.
 //
 // Responsibilities:
 // - Recalculate layout when configuration or monitor state changes.
 // - Clamp effective icon size to the selected output.
-// - Schedule tooltip, icon refresh, and geometry updates.
+// - Forward tooltip and preview requests to focused managers.
+// - Schedule icon refresh and geometry updates.
 // - Keep DockWindow side effects ordered after GTK realization.
 //
 // Dependencies and ownership:
@@ -21,8 +22,8 @@
 // references, and owns calculation objects and signal connections.
 //
 // Design notes:
-// The controller is the boundary between pure layout rules and the
-// event-driven GTK surface that applies those rules.
+// The controller retains only cross-cutting policy and final dock layout;
+// surface-specific state and timers live in the owned coordinators.
 //
 // ------------------------------------------------------------
 
@@ -43,9 +44,10 @@
 
 class DockWindow;
 class DockAutohideController;
-class DockMediaPlaybackMonitor;
-class DockPreviewWindow;
 class DockItem;
+class TooltipManager;
+class PreviewManager;
+class LayoutCoordinator;
 
 namespace Gtk
 {
@@ -100,10 +102,7 @@ public:
         return m_layout_request.location;
     }
 
-    bool preview_input_forwarding() const
-    {
-        return m_preview_input_forwarding;
-    }
+    bool preview_input_forwarding() const;
 
 private:
     bool sample_initial_x11_workarea();
@@ -126,28 +125,11 @@ private:
         int height) const;
     void schedule_icon_refresh();
     void reload_icons();
-    void start_tooltip_show_timer(
-        Gtk::Widget &item,
-        const Glib::ustring &text,
-        bool preserve_pending_preview = false);
-    void show_tooltip(
-        Gtk::Widget &item,
-        const Glib::ustring &text,
-        bool preserve_pending_preview = false);
     void hide_tooltip();
-    void show_preview(
-        DockItem &item,
-        const WindowId &excluded_window_id = {});
     void hide_preview(
         bool cancel_pending_show = true);
-    void preview_pointer_entered();
-    void preview_pointer_left();
     void shell_preview_pointer_changed(bool inside);
     void activate_preview_window(
-        const WindowId &window_id);
-    void reload_preview_thumbnail(
-        const WindowId &window_id);
-    void close_preview_window(
         const WindowId &window_id);
     void apply_thumbnail_policy();
     void start_hide_timer();
@@ -160,10 +142,12 @@ private:
 
     std::unique_ptr<DockAutohideController>
         m_autohide_controller;
-    std::unique_ptr<DockPreviewWindow>
-        m_preview_window;
-    std::unique_ptr<DockMediaPlaybackMonitor>
-        m_media_playback_monitor;
+    std::unique_ptr<LayoutCoordinator>
+        m_layout_coordinator;
+    std::unique_ptr<TooltipManager>
+        m_tooltip_manager;
+    std::unique_ptr<PreviewManager>
+        m_preview_manager;
 
     Glib::RefPtr<Gdk::Monitor> m_monitor;
     Glib::RefPtr<Gtk::IconTheme> m_icon_theme;
@@ -184,16 +168,12 @@ private:
     DockLocation m_applied_location =
         DockLocation::bottom;
 
-    sigc::connection m_show_timer;
-    sigc::connection m_hide_timer;
     sigc::connection m_layout_update;
     sigc::connection m_icon_geometry_update;
     sigc::connection m_intellihide_update;
     sigc::connection m_edge_layout_update;
     sigc::connection m_icon_theme_changed;
     sigc::connection m_icon_refresh;
-    sigc::connection m_preview_show_timer;
-    sigc::connection m_media_playback_changed;
     sigc::connection m_realize;
     sigc::connection m_map;
     sigc::connection m_initial_x11_workarea_timer;
@@ -217,8 +197,6 @@ private:
     sigc::connection
         m_preview_input_forwarding_changed;
     sigc::connection
-        m_preview_input_forwarding_reset;
-    sigc::connection
         m_preview_window_activated;
     sigc::connection
         m_dock_animation_completed;
@@ -226,21 +204,10 @@ private:
         m_gnome_placement_fallback;
     sigc::connection m_dock_add;
     sigc::connection m_dock_remove;
-
-    Gtk::Widget *m_pending_item = nullptr;
-    Gtk::Widget *m_hovered_item = nullptr;
-    Gtk::Widget *m_tooltip_item = nullptr;
-    unsigned long long
-        m_tooltip_request_generation = 0;
-    std::string m_pending_preview_desktop_id;
-    std::string m_preview_desktop_id;
-    Glib::ustring m_pending_tooltip_text;
-
-    bool m_preview_inhibits_autohide = false;
-    bool m_dock_item_pointer_inside = false;
-    bool m_preview_pointer_inside = false;
-    bool m_shell_preview_pointer_inside = false;
-    bool m_preview_input_forwarding = false;
+    sigc::connection m_tooltip_will_show;
+    sigc::connection m_tooltip_hide_requested;
+    sigc::connection m_preview_pointer_entered;
+    sigc::connection m_preview_pointer_left;
 
     bool m_initial_x11_workarea_pending = false;
     int m_initial_x11_workarea_stable_sample_count = 0;

@@ -386,7 +386,7 @@ bool DockWindow::can_drop_item(
     if (!m_dragged_item)
         return false;
 
-    const auto items = dock_items();
+    const auto &items = dock_items();
 
     return std::find(
                items.begin(),
@@ -607,7 +607,7 @@ bool DockWindow::is_first_item_drop_zone(
     if (!m_dragged_item)
         return false;
 
-    const auto items = dock_items();
+    const auto &items = dock_items();
 
     if (items.empty())
         return false;
@@ -705,6 +705,8 @@ bool DockWindow::apply_dragged_item_order(
             *item,
             position++);
     }
+
+    m_dock_items_cache = items;
 
     std::vector<std::string>
         attached_ids;
@@ -1039,22 +1041,51 @@ void DockWindow::apply_main_axis_end_margins(
         trailing_height);
 }
 
-std::vector<DockItem *>
-DockWindow::dock_items()
+const std::vector<DockItem *> &
+DockWindow::dock_items() const
 {
-    std::vector<DockItem *> items;
+    return m_dock_items_cache;
+}
 
-    for (auto *child :
-         m_dock_box.get_children())
+void DockWindow::register_dock_item(
+    DockItem *item)
+{
+    if (!item ||
+        std::find(
+            m_dock_items_cache.begin(),
+            m_dock_items_cache.end(),
+            item) != m_dock_items_cache.end())
     {
-        if (auto *item =
-                dynamic_cast<DockItem *>(child))
-        {
-            items.push_back(item);
-        }
+        return;
     }
 
-    return items;
+    // Update the typed view first: signal_add() observers can query the dock
+    // synchronously while Gtk::Box::pack_start() is still on the stack.
+    m_dock_items_cache.push_back(item);
+    m_dock_box.pack_start(
+        *item,
+        Gtk::PACK_SHRINK);
+    item->show();
+}
+
+void DockWindow::unregister_dock_item(
+    DockItem *item)
+{
+    if (!item)
+        return;
+
+    const auto item_position =
+        std::find(
+            m_dock_items_cache.begin(),
+            m_dock_items_cache.end(),
+            item);
+    if (item_position == m_dock_items_cache.end())
+        return;
+
+    // Gtk::manage() allows removal to destroy the child. Erase the borrowed
+    // pointer before remove() and before signal_remove() observers run.
+    m_dock_items_cache.erase(item_position);
+    m_dock_box.remove(*item);
 }
 
 Glib::RefPtr<Gio::AppInfo>
@@ -1233,7 +1264,7 @@ void DockWindow::synchronize_dock_items()
             DockConstants::MAX_DOCK_ITEMS -
                 1);
 
-    const auto current_items =
+    const auto &current_items =
         dock_items();
 
     // Keep the live visual order, including positions where running,
@@ -1423,6 +1454,43 @@ void DockWindow::synchronize_dock_items()
         }
     }
 
+    // The coarse attached/running snapshots above avoid building this list
+    // for title-only registry updates. This structural diff handles the
+    // remaining case where a snapshot changed but resolved to the same live
+    // widget sequence and attachment state.
+    bool dock_structure_changed =
+        current_items.size() != desired_items.size();
+
+    if (!dock_structure_changed)
+    {
+        for (std::size_t index = 0;
+             index < current_items.size();
+             ++index)
+        {
+            const auto current_id =
+                LauncherManager::normalize_desktop_id(
+                    current_items[index]->desktop_id());
+            const auto desired_id =
+                LauncherManager::normalize_desktop_id(
+                    desired_items[index].desktop_id);
+
+            if (current_id != desired_id ||
+                current_items[index]->attached() !=
+                    desired_items[index].attached)
+            {
+                dock_structure_changed = true;
+                break;
+            }
+        }
+    }
+
+    if (!dock_structure_changed)
+    {
+        for (auto *item : current_items)
+            item->refresh_indicator();
+        return;
+    }
+
     auto existing_items =
         dock_items();
 
@@ -1506,10 +1574,7 @@ void DockWindow::synchronize_dock_items()
                     ->settings()
                     .manage_all_workspaces());
 
-            m_dock_box.pack_start(
-                *item,
-                Gtk::PACK_SHRINK);
-            item->show();
+            register_dock_item(item);
             children_changed = true;
         }
 
@@ -1521,9 +1586,20 @@ void DockWindow::synchronize_dock_items()
 
     for (auto *item : existing_items)
     {
-        m_dock_box.remove(*item);
+        unregister_dock_item(item);
         children_changed = true;
     }
+
+    // GTK3 exposes child-notify freezing on each child widget, not on the
+    // container. Queue at most one child-property notification per survivor
+    // while their positions are updated as one logical transaction.
+    for (auto *item : ordered_items)
+    {
+        gtk_widget_freeze_child_notify(
+            GTK_WIDGET(item->gobj()));
+    }
+    gtk_widget_freeze_child_notify(
+        GTK_WIDGET(m_trailing_margin.gobj()));
 
     int position = 2;
 
@@ -1534,9 +1610,19 @@ void DockWindow::synchronize_dock_items()
             position++);
     }
 
+    m_dock_items_cache = ordered_items;
+
     m_dock_box.reorder_child(
         m_trailing_margin,
         -1);
+
+    for (auto *item : ordered_items)
+    {
+        gtk_widget_thaw_child_notify(
+            GTK_WIDGET(item->gobj()));
+    }
+    gtk_widget_thaw_child_notify(
+        GTK_WIDGET(m_trailing_margin.gobj()));
 
     if (children_changed)
     {
