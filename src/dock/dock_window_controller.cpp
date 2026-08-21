@@ -155,11 +155,13 @@ void DockWindowController::initialize()
 
     if (native_x11_window)
     {
-        // Cinnamon publishes provisional monitor and panel work areas while
-        // the login session is still being assembled. Keep the ordinary X11
-        // toplevel invisible and avoid publishing our strut until Muffin has
-        // repeatedly reported the same output and work area.
+        // X11 desktops can publish provisional monitor and panel work areas
+        // while the login session is still being assembled. Keep the ordinary
+        // X11 toplevel invisible and avoid publishing our strut until the
+        // window manager repeatedly reports the same output and work area.
         m_initial_x11_workarea_pending = true;
+        m_autohide_controller
+            ->begin_initial_x11_startup();
         m_initial_x11_workarea_timer =
             Glib::signal_timeout().connect(
                 sigc::mem_fun(
@@ -556,8 +558,9 @@ bool DockWindowController::sample_initial_x11_workarea()
 
     // apply_dock_layout() submits an asynchronous X11 move and autohide's
     // placement reset restores opacity. Reapply the guard before returning to
-    // the main loop, then reveal only after Muffin reports the requested root
-    // coordinates. This prevents one painted frame at the provisional edge.
+    // the main loop, then choose the initial visibility state only after the
+    // window manager reports the requested root coordinates. This prevents
+    // one painted frame at the provisional edge.
     m_window.set_opacity(0.0);
 
     const int requested_width =
@@ -602,7 +605,8 @@ bool DockWindowController::finish_initial_x11_placement()
     if (x == m_initial_x11_target_position.x &&
         y == m_initial_x11_target_position.y)
     {
-        m_window.set_opacity(1.0);
+        m_autohide_controller
+            ->complete_initial_x11_startup();
         return false;
     }
 
@@ -617,7 +621,8 @@ bool DockWindowController::finish_initial_x11_placement()
     // Do not leave the dock permanently transparent if a non-conforming
     // window manager adjusts the requested position. The final coordinates
     // are still preferable to painting its provisional startup position.
-    m_window.set_opacity(1.0);
+    m_autohide_controller
+        ->complete_initial_x11_startup();
     g_warning(
         "X11 did not confirm Docklight's initial position "
         "(%d,%d); using compositor position (%d,%d)",

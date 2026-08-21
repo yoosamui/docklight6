@@ -178,6 +178,40 @@ void DockAutohideController::initialize()
                 });
 }
 
+void DockAutohideController::begin_initial_x11_startup()
+{
+    if (!m_window.surface_is_native_x11())
+        return;
+
+    m_initial_x11_startup_pending = true;
+    cancel_hide();
+}
+
+void DockAutohideController::complete_initial_x11_startup()
+{
+    if (!m_initial_x11_startup_pending)
+        return;
+
+    m_initial_x11_startup_pending = false;
+    cancel_hide();
+
+    // The dock has remained transparent while its work area and final root
+    // coordinates settled. Decide its first painted state now, instead of
+    // exposing one visible frame and then running the configured autohide.
+    m_pointer_inside =
+        m_window.pointer_is_inside();
+
+    if (can_hide() &&
+        m_inhibit_count == 0 &&
+        !pointer_inside())
+    {
+        hide_immediately_for_x11_startup();
+        return;
+    }
+
+    reveal_immediately();
+}
+
 void DockAutohideController::set_mode(
     DockAutohide mode)
 {
@@ -525,7 +559,10 @@ void DockAutohideController::reset_x11_visual_transform()
         1.0,
         m_placement.anchor_right);
     m_window.set_x11_vertical_offset(0.0);
-    m_window.set_opacity(1.0);
+    m_window.set_opacity(
+        m_initial_x11_startup_pending
+            ? 0.0
+            : 1.0);
 }
 
 void DockAutohideController::set_surface_input_passthrough(
@@ -1033,6 +1070,69 @@ bool DockAutohideController::advance_x11_animation()
     return false;
 }
 
+void DockAutohideController::
+    hide_immediately_for_x11_startup()
+{
+    cancel_animation();
+    m_pending_x11_reveal_animation = false;
+    m_window.hide_tooltip_immediately();
+    m_hidden = true;
+
+    m_reveal_window.show();
+    set_surface_input_passthrough(true);
+
+    int current_x = 0;
+    int current_y = 0;
+    m_window.get_position(current_x, current_y);
+    m_shown_x = current_x;
+    m_shown_y = current_y;
+    m_has_shown_position = true;
+
+    m_window.set_x11_horizontal_scale(
+        1.0,
+        m_placement.anchor_right);
+    m_window.set_x11_vertical_offset(0.0);
+
+    if (can_animate_x11())
+    {
+        const bool collapse_horizontally =
+            m_placement.is_vertical() &&
+            should_collapse_x11_horizontally();
+        const bool clip_top =
+            !collapse_horizontally &&
+            m_placement.is_horizontal() &&
+            m_placement.anchor_top;
+
+        if (collapse_horizontally)
+        {
+            m_window.set_x11_horizontal_scale(
+                0.0,
+                m_placement.anchor_right);
+        }
+        else if (clip_top)
+        {
+            m_window.set_x11_vertical_offset(
+                -m_window.get_allocated_height());
+        }
+        else
+        {
+            const auto hidden =
+                x11_hidden_screen_position(
+                    m_placement,
+                    m_shown_x,
+                    m_shown_y,
+                    m_window.get_allocated_width(),
+                    m_window.get_allocated_height());
+            m_window.move(hidden.x, hidden.y);
+        }
+    }
+
+    // Keep the already-mapped surface transparent while the X11 window
+    // manager applies the hidden transform. The edge trigger is responsible
+    // for the first reveal.
+    m_window.set_opacity(0.0);
+}
+
 void DockAutohideController::reveal_immediately()
 {
     cancel_hide();
@@ -1219,7 +1319,8 @@ bool DockAutohideController::can_hide() const
     // GNOME's ordinary Wayland surface has no independent edge window. If
     // the Shell integration is disconnected, hiding would leave no component
     // capable of revealing the dock again.
-    return hiding_requested &&
+    return !m_initial_x11_startup_pending &&
+           hiding_requested &&
            (!has_shell_reveal_trigger() ||
             uses_shell_reveal_trigger());
 }

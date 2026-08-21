@@ -58,6 +58,7 @@ docklight6_SOURCES = \
     windowing/window_backend.cpp \
     windowing/window_registry.h \
     windowing/window_registry.cpp \
+    integrations/desktop_session_identity.h \
     integrations/window_system_controller.h \
     integrations/window_system_controller.cpp \
     integrations/gnome/gnome_wayland_window_backend.h \
@@ -342,6 +343,7 @@ kwin_integration_service_test_LDADD = \
 
 x11_backend_selection_test_SOURCES = \
     tests/x11_backend_selection_test.cpp \
+    integrations/desktop_session_identity.h \
     integrations/x11/x11_backend_selection.h \
     integrations/x11/x11_backend_selection.cpp
 

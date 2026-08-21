@@ -45,6 +45,8 @@ public:
     ~DockAutohideController();
 
     void initialize();
+    void begin_initial_x11_startup();
+    void complete_initial_x11_startup();
     void set_mode(DockAutohide mode);
     void set_effect(DockAutohideEffect effect);
     void set_hide_delay(int delay_ms);
@@ -83,6 +85,7 @@ private:
         bool hiding,
         bool start_at_hidden_edge = false);
     bool advance_x11_animation();
+    void hide_immediately_for_x11_startup();
     void reveal_immediately();
     void hide_now(bool refresh_pointer = true);
     void reveal();
@@ -146,6 +149,7 @@ private:
     bool m_backend_pointer_inside = false;
     bool m_suppress_next_map_hide = false;
     bool m_pending_x11_reveal_animation = false;
+    bool m_initial_x11_startup_pending = false;
     ShellDockState m_shell_state = ShellDockState::visible;
 
     sigc::signal<void> m_signal_fully_revealed;

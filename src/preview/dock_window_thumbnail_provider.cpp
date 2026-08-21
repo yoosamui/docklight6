@@ -19,6 +19,7 @@
 // ------------------------------------------------------------
 
 #include "dock_window_thumbnail_provider.h"
+#include "integrations/desktop_session_identity.h"
 
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
@@ -31,7 +32,6 @@
 #include <X11/extensions/Xrender.h>
 
 #include <algorithm>
-#include <cctype>
 #include <cerrno>
 #include <cmath>
 #include <cstdint>
@@ -1136,22 +1136,23 @@ DockWindowThumbnailProvider::
         display && GDK_IS_X11_DISPLAY(display);
 
     const char *desktop = std::getenv("XDG_CURRENT_DESKTOP");
-    std::string normalized_desktop = desktop ? desktop : "";
-    std::transform(
-        normalized_desktop.begin(),
-        normalized_desktop.end(),
-        normalized_desktop.begin(),
-        [](unsigned char character)
-        {
-            return static_cast<char>(std::tolower(character));
-        });
+    if (!desktop || !*desktop)
+        desktop = std::getenv("XDG_SESSION_DESKTOP");
+    if (!desktop || !*desktop)
+        desktop = std::getenv("DESKTOP_SESSION");
+
+    const auto normalized_desktop =
+        DesktopSessionIdentity::normalized(
+            desktop ? desktop : "");
 
     // The GNOME Shell registry publishes Mutter stable-sequence ids on both
     // Wayland and X11. They can be numeric but are not X11 window handles.
     // Route them through the same Shell compositor capture service that owns
     // the registry so static and live previews address the correct actors.
     m_state->gnome_shell_capture =
-        normalized_desktop.find("gnome") != std::string::npos;
+        DesktopSessionIdentity::
+            identifies_gnome_shell(
+                normalized_desktop);
 
     // ScreenShot2 is a KWin-only API. On other Wayland compositors, avoid
     // connecting unless their own capture transport is active.

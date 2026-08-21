@@ -64,6 +64,9 @@ const thumbnailProviderPath = path.resolve(
 const windowSystemControllerPath = path.resolve(
     __dirname,
     "../integrations/window_system_controller.cpp");
+const desktopSessionIdentityPath = path.resolve(
+    __dirname,
+    "../integrations/desktop_session_identity.h");
 
 // gnome-extensions pack only bundles its conventional entry points unless
 // imported modules are explicitly listed as extra sources. Keep the package
@@ -111,6 +114,8 @@ const thumbnailProviderSource = fs.readFileSync(
     thumbnailProviderPath, "utf8");
 const windowSystemControllerSource = fs.readFileSync(
     windowSystemControllerPath, "utf8");
+const desktopSessionIdentitySource = fs.readFileSync(
+    desktopSessionIdentityPath, "utf8");
 
 assert.match(
     extensionSource,
@@ -283,8 +288,8 @@ assert.match(
     "GNOME live-preview teardown must be idempotent");
 assert.match(
     thumbnailProviderSource,
-    /gnome_shell_capture\s*=\s*normalized_desktop\.find\("gnome"\) != std::string::npos/,
-    "GNOME X11 stable window ids must use Shell compositor thumbnail capture");
+    /gnome_shell_capture\s*=\s*DesktopSessionIdentity::[\s\S]*?identifies_gnome_shell\([\s\S]*?normalized_desktop\)/,
+    "thumbnail capture must use the shared GNOME Shell identity instead of treating Flashback as Shell");
 assert.match(
     thumbnailProviderSource,
     /set_gnome_preview_color[\s\S]*?SetPreviewColor[\s\S]*?\(dddd\)/,
@@ -463,8 +468,32 @@ assert.match(
     "preview input forwarding must consume its centralized reset timeout");
 assert.match(
     windowSystemControllerSource,
-    /detected_window_manager[\s\S]*?identifies_gnome\(desktop\)[\s\S]*?return "Mutter";[\s\S]*?wnck_handle_new/,
+    /detected_window_manager[\s\S]*?identifies_gnome_shell\(desktop\)[\s\S]*?return "Mutter";[\s\S]*?wnck_handle_new/,
     "known GNOME sessions must not initialize libwnck only to identify Mutter");
+assert.match(
+    desktopSessionIdentitySource,
+    /identifies_gnome_flashback[\s\S]*?gnome-flashback[\s\S]*?identifies_gnome_shell[\s\S]*?!identifies_gnome_flashback/,
+    "GNOME Flashback must not be identified as GNOME Shell");
+assert.match(
+    windowSystemControllerSource,
+    /const bool gnome_shell\s*=\s*DesktopSessionIdentity::[\s\S]*?identifies_gnome_shell\(desktop\)/,
+    "backend startup must distinguish GNOME Shell from GNOME Flashback");
+assert.match(
+    dockWindowControllerSource,
+    /m_initial_x11_workarea_pending\s*=\s*true;[\s\S]*?begin_initial_x11_startup\(\)[\s\S]*?finish_initial_x11_placement[\s\S]*?complete_initial_x11_startup\(\)/,
+    "native X11 startup must remain guarded until final placement chooses its first visibility state");
+assert.doesNotMatch(
+    dockWindowControllerSource,
+    /finish_initial_x11_placement\(\)[\s\S]*?set_opacity\(1\.0\)[\s\S]*?void DockWindowController::apply_configuration/,
+    "final X11 placement must not expose the dock before autohide settles");
+assert.match(
+    autohideControllerSource,
+    /complete_initial_x11_startup[\s\S]*?pointer_is_inside\(\)[\s\S]*?hide_immediately_for_x11_startup[\s\S]*?reveal_immediately/,
+    "the first stable X11 frame must honor autohide and the live pointer without an intermediate reveal");
+assert.match(
+    autohideControllerSource,
+    /reset_x11_visual_transform[\s\S]*?m_initial_x11_startup_pending[\s\S]*?0\.0[\s\S]*?1\.0/,
+    "layout resets must preserve the transparent X11 startup guard");
 assert.match(
     tooltipManagerSource,
     /requested_item == m_hovered_item/,

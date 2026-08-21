@@ -23,6 +23,7 @@
 #include "window_system_controller.h"
 
 #include "docklight_log.h"
+#include "integrations/desktop_session_identity.h"
 #include "integrations/gnome/gnome_wayland_window_backend.h"
 #include "integrations/kwin/kwin_integration_service.h"
 #include "integrations/kwin/kwin_script_manager.h"
@@ -95,13 +96,6 @@ bool identifies_kde(
                std::string::npos;
 }
 
-bool identifies_gnome(
-    const std::string &desktop)
-{
-    return lowercase(desktop).find("gnome") !=
-           std::string::npos;
-}
-
 std::string detected_desktop()
 {
     auto desktop = environment_value(
@@ -132,11 +126,13 @@ std::string detected_window_manager(
             environment_value(
                 "XDG_SESSION_TYPE"));
 
-    // GNOME's window manager is Mutter. Avoid initializing libwnck merely to
-    // read GNOME Shell's EWMH display name: libwnck subscribes the shared X11
-    // connection to property changes from every client window, which keeps an
-    // otherwise idle native-X11 dock awake.
-    if (identifies_gnome(desktop))
+    // GNOME Shell's window manager is Mutter. Avoid initializing libwnck
+    // merely to read GNOME Shell's EWMH display name: libwnck subscribes the
+    // shared X11 connection to property changes from every client window,
+    // which keeps an otherwise idle native-X11 dock awake. GNOME Flashback is
+    // not GNOME Shell and must still be queried because it can run Metacity.
+    if (DesktopSessionIdentity::
+            identifies_gnome_shell(desktop))
         return "Mutter";
 
     if (session_type != "wayland")
@@ -322,7 +318,8 @@ void WindowSystemController::start()
     const bool kde_wayland =
         is_kde_wayland_session();
     const bool gnome_shell =
-        identifies_gnome(desktop);
+        DesktopSessionIdentity::
+            identifies_gnome_shell(desktop);
     const bool uses_shell_protocol =
         kde_wayland || gnome_shell;
 
@@ -581,10 +578,12 @@ bool WindowSystemController::
              .empty();
 
     const bool gnome =
-        identifies_gnome(
+        DesktopSessionIdentity::
+            identifies_gnome_shell(
             environment_value(
                 "XDG_CURRENT_DESKTOP")) ||
-        identifies_gnome(
+        DesktopSessionIdentity::
+            identifies_gnome_shell(
             environment_value(
                 "XDG_SESSION_DESKTOP"));
 

@@ -6,6 +6,7 @@
 // ------------------------------------------------------------
 
 #include "integrations/x11/x11_backend_selection.h"
+#include "integrations/desktop_session_identity.h"
 
 #include <iostream>
 #include <string>
@@ -69,6 +70,15 @@ int main()
 {
     bool passed = true;
 
+    passed &= DesktopSessionIdentity::
+        identifies_gnome_shell("GNOME");
+    passed &= !DesktopSessionIdentity::
+        identifies_gnome_shell(
+            "GNOME-Flashback:GNOME:");
+    passed &= DesktopSessionIdentity::
+        identifies_gnome_flashback(
+            "gnome-flashback-metacity");
+
     passed &= expect_backend(
         "KWin",
         "KDE",
@@ -102,6 +112,10 @@ int main()
         "",
         X11BackendKind::marco);
     passed &= expect_backend(
+        "Metacity",
+        "GNOME-Flashback:GNOME:",
+        X11BackendKind::marco);
+    passed &= expect_backend(
         "Openbox",
         "XFCE",
         X11BackendKind::openbox);
@@ -123,6 +137,10 @@ int main()
     passed &= expect_backend(
         "",
         "MATE",
+        X11BackendKind::marco);
+    passed &= expect_backend(
+        "",
+        "GNOME-Flashback:GNOME:",
         X11BackendKind::marco);
     passed &= expect_backend(
         "",

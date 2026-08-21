@@ -1,4 +1,5 @@
 #include "x11_backend_selection.h"
+#include "integrations/desktop_session_identity.h"
 
 #include <algorithm>
 #include <cctype>
@@ -63,6 +64,13 @@ X11BackendKind select_x11_backend_kind(
     // name yet. An explicit but unknown manager always uses the generic path.
     if (!manager.empty())
         return X11BackendKind::ewmh_fallback;
+
+    if (DesktopSessionIdentity::
+            identifies_gnome_flashback(
+                desktop_name))
+    {
+        return X11BackendKind::marco;
+    }
 
     const auto desktop =
         lowercase(desktop_name);
