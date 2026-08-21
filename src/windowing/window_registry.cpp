@@ -23,10 +23,13 @@
 
 #include <giomm/desktopappinfo.h>
 #include <glib.h>
+#include <glibmm/miscutils.h>
 
 #include <algorithm>
 #include <cctype>
 #include <iterator>
+#include <memory>
+#include <string_view>
 
 namespace
 {
@@ -1297,44 +1300,38 @@ std::string WindowRegistry::executable_name(
         std::to_string(process_id) +
         "/exe";
 
-    GError *error = nullptr;
-    auto executable_path =
+    using GCharPtr =
+        std::unique_ptr<
+            gchar,
+            decltype(&g_free)>;
+
+    GCharPtr executable_path{
         g_file_read_link(
             executable_link.c_str(),
-            &error);
+            nullptr),
+        &g_free};
 
     if (!executable_path)
-    {
-        g_clear_error(&error);
         return {};
-    }
 
-    auto process_name =
-        g_path_get_basename(
-            executable_path);
+    auto result =
+        Glib::path_get_basename(
+            executable_path.get());
 
-    std::string result =
-        process_name
-            ? process_name
-            : "";
-
-    g_free(process_name);
-    g_free(executable_path);
-
-    constexpr char deleted_suffix[] =
-        " (deleted)";
+    constexpr std::string_view
+        deleted_suffix = " (deleted)";
 
     if (result.size() >=
-            sizeof(deleted_suffix) - 1 &&
+            deleted_suffix.size() &&
         result.compare(
             result.size() -
-                (sizeof(deleted_suffix) - 1),
-            sizeof(deleted_suffix) - 1,
+                deleted_suffix.size(),
+            deleted_suffix.size(),
             deleted_suffix) == 0)
     {
         result.erase(
             result.size() -
-            (sizeof(deleted_suffix) - 1));
+            deleted_suffix.size());
     }
 
     return result;
