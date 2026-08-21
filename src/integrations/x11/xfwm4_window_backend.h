@@ -12,4 +12,10 @@ class Xfwm4WindowBackend : public EwmhWindowBackend
 {
 public:
     Xfwm4WindowBackend();
+
+protected:
+    std::optional<bool>
+    set_window_minimized_override(
+        WnckWindow *window,
+        bool minimized) override;
 };
