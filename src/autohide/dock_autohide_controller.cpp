@@ -434,8 +434,26 @@ void DockAutohideController::finish_shell_animation(
 
     m_shell_state = ShellDockState::visible;
     set_surface_input_passthrough(false);
+    m_signal_fully_revealed.emit();
     if (!pointer_inside())
         schedule_hide(false);
+}
+
+bool DockAutohideController::is_fully_revealed() const
+{
+    if (m_hidden || m_pending_x11_reveal_animation)
+        return false;
+
+    if (uses_shell_reveal_trigger())
+        return m_shell_state == ShellDockState::visible;
+
+    return !m_animation_timer.connected();
+}
+
+sigc::signal<void> &
+DockAutohideController::signal_fully_revealed()
+{
+    return m_signal_fully_revealed;
 }
 
 void DockAutohideController::pointer_entered()
@@ -660,6 +678,7 @@ bool DockAutohideController::advance_fade_animation()
     {
         m_window.finish_surface_autohide_fade(false);
         set_surface_input_passthrough(false);
+        m_signal_fully_revealed.emit();
     }
 
     return false;
@@ -755,6 +774,8 @@ void DockAutohideController::animate_x11(
     {
         if (hiding)
             m_window.hide();
+        else
+            m_signal_fully_revealed.emit();
         return;
     }
 
@@ -1006,6 +1027,7 @@ bool DockAutohideController::advance_x11_animation()
     else
     {
         reset_x11_visual_transform();
+        m_signal_fully_revealed.emit();
     }
 
     return false;
@@ -1049,6 +1071,7 @@ void DockAutohideController::reveal_immediately()
     }
 
     m_reveal_window.hide();
+    m_signal_fully_revealed.emit();
 }
 
 void DockAutohideController::hide_now(

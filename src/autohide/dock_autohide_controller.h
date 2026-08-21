@@ -14,6 +14,7 @@
 // - Apply configured autohide modes and monitor placement.
 // - Coordinate dock visibility with pointer and overlap state.
 // - Manage temporary visibility inhibition.
+// - Publish reveal completion for position-dependent overlays.
 //
 // Dependencies and ownership:
 // The controller borrows DockWindow and owns its reveal window, timers, and
@@ -31,6 +32,7 @@
 
 #include <gdkmm/monitor.h>
 #include <sigc++/connection.h>
+#include <sigc++/signal.h>
 
 class DockWindow;
 
@@ -59,6 +61,9 @@ public:
     void request_reveal();
     void set_backend_pointer_inside(bool inside);
     void finish_shell_animation(bool hidden);
+
+    bool is_fully_revealed() const;
+    sigc::signal<void> &signal_fully_revealed();
 
 private:
     void pointer_entered();
@@ -142,4 +147,6 @@ private:
     bool m_suppress_next_map_hide = false;
     bool m_pending_x11_reveal_animation = false;
     ShellDockState m_shell_state = ShellDockState::visible;
+
+    sigc::signal<void> m_signal_fully_revealed;
 };

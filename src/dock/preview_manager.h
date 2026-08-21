@@ -24,6 +24,8 @@ class TooltipManager;
 
 // Owns the preview surface, media monitor, delayed-show intent, window
 // actions, and the autohide inhibition associated with a visible preview.
+// A delayed preview remains pending until the dock is fully revealed so its
+// position is calculated from stable surface coordinates.
 class PreviewManager
 {
 public:
@@ -66,6 +68,7 @@ public:
     sigc::signal<void> &signal_pointer_left();
 
 private:
+    void show_pending_if_ready();
     void show_now(
         DockItem &item,
         const WindowId &excluded_window_id = {});
@@ -91,12 +94,14 @@ private:
     std::string m_pending_desktop_id;
     std::string m_preview_desktop_id;
     sigc::connection m_show_timer;
+    sigc::connection m_fully_revealed;
     sigc::connection m_media_playback_changed;
     sigc::connection m_input_forwarding_reset;
     bool m_inhibits_autohide = false;
     bool m_pointer_inside = false;
     bool m_shell_pointer_inside = false;
     bool m_input_forwarding = false;
+    bool m_show_delay_elapsed = false;
 
     sigc::signal<void> m_signal_pointer_entered;
     sigc::signal<void> m_signal_pointer_left;

@@ -52,6 +52,12 @@ PreviewManager::PreviewManager(
     m_preview_window->signal_close_window().connect(
         sigc::mem_fun(*this, &PreviewManager::close_window));
 
+    m_fully_revealed =
+        m_autohide.signal_fully_revealed().connect(
+            sigc::mem_fun(
+                *this,
+                &PreviewManager::show_pending_if_ready));
+
     m_media_playback_changed =
         m_media_monitor->signal_changed().connect(
             [this]()
@@ -66,6 +72,7 @@ PreviewManager::PreviewManager(
 
 PreviewManager::~PreviewManager()
 {
+    m_fully_revealed.disconnect();
     hide();
     cancel_show_timer();
     m_media_playback_changed.disconnect();
@@ -139,6 +146,7 @@ void PreviewManager::schedule_show(DockItem &item, int show_delay_ms)
         m_preview_desktop_id == item.desktop_id())
     {
         m_pending_desktop_id.clear();
+        m_show_delay_elapsed = false;
         return;
     }
 
@@ -157,24 +165,42 @@ void PreviewManager::schedule_show(DockItem &item, int show_delay_ms)
     }
 
     m_pending_desktop_id = item.desktop_id();
+    m_show_delay_elapsed = false;
     m_show_timer = Glib::signal_timeout().connect(
         [this]()
         {
             m_tooltips.cancel_show_timer();
-            const auto desktop_id = m_pending_desktop_id;
-            m_pending_desktop_id.clear();
-
-            for (auto *item : m_window.dock_items())
-            {
-                if (item && item->desktop_id() == desktop_id)
-                {
-                    show_now(*item);
-                    break;
-                }
-            }
+            m_show_delay_elapsed = true;
+            show_pending_if_ready();
             return false;
         },
         show_delay_ms);
+}
+
+void PreviewManager::show_pending_if_ready()
+{
+    // On native X11 the dock moves in root coordinates during its reveal.
+    // Keep the hover request alive, but do not calculate the preview position
+    // from an intermediate animation frame.
+    if (!m_show_delay_elapsed ||
+        m_pending_desktop_id.empty() ||
+        !m_autohide.is_fully_revealed())
+    {
+        return;
+    }
+
+    const auto desktop_id = m_pending_desktop_id;
+    m_pending_desktop_id.clear();
+    m_show_delay_elapsed = false;
+
+    for (auto *item : m_window.dock_items())
+    {
+        if (item && item->desktop_id() == desktop_id)
+        {
+            show_now(*item);
+            break;
+        }
+    }
 }
 
 void PreviewManager::show_now(
@@ -329,6 +355,7 @@ void PreviewManager::cancel_show_timer()
     if (m_show_timer.connected())
         m_show_timer.disconnect();
     m_pending_desktop_id.clear();
+    m_show_delay_elapsed = false;
 }
 
 void PreviewManager::set_shell_pointer_inside(bool inside)
