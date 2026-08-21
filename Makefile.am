@@ -6,7 +6,6 @@ EXTRA_DIST = \
     build.sh \
     createpo.sh \
     install_dependencies.sh \
-    run_xwayland_prototype.sh \
     setup_backend.sh \
     setup_presentation.sh \
     validate_presentation.sh \
@@ -14,7 +13,6 @@ EXTRA_DIST = \
     tests/setup_backend_test.sh \
     tests/setup_presentation_test.sh \
     tests/validate_presentation_test.sh \
-    tests/xwayland_prototype_test.sh \
     gnome/README.md \
     gnome/install-window-integration.sh \
     gnome/docklight-window-integration@docklight6/metadata.json \
@@ -43,8 +41,7 @@ TESTS = \
     tests/build_script_test.sh \
     tests/setup_backend_test.sh \
     tests/setup_presentation_test.sh \
-    tests/validate_presentation_test.sh \
-    tests/xwayland_prototype_test.sh
+    tests/validate_presentation_test.sh
 
 dist_pkgdata_DATA = \
     plasma/geometry-bridge/ensure-geometry-bridge.js

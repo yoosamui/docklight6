@@ -347,22 +347,6 @@ The per-user choice is stored as `mode=auto`, `mode=native`, or
 `${XDG_CONFIG_HOME:-$HOME/.config}/docklight6/presentation.conf`. Restart
 DockLight after changing it.
 
-Test XWayland for one run without changing the saved setting:
-
-```sh
-./run_xwayland_prototype.sh
-```
-
-The launcher selects a binary in this order:
-
-1. `DOCKLIGHT_PROTOTYPE_BINARY`, if set;
-2. `build-debug/src/docklight6`;
-3. `build/src/docklight6`;
-4. `/usr/local/bin/docklight6`.
-
-Close a running DockLight instance first. Test automation can bypass the guard
-with `DOCKLIGHT_PROTOTYPE_SKIP_RUNNING_CHECK=1`.
-
 Validate a running GNOME/XWayland instance and its EWMH properties:
 
 ```sh
@@ -430,7 +414,6 @@ make -C build-debug clean
 | `install_dependencies.sh` | Install Debian/Ubuntu dependencies | System packages |
 | `setup_backend.sh` | Install or inspect desktop integration | Per-user |
 | `setup_presentation.sh` | Save automatic/native/XWayland presentation | Per-user config |
-| `run_xwayland_prototype.sh` | Run one XWayland test instance | Process only |
 | `validate_presentation.sh` | Diagnose XWayland presentation | Read-only |
 | `createpo.sh` | Create missing translation catalogs | Source files |
 | `po/compile_all.sh` | Compile catalogs below `po/` | Generated files |

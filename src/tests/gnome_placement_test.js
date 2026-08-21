@@ -308,6 +308,10 @@ assert.match(
     "all GNOME live-preview sessions must skip eager thumbnail capture");
 assert.match(
     previewWindowSource,
+    /const auto previously_active\s*=\s*m_thumbnail_cache_active;[\s\S]*?for \(const auto &window_id\s*:\s*m_thumbnail_cache_active\)[\s\S]*?previously_active\.count\(window_id\) == 0[\s\S]*?request_active_cache_refresh\(window_id\)/,
+    "caption-only updates must not recapture an unchanged active window while previews are closed");
+assert.match(
+    previewWindowSource,
     /GNOME_FALLBACK_CAPTURE_DELAY_MS[\s\S]*?show_gnome_live_previews[\s\S]*?m_gnome_thumbnail_fallback[\s\S]*?generation != m_generation[\s\S]*?!get_visible\(\)[\s\S]*?!entry\.second\.has_thumbnail[\s\S]*?request_thumbnail\([\s\S]*?GNOME_FALLBACK_CAPTURE_DELAY_MS/,
     "a stable GNOME preview must cache a delayed fallback without capturing during transient hover");
 assert.match(

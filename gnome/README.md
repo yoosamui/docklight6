@@ -1,21 +1,8 @@
 # GNOME Wayland integration
 
-## XWayland presentation prototype
+## XWayland presentation
 
-Docklight can be launched experimentally as an XWayland dock surface while
-retaining the GNOME Wayland extension for window discovery and actions:
-
-```bash
-./run_xwayland_prototype.sh
-```
-
-Close the normally running Docklight instance first. The launcher passes the
-explicit `--presentation=xwayland` switch, which selects `GDK_BACKEND=x11`
-only for that process. It does not change the desktop entry, configuration, or
-backend installation.
-
-After validating the prototype, persist or reverse the presentation choice
-without changing the GNOME integration:
+Configure the presentation choice without changing the GNOME integration:
 
 ```bash
 ./setup_presentation.sh auto
@@ -24,8 +11,9 @@ without changing the GNOME integration:
 ./setup_presentation.sh native
 ```
 
-`auto` is recommended: it selects XWayland in a GNOME Wayland session when
-available, while retaining native presentation on Plasma Wayland and X11.
+`auto` is recommended and is the default: it selects XWayland in a GNOME
+Wayland session when available, while retaining native presentation on Plasma
+Wayland and X11.
 
 Validate a running GNOME/XWayland instance and its EWMH dock contract with:
 

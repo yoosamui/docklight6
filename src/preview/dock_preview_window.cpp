@@ -1630,13 +1630,17 @@ void DockPreviewWindow::prime_thumbnail_cache(
             }
         }
 
-        // Capture a newly active mapped window once. Refreshing continuously
-        // while the preview is closed keeps XComposite busy at idle; visible
-        // previews already have their own demand-driven live refresh path.
+        // Capture a newly active mapped window once. Window metadata such as
+        // a browser caption can change repeatedly while the same window stays
+        // active; treating every registry update as a new activation would
+        // request a full compositor screenshot each time while the preview is
+        // closed. Visible previews already have their own demand-driven live
+        // refresh path.
         for (const auto &window_id :
              m_thumbnail_cache_active)
         {
-            request_active_cache_refresh(window_id);
+            if (previously_active.count(window_id) == 0)
+                request_active_cache_refresh(window_id);
         }
 
         for (const auto &entry : entries)
