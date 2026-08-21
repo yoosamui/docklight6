@@ -1085,6 +1085,15 @@ void DockAutohideController::hide_now(
     }
 
     m_reveal_window.show();
+
+    // Native X11 keeps the dock mapped while its hide animation runs. Stop
+    // routing input to it before the first frame moves or clips the surface;
+    // otherwise XFWM can emit child crossing events during the transition and
+    // queue a tooltip or preview after the overlays above were cleared. The
+    // separate reveal window is already mapped and remains the edge trigger.
+    if (m_window.surface_is_native_x11())
+        set_surface_input_passthrough(true);
+
     animate_effect(true);
 }
 

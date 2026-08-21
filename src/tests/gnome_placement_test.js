@@ -682,6 +682,10 @@ assert.match(
     "a hidden native X11 dock must remain mapped and input-pass-through so reveal does not trigger a compositor map effect");
 assert.match(
     autohideControllerSource,
+    /hide_now\([\s\S]*?m_window\.hide_tooltip_immediately\(\);[\s\S]*?m_reveal_window\.show\(\);[\s\S]*?surface_is_native_x11\(\)[\s\S]*?set_surface_input_passthrough\(true\);[\s\S]*?animate_effect\(true\);/,
+    "native X11 input must be disabled before hiding so XFWM crossing events cannot reopen overlays during the transition");
+assert.match(
+    autohideControllerSource,
     /should_collapse_x11_horizontally\(\)[\s\S]*?horizontal_hide_corridor_intersects_monitor\([\s\S]*?m_animation_collapses_horizontally[\s\S]*?set_x11_horizontal_scale\([\s\S]*?0\.0,[\s\S]*?m_animation_target_scale/,
     "a native X11 vertical dock facing another monitor must collapse at its fixed edge");
 assert.match(
