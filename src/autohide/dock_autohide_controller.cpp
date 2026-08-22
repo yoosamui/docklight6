@@ -322,6 +322,38 @@ void DockAutohideController::set_placement(
     m_has_placement = true;
 
     const bool was_hidden = m_hidden;
+    const bool preserve_hidden_surface =
+        was_hidden &&
+        !m_window.surface_is_native_x11();
+
+    if (preserve_hidden_surface)
+    {
+        // Launcher membership changes alter the dock's natural size. Plasma
+        // applies that new layer-surface placement while the GTK window is
+        // unmapped, and GNOME moves its compositor-owned hidden actor. Do not
+        // pass through the visible state merely to update the reveal strip:
+        // doing so exposes the dock briefly whenever an application opens or
+        // closes while autohidden.
+        cancel_hide();
+        cancel_animation();
+        m_pending_x11_reveal_animation = false;
+        m_has_shown_position = false;
+        m_reveal_window.apply_placement(placement);
+
+        if (uses_shell_reveal_trigger())
+            return;
+
+        // A placement update can arrive while a local fade is still running.
+        // Finish it invisibly, retain the normal unmapped Wayland hidden
+        // state, then restore full opacity for the next explicit reveal.
+        if (m_effect == DockAutohideEffect::fade)
+            set_surface_input_passthrough(true);
+        m_window.set_surface_autohide_fade_opacity(0.0);
+        m_window.finish_surface_autohide_fade(true);
+        m_window.set_surface_autohide_fade_opacity(1.0);
+        m_reveal_window.show();
+        return;
+    }
 
     if (was_hidden)
         reveal_immediately();

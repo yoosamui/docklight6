@@ -731,6 +731,10 @@ assert.match(
     "changing dock placement must clear an interrupted X11 transform");
 assert.match(
     autohideControllerSource,
+    /set_placement\([\s\S]*?preserve_hidden_surface[\s\S]*?was_hidden &&[\s\S]*?!m_window\.surface_is_native_x11\(\)[\s\S]*?if \(preserve_hidden_surface\)[\s\S]*?m_reveal_window\.apply_placement\(placement\)[\s\S]*?uses_shell_reveal_trigger\(\)[\s\S]*?finish_surface_autohide_fade\(true\)[\s\S]*?m_reveal_window\.show\(\);[\s\S]*?return;[\s\S]*?if \(was_hidden\)[\s\S]*?reveal_immediately\(\)/,
+    "Wayland placement changes must preserve autohide instead of exposing the dock during launcher updates");
+assert.match(
+    autohideControllerSource,
     /const double eased = m_animating_to_hidden[\s\S]*?progress \* progress \* progress[\s\S]*?1\.0 - std::pow\(1\.0 - progress, 3\.0\)/,
     "every native X11 edge must use the standard hide and reveal curves");
 assert.match(
