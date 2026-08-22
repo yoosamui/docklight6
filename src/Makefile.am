@@ -5,6 +5,7 @@ check_PROGRAMS = \
     dock_autohide_layout_test \
     dock_configuration_manager_test \
     dock_icon_renderer_test \
+    dock_process_application_test \
     gnome_wayland_window_backend_test \
     launcher_manager_test \
     presentation_selector_test \
@@ -94,6 +95,8 @@ docklight6_SOURCES = \
     integrations/kwin/kwin_window_backend.h \
     integrations/kwin/kwin_window_backend.cpp \
     application/dock_runtime_info.h \
+    application/dock_process_application.h \
+    application/dock_process_application.cpp \
     application/dock_application_controller.h \
     application/dock_application_controller.cpp \
     config/dock_configuration.h \
@@ -238,6 +241,17 @@ dock_icon_renderer_test_CPPFLAGS = \
     $(GTKMM_CFLAGS)
 
 dock_icon_renderer_test_LDADD = \
+    $(GTKMM_LIBS)
+
+dock_process_application_test_SOURCES = \
+    tests/dock_process_application_test.cpp \
+    application/dock_process_application.h \
+    application/dock_process_application.cpp
+
+dock_process_application_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+dock_process_application_test_LDADD = \
     $(GTKMM_LIBS)
 
 launcher_manager_test_SOURCES = \

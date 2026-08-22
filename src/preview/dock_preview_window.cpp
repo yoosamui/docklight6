@@ -1612,6 +1612,23 @@ void DockPreviewWindow::prime_thumbnail_cache(
             }
         }
 
+        for (auto attempted =
+                 m_cold_kwin_thumbnail_attempted.begin();
+             attempted !=
+                 m_cold_kwin_thumbnail_attempted.end();)
+        {
+            if (m_known_window_ids.count(*attempted) == 0)
+            {
+                attempted =
+                    m_cold_kwin_thumbnail_attempted.erase(
+                        attempted);
+            }
+            else
+            {
+                ++attempted;
+            }
+        }
+
         for (auto retry =
                  m_thumbnail_cache_retries.begin();
              retry != m_thumbnail_cache_retries.end();)
@@ -1664,9 +1681,110 @@ void DockPreviewWindow::prime_thumbnail_cache(
                 X11_STATIC_RETRY_COUNT);
         }
 
+        // A KWin Wayland window can still have an offscreen WindowItem when
+        // normal scene painting is disabled by minimization or a different
+        // virtual desktop. When DockLight starts in that state there is no
+        // last-known mapped frame to reuse, so make one guarded ScreenShot2
+        // request. Do not add the window to normal cache eligibility: that
+        // would also enable retries and live refresh during minimize effects.
+        if (uses_settled_thumbnail_capture())
+        {
+            for (const auto &entry : entries)
+            {
+                if (entry.id.empty() ||
+                    (!entry.minimized &&
+                     entry.on_current_desktop) ||
+                    m_thumbnail_cache.count(entry.id) != 0 ||
+                    m_thumbnail_cache_in_flight.count(
+                        entry.id) != 0 ||
+                    m_cold_kwin_thumbnail_attempted.count(
+                        entry.id) != 0)
+                {
+                    continue;
+                }
+
+                request_cold_kwin_thumbnail(entry.id);
+            }
+        }
+
         m_thumbnail_cache_refresh.disconnect();
 
     }
+}
+
+void DockPreviewWindow::request_cold_kwin_thumbnail(
+    const WindowId &window_id)
+{
+    if (window_id.empty() ||
+        !uses_settled_thumbnail_capture() ||
+        m_known_window_ids.count(window_id) == 0 ||
+        m_thumbnail_cache_eligible.count(window_id) != 0 ||
+        m_thumbnail_cache.count(window_id) != 0 ||
+        m_thumbnail_cache_in_flight.count(window_id) != 0 ||
+        !m_cold_kwin_thumbnail_attempted.insert(
+             window_id).second)
+    {
+        return;
+    }
+
+    m_thumbnail_cache_in_flight.insert(window_id);
+
+    m_thumbnail_provider.request(
+        window_id,
+        MAX_HEIGHT * 2,
+        MAX_HEIGHT,
+        [this](
+            const WindowId &completed_window_id,
+            const Glib::RefPtr<Gdk::Pixbuf> &thumbnail)
+        {
+            m_thumbnail_cache_in_flight.erase(
+                completed_window_id);
+
+            // If the window became mapped while ScreenShot2 was working,
+            // discard this result. The settled mapped-window path will take
+            // a fresh frame after the transition instead.
+            if (!thumbnail ||
+                m_known_window_ids.count(
+                    completed_window_id) == 0 ||
+                m_thumbnail_cache_eligible.count(
+                    completed_window_id) != 0 ||
+                m_thumbnail_cache.count(
+                    completed_window_id) != 0)
+            {
+                return;
+            }
+
+            m_thumbnail_cache[completed_window_id] =
+                thumbnail;
+            m_thumbnail_cache_dirty.insert(
+                completed_window_id);
+
+            if (m_thumbnail_cache_persisted.count(
+                    completed_window_id) == 0)
+            {
+                persist_thumbnail_cache(
+                    completed_window_id,
+                    thumbnail);
+            }
+
+            const auto target =
+                m_thumbnail_targets.find(
+                    completed_window_id);
+            if (target != m_thumbnail_targets.end() &&
+                !target->second.has_thumbnail)
+            {
+                target->second.image->set(
+                    scaled_to_fit(
+                        thumbnail,
+                        target->second.target_width,
+                        target->second.target_height));
+                target->second.image->queue_draw();
+                target->second.has_thumbnail = true;
+            }
+        },
+        1.0,
+        false,
+        false);
 }
 
 void DockPreviewWindow::request_cached_thumbnail(

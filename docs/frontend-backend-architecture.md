@@ -158,6 +158,7 @@ integration.
 | Area | Primary source |
 | --- | --- |
 | Process composition | `src/main.cpp` |
+| Process lifecycle, uniqueness, and shell identity | `src/application/dock_process_application.*` |
 | Main dock surface | `src/dock/dock_window.*` |
 | UI orchestration | `src/dock/dock_window_controller.*` |
 | Application action policy | `src/application/dock_application_controller.*` |

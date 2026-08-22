@@ -161,6 +161,8 @@ private:
         const WindowId &window_id,
         unsigned int retries_remaining,
         std::uint64_t settle_epoch = 0);
+    void request_cold_kwin_thumbnail(
+        const WindowId &window_id);
     void request_active_cache_refresh(
         const WindowId &window_id);
     void persist_thumbnail_cache(
@@ -229,6 +231,8 @@ private:
         m_thumbnail_cache_dirty;
     std::set<WindowId>
         m_thumbnail_cache_in_flight;
+    std::set<WindowId>
+        m_cold_kwin_thumbnail_attempted;
     std::set<WindowId>
         m_known_window_ids;
     std::set<WindowId>

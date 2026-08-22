@@ -37,14 +37,15 @@
 //
 // ------------------------------------------------------------
 
-#include "config/dock_configuration_manager.h"
+#include "application/dock_process_application.h"
 #include "application/dock_runtime_info.h"
-#include "monitors/dock_monitor_manager.h"
+#include "config/dock_configuration_manager.h"
 #include "dock/dock_window.h"
 #include "docklight_log.h"
 #include "integrations/window_system_controller.h"
-#include "presentation/presentation_selector.h"
+#include "monitors/dock_monitor_manager.h"
 #include "presentation/docklight_surface_identity.h"
+#include "presentation/presentation_selector.h"
 #include "config.h"
 
 #include <gtkmm.h>
@@ -155,10 +156,13 @@ int main(int argc, char *argv[])
         return 2;
     }
 
-    auto app = Gtk::Application::create(
+    // Initialize GTK without GtkApplication, whose registration creates a
+    // desktop-portal session proxy that can retain stale backend activation
+    // while a graphical session restarts. Docklight does not use the
+    // GtkApplication session API.
+    Gtk::Main gtk_runtime(
         argc,
-        argv,
-        "org.docklight6");
+        argv);
 
     // Ensure an existing configuration receives newly introduced settings
     // even when this invocation only lists monitors.
@@ -176,16 +180,23 @@ int main(int argc, char *argv[])
                    : 0;
     }
 
-    // Emit GApplication::startup before manually attaching the dock window.
-    // run(window) normally performs this registration, but that overload
-    // cannot be used because a monitor move temporarily hides the window.
+    // Keep process uniqueness and activation in the desktop-neutral
+    // GApplication layer.
+    auto app =
+        DockProcessApplication::create();
+
+    // Claim the standard application ID before constructing long-lived
+    // desktop integrations. A second invocation remains a remote
+    // GApplication activation and never creates a second dock.
     app->register_application();
 
     if (app->is_remote())
     {
         g_message(
             "DockLight is already running");
-        return app->run();
+        return app->run(
+            argc,
+            argv);
     }
 
     DocklightLog::startup(
@@ -276,6 +287,11 @@ int main(int argc, char *argv[])
         window_system.registry(),
         runtime_info);
 
+    DockProcessApplication::
+        bind_window_identity(
+            window,
+            app);
+
     // A second invocation is delivered to this primary process as an
     // application activation. Treat it as an explicit request to reveal the
     // existing dock instead of silently exiting while the dock is hidden.
@@ -320,11 +336,9 @@ int main(int argc, char *argv[])
             "false");
     }
 
-    // Gtk::Application::run(window) returns as soon as that window is hidden.
+    // The process hold deliberately outlives the window's mapped state.
     // gtk_layer_set_monitor() temporarily unmaps the layer surface while
-    // moving it, so using the convenience overload would terminate DockLight
-    // during every runtime monitor change.
-    app->add_window(window);
+    // moving it, which must not terminate Docklight's application loop.
     app->hold();
     window.show();
 
@@ -365,5 +379,7 @@ int main(int argc, char *argv[])
         compositor_warning->show_all();
     }
 
-    return app->run();
+    return app->run(
+        argc,
+        argv);
 }
