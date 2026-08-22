@@ -587,6 +587,10 @@ assert.match(
     "an X11 reveal strip must reapply its placement after its monitor geometry changes");
 assert.match(
     revealWindowSource,
+    /reveal_window_type\(\)[\s\S]*?GDK_IS_X11_DISPLAY\(display\)[\s\S]*?Gtk::WINDOW_POPUP[\s\S]*?Gtk::WINDOW_TOPLEVEL[\s\S]*?DockRevealWindow::DockRevealWindow\(\)[\s\S]*?Gtk::Window\(reveal_window_type\(\)\)/,
+    "the native X11 reveal strip must remain outside asynchronous window-manager placement");
+assert.match(
+    revealWindowSource,
     /DockRevealWindow::start_x11_edge_poll[\s\S]*?if \(!x11_reveal_surface_is_inset\(\)\)[\s\S]*?return;[\s\S]*?signal_timeout/,
     "an X11 reveal strip at the physical edge must use enter events without an idle poll");
 assert.match(
@@ -731,8 +735,12 @@ assert.match(
     "changing dock placement must clear an interrupted X11 transform");
 assert.match(
     autohideControllerSource,
-    /set_placement\([\s\S]*?preserve_hidden_surface[\s\S]*?was_hidden &&[\s\S]*?!m_window\.surface_is_native_x11\(\)[\s\S]*?if \(preserve_hidden_surface\)[\s\S]*?m_reveal_window\.apply_placement\(placement\)[\s\S]*?uses_shell_reveal_trigger\(\)[\s\S]*?finish_surface_autohide_fade\(true\)[\s\S]*?m_reveal_window\.show\(\);[\s\S]*?return;[\s\S]*?if \(was_hidden\)[\s\S]*?reveal_immediately\(\)/,
+    /set_placement\([\s\S]*?preserve_hidden_wayland_surface[\s\S]*?was_hidden &&[\s\S]*?!m_window\.surface_is_native_x11\(\)[\s\S]*?if \(preserve_hidden_wayland_surface\)[\s\S]*?m_reveal_window\.apply_placement\(placement\)[\s\S]*?uses_shell_reveal_trigger\(\)[\s\S]*?finish_surface_autohide_fade\(true\)[\s\S]*?m_reveal_window\.show\(\);[\s\S]*?return;[\s\S]*?if \(was_hidden\)[\s\S]*?reveal_immediately\(\)/,
     "Wayland placement changes must preserve autohide instead of exposing the dock during launcher updates");
+assert.match(
+    autohideControllerSource,
+    /set_placement\([\s\S]*?was_hidden &&[\s\S]*?surface_is_native_x11\(\)[\s\S]*?apply_hidden_x11_placement\([\s\S]*?shown_position\);[\s\S]*?m_reveal_window\.apply_placement\(placement\);[\s\S]*?m_reveal_window\.show\(\);[\s\S]*?return;[\s\S]*?apply_hidden_x11_placement\([\s\S]*?set_surface_input_passthrough\(true\);[\s\S]*?set_opacity\(0\.0\)[\s\S]*?m_shown_x = shown_position\.x;[\s\S]*?m_shown_y = shown_position\.y;/,
+    "native X11 placement changes must rebuild the hidden transform without exposing the dock");
 assert.match(
     autohideControllerSource,
     /const double eased = m_animating_to_hidden[\s\S]*?progress \* progress \* progress[\s\S]*?1\.0 - std::pow\(1\.0 - progress, 3\.0\)/,

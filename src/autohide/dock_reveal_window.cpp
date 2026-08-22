@@ -24,6 +24,7 @@
 #include <gtk-layer-shell.h>
 #include <gdk/gdk.h>
 #include <gdk/gdkwayland.h>
+#include <gdk/gdkx.h>
 #include <glibmm/main.h>
 
 #include <string>
@@ -33,9 +34,24 @@ namespace
 
 constexpr int X11_EDGE_POLL_INTERVAL_MS = 50;
 
+Gtk::WindowType reveal_window_type()
+{
+    auto *display = gdk_display_get_default();
+
+    // A managed two-pixel DOCK toplevel is subject to asynchronous Mutter
+    // placement and stacking.  The reveal strip has no desktop-management
+    // role of its own, so make it an override-redirect popup on native X11.
+    // This keeps its input window at the requested root coordinates and
+    // makes edge crossing delivery independent of window-manager policy.
+    return display && GDK_IS_X11_DISPLAY(display)
+        ? Gtk::WINDOW_POPUP
+        : Gtk::WINDOW_TOPLEVEL;
+}
+
 }
 
 DockRevealWindow::DockRevealWindow()
+    : Gtk::Window(reveal_window_type())
 {
     set_decorated(false);
     set_resizable(false);
@@ -90,13 +106,16 @@ DockRevealWindow::DockRevealWindow()
             GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
         gtk_layer_set_exclusive_zone(window, 0);
     }
-    else
+    else if (m_backend == SurfaceBackend::wayland_toplevel)
     {
         set_type_hint(Gdk::WINDOW_TYPE_HINT_DOCK);
         set_keep_above(true);
         stick();
         set_position(Gtk::WIN_POS_NONE);
+    }
 
+    if (m_backend != SurfaceBackend::layer_shell)
+    {
         auto screen = get_screen();
         if (screen)
         {

@@ -887,41 +887,42 @@ void DockWindowController::update_dock_layout()
         output_geometry,
         native_workarea_geometry);
 
-    m_autohide_controller->set_placement(
-        placement);
-
     m_placement = placement;
+
+    const int requested_width =
+        placement.width > 0
+            ? placement.width
+            : std::max(
+                  1,
+                  output_geometry.width -
+                      placement.margin_left -
+                      placement.margin_right);
+    const int requested_height =
+        placement.height > 0
+            ? placement.height
+            : std::max(
+                  1,
+                  output_geometry.height -
+                      placement.margin_top -
+                      placement.margin_bottom);
+    // X11 moves are asynchronous. Keep the synchronous target shared by the
+    // hidden transform and the window-system backend so neither observes the
+    // previous dock size's root coordinates.
+    const auto position =
+        calculated_dock_screen_position(
+            requested_width,
+            requested_height);
+
+    m_autohide_controller->set_placement(
+        placement,
+        position);
+
     m_applied_location =
         m_layout_request.location;
     m_has_applied_layout = true;
 
     if (m_window.m_window_registry)
     {
-        const int requested_width =
-            placement.width > 0
-                ? placement.width
-                : std::max(
-                      1,
-                      output_geometry.width -
-                          placement.margin_left -
-                          placement.margin_right);
-        const int requested_height =
-            placement.height > 0
-                ? placement.height
-                : std::max(
-                      1,
-                      output_geometry.height -
-                          placement.margin_top -
-                          placement.margin_bottom);
-        // X11 moves are asynchronous. Reading the mapped root origin here
-        // can return the previous monitor and make the GNOME integration
-        // move the XWayland dock back there. Publish the synchronous layout
-        // target; mapped coordinates remain authoritative for overlays.
-        const auto position =
-            calculated_dock_screen_position(
-                requested_width,
-                requested_height);
-
         const WindowIconGeometry geometry{
             position.x,
             position.y,

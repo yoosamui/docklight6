@@ -310,7 +310,8 @@ void DockAutohideController::set_monitor(
 }
 
 void DockAutohideController::set_placement(
-    const DockPlacement &placement)
+    const DockPlacement &placement,
+    const ScreenPosition &shown_position)
 {
     if (m_has_placement &&
         same_placement(m_placement, placement))
@@ -322,11 +323,26 @@ void DockAutohideController::set_placement(
     m_has_placement = true;
 
     const bool was_hidden = m_hidden;
-    const bool preserve_hidden_surface =
+    const bool preserve_hidden_wayland_surface =
         was_hidden &&
         !m_window.surface_is_native_x11();
 
-    if (preserve_hidden_surface)
+    if (was_hidden &&
+        m_window.surface_is_native_x11())
+    {
+        // apply_dock_layout() has already submitted the new shown geometry.
+        // Keep the mapped native-X11 surface transparent and input-pass-
+        // through while rebuilding its hidden transform around that geometry.
+        // Passing through reveal_immediately() here exposes one frame whenever
+        // launcher membership changes after a window opens or closes.
+        apply_hidden_x11_placement(
+            shown_position);
+        m_reveal_window.apply_placement(placement);
+        m_reveal_window.show();
+        return;
+    }
+
+    if (preserve_hidden_wayland_surface)
     {
         // Launcher membership changes alter the dock's natural size. Plasma
         // applies that new layer-surface placement while the GTK window is
@@ -595,6 +611,69 @@ void DockAutohideController::reset_x11_visual_transform()
         m_initial_x11_startup_pending
             ? 0.0
             : 1.0);
+}
+
+void DockAutohideController::apply_hidden_x11_placement(
+    const ScreenPosition &shown_position)
+{
+    cancel_hide();
+    cancel_animation();
+    m_pending_x11_reveal_animation = false;
+    set_surface_input_passthrough(true);
+
+    // Opacity is the atomic guard around the asynchronous X11 resize/move.
+    // Rebuild the configured slide transform while no intermediate shown
+    // geometry can reach the compositor.
+    m_window.set_opacity(0.0);
+
+    // The GTK move submitted immediately before this method is asynchronous.
+    // Use the layout engine's root-global target rather than reading the old
+    // server position while launcher-count changes are resizing the dock.
+    m_shown_x = shown_position.x;
+    m_shown_y = shown_position.y;
+    m_has_shown_position = true;
+
+    m_window.set_x11_horizontal_scale(
+        1.0,
+        m_placement.anchor_right);
+    m_window.set_x11_vertical_offset(0.0);
+
+    if (!can_animate_x11())
+        return;
+
+    const bool collapse_horizontally =
+        m_placement.is_vertical() &&
+        should_collapse_x11_horizontally();
+    if (collapse_horizontally)
+    {
+        m_window.set_x11_horizontal_scale(
+            0.0,
+            m_placement.anchor_right);
+        return;
+    }
+
+    const int width = m_placement.width > 0
+        ? m_placement.width
+        : std::max(1, m_window.get_allocated_width());
+    const int height = m_placement.height > 0
+        ? m_placement.height
+        : std::max(1, m_window.get_allocated_height());
+
+    if (m_placement.is_horizontal() &&
+        m_placement.anchor_top)
+    {
+        m_window.set_x11_vertical_offset(-height);
+        return;
+    }
+
+    const auto hidden =
+        x11_hidden_screen_position(
+            m_placement,
+            m_shown_x,
+            m_shown_y,
+            width,
+            height);
+    m_window.move(hidden.x, hidden.y);
 }
 
 void DockAutohideController::set_surface_input_passthrough(

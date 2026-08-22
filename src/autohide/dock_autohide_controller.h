@@ -53,7 +53,8 @@ public:
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor> &monitor);
     void set_placement(
-        const DockPlacement &placement);
+        const DockPlacement &placement,
+        const ScreenPosition &shown_position);
     void set_intellihide_overlap(bool overlap);
 
     void inhibit();
@@ -74,6 +75,8 @@ private:
     void cancel_hide();
     void cancel_animation();
     void reset_x11_visual_transform();
+    void apply_hidden_x11_placement(
+        const ScreenPosition &shown_position);
     void request_shell_visibility(bool hidden);
     void set_surface_input_passthrough(bool passthrough);
     void animate_effect(bool hiding);
