@@ -2558,7 +2558,7 @@ bool DockPreviewWindow::advance_opacity_animation()
     return false;
 }
 
-gitvoid DockPreviewWindow::set_dynamic_refresh(
+void DockPreviewWindow::set_dynamic_refresh(
     bool enabled,
     const std::string &media_title)
 {
