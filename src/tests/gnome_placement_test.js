@@ -379,6 +379,18 @@ assert.match(
     /if \(uses_gnome_live_previews\)[\s\S]*?desired_windows\.insert\(entry\.first\);[\s\S]*?if \(!entry\.second\.minimized/,
     "GNOME live previews must include fully minimized window groups");
 assert.match(
+    previewWindowSource,
+    /has_visible_current_muffin_target[\s\S]*?uses_muffin_session\(\)[\s\S]*?!entry\.second\.minimized &&[\s\S]*?entry\.second\.on_current_desktop[\s\S]*?m_dynamic_refresh =[\s\S]*?has_visible_current_muffin_target/,
+    "Muffin must keep live refresh active for visible current-workspace windows without relying on MPRIS");
+assert.match(
+    previewWindowSource,
+    /DockPreviewWindow::request_x11_change_probe[\s\S]*?found->second\.minimized \|\|[\s\S]*?!found->second\.on_current_desktop[\s\S]*?DockPreviewWindow::request_live_x11_thumbnail[\s\S]*?found->second\.minimized \|\|[\s\S]*?!found->second\.on_current_desktop/,
+    "native X11 must leave minimized and other-workspace thumbnails frozen");
+assert.match(
+    previewWindowSource,
+    /uses_muffin_session[\s\S]*?cinnamon[\s\S]*?uses_muffin_full_live_capture[\s\S]*?if \(uses_muffin_full_live_capture \|\|[\s\S]*?request_live_x11_thumbnail[\s\S]*?if \(uses_muffin_full_live_capture\)[\s\S]*?return;[\s\S]*?request_x11_change_probe/,
+    "Muffin must directly refresh every visible current-workspace card without depending on change-probe promotion");
+assert.match(
     previewManagerSource,
     /set_preview_color\(settings\.preview_color\(\)\)/,
     "preview rendering must receive the configured preview color");

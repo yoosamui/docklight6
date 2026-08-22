@@ -280,6 +280,24 @@ namespace
         return result;
     }
 
+    bool uses_muffin_session()
+    {
+        const char *desktop =
+            g_getenv("XDG_CURRENT_DESKTOP");
+        if (!desktop)
+            desktop = g_getenv("XDG_SESSION_DESKTOP");
+        if (!desktop)
+            return false;
+
+        auto *normalized = g_ascii_strdown(desktop, -1);
+        const bool result =
+            normalized &&
+            std::string(normalized).find("cinnamon") !=
+                std::string::npos;
+        g_free(normalized);
+        return result;
+    }
+
     bool uses_wayland_session()
     {
         const char *session_type =
@@ -2556,11 +2574,31 @@ void DockPreviewWindow::set_dynamic_refresh(
             [](const auto &entry)
             {
                 return !entry.second.minimized &&
+                       entry.second.on_current_desktop &&
                        entry.second.application_auxiliary;
             });
 
+    // Browser MPRIS state is only a hint: it can be absent, delayed, or tied
+    // to another tab. Muffin keeps mapped current-workspace pixmaps live, so
+    // keep the refresh scheduler active for those windows and capture them
+    // directly below. Hidden compositor pixmaps are allowed to remain frozen.
+    const bool has_visible_current_muffin_target =
+        !m_uses_layer_shell &&
+        uses_muffin_session() &&
+        !m_thumbnail_provider.supports_gnome_live_previews() &&
+        std::any_of(
+            m_thumbnail_targets.begin(),
+            m_thumbnail_targets.end(),
+            [](const auto &entry)
+            {
+                return !entry.second.minimized &&
+                       entry.second.on_current_desktop;
+            });
+
     m_dynamic_refresh =
-        enabled || has_x11_application_auxiliary;
+        enabled ||
+        has_x11_application_auxiliary ||
+        has_visible_current_muffin_target;
 
     if (!media_title.empty())
         m_media_title = media_title;
@@ -3239,9 +3277,7 @@ void DockPreviewWindow::request_x11_change_probe(
         m_thumbnail_cache_settle_epochs.count(
             window_id) != 0 ||
         found->second.minimized ||
-        ((uses_xfwm_session() ||
-          uses_mapped_thumbnail_cache()) &&
-         !found->second.on_current_desktop))
+        !found->second.on_current_desktop)
     {
         return;
     }
@@ -3311,9 +3347,7 @@ void DockPreviewWindow::request_live_x11_thumbnail(
         m_thumbnail_cache_settle_epochs.count(
             window_id) != 0 ||
         found->second.minimized ||
-        ((uses_xfwm_session() ||
-          uses_mapped_thumbnail_cache()) &&
-         !found->second.on_current_desktop))
+        !found->second.on_current_desktop)
     {
         return;
     }
@@ -3433,13 +3467,10 @@ void DockPreviewWindow::start_live_streams(
             continue;
         }
 
-        // Firefox exposes one browser-wide MPRIS player and can leave it
-        // associated with an unrelated tab. Refresh the complete visible
-        // group on X11 so a playing page cannot be omitted by stale metadata.
+        // Refresh only windows the compositor is expected to keep painting.
+        // Hidden windows are allowed to retain their last frame.
         if (!entry.second.minimized &&
-            ((!uses_xfwm_session() &&
-              !uses_mapped_thumbnail_cache()) ||
-             entry.second.on_current_desktop))
+            entry.second.on_current_desktop)
             desired_windows.insert(entry.first);
     }
 
@@ -3528,6 +3559,8 @@ void DockPreviewWindow::start_live_streams(
 
     if (!m_uses_layer_shell)
     {
+        const bool uses_muffin_full_live_capture =
+            uses_muffin_session();
         m_live_window_ids = desired_windows;
 
         g_message(
@@ -3537,7 +3570,9 @@ void DockPreviewWindow::start_live_streams(
 
         m_x11_live_refresh =
             Glib::signal_timeout().connect(
-                [this, generation]()
+                [this,
+                 generation,
+                 uses_muffin_full_live_capture]()
                 {
                     if (generation != m_generation ||
                         !m_dynamic_refresh ||
@@ -3568,7 +3603,12 @@ void DockPreviewWindow::start_live_streams(
                             target->second.live_until_us >
                             now;
 
-                        if (target->second.application_auxiliary ||
+                        // Muffin keeps mapped current-workspace pixmaps live.
+                        // Capture every such card directly: relying on a
+                        // downscaled change probe can miss video motion and
+                        // leave only some cards in a browser group frozen.
+                        if (uses_muffin_full_live_capture ||
+                            target->second.application_auxiliary ||
                             target->second.active ||
                             matches_media_title ||
                             recently_changed)
@@ -3584,6 +3624,11 @@ void DockPreviewWindow::start_live_streams(
                     return true;
                 },
                 X11_LIVE_REFRESH_MS);
+
+        // Direct Muffin capture already covers every eligible card. Avoid a
+        // redundant low-resolution request competing for the same pixmap.
+        if (uses_muffin_full_live_capture)
+            return;
 
         m_x11_probe_refresh =
             Glib::signal_timeout().connect(
