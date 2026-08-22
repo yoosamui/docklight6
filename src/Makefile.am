@@ -22,6 +22,7 @@ TESTS = \
     tests/kwin_script_test.js \
     tests/kwin_surface_identity_test.js \
     tests/plasma_geometry_bridge_test.js \
+    tests/marco_restore_test.js \
     tests/xfwm4_restore_test.js
 
 AM_CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic

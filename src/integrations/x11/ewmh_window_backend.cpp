@@ -312,14 +312,33 @@ bool EwmhWindowBackend::present_windows(const std::vector<WindowId> &ids)
         return true;
     }
 
+    bool accepted = true;
+
     for (auto *window : windows)
     {
         if (wnck_window_is_minimized(window))
-            wnck_window_unminimize(window, timestamp);
+        {
+            const auto handled =
+                set_window_minimized_override(
+                    window,
+                    false);
+
+            if (handled)
+            {
+                accepted =
+                    *handled && accepted;
+            }
+            else
+            {
+                wnck_window_unminimize(
+                    window,
+                    timestamp);
+            }
+        }
     }
 
     wnck_window_activate(target, timestamp);
-    return true;
+    return accepted;
 }
 
 bool EwmhWindowBackend::defer_activation_until_workspace(
@@ -386,7 +405,19 @@ void EwmhWindowBackend::complete_pending_activation()
             continue;
 
         if (wnck_window_is_minimized(window))
-            wnck_window_unminimize(window, timestamp);
+        {
+            const auto handled =
+                set_window_minimized_override(
+                    window,
+                    false);
+
+            if (!handled)
+            {
+                wnck_window_unminimize(
+                    window,
+                    timestamp);
+            }
+        }
 
         target = window;
     }
