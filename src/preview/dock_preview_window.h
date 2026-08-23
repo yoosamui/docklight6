@@ -106,17 +106,20 @@ public:
     bool visible_for(const WindowId &window_id) const;
 
     sigc::signal<void> &signal_pointer_entered();
+    sigc::signal<void> &signal_pointer_moved();
     sigc::signal<void> &signal_pointer_left();
     sigc::signal<void, const WindowId &> &
     signal_activate_window();
     sigc::signal<void, const WindowId &> &
     signal_reload_thumbnail();
-    sigc::signal<void, const WindowId &> &
+    sigc::signal<void, const WindowId &, bool> &
     signal_close_window();
 
 protected:
     bool on_enter_notify_event(
         GdkEventCrossing *event) override;
+    bool on_motion_notify_event(
+        GdkEventMotion *event) override;
     bool on_leave_notify_event(
         GdkEventCrossing *event) override;
 
@@ -267,12 +270,13 @@ private:
     sigc::connection m_gnome_preview_reveal_delay;
 
     sigc::signal<void> m_pointer_entered;
+    sigc::signal<void> m_pointer_moved;
     sigc::signal<void> m_pointer_left;
     sigc::signal<void, const WindowId &>
         m_activate_window;
     sigc::signal<void, const WindowId &>
         m_reload_thumbnail;
-    sigc::signal<void, const WindowId &>
+    sigc::signal<void, const WindowId &, bool>
         m_close_window;
 
     unsigned int m_generation = 0;
@@ -299,4 +303,7 @@ private:
     bool m_replacing_gnome_wayland_preview = false;
     bool m_opacity_animation_hiding = false;
     bool m_uses_layer_shell = false;
+    bool m_close_pointer_origin_valid = false;
+    double m_close_pointer_root_x = 0.0;
+    double m_close_pointer_root_y = 0.0;
 };
