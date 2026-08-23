@@ -73,7 +73,9 @@ private:
         DockItem &item,
         const WindowId &excluded_window_id = {});
     void reload_thumbnail(const WindowId &window_id);
-    void close_window(const WindowId &window_id);
+    void close_window(
+        const WindowId &window_id,
+        bool last_card);
 
 private:
     DockWindow &m_window;
@@ -102,6 +104,7 @@ private:
     bool m_shell_pointer_inside = false;
     bool m_input_forwarding = false;
     bool m_show_delay_elapsed = false;
+    bool m_last_card_close_pending = false;
 
     sigc::signal<void> m_signal_pointer_entered;
     sigc::signal<void> m_signal_pointer_left;

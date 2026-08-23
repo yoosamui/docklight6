@@ -909,6 +909,7 @@ DockPreviewWindow::DockPreviewWindow()
 
     add_events(
         Gdk::ENTER_NOTIFY_MASK |
+        Gdk::POINTER_MOTION_MASK |
         Gdk::LEAVE_NOTIFY_MASK);
 
     m_row.set_margin_start(WINDOW_PADDING);
@@ -2781,7 +2782,16 @@ void DockPreviewWindow::rebuild(
             {
                 if (event && event->button == 1)
                 {
-                    m_close_window.emit(window_id);
+                    const bool last_card =
+                        !m_window_ids.empty() &&
+                        m_window_ids.back() == window_id;
+                    m_close_pointer_origin_valid =
+                        last_card;
+                    m_close_pointer_root_x = event->x_root;
+                    m_close_pointer_root_y = event->y_root;
+                    m_close_window.emit(
+                        window_id,
+                        last_card);
                     return true;
                 }
 
@@ -3914,10 +3924,26 @@ bool DockPreviewWindow::on_enter_notify_event(
     if (!event ||
         event->detail != GDK_NOTIFY_INFERIOR)
     {
+        m_close_pointer_origin_valid = false;
         m_pointer_entered.emit();
     }
 
     return Gtk::Window::on_enter_notify_event(event);
+}
+
+bool DockPreviewWindow::on_motion_notify_event(
+    GdkEventMotion *event)
+{
+    if (!m_input_forwarding &&
+        (!m_close_pointer_origin_valid ||
+         std::abs(event->x_root - m_close_pointer_root_x) > 0.5 ||
+         std::abs(event->y_root - m_close_pointer_root_y) > 0.5))
+    {
+        m_close_pointer_origin_valid = false;
+        m_pointer_moved.emit();
+    }
+
+    return Gtk::Window::on_motion_notify_event(event);
 }
 
 bool DockPreviewWindow::on_leave_notify_event(
@@ -3942,6 +3968,12 @@ DockPreviewWindow::signal_pointer_entered()
 }
 
 sigc::signal<void> &
+DockPreviewWindow::signal_pointer_moved()
+{
+    return m_pointer_moved;
+}
+
+sigc::signal<void> &
 DockPreviewWindow::signal_pointer_left()
 {
     return m_pointer_left;
@@ -3959,7 +3991,7 @@ DockPreviewWindow::signal_reload_thumbnail()
     return m_reload_thumbnail;
 }
 
-sigc::signal<void, const WindowId &> &
+sigc::signal<void, const WindowId &, bool> &
 DockPreviewWindow::signal_close_window()
 {
     return m_close_window;

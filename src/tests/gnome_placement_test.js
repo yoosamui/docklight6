@@ -550,6 +550,22 @@ assert.match(
     /PreviewManager::schedule_show[\s\S]*?m_tooltips\.hide\(\);[\s\S]*?m_settings\.display_tooltips\(\) &&[\s\S]*?!m_settings\.display_preview\(\)[\s\S]*?m_tooltips\.schedule_show/,
     "populated groups must only show a tooltip when previews are disabled");
 assert.match(
+    previewWindowSource,
+    /last_card =[\s\S]*?m_window_ids\.back\(\) == window_id;[\s\S]*?m_close_pointer_origin_valid =[\s\S]*?last_card;[\s\S]*?m_close_window\.emit\([\s\S]*?window_id,[\s\S]*?last_card\)/,
+    "the Preview close action must identify the last displayed card before the group changes");
+assert.match(
+    previewWindowSource + previewManagerSource,
+    /on_motion_notify_event[\s\S]*?m_close_pointer_origin_valid[\s\S]*?event->x_root - m_close_pointer_root_x[\s\S]*?event->y_root - m_close_pointer_root_y[\s\S]*?m_pointer_moved\.emit\(\)[\s\S]*?signal_pointer_moved\(\)[\s\S]*?m_last_card_close_pending = false;[\s\S]*?signal_pointer_left\(\)[\s\S]*?if \(m_last_card_close_pending\)[\s\S]*?return;[\s\S]*?m_signal_pointer_left\.emit\(\)/,
+    "only a stationary-pointer leave caused by the last-card close may bypass normal Preview leave handling");
+assert.match(
+    previewManagerSource,
+    /if \(entries\.empty\(\)\)[\s\S]*?hide\(\);[\s\S]*?if \(excluded_window_id\.empty\(\)\)/,
+    "closing the final card must close the empty Preview layer intentionally");
+assert.match(
+    previewManagerSource,
+    /PreviewManager::hide\([\s\S]*?m_last_card_close_pending = false;[\s\S]*?hide_preview\(\)/,
+    "hiding the Preview must reset the final-card interaction state");
+assert.match(
     dockItemSource,
     /signal_button_press_event[\s\S]*?GDK_BUTTON_SECONDARY[\s\S]*?outside_menu[\s\S]*?m_context_menu\.popdown\(\)/,
     "the context menu must catch an outside secondary press consumed by its pointer grab");

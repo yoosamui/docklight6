@@ -36,13 +36,21 @@ PreviewManager::PreviewManager(
     m_preview_window->signal_pointer_entered().connect(
         [this]()
         {
+            m_last_card_close_pending = false;
             m_pointer_inside = true;
             m_signal_pointer_entered.emit();
+        });
+    m_preview_window->signal_pointer_moved().connect(
+        [this]()
+        {
+            m_last_card_close_pending = false;
         });
     m_preview_window->signal_pointer_left().connect(
         [this]()
         {
             m_pointer_inside = false;
+            if (m_last_card_close_pending)
+                return;
             m_signal_pointer_left.emit();
         });
     m_preview_window->signal_activate_window().connect(
@@ -150,6 +158,7 @@ void PreviewManager::schedule_show(DockItem &item, int show_delay_ms)
         return;
     }
 
+    m_last_card_close_pending = false;
     m_tooltips.hide();
 
     if (m_settings.display_tooltips() &&
@@ -207,6 +216,9 @@ void PreviewManager::show_now(
     DockItem &item,
     const WindowId &excluded_window_id)
 {
+    if (excluded_window_id.empty())
+        m_last_card_close_pending = false;
+
     auto entries = item.window_entries();
     std::stable_sort(
         entries.begin(),
@@ -239,6 +251,9 @@ void PreviewManager::show_now(
 
     if (entries.empty())
     {
+        // With no cards left there is no Preview content to retain. Close the
+        // empty layer intentionally; the close-interaction guard is only for
+        // geometry changes while another card remains visible.
         hide();
         if (excluded_window_id.empty())
             m_tooltips.show_immediately(item, item.tooltip_text());
@@ -334,6 +349,7 @@ void PreviewManager::hide(bool cancel_pending_show)
     m_preview_desktop_id.clear();
     m_pointer_inside = false;
     m_shell_pointer_inside = false;
+    m_last_card_close_pending = false;
     m_preview_window->hide_preview();
 
     if (m_inhibits_autohide)
@@ -362,8 +378,11 @@ void PreviewManager::set_shell_pointer_inside(bool inside)
 {
     m_shell_pointer_inside = inside;
     if (inside)
+    {
+        m_last_card_close_pending = false;
         m_signal_pointer_entered.emit();
-    else
+    }
+    else if (!m_last_card_close_pending)
         m_signal_pointer_left.emit();
 }
 
@@ -435,21 +454,31 @@ void PreviewManager::reload_thumbnail(const WindowId &window_id)
         m_window.m_window_registry->present_windows({window_id});
 }
 
-void PreviewManager::close_window(const WindowId &window_id)
+void PreviewManager::close_window(
+    const WindowId &window_id,
+    bool last_card)
 {
     const auto desktop_id = m_preview_desktop_id;
+    m_last_card_close_pending = last_card;
     Glib::signal_idle().connect_once(
         [this, desktop_id, window_id]()
         {
+            bool matching_item_found = false;
             for (auto *item : m_window.dock_items())
             {
                 if (item && item->desktop_id() == desktop_id)
                 {
+                    matching_item_found = true;
                     if (item->close_window(window_id))
                         show_now(*item, window_id);
+                    else
+                        m_last_card_close_pending = false;
                     break;
                 }
             }
+
+            if (!matching_item_found)
+                m_last_card_close_pending = false;
         });
 }
 
