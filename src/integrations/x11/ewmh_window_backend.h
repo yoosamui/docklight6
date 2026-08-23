@@ -51,6 +51,9 @@ protected:
         WnckWindow *window,
         bool minimized);
 
+    WnckWindow *find_window(
+        const WindowId &window_id) const;
+
 private:
     static void on_window_opened(WnckScreen *, WnckWindow *, gpointer data);
     static void on_window_closed(WnckScreen *, WnckWindow *, gpointer data);
@@ -71,7 +74,6 @@ private:
         WnckWindow *target,
         guint32 timestamp);
     void complete_pending_activation();
-    WnckWindow *find_window(const WindowId &window_id) const;
     static WindowId window_id(WnckWindow *window);
     static ManagedWindow managed_window(WnckWindow *window,
                                         WnckScreen *screen);
