@@ -52,6 +52,9 @@ available.
     <tr><td>GNOME</td><td>Wayland</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>GnomeWaylandWindowBackend</code></td><td>PASS</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> Uses the GNOME Shell extension bridge.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
+    <tr><td>GNOME Flashback</td><td>X11</td><td>Metacity or Marco</td><td>Metacity or Marco</td><td><code>MarcoWindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Uses the shared Marco/Metacity X11 backend instead of the GNOME Shell extension bridge.</td></tr>
+    <tr><td colspan="6"><hr></td></tr>
     <tr><td>LXDE</td><td>X11</td><td>Openbox</td><td>compton or picom</td><td><code>OpenboxWindowBackend</code></td><td>PASS</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> A compositor is required for complete window previews.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
@@ -103,8 +106,8 @@ Important current-code details:
 bug fixes, compatibility, and translations.
 
 DockLight's complete window-management integration is designed for X11 or
-Wayland. On unsupported desktop sessions, the dock can still start, but
-desktop-specific window actions and previews may not be available.
+Wayland. *On unsupported desktop sessions, the dock can still start, but
+desktop-specific window actions and previews may not be available.*
 
 ## Architecture
 
