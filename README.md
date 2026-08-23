@@ -106,39 +106,9 @@ Important current-code details:
 bug fixes, compatibility, and translations.
 
 DockLight's complete window-management integration is designed for X11 or
-Wayland. *On unsupported desktop sessions, the dock can still start, but
-desktop-specific window actions and previews may not be available.*
+Wayland. **On unsupported desktop sessions, the dock can still start, but
+desktop-specific window actions and previews may not be available.**
 
-## Architecture
-
-DockLight is a C++17 GTK application built with gtkmm 3. Its main components
-are separated by responsibility:
-
-- `src/dock/` contains the dock window, items, tooltips, and UI controller.
-- `src/application/` maps dock items to running applications and coordinates
-  window actions.
-- `src/windowing/` provides desktop-independent window models and the window
-  registry.
-- `src/integrations/` connects the registry to KWin through D-Bus and manages
-  the Plasma-specific integration components.
-- `src/layout/`, `src/autohide/`, and `src/rendering/` calculate dock geometry,
-  visibility behavior, and icon presentation.
-- `src/preview/` captures and displays live window previews through PipeWire
-  and KDE's Wayland screencast protocol.
-- `src/config/` loads, validates, saves, and watches the per-user
-  configuration; changes are applied while DockLight is running.
-- `kwin/` and `plasma/` contain the companion KWin scripts, effect, and Plasma
-  geometry bridge used for window tracking and desktop integration.
-
-At startup, `main.cpp` loads configuration and monitor state, starts the
-window-system integration, and creates the dock window. The UI talks to
-applications through `DockApplicationController` and `WindowRegistry`, so
-desktop-specific KWin code remains isolated from the dock widgets.
-
-See the
-[frontend and backend architecture diagrams](docs/frontend-backend-architecture.md)
-for the component boundaries, runtime backend selection, desktop bridges,
-and preview data paths.
 
 ## Installation
 
