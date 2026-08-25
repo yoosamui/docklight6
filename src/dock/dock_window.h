@@ -59,8 +59,12 @@ public:
     DockSurfaceBox();
     void set_horizontal_scale(
         double scale,
-        bool anchor_right);
+        double anchor);
     double horizontal_scale() const;
+    void set_vertical_scale(
+        double scale,
+        double anchor);
+    double vertical_scale() const;
     void set_vertical_offset(double offset);
     double vertical_offset() const;
 
@@ -71,7 +75,9 @@ protected:
 
 private:
     double m_horizontal_scale = 1.0;
-    bool m_scale_anchor_right = true;
+    double m_horizontal_scale_anchor = 1.0;
+    double m_vertical_scale = 1.0;
+    double m_vertical_scale_anchor = 1.0;
     double m_vertical_offset = 0.0;
 };
 
@@ -113,6 +119,9 @@ public:
     void end_item_drag(DockItem &item);
     DockLocation location() const;
     bool preview_input_forwarding() const;
+    DockAutohideEffect
+    effective_autohide_effect() const;
+    bool shows_x11_autohide_effects() const;
 
 protected:
     bool on_drag_motion(
@@ -174,8 +183,12 @@ private:
     void apply_visual_style();
     void set_x11_horizontal_scale(
         double scale,
-        bool anchor_right);
+        double anchor);
     double x11_horizontal_scale() const;
+    void set_x11_vertical_scale(
+        double scale,
+        double anchor);
+    double x11_vertical_scale() const;
     void set_x11_vertical_offset(double offset);
     double x11_vertical_offset() const;
     void apply_main_axis_end_margins(

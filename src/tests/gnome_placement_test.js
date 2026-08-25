@@ -647,16 +647,16 @@ assert.match(
     "Plasma Wayland must retain its current surface effect");
 assert.match(
     legacySurfaceBackendSource,
-    /default_autohide_effect\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?DockAutohideEffect::slide/,
-    "GNOME Wayland must retain its Shell effect while other legacy surfaces retain the X11 slide");
+    /default_autohide_effect\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?m_native_x11[\s\S]*?DockAutohideEffect::plasma[\s\S]*?DockAutohideEffect::slide/,
+    "native X11 must use the Plasma-style effect without changing ordinary Wayland defaults");
 assert.match(
     dockWindowControllerSource,
     /set_effect\([\s\S]*?surface_default_autohide_effect\(\)[\s\S]*?m_autohide_controller->initialize\(\)/,
     "the shared autohide controller must own the selected backend default");
 assert.match(
     autohideControllerSource,
-    /can_animate_x11\(\) const[\s\S]*?m_effect == DockAutohideEffect::slide[\s\S]*?m_effect == DockAutohideEffect::gnome[\s\S]*?!has_shell_reveal_trigger\(\)[\s\S]*?surface_is_native_x11\(\)/,
-    "native X11 must retain its slide, including the safe GNOME fallback without Shell integration");
+    /can_animate_x11\(\) const[\s\S]*?m_effect == DockAutohideEffect::slide[\s\S]*?m_effect == DockAutohideEffect::plasma[\s\S]*?m_effect == DockAutohideEffect::gnome[\s\S]*?!has_shell_reveal_trigger\(\)[\s\S]*?surface_is_native_x11\(\)/,
+    "native X11 must animate both its Plasma-style default and legacy fallback effects");
 assert.match(
     autohideControllerSource,
     /uses_shell_reveal_trigger\(\) const[\s\S]*?surface_delegates_autohide_effect\([\s\S]*?m_effect[\s\S]*?has_shell_reveal_trigger\(\)/,
@@ -751,12 +751,20 @@ assert.match(
     "native X11 input must be disabled before hiding so XFWM crossing events cannot reopen overlays during the transition");
 assert.match(
     autohideControllerSource,
-    /should_collapse_x11_horizontally\(\)[\s\S]*?horizontal_hide_corridor_intersects_monitor\([\s\S]*?m_animation_collapses_horizontally[\s\S]*?set_x11_horizontal_scale\([\s\S]*?0\.0,[\s\S]*?m_animation_target_scale/,
+    /x11_slide_requires_horizontal_collapse\(\)[\s\S]*?horizontal_hide_corridor_intersects_monitor\([\s\S]*?m_animation_collapses_horizontally[\s\S]*?set_x11_horizontal_scale\([\s\S]*?0\.0,[\s\S]*?m_animation_target_scale/,
     "a native X11 vertical dock facing another monitor must collapse at its fixed edge");
 assert.match(
     autohideControllerSource,
-    /m_animation_collapses_horizontally\s*=\s*m_placement\.is_vertical\(\)\s*&&\s*\(should_collapse_x11_horizontally\(\)\s*\|\|\s*m_window\.x11_horizontal_scale\(\) < 1\.0\)/,
+    /collapses_x11_horizontally\([\s\S]*?include_partial_slide[\s\S]*?m_placement\.is_vertical\(\)[\s\S]*?x11_slide_requires_horizontal_collapse\(\)[\s\S]*?include_partial_slide[\s\S]*?m_window\.x11_horizontal_scale\(\) < 1\.0/,
     "a partial vertical collapse must not leak into a horizontal dock edge");
+assert.match(
+    autohideControllerSource,
+    /uses_plasma_x11_edge_effect\(\) const[\s\S]*?DockAutohideEffect::plasma[\s\S]*?surface_is_native_x11\(\)[\s\S]*?m_has_placement[\s\S]*?collapses_x11_horizontally\([\s\S]*?m_placement\.is_horizontal\(\)[\s\S]*?collapses_x11_vertically\(\) const[\s\S]*?m_placement\.is_vertical\(\)[\s\S]*?m_animation_collapses_horizontally[\s\S]*?m_animation_collapses_vertically[\s\S]*?m_animation_fades = plasma_edge_effect[\s\S]*?SCALE_ANCHOR_CENTER[\s\S]*?m_animation_start_opacity[\s\S]*?m_animation_target_opacity/,
+    "the native-X11 Plasma effect must fade and collapse along every edge's main axis");
+assert.match(
+    dockWindowSource,
+    /set_horizontal_scale\([\s\S]*?double anchor\)[\s\S]*?m_horizontal_scale_anchor = clamped_anchor[\s\S]*?set_vertical_scale\([\s\S]*?double anchor\)[\s\S]*?m_vertical_scale_anchor = clamped_anchor[\s\S]*?context->translate\([\s\S]*?m_horizontal_scale_anchor[\s\S]*?m_vertical_scale_anchor[\s\S]*?context->scale\([\s\S]*?m_horizontal_scale,[\s\S]*?m_vertical_scale/,
+    "the dock drawing transform must support centred scaling on both axes");
 assert.match(
     autohideControllerSource,
     /set_placement\([\s\S]*?cancel_animation\(\);\s*reset_x11_visual_transform\(\);/,

@@ -46,26 +46,58 @@ DockSurfaceBox::DockSurfaceBox()
 
 void DockSurfaceBox::set_horizontal_scale(
     double scale,
-    bool anchor_right)
+    double anchor)
 {
     const double clamped =
         std::clamp(scale, 0.0, 1.0);
+    const double clamped_anchor =
+        std::clamp(anchor, 0.0, 1.0);
     if (std::abs(
             clamped -
             m_horizontal_scale) < 0.0001 &&
-        anchor_right == m_scale_anchor_right)
+        std::abs(
+            clamped_anchor -
+            m_horizontal_scale_anchor) < 0.0001)
     {
         return;
     }
 
     m_horizontal_scale = clamped;
-    m_scale_anchor_right = anchor_right;
+    m_horizontal_scale_anchor = clamped_anchor;
     queue_draw();
 }
 
 double DockSurfaceBox::horizontal_scale() const
 {
     return m_horizontal_scale;
+}
+
+void DockSurfaceBox::set_vertical_scale(
+    double scale,
+    double anchor)
+{
+    const double clamped =
+        std::clamp(scale, 0.0, 1.0);
+    const double clamped_anchor =
+        std::clamp(anchor, 0.0, 1.0);
+    if (std::abs(
+            clamped -
+            m_vertical_scale) < 0.0001 &&
+        std::abs(
+            clamped_anchor -
+            m_vertical_scale_anchor) < 0.0001)
+    {
+        return;
+    }
+
+    m_vertical_scale = clamped;
+    m_vertical_scale_anchor = clamped_anchor;
+    queue_draw();
+}
+
+double DockSurfaceBox::vertical_scale() const
+{
+    return m_vertical_scale;
 }
 
 void DockSurfaceBox::set_vertical_offset(
@@ -88,10 +120,12 @@ bool DockSurfaceBox::on_draw(
         &context)
 {
     if (m_horizontal_scale <= 0.0 ||
+        m_vertical_scale <= 0.0 ||
         m_vertical_offset <= -get_allocated_height())
         return true;
 
     if (m_horizontal_scale >= 1.0 &&
+        m_vertical_scale >= 1.0 &&
         std::abs(m_vertical_offset) < 0.0001)
         return Gtk::Box::on_draw(context);
 
@@ -102,17 +136,17 @@ bool DockSurfaceBox::on_draw(
         get_allocated_width(),
         get_allocated_height());
     context->clip();
-    context->translate(0.0, m_vertical_offset);
-    if (m_scale_anchor_right)
-    {
-        context->translate(
-            get_allocated_width() *
-                (1.0 - m_horizontal_scale),
-            0.0);
-    }
+    context->translate(
+        get_allocated_width() *
+            (1.0 - m_horizontal_scale) *
+            m_horizontal_scale_anchor,
+        get_allocated_height() *
+                (1.0 - m_vertical_scale) *
+                m_vertical_scale_anchor +
+            m_vertical_offset);
     context->scale(
         m_horizontal_scale,
-        1.0);
+        m_vertical_scale);
     const bool handled =
         Gtk::Box::on_draw(context);
     context->restore();
@@ -247,16 +281,30 @@ DockWindow::~DockWindow()
 
 void DockWindow::set_x11_horizontal_scale(
     double scale,
-    bool anchor_right)
+    double anchor)
 {
     m_dock_box.set_horizontal_scale(
         scale,
-        anchor_right);
+        anchor);
 }
 
 double DockWindow::x11_horizontal_scale() const
 {
     return m_dock_box.horizontal_scale();
+}
+
+void DockWindow::set_x11_vertical_scale(
+    double scale,
+    double anchor)
+{
+    m_dock_box.set_vertical_scale(
+        scale,
+        anchor);
+}
+
+double DockWindow::x11_vertical_scale() const
+{
+    return m_dock_box.vertical_scale();
 }
 
 void DockWindow::set_x11_vertical_offset(
@@ -740,6 +788,22 @@ DockLocation DockWindow::location() const
 bool DockWindow::preview_input_forwarding() const
 {
     return m_controller->preview_input_forwarding();
+}
+
+DockAutohideEffect
+DockWindow::effective_autohide_effect() const
+{
+    return m_controller
+        ->settings()
+        .autohide_effect()
+        .value_or(
+            m_surface_backend
+                ->default_autohide_effect());
+}
+
+bool DockWindow::shows_x11_autohide_effects() const
+{
+    return m_surface_backend->is_native_x11();
 }
 
 DockWindowGeometry

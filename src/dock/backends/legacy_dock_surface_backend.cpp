@@ -359,8 +359,11 @@ DockAutohideEffect
 LegacyDockSurfaceBackend::
     default_autohide_effect() const
 {
-    return uses_gnome_wayland_autohide_effect()
-               ? DockAutohideEffect::gnome
+    if (uses_gnome_wayland_autohide_effect())
+        return DockAutohideEffect::gnome;
+
+    return m_native_x11
+               ? DockAutohideEffect::plasma
                : DockAutohideEffect::slide;
 }
 

@@ -27,6 +27,7 @@
 #include <gtkmm.h>
 
 #include <algorithm>
+#include <array>
 #include <string>
 #include <vector>
 
@@ -78,7 +79,9 @@ void center_dialog_on_parent_monitor(
 
 void DockSettingsDialog::show(
     Gtk::Window &parent,
-    const Glib::RefPtr<Gdk::Pixbuf> &icon)
+    const Glib::RefPtr<Gdk::Pixbuf> &icon,
+    DockAutohideEffect effective_autohide_effect,
+    bool show_x11_autohide_effects)
 {
     DockConfigurationManager configuration;
     const auto current =
@@ -200,10 +203,12 @@ void DockSettingsDialog::show(
         _("Alignment"));
     Gtk::Label autohide_label(
         _("Autohide"));
+    Gtk::Label autohide_effect_label(
+        _("Autohide Effect"));
     Gtk::Label autohide_hide_delay_label(
         _("Autohide Delay (ms)"));
 
-    const std::vector<Gtk::Label *>
+    std::vector<Gtk::Label *>
         labels = {
             &monitor_label,
             &hover_label,
@@ -226,6 +231,12 @@ void DockSettingsDialog::show(
             &alignment_label,
             &autohide_label,
             &autohide_hide_delay_label};
+
+    if (show_x11_autohide_effects)
+    {
+        labels.push_back(
+            &autohide_effect_label);
+    }
 
     for (auto *field_label : labels)
     {
@@ -741,7 +752,86 @@ void DockSettingsDialog::show(
         break;
     }
 
-    const std::vector<Gtk::Widget *>
+    struct AutohideEffectChoice
+    {
+        DockAutohideEffect effect;
+        const char *value;
+        Glib::ustring label;
+    };
+
+    const std::array<AutohideEffectChoice, 3>
+        autohide_effect_choices{{
+            {
+                DockAutohideEffect::plasma,
+                "plasma",
+                C_("autohide effect", "Plasma")},
+            {
+                DockAutohideEffect::slide,
+                "slide",
+                C_("autohide effect", "Slide")},
+            {
+                DockAutohideEffect::fade,
+                "fade",
+                C_("autohide effect", "Fade")}}};
+
+    Gtk::ScrolledWindow autohide_effect_scroller;
+    Gtk::ListBox autohide_effect_list;
+
+    autohide_effect_scroller.set_policy(
+        Gtk::POLICY_NEVER,
+        Gtk::POLICY_NEVER);
+    autohide_effect_scroller.set_shadow_type(
+        Gtk::SHADOW_IN);
+    autohide_effect_scroller.set_size_request(
+        -1,
+        34 * static_cast<int>(
+                 autohide_effect_choices.size()));
+    autohide_effect_list.set_selection_mode(
+        Gtk::SELECTION_SINGLE);
+    autohide_effect_list.set_activate_on_single_click(
+        true);
+
+    const auto selected_autohide_effect =
+        current.settings.autohide_effect().value_or(
+            effective_autohide_effect);
+    Gtk::ListBoxRow *selected_autohide_effect_row =
+        nullptr;
+
+    for (const auto &choice :
+         autohide_effect_choices)
+    {
+        auto *row = Gtk::manage(
+            new Gtk::ListBoxRow());
+        auto *name = Gtk::manage(
+            new Gtk::Label(choice.label));
+
+        name->set_halign(
+            Gtk::ALIGN_START);
+        name->set_margin_start(8);
+        name->set_margin_end(8);
+        name->set_margin_top(5);
+        name->set_margin_bottom(5);
+
+        row->add(*name);
+        autohide_effect_list.append(*row);
+
+        if (choice.effect ==
+            selected_autohide_effect)
+        {
+            selected_autohide_effect_row = row;
+        }
+    }
+
+    autohide_effect_scroller.add(
+        autohide_effect_list);
+
+    if (selected_autohide_effect_row)
+    {
+        autohide_effect_list.select_row(
+            *selected_autohide_effect_row);
+    }
+
+    std::vector<Gtk::Widget *>
         fields = {
             &monitor_scroller,
             &hover_choices,
@@ -764,6 +854,12 @@ void DockSettingsDialog::show(
             &alignment_choices,
             &autohide_choices,
             &autohide_hide_delay_spin};
+
+    if (show_x11_autohide_effects)
+    {
+        fields.push_back(
+            &autohide_effect_scroller);
+    }
 
     for (auto *field : fields)
     {
@@ -1029,16 +1125,36 @@ void DockSettingsDialog::show(
         19,
         1,
         1);
+
+    int autohide_hide_delay_row = 20;
+
+    if (show_x11_autohide_effects)
+    {
+        grid.attach(
+            autohide_effect_label,
+            0,
+            20,
+            1,
+            1);
+        grid.attach(
+            autohide_effect_scroller,
+            1,
+            20,
+            1,
+            1);
+        autohide_hide_delay_row = 21;
+    }
+
     grid.attach(
         autohide_hide_delay_label,
         0,
-        20,
+        autohide_hide_delay_row,
         1,
         1);
     grid.attach(
         autohide_hide_delay_spin,
         1,
-        20,
+        autohide_hide_delay_row,
         1,
         1);
 
@@ -1075,6 +1191,39 @@ void DockSettingsDialog::show(
                             std::size_t>(
                             index)]);
             }));
+
+    if (show_x11_autohide_effects)
+    {
+        settings_connections.push_back(
+            autohide_effect_list
+                .signal_row_selected()
+                .connect(
+                [&configuration,
+                 &autohide_effect_choices](
+                    Gtk::ListBoxRow *row)
+                {
+                    if (!row)
+                        return;
+
+                    const int index =
+                        row->get_index();
+
+                    if (index < 0 ||
+                        index >= static_cast<int>(
+                            autohide_effect_choices
+                                .size()))
+                    {
+                        return;
+                    }
+
+                    configuration.save_setting(
+                        "autohide_effect",
+                        autohide_effect_choices[
+                            static_cast<std::size_t>(
+                                index)]
+                            .value);
+                }));
+    }
 
     const auto connect_radio =
         [&configuration,

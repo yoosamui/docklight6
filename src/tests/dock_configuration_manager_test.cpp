@@ -284,6 +284,24 @@ int main()
 
     assert(configuration.save_setting(
         "autohide_effect",
+        "plasma"));
+    DockConfigurationManager plasma_effect(
+        config_home);
+    assert(plasma_effect.current().settings
+               .autohide_effect() ==
+           DockAutohideEffect::plasma);
+
+    assert(configuration.save_setting(
+        "autohide_effect",
+        "slide"));
+    DockConfigurationManager slide_effect(
+        config_home);
+    assert(slide_effect.current().settings
+               .autohide_effect() ==
+           DockAutohideEffect::slide);
+
+    assert(configuration.save_setting(
+        "autohide_effect",
         "scale"));
     DockConfigurationManager unsupported_effect(
         config_home);

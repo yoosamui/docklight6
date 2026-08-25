@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "layout/dock_layout_types.h"
+
 #include <gdkmm/pixbuf.h>
 #include <glibmm/refptr.h>
 
@@ -38,5 +40,7 @@ namespace DockSettingsDialog
 {
 void show(
     Gtk::Window &parent,
-    const Glib::RefPtr<Gdk::Pixbuf> &icon);
+    const Glib::RefPtr<Gdk::Pixbuf> &icon,
+    DockAutohideEffect effective_autohide_effect,
+    bool show_x11_autohide_effects);
 }

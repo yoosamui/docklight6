@@ -83,7 +83,12 @@ private:
     void animate_fade(bool hiding);
     bool advance_fade_animation();
     bool can_animate_x11() const;
-    bool should_collapse_x11_horizontally() const;
+    bool uses_plasma_x11_edge_effect() const;
+    bool x11_slide_requires_horizontal_collapse() const;
+    bool collapses_x11_horizontally(
+        bool include_partial_slide = false) const;
+    bool collapses_x11_vertically() const;
+    double x11_horizontal_collapse_anchor() const;
     void animate_x11(
         bool hiding,
         bool start_at_hidden_edge = false);
@@ -145,8 +150,10 @@ private:
     bool m_has_shown_position = false;
     bool m_animating_to_hidden = false;
     bool m_animation_collapses_horizontally = false;
+    bool m_animation_collapses_vertically = false;
     bool m_animation_clips_top = false;
-    bool m_animation_scale_anchor_right = true;
+    bool m_animation_fades = false;
+    double m_animation_scale_anchor = 1.0;
     bool m_pointer_inside = false;
     bool m_shell_pointer_inside = false;
     bool m_backend_pointer_inside = false;

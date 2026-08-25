@@ -166,7 +166,7 @@ autohide_hide_delay = 1200
 // Configuration block added when the autohide-effect setting is missing.
 const char *AUTOHIDE_EFFECT_SETTING_TEMPLATE = R"(# Autohide visual effect.
 # Empty keeps the current platform-specific effect.
-# Valid additional effect: fade
+# Valid explicit effects: plasma, slide, fade
 autohide_effect =
 
 )";
@@ -277,7 +277,7 @@ autohide_hide_delay = 1200
 
 # Autohide visual effect.
 # Empty keeps the current platform-specific effect.
-# Valid additional effect: fade
+# Valid explicit effects: plasma, slide, fade
 autohide_effect =
 )";
 
@@ -992,6 +992,18 @@ void DockConfigurationManager::reload()
             candidate.settings
                 .set_autohide_effect({});
         }
+        else if (autohide_effect == "plasma")
+        {
+            candidate.settings
+                .set_autohide_effect(
+                    DockAutohideEffect::plasma);
+        }
+        else if (autohide_effect == "slide")
+        {
+            candidate.settings
+                .set_autohide_effect(
+                    DockAutohideEffect::slide);
+        }
         else if (autohide_effect == "fade")
         {
             candidate.settings
@@ -1002,7 +1014,8 @@ void DockConfigurationManager::reload()
         {
             g_warning(
                 "Invalid [dock] autohide_effect '%s'; "
-                "expected empty or fade; keeping the "
+                "expected empty, plasma, slide, or fade; "
+                "keeping the "
                 "platform default",
                 autohide_effect.c_str());
             candidate.settings
