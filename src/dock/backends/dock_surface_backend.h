@@ -80,7 +80,8 @@ public:
     // Settings only exposes effects which the active surface backend can
     // implement without changing presentation mode. Plasma Wayland keeps
     // its compositor map/unmap effect and adds its client-rendered
-    // slide/fade; native X11 retains its existing choices.
+    // slide/fade; GNOME Wayland delegates its choices to Shell; native X11
+    // retains its existing choices.
     virtual std::vector<DockAutohideEffect>
     configurable_autohide_effects() const = 0;
 
@@ -95,9 +96,11 @@ public:
     virtual void finish_autohide_fade(
         bool hidden) = 0;
 
-    // Plasma Wayland owns the physical slide/fade transform. The shared
-    // controller supplies normalized progress (0 shown, 1 hidden) so policy
-    // and timing remain independent of layer-surface drawing details.
+    // Native Plasma Wayland owns its physical slide/fade transform. The
+    // shared controller supplies normalized progress (0 shown, 1 hidden) so
+    // policy and timing remain independent of layer-surface drawing details.
+    // GNOME Wayland instead delegates this effect through the compositor
+    // integration and therefore does not use these local-surface hooks.
     virtual bool supports_autohide_slide_fade() const
     {
         return false;

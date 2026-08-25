@@ -30,6 +30,17 @@ configured monitor edge, centres its dialogs, respects existing GNOME panel
 and dock work areas, and reserves space while autohide is disabled; ordinary
 applications cannot perform those operations themselves on GNOME Wayland.
 
+The Shell extension also owns GNOME Wayland autohide drawing. The settings
+dialog exposes `GNOME`, which matches Docklight's controlled Plasma-style
+effect by keeping the dock fixed at the edge while scaling the complete actor
+around its centre and fading, and a separate `Slide and Fade` option. The
+latter moves the compositor actor outward by the complete dock thickness and
+fades it over the same 200 ms cubic timing. A right-edge dock beside another
+monitor keeps the existing inward-collapse safeguard so it cannot appear on
+that monitor. GTK continues to own autohide and intellihide policy, delays,
+input pass-through, and the final hidden state; Shell reports animation
+completion over the existing integration protocol.
+
 From the source directory, install the extension as the logged-in desktop
 user (without `sudo`):
 

@@ -226,6 +226,11 @@ The setup command must be run as the logged-in Plasma user, without `sudo`.
 
 DockLight creates `~/.config/docklight6/docklight.conf` automatically and
 monitors it for changes. Use the settings dialog for normal configuration.
+On GNOME Wayland, **Autohide Effect** offers a `GNOME` compositor effect which
+keeps the dock at its edge while scaling the complete dock around its centre
+and fading, matching Plasma Wayland's map/unmap behavior. `Slide and Fade`
+instead combines outward movement with opacity. The GNOME Shell extension
+owns both effects for native Wayland and XWayland presentation.
 On Plasma Wayland, **Autohide Effect** offers the existing `Plasma` behavior
 and the KDE-specific `Slide and Fade` behavior.
 

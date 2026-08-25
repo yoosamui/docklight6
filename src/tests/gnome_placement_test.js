@@ -658,9 +658,13 @@ assert.match(
     /default_autohide_effect\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?m_native_x11[\s\S]*?DockAutohideEffect::plasma[\s\S]*?DockAutohideEffect::slide/,
     "native X11 must use the Plasma-style effect without changing ordinary Wayland defaults");
 assert.match(
+    legacySurfaceBackendSource,
+    /configurable_autohide_effects\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?DockAutohideEffect::slide_fade/,
+    "GNOME Wayland settings must retain the GNOME effect and add slide/fade");
+assert.match(
     dockWindowControllerSource,
-    /set_effect\([\s\S]*?surface_default_autohide_effect\(\)[\s\S]*?m_autohide_controller->initialize\(\)/,
-    "the shared autohide controller must own the selected backend default");
+    /set_effect\([\s\S]*?m_window\.effective_autohide_effect\(\)[\s\S]*?m_autohide_controller->initialize\(\)/,
+    "the shared autohide controller must own the backend-normalized effect");
 assert.match(
     autohideControllerSource,
     /can_animate_x11\(\) const[\s\S]*?m_effect == DockAutohideEffect::slide[\s\S]*?m_effect == DockAutohideEffect::plasma[\s\S]*?m_effect == DockAutohideEffect::gnome[\s\S]*?!has_shell_reveal_trigger\(\)[\s\S]*?surface_is_native_x11\(\)/,
@@ -670,9 +674,9 @@ assert.match(
     /uses_shell_reveal_trigger\(\) const[\s\S]*?surface_delegates_autohide_effect\([\s\S]*?m_effect[\s\S]*?has_shell_reveal_trigger\(\)/,
     "compositor-owned effects must remain routed through the active surface backend and Shell integration");
 assert.match(
-    dockWindowControllerSource,
-    /autohide_effect\(\)\.value_or\([\s\S]*?surface_default_autohide_effect\(\)/,
-    "an empty effect setting must preserve the active backend default");
+    dockWindowSource,
+    /effective_autohide_effect\(\) const[\s\S]*?default_autohide_effect\(\)[\s\S]*?autohide_effect\(\)[\s\S]*?configurable_autohide_effects\(\)[\s\S]*?std::find\([\s\S]*?return platform_default/,
+    "unsupported desktop-specific settings must fall back to the active backend default");
 assert.match(
     autohideControllerSource,
     /case DockAutohideEffect::fade:[\s\S]*?animate_fade\(hiding\)/,
@@ -687,28 +691,36 @@ assert.match(
     "local fade must reverse from current opacity and preserve each backend's final hidden state");
 assert.match(
     legacySurfaceBackendSource,
-    /delegates_autohide_effect\([\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::fade[\s\S]*?finish_autohide_fade\([\s\S]*?!m_native_x11[\s\S]*?m_window\.hide\(\)/,
-    "the legacy backend must delegate GNOME fade while retaining X11's mapped hidden surface");
+    /delegates_autohide_effect\([\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::fade[\s\S]*?DockAutohideEffect::slide_fade[\s\S]*?finish_autohide_fade\([\s\S]*?!m_native_x11[\s\S]*?m_window\.hide\(\)/,
+    "the legacy backend must delegate GNOME compositor effects while retaining X11's mapped hidden surface");
 assert.match(
     plasmaSurfaceBackendSource,
     /set_autohide_fade_opacity\([\s\S]*?m_window\.set_opacity\(opacity\)[\s\S]*?finish_autohide_fade\([\s\S]*?m_window\.hide\(\)/,
     "Plasma fade must use layer-surface opacity before its existing unmapped hidden state");
 assert.match(
     extensionSource,
-    /get_string\([\s\S]*?'dock', 'autohide_effect'[\s\S]*?configuredEffect === 'fade'[\s\S]*?this\._dockAutohideEffect = autohideEffect/,
-    "GNOME must consume the same fade selection as the application");
+    /get_string\([\s\S]*?'dock', 'autohide_effect'[\s\S]*?\['fade', 'slide_fade'\]\.includes\(configuredEffect\)[\s\S]*?this\._dockAutohideEffect = autohideEffect/,
+    "GNOME must consume its compositor-effect selections from application configuration");
 assert.match(
     extensionSource,
     /_dockAutohideEffect === 'fade'[\s\S]*?_startDockFadeTransition\(hidden, actor\)[\s\S]*?_startDockFadeTransition\(hidden, actor\)[\s\S]*?actor\.remove_all_transitions\(\)[\s\S]*?const startOpacity = actor\.get_opacity\(\)[\s\S]*?actor\.ease\(\{[\s\S]*?opacity: targetOpacity/,
     "GNOME fade must use its compositor actor and reverse from the current opacity");
+assert.match(
+    extensionSource,
+    /_dockAutohideEffect !== 'slide_fade'[\s\S]*?_startDockPlasmaStyleTransition\(hidden, actor\)[\s\S]*?calculateDockHideOffset\(positioned\)[\s\S]*?EASE_IN_CUBIC[\s\S]*?EASE_OUT_CUBIC[\s\S]*?animation\.opacity = hidden \? 0 : this\._dockActorOpacity[\s\S]*?actor\.ease\(animation\)/,
+    "GNOME slide/fade must combine outward movement and opacity with Plasma timing");
+assert.match(
+    extensionSource,
+    /_startDockPlasmaStyleTransition\(hidden, actor\)[\s\S]*?set_pivot_point\(0\.5, 0\.5\)[\s\S]*?startScaleX = actor\.scale_x[\s\S]*?startScaleY = actor\.scale_y[\s\S]*?targetScale = hidden \? 0 : 1[\s\S]*?targetOpacity = hidden \? 0 : this\._dockActorOpacity[\s\S]*?animation\.scale_x = targetScale[\s\S]*?animation\.scale_y = targetScale[\s\S]*?actor\.ease\(animation\)/,
+    "the GNOME effect must match Plasma Wayland centred two-axis scale and fade");
 assert.match(
     autohideControllerSource,
     /finish_shell_animation\([\s\S]*?hidden[\s\S]*?ShellDockState::hidden[\s\S]*?set_surface_input_passthrough\(true\)/,
     "input pass-through must begin only after Shell completes the hide animation");
 assert.match(
     extensionSource,
-    /_startDockVisibilityTransition\(hidden[\s\S]*?calculateDockHideOffset\(positioned\)[\s\S]*?_updateDockAnimationClip\(actor, positioned, base\)[\s\S]*?EASE_OUT_QUAD[\s\S]*?actor\.ease\(/,
-    "GNOME must use Cinnamon-style compositor movement and monitor clipping");
+    /_startDockVisibilityTransition\(hidden[\s\S]*?_dockAutohideEffect !== 'slide_fade'[\s\S]*?calculateDockHideOffset\(positioned\)[\s\S]*?_updateDockAnimationClip\(actor, positioned, base\)[\s\S]*?actor\.ease\(animation\)/,
+    "GNOME slide/fade must retain compositor movement and monitor clipping");
 assert.match(
     extensionSource,
     /get_string\('dock', 'location'\)[\s\S]*?this\._dockLocation = location[\s\S]*?placeDockInWorkArea\([\s\S]*?this\._dockLocation/,

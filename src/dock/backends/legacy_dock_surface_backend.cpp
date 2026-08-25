@@ -371,6 +371,13 @@ std::vector<DockAutohideEffect>
 LegacyDockSurfaceBackend::
     configurable_autohide_effects() const
 {
+    if (uses_gnome_wayland_autohide_effect())
+    {
+        return {
+            DockAutohideEffect::gnome,
+            DockAutohideEffect::slide_fade};
+    }
+
     if (!m_native_x11)
         return {};
 
@@ -386,7 +393,8 @@ bool LegacyDockSurfaceBackend::
 {
     return uses_gnome_wayland_autohide_effect() &&
            (effect == DockAutohideEffect::gnome ||
-            effect == DockAutohideEffect::fade);
+            effect == DockAutohideEffect::fade ||
+            effect == DockAutohideEffect::slide_fade);
 }
 
 double LegacyDockSurfaceBackend::

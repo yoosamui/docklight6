@@ -64,7 +64,8 @@ const DOCK_PLACEMENT_MAX_ATTEMPTS = 40;
 const DOCK_DISCOVERY_MAX_ATTEMPTS = 30;
 const REGISTRATION_RETRY_MS = 250;
 const CONFIGURATION_SETTLE_MS = 50;
-// Match Cinnamon's panel tween: a 200 ms compositor-side ease-out movement.
+// Keep GNOME's compositor-owned effects aligned with Docklight's 200 ms
+// Plasma-style and slide/fade transitions.
 const DOCK_HIDE_ANIMATION_MS = 200;
 const DOCK_REVEAL_ANIMATION_MS = 200;
 const DOCK_CLIP_FRAME_MS = 16;
@@ -396,7 +397,7 @@ export default class DocklightWindowIntegration extends Extension {
             try {
                 const configuredEffect = keyFile.get_string(
                     'dock', 'autohide_effect').trim();
-                if (configuredEffect === 'fade')
+                if (['fade', 'slide_fade'].includes(configuredEffect))
                     autohideEffect = configuredEffect;
             } catch (_error) {
                 // Missing and empty values retain the GNOME effect.
@@ -1009,6 +1010,14 @@ export default class DocklightWindowIntegration extends Extension {
             return;
         }
 
+        if (this._dockAutohideEffect !== 'slide_fade') {
+            this._startDockPlasmaStyleTransition(hidden, actor);
+            return;
+        }
+
+        // GNOME owns the compositor actor, so reproduce Plasma's normalized
+        // outward movement and opacity curve here instead of moving or
+        // redrawing the GTK surface.
         const base = this._dockActorBaseTranslation ?? {x: 0, y: 0};
         const monitorIndex = this._dockMonitorIndex();
         const positioned = placeDockInWorkArea(
@@ -1073,7 +1082,6 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockVisibilityState = hidden ? 'hiding' : 'revealing';
         if (!collapseRight)
             this._updateDockAnimationClip(actor, positioned, base);
-        actor.set_opacity(this._dockActorOpacity);
         this._updateDockRevealActor();
         this._publishDockPointerInside(true);
 
@@ -1122,7 +1130,9 @@ export default class DocklightWindowIntegration extends Extension {
             });
         const animation = {
             duration,
-            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            mode: hidden
+                ? Clutter.AnimationMode.EASE_IN_CUBIC
+                : Clutter.AnimationMode.EASE_OUT_CUBIC,
             onComplete: completeTransition,
         };
         if (collapseRight)
@@ -1131,6 +1141,7 @@ export default class DocklightWindowIntegration extends Extension {
             animation.translation_x = targetX;
             animation.translation_y = targetY;
         }
+        animation.opacity = hidden ? 0 : this._dockActorOpacity;
         actor.ease(animation);
         if (this._isX11DockWindow() && !collapseRight) {
             this._dockClipSource = GLib.timeout_add(
@@ -1145,6 +1156,98 @@ export default class DocklightWindowIntegration extends Extension {
                     return GLib.SOURCE_CONTINUE;
                 });
         }
+    }
+
+    _startDockPlasmaStyleTransition(hidden, actor) {
+        const serial = ++this._dockVisibilityAnimationSerial;
+        this._cancelDockAnimationClip(false);
+        actor.remove_all_transitions();
+
+        // Match Plasma Wayland's map/unmap effect: keep the window fixed at
+        // its edge while the complete actor scales into or out of its centre
+        // and its compositor opacity fades. Shell owns this transform for
+        // both native Wayland and XWayland presentation.
+        const base = this._dockActorBaseTranslation ?? {x: 0, y: 0};
+        actor.translation_x = base.x;
+        actor.translation_y = base.y;
+        actor.set_pivot_point(0.5, 0.5);
+        actor.remove_clip();
+
+        let startScaleX = actor.scale_x;
+        let startScaleY = actor.scale_y;
+        if (!hidden && actor.get_opacity() === 0 &&
+            startScaleX >= 0.999 && startScaleY >= 0.999) {
+            startScaleX = 0;
+            startScaleY = 0;
+            actor.scale_x = startScaleX;
+            actor.scale_y = startScaleY;
+        }
+
+        const targetScale = hidden ? 0 : 1;
+        const targetOpacity = hidden ? 0 : this._dockActorOpacity;
+        const startOpacity = actor.get_opacity();
+        const remainingScale = Math.max(
+            Math.abs(targetScale - startScaleX),
+            Math.abs(targetScale - startScaleY));
+        const remainingOpacity = Math.abs(targetOpacity - startOpacity) /
+            Math.max(1, this._dockActorOpacity);
+        const remainingFraction = Math.min(
+            1, Math.max(remainingScale, remainingOpacity));
+        const fullDuration = hidden
+            ? DOCK_HIDE_ANIMATION_MS
+            : DOCK_REVEAL_ANIMATION_MS;
+        const duration = Math.max(
+            60, Math.round(fullDuration * remainingFraction));
+
+        this._dockVisibilityState = hidden ? 'hiding' : 'revealing';
+        this._updateDockRevealActor();
+        this._publishDockPointerInside(true);
+
+        let completed = false;
+        let completionSource = 0;
+        const completeTransition = () => {
+            if (completed || serial !== this._dockVisibilityAnimationSerial)
+                return;
+
+            completed = true;
+            if (completionSource) {
+                GLib.source_remove(completionSource);
+                completionSource = 0;
+            }
+            this._dockVisibilityState = hidden ? 'hidden' : 'visible';
+            actor.scale_x = targetScale;
+            actor.scale_y = targetScale;
+            actor.set_opacity(targetOpacity);
+            this._updateDockRevealActor();
+            this._publishDockPointerInside(true);
+            this._call(
+                'PublishDockAnimationCompleted', '(b)', [hidden]);
+        };
+
+        if (remainingFraction < 0.001) {
+            completeTransition();
+            return;
+        }
+
+        completionSource = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            duration + 32,
+            () => {
+                completionSource = 0;
+                completeTransition();
+                return GLib.SOURCE_REMOVE;
+            });
+        const animation = {
+            opacity: targetOpacity,
+            duration,
+            mode: hidden
+                ? Clutter.AnimationMode.EASE_IN_CUBIC
+                : Clutter.AnimationMode.EASE_OUT_CUBIC,
+            onComplete: completeTransition,
+        };
+        animation.scale_x = targetScale;
+        animation.scale_y = targetScale;
+        actor.ease(animation);
     }
 
     _startDockFadeTransition(hidden, actor) {

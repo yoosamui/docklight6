@@ -282,6 +282,16 @@ The equivalent configured-build target is:
 make -C build install-gnome-integration
 ```
 
+The GNOME Wayland settings dialog offers two compositor-owned autohide
+effects:
+
+- `GNOME` matches the Plasma Wayland effect: the dock stays fixed at its edge
+  while the complete dock scales around its centre and fades.
+- `Slide and Fade` moves the dock outward while fading it, using the same
+  200 ms cubic hide/reveal timing as the Plasma Wayland implementation.
+
+The corresponding configuration values are `gnome` and `slide_fade`.
+
 See `gnome/README.md` for GNOME-specific architecture and presentation notes.
 
 ### Plasma Wayland

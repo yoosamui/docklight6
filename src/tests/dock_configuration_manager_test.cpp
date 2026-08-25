@@ -293,6 +293,15 @@ int main()
 
     assert(configuration.save_setting(
         "autohide_effect",
+        "gnome"));
+    DockConfigurationManager gnome_effect(
+        config_home);
+    assert(gnome_effect.current().settings
+               .autohide_effect() ==
+           DockAutohideEffect::gnome);
+
+    assert(configuration.save_setting(
+        "autohide_effect",
         "slide"));
     DockConfigurationManager slide_effect(
         config_home);

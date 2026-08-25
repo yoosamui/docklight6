@@ -173,8 +173,7 @@ void DockWindowController::initialize()
     }
 
     m_autohide_controller->set_effect(
-        m_settings.autohide_effect().value_or(
-            m_window.surface_default_autohide_effect()));
+        m_window.effective_autohide_effect());
     m_autohide_controller->initialize();
     m_autohide_controller->set_monitor(
         m_monitor);
@@ -692,8 +691,7 @@ void DockWindowController::apply_configuration(
     m_autohide_controller->set_hide_delay(
         m_settings.autohide_hide_delay());
     m_autohide_controller->set_effect(
-        m_settings.autohide_effect().value_or(
-            m_window.surface_default_autohide_effect()));
+        m_window.effective_autohide_effect());
     m_autohide_controller->set_mode(
         m_layout_request.autohide);
 

@@ -794,6 +794,11 @@ void DockSettingsDialog::show(
                     "Slide and Fade")});
             break;
         case DockAutohideEffect::gnome:
+            autohide_effect_choices.push_back({
+                effect,
+                "gnome",
+                C_("autohide effect", "GNOME")});
+            break;
         case DockAutohideEffect::scale:
             break;
         }

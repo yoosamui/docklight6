@@ -820,18 +820,43 @@ bool DockWindow::preview_input_forwarding() const
 DockAutohideEffect
 DockWindow::effective_autohide_effect() const
 {
-    return m_controller
-        ->settings()
-        .autohide_effect()
-        .value_or(
-            m_surface_backend
-                ->default_autohide_effect());
+    const auto platform_default =
+        m_surface_backend
+            ->default_autohide_effect();
+    const auto configured =
+        m_controller
+            ->settings()
+            .autohide_effect();
+
+    if (!configured.has_value())
+        return platform_default;
+
+    if (*configured == platform_default ||
+        *configured == DockAutohideEffect::fade)
+        return *configured;
+
+    const auto supported =
+        m_surface_backend
+            ->configurable_autohide_effects();
+    if (std::find(
+            supported.begin(),
+            supported.end(),
+            *configured) != supported.end())
+    {
+        return *configured;
+    }
+
+    // A shared configuration can retain a desktop-specific choice after the
+    // user changes sessions. Never dispatch that value through a surface
+    // backend which cannot reveal it; use the backend's safe default instead.
+    return platform_default;
 }
 
 std::vector<DockAutohideEffect>
 DockWindow::configurable_autohide_effects() const
 {
-    return surface_configurable_autohide_effects();
+    return m_surface_backend
+        ->configurable_autohide_effects();
 }
 
 DockWindowGeometry
@@ -940,20 +965,6 @@ bool DockWindow::surface_is_native_x11() const
 bool DockWindow::surface_is_ordinary_wayland() const
 {
     return m_surface_backend->is_ordinary_wayland();
-}
-
-DockAutohideEffect
-DockWindow::surface_default_autohide_effect() const
-{
-    return m_surface_backend
-        ->default_autohide_effect();
-}
-
-std::vector<DockAutohideEffect>
-DockWindow::surface_configurable_autohide_effects() const
-{
-    return m_surface_backend
-        ->configurable_autohide_effects();
 }
 
 bool DockWindow::surface_delegates_autohide_effect(

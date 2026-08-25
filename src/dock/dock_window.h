@@ -171,10 +171,6 @@ private:
     bool surface_uses_native_placement() const;
     bool surface_is_native_x11() const;
     bool surface_is_ordinary_wayland() const;
-    DockAutohideEffect
-    surface_default_autohide_effect() const;
-    std::vector<DockAutohideEffect>
-    surface_configurable_autohide_effects() const;
     bool surface_delegates_autohide_effect(
         DockAutohideEffect effect) const;
     double surface_autohide_fade_opacity() const;
