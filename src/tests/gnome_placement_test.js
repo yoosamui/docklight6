@@ -508,7 +508,7 @@ assert.match(
     "the first stable X11 frame must honor autohide and the live pointer without an intermediate reveal");
 assert.match(
     autohideControllerSource,
-    /reset_x11_visual_transform[\s\S]*?m_initial_x11_startup_pending[\s\S]*?0\.0[\s\S]*?1\.0/,
+    /reset_local_visual_transform[\s\S]*?m_initial_x11_startup_pending[\s\S]*?0\.0[\s\S]*?1\.0/,
     "layout resets must preserve the transparent X11 startup guard");
 assert.match(
     tooltipManagerSource,
@@ -646,6 +646,14 @@ assert.match(
     /default_autohide_effect\(\) const[\s\S]*?DockAutohideEffect::plasma/,
     "Plasma Wayland must retain its current surface effect");
 assert.match(
+    plasmaSurfaceBackendSource,
+    /configurable_autohide_effects\(\) const[\s\S]*?DockAutohideEffect::plasma[\s\S]*?DockAutohideEffect::slide_fade/,
+    "Plasma Wayland settings must retain Plasma and add slide/fade as a separate choice");
+assert.match(
+    plasmaSurfaceBackendSource,
+    /supports_autohide_slide_fade\(\) const[\s\S]*?return true;[\s\S]*?set_autohide_slide_fade_progress\([\s\S]*?autohide_slide_content_offset\([\s\S]*?set_surface_horizontal_offset\([\s\S]*?set_surface_vertical_offset\([\s\S]*?set_opacity\(1\.0 - clamped\)[\s\S]*?finish_autohide_slide_fade\([\s\S]*?m_window\.hide\(\)/,
+    "Plasma Wayland must own slide/fade drawing and unmap only after its transparent final frame");
+assert.match(
     legacySurfaceBackendSource,
     /default_autohide_effect\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?m_native_x11[\s\S]*?DockAutohideEffect::plasma[\s\S]*?DockAutohideEffect::slide/,
     "native X11 must use the Plasma-style effect without changing ordinary Wayland defaults");
@@ -669,6 +677,10 @@ assert.match(
     autohideControllerSource,
     /case DockAutohideEffect::fade:[\s\S]*?animate_fade\(hiding\)/,
     "fade must have an explicit visual-transition dispatch");
+assert.match(
+    autohideControllerSource,
+    /case DockAutohideEffect::slide_fade:[\s\S]*?surface_supports_autohide_slide_fade\(\)[\s\S]*?animate_slide_fade\(hiding\)[\s\S]*?animate_slide_fade\([\s\S]*?surface_autohide_slide_fade_progress\(\)[\s\S]*?progress \* progress \* progress[\s\S]*?1\.0 - std::pow\(1\.0 - progress, 3\.0\)[\s\S]*?finish_surface_autohide_slide_fade\(true\)/,
+    "Plasma Wayland slide/fade must reverse from current progress and use native-X11 timing");
 assert.match(
     autohideControllerSource,
     /animate_fade\([\s\S]*?cancel_animation\(\)[\s\S]*?surface_autohide_fade_opacity\(\)[\s\S]*?advance_fade_animation[\s\S]*?set_surface_input_passthrough\(true\)[\s\S]*?finish_surface_autohide_fade\(true\)/,
@@ -743,7 +755,7 @@ assert.match(
     "a remapped X11 dock must stay transparent until its hidden-edge transform reaches the compositor");
 assert.match(
     autohideControllerSource,
-    /if \(m_animating_to_hidden\)[\s\S]*?m_window\.set_opacity\(0\.0\);[\s\S]*?set_surface_input_passthrough\(true\);[\s\S]*?else[\s\S]*?reset_x11_visual_transform\(\);/,
+    /if \(m_animating_to_hidden\)[\s\S]*?m_window\.set_opacity\(0\.0\);[\s\S]*?set_surface_input_passthrough\(true\);[\s\S]*?else[\s\S]*?reset_local_visual_transform\(\);/,
     "a hidden native X11 dock must remain mapped and input-pass-through so reveal does not trigger a compositor map effect");
 assert.match(
     autohideControllerSource,
@@ -766,8 +778,12 @@ assert.match(
     /set_horizontal_scale\([\s\S]*?double anchor\)[\s\S]*?m_horizontal_scale_anchor = clamped_anchor[\s\S]*?set_vertical_scale\([\s\S]*?double anchor\)[\s\S]*?m_vertical_scale_anchor = clamped_anchor[\s\S]*?context->translate\([\s\S]*?m_horizontal_scale_anchor[\s\S]*?m_vertical_scale_anchor[\s\S]*?context->scale\([\s\S]*?m_horizontal_scale,[\s\S]*?m_vertical_scale/,
     "the dock drawing transform must support centred scaling on both axes");
 assert.match(
+    dockWindowSource,
+    /set_horizontal_offset\([\s\S]*?m_horizontal_offset = offset[\s\S]*?context->translate\([\s\S]*?m_horizontal_offset/,
+    "the dock drawing transform must support Wayland slide translation on vertical edges");
+assert.match(
     autohideControllerSource,
-    /set_placement\([\s\S]*?cancel_animation\(\);\s*reset_x11_visual_transform\(\);/,
+    /set_placement\([\s\S]*?cancel_animation\(\);\s*reset_local_visual_transform\(\);/,
     "changing dock placement must clear an interrupted X11 transform");
 assert.match(
     autohideControllerSource,

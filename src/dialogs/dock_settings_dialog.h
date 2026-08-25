@@ -31,6 +31,8 @@
 #include <gdkmm/pixbuf.h>
 #include <glibmm/refptr.h>
 
+#include <vector>
+
 namespace Gtk
 {
 class Window;
@@ -42,5 +44,6 @@ void show(
     Gtk::Window &parent,
     const Glib::RefPtr<Gdk::Pixbuf> &icon,
     DockAutohideEffect effective_autohide_effect,
-    bool show_x11_autohide_effects);
+    const std::vector<DockAutohideEffect>
+        &configurable_autohide_effects);
 }

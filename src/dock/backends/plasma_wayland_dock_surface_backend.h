@@ -57,6 +57,8 @@ public:
     bool is_ordinary_wayland() const override;
     DockAutohideEffect
     default_autohide_effect() const override;
+    std::vector<DockAutohideEffect>
+    configurable_autohide_effects() const override;
     bool delegates_autohide_effect(
         DockAutohideEffect effect) const override;
     double autohide_fade_opacity() const override;
@@ -64,10 +66,18 @@ public:
         double opacity) override;
     void finish_autohide_fade(
         bool hidden) override;
+    bool supports_autohide_slide_fade() const override;
+    double autohide_slide_fade_progress() const override;
+    void set_autohide_slide_fade_progress(
+        const DockPlacement &placement,
+        double progress) override;
+    void finish_autohide_slide_fade(
+        bool hidden) override;
     bool initial_placement_pending() const override;
     void complete_initial_placement() override;
 
 private:
     DockWindow &m_window;
     Glib::RefPtr<Gdk::Monitor> m_monitor;
+    double m_autohide_slide_fade_progress = 0.0;
 };

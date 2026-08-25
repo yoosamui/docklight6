@@ -32,6 +32,7 @@
 #include <gdkmm/monitor.h>
 
 #include <memory>
+#include <vector>
 
 class DockWindow;
 
@@ -76,6 +77,13 @@ public:
     virtual DockAutohideEffect
     default_autohide_effect() const = 0;
 
+    // Settings only exposes effects which the active surface backend can
+    // implement without changing presentation mode. Plasma Wayland keeps
+    // its compositor map/unmap effect and adds its client-rendered
+    // slide/fade; native X11 retains its existing choices.
+    virtual std::vector<DockAutohideEffect>
+    configurable_autohide_effects() const = 0;
+
     // Physical effect ownership stays at the surface boundary. A delegated
     // effect is animated by the compositor integration; otherwise fade uses
     // the backend's native surface opacity and hidden-state operation.
@@ -86,6 +94,27 @@ public:
         double opacity) = 0;
     virtual void finish_autohide_fade(
         bool hidden) = 0;
+
+    // Plasma Wayland owns the physical slide/fade transform. The shared
+    // controller supplies normalized progress (0 shown, 1 hidden) so policy
+    // and timing remain independent of layer-surface drawing details.
+    virtual bool supports_autohide_slide_fade() const
+    {
+        return false;
+    }
+    virtual double autohide_slide_fade_progress() const
+    {
+        return 0.0;
+    }
+    virtual void set_autohide_slide_fade_progress(
+        const DockPlacement &,
+        double)
+    {
+    }
+    virtual void finish_autohide_slide_fade(
+        bool)
+    {
+    }
 
     virtual bool initial_placement_pending() const = 0;
     virtual void complete_initial_placement() = 0;

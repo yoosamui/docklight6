@@ -367,6 +367,19 @@ LegacyDockSurfaceBackend::
                : DockAutohideEffect::slide;
 }
 
+std::vector<DockAutohideEffect>
+LegacyDockSurfaceBackend::
+    configurable_autohide_effects() const
+{
+    if (!m_native_x11)
+        return {};
+
+    return {
+        DockAutohideEffect::plasma,
+        DockAutohideEffect::slide,
+        DockAutohideEffect::fade};
+}
+
 bool LegacyDockSurfaceBackend::
     delegates_autohide_effect(
         DockAutohideEffect effect) const

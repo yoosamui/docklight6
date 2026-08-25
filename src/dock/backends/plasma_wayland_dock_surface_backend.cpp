@@ -271,6 +271,15 @@ PlasmaWaylandDockSurfaceBackend::
     return DockAutohideEffect::plasma;
 }
 
+std::vector<DockAutohideEffect>
+PlasmaWaylandDockSurfaceBackend::
+    configurable_autohide_effects() const
+{
+    return {
+        DockAutohideEffect::plasma,
+        DockAutohideEffect::slide_fade};
+}
+
 bool PlasmaWaylandDockSurfaceBackend::
     delegates_autohide_effect(
         DockAutohideEffect) const
@@ -293,6 +302,59 @@ void PlasmaWaylandDockSurfaceBackend::
 
 void PlasmaWaylandDockSurfaceBackend::
     finish_autohide_fade(
+        bool hidden)
+{
+    if (hidden)
+        m_window.hide();
+}
+
+bool PlasmaWaylandDockSurfaceBackend::
+    supports_autohide_slide_fade() const
+{
+    return true;
+}
+
+double PlasmaWaylandDockSurfaceBackend::
+    autohide_slide_fade_progress() const
+{
+    return m_autohide_slide_fade_progress;
+}
+
+void PlasmaWaylandDockSurfaceBackend::
+    set_autohide_slide_fade_progress(
+        const DockPlacement &placement,
+        double progress)
+{
+    const double clamped =
+        std::clamp(progress, 0.0, 1.0);
+    const int width = placement.width > 0
+        ? placement.width
+        : std::max(
+              1,
+              m_window.get_allocated_width());
+    const int height = placement.height > 0
+        ? placement.height
+        : std::max(
+              1,
+              m_window.get_allocated_height());
+
+    const auto offset =
+        autohide_slide_content_offset(
+            placement,
+            width,
+            height,
+            clamped);
+
+    m_autohide_slide_fade_progress = clamped;
+    m_window.set_surface_horizontal_offset(
+        offset.x);
+    m_window.set_surface_vertical_offset(
+        offset.y);
+    m_window.set_opacity(1.0 - clamped);
+}
+
+void PlasmaWaylandDockSurfaceBackend::
+    finish_autohide_slide_fade(
         bool hidden)
 {
     if (hidden)

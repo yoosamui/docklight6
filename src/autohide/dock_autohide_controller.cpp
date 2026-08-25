@@ -311,7 +311,7 @@ void DockAutohideController::set_monitor(
         reveal_immediately();
 
     cancel_animation();
-    reset_x11_visual_transform();
+    reset_local_visual_transform();
     m_has_shown_position = false;
 
     m_reveal_window.set_monitor(monitor);
@@ -370,6 +370,18 @@ void DockAutohideController::set_placement(
         if (uses_shell_reveal_trigger())
             return;
 
+        if (m_effect == DockAutohideEffect::slide_fade &&
+            m_window.surface_supports_autohide_slide_fade())
+        {
+            set_surface_input_passthrough(true);
+            m_window.set_surface_autohide_slide_fade_progress(
+                m_placement,
+                1.0);
+            m_window.finish_surface_autohide_slide_fade(true);
+            m_reveal_window.show();
+            return;
+        }
+
         // A placement update can arrive while a local fade is still running.
         // Finish it invisibly, retain the normal unmapped Wayland hidden
         // state, then restore full opacity for the next explicit reveal.
@@ -386,7 +398,7 @@ void DockAutohideController::set_placement(
         reveal_immediately();
 
     cancel_animation();
-    reset_x11_visual_transform();
+    reset_local_visual_transform();
     m_has_shown_position = false;
 
     m_reveal_window.apply_placement(placement);
@@ -612,8 +624,14 @@ void DockAutohideController::cancel_animation()
     m_animation_timer.disconnect();
 }
 
-void DockAutohideController::reset_x11_visual_transform()
+void DockAutohideController::reset_local_visual_transform()
 {
+    if (m_window.surface_supports_autohide_slide_fade())
+    {
+        m_window.set_surface_autohide_slide_fade_progress(
+            m_placement,
+            0.0);
+    }
     m_window.set_x11_horizontal_scale(
         1.0,
         horizontal_scale_anchor(m_placement));
@@ -740,6 +758,19 @@ void DockAutohideController::animate_effect(
             animate_fade(hiding);
             return;
 
+        case DockAutohideEffect::slide_fade:
+            if (m_window.surface_supports_autohide_slide_fade())
+            {
+                animate_slide_fade(hiding);
+                return;
+            }
+
+            g_warning(
+                "Slide and fade autohide is not supported "
+                "by the active surface backend; using fade");
+            animate_fade(hiding);
+            return;
+
         case DockAutohideEffect::plasma:
         case DockAutohideEffect::gnome:
         case DockAutohideEffect::slide:
@@ -750,7 +781,6 @@ void DockAutohideController::animate_effect(
             return;
 
         case DockAutohideEffect::scale:
-        case DockAutohideEffect::slide_fade:
             g_warning(
                 "Requested autohide effect is not implemented");
             return;
@@ -853,6 +883,104 @@ bool DockAutohideController::advance_fade_animation()
     else
     {
         m_window.finish_surface_autohide_fade(false);
+        set_surface_input_passthrough(false);
+        m_signal_fully_revealed.emit();
+    }
+
+    return false;
+}
+
+void DockAutohideController::animate_slide_fade(
+    bool hiding)
+{
+    cancel_animation();
+
+    // The reveal strip owns edge input during the complete hide transition.
+    // On reveal, restore dock input before its first visible frame.
+    set_surface_input_passthrough(hiding);
+
+    m_animation_start_progress =
+        std::clamp(
+            m_window.surface_autohide_slide_fade_progress(),
+            0.0,
+            1.0);
+    m_animation_target_progress =
+        hiding ? 1.0 : 0.0;
+    m_animating_to_hidden = hiding;
+
+    const double remaining =
+        std::abs(
+            m_animation_target_progress -
+            m_animation_start_progress);
+    m_animation_duration_ms = std::max(
+        DockConstants::AUTOHIDE_ANIMATION_FRAME_MS,
+        static_cast<int>(std::lround(
+            DockConstants::AUTOHIDE_ANIMATION_DURATION_MS *
+            remaining)));
+    m_animation_start_time_us =
+        g_get_monotonic_time();
+
+    if (remaining < 0.001)
+    {
+        advance_slide_fade_animation();
+        return;
+    }
+
+    m_animation_timer =
+        Glib::signal_timeout().connect(
+            sigc::mem_fun(
+                *this,
+                &DockAutohideController::
+                    advance_slide_fade_animation),
+            DockConstants::
+                AUTOHIDE_ANIMATION_FRAME_MS);
+}
+
+bool DockAutohideController::
+    advance_slide_fade_animation()
+{
+    const double elapsed_ms =
+        static_cast<double>(
+            g_get_monotonic_time() -
+            m_animation_start_time_us) /
+        1000.0;
+    const double progress = std::clamp(
+        elapsed_ms /
+            std::max(1, m_animation_duration_ms),
+        0.0,
+        1.0);
+
+    // Match native X11: accelerate toward the edge while hiding and
+    // decelerate into the shown position while revealing.
+    const double eased = m_animating_to_hidden
+        ? progress * progress * progress
+        : 1.0 - std::pow(1.0 - progress, 3.0);
+    const double surface_progress =
+        m_animation_start_progress +
+        (m_animation_target_progress -
+         m_animation_start_progress) *
+            eased;
+
+    m_window.set_surface_autohide_slide_fade_progress(
+        m_placement,
+        surface_progress);
+
+    if (progress < 1.0)
+        return true;
+
+    m_animation_timer.disconnect();
+    m_window.set_surface_autohide_slide_fade_progress(
+        m_placement,
+        m_animation_target_progress);
+
+    if (m_animating_to_hidden)
+    {
+        set_surface_input_passthrough(true);
+        m_window.finish_surface_autohide_slide_fade(true);
+    }
+    else
+    {
+        m_window.finish_surface_autohide_slide_fade(false);
         set_surface_input_passthrough(false);
         m_signal_fully_revealed.emit();
     }
@@ -1312,7 +1440,7 @@ bool DockAutohideController::advance_x11_animation()
     }
     else
     {
-        reset_x11_visual_transform();
+        reset_local_visual_transform();
         m_signal_fully_revealed.emit();
     }
 
@@ -1417,7 +1545,7 @@ void DockAutohideController::reveal_immediately()
         m_shell_state = ShellDockState::visible;
     }
 
-    reset_x11_visual_transform();
+    reset_local_visual_transform();
     set_surface_input_passthrough(false);
 
     if (m_hidden)
@@ -1563,6 +1691,14 @@ void DockAutohideController::reveal()
             if (m_effect == DockAutohideEffect::fade)
                 m_window.set_opacity(0.0);
 
+            if (m_effect == DockAutohideEffect::slide_fade &&
+                m_window.surface_supports_autohide_slide_fade())
+            {
+                m_window.set_surface_autohide_slide_fade_progress(
+                    m_placement,
+                    1.0);
+            }
+
             m_window.show();
 
             if (defer_x11_reveal)
@@ -1573,7 +1709,9 @@ void DockAutohideController::reveal()
         }
 
         if (can_animate_x11() ||
-            m_effect == DockAutohideEffect::fade)
+            m_effect == DockAutohideEffect::fade ||
+            (m_effect == DockAutohideEffect::slide_fade &&
+             m_window.surface_supports_autohide_slide_fade()))
             set_surface_input_passthrough(false);
 
         animate_effect(false);

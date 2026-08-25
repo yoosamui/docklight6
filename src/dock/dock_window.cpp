@@ -115,17 +115,31 @@ double DockSurfaceBox::vertical_offset() const
     return m_vertical_offset;
 }
 
+void DockSurfaceBox::set_horizontal_offset(
+    double offset)
+{
+    if (std::abs(offset - m_horizontal_offset) < 0.0001)
+        return;
+
+    m_horizontal_offset = offset;
+    queue_draw();
+}
+
 bool DockSurfaceBox::on_draw(
     const Cairo::RefPtr<Cairo::Context>
         &context)
 {
     if (m_horizontal_scale <= 0.0 ||
         m_vertical_scale <= 0.0 ||
-        m_vertical_offset <= -get_allocated_height())
+        std::abs(m_horizontal_offset) >=
+            get_allocated_width() ||
+        std::abs(m_vertical_offset) >=
+            get_allocated_height())
         return true;
 
     if (m_horizontal_scale >= 1.0 &&
         m_vertical_scale >= 1.0 &&
+        std::abs(m_horizontal_offset) < 0.0001 &&
         std::abs(m_vertical_offset) < 0.0001)
         return Gtk::Box::on_draw(context);
 
@@ -137,7 +151,8 @@ bool DockSurfaceBox::on_draw(
         get_allocated_height());
     context->clip();
     context->translate(
-        get_allocated_width() *
+        m_horizontal_offset +
+            get_allocated_width() *
             (1.0 - m_horizontal_scale) *
             m_horizontal_scale_anchor,
         get_allocated_height() *
@@ -316,6 +331,18 @@ void DockWindow::set_x11_vertical_offset(
 double DockWindow::x11_vertical_offset() const
 {
     return m_dock_box.vertical_offset();
+}
+
+void DockWindow::set_surface_horizontal_offset(
+    double offset)
+{
+    m_dock_box.set_horizontal_offset(offset);
+}
+
+void DockWindow::set_surface_vertical_offset(
+    double offset)
+{
+    m_dock_box.set_vertical_offset(offset);
 }
 
 void DockWindow::apply_configuration(
@@ -801,9 +828,10 @@ DockWindow::effective_autohide_effect() const
                 ->default_autohide_effect());
 }
 
-bool DockWindow::shows_x11_autohide_effects() const
+std::vector<DockAutohideEffect>
+DockWindow::configurable_autohide_effects() const
 {
-    return m_surface_backend->is_native_x11();
+    return surface_configurable_autohide_effects();
 }
 
 DockWindowGeometry
@@ -921,6 +949,13 @@ DockWindow::surface_default_autohide_effect() const
         ->default_autohide_effect();
 }
 
+std::vector<DockAutohideEffect>
+DockWindow::surface_configurable_autohide_effects() const
+{
+    return m_surface_backend
+        ->configurable_autohide_effects();
+}
+
 bool DockWindow::surface_delegates_autohide_effect(
     DockAutohideEffect effect) const
 {
@@ -946,6 +981,39 @@ void DockWindow::finish_surface_autohide_fade(
 {
     m_surface_backend
         ->finish_autohide_fade(hidden);
+}
+
+bool DockWindow::
+    surface_supports_autohide_slide_fade() const
+{
+    return m_surface_backend
+        ->supports_autohide_slide_fade();
+}
+
+double DockWindow::
+    surface_autohide_slide_fade_progress() const
+{
+    return m_surface_backend
+        ->autohide_slide_fade_progress();
+}
+
+void DockWindow::
+    set_surface_autohide_slide_fade_progress(
+    const DockPlacement &placement,
+    double progress)
+{
+    m_surface_backend
+        ->set_autohide_slide_fade_progress(
+            placement,
+            progress);
+}
+
+void DockWindow::
+    finish_surface_autohide_slide_fade(
+    bool hidden)
+{
+    m_surface_backend
+        ->finish_autohide_slide_fade(hidden);
 }
 
 bool DockWindow::surface_initial_placement_pending() const

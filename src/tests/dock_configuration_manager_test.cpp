@@ -302,6 +302,15 @@ int main()
 
     assert(configuration.save_setting(
         "autohide_effect",
+        "slide_fade"));
+    DockConfigurationManager slide_fade_effect(
+        config_home);
+    assert(slide_fade_effect.current().settings
+               .autohide_effect() ==
+           DockAutohideEffect::slide_fade);
+
+    assert(configuration.save_setting(
+        "autohide_effect",
         "scale"));
     DockConfigurationManager unsupported_effect(
         config_home);

@@ -46,6 +46,7 @@
 
 class DockWindowController;
 class DockAutohideController;
+class PlasmaWaylandDockSurfaceBackend;
 class TooltipManager;
 class PreviewManager;
 class LayoutCoordinator;
@@ -67,6 +68,7 @@ public:
     double vertical_scale() const;
     void set_vertical_offset(double offset);
     double vertical_offset() const;
+    void set_horizontal_offset(double offset);
 
 protected:
     bool on_draw(
@@ -79,6 +81,7 @@ private:
     double m_vertical_scale = 1.0;
     double m_vertical_scale_anchor = 1.0;
     double m_vertical_offset = 0.0;
+    double m_horizontal_offset = 0.0;
 };
 
 class DockWindow : public Gtk::Window
@@ -121,7 +124,8 @@ public:
     bool preview_input_forwarding() const;
     DockAutohideEffect
     effective_autohide_effect() const;
-    bool shows_x11_autohide_effects() const;
+    std::vector<DockAutohideEffect>
+    configurable_autohide_effects() const;
 
 protected:
     bool on_drag_motion(
@@ -169,12 +173,21 @@ private:
     bool surface_is_ordinary_wayland() const;
     DockAutohideEffect
     surface_default_autohide_effect() const;
+    std::vector<DockAutohideEffect>
+    surface_configurable_autohide_effects() const;
     bool surface_delegates_autohide_effect(
         DockAutohideEffect effect) const;
     double surface_autohide_fade_opacity() const;
     void set_surface_autohide_fade_opacity(
         double opacity);
     void finish_surface_autohide_fade(
+        bool hidden);
+    bool surface_supports_autohide_slide_fade() const;
+    double surface_autohide_slide_fade_progress() const;
+    void set_surface_autohide_slide_fade_progress(
+        const DockPlacement &placement,
+        double progress);
+    void finish_surface_autohide_slide_fade(
         bool hidden);
     bool surface_initial_placement_pending() const;
     void complete_surface_initial_placement();
@@ -191,6 +204,8 @@ private:
     double x11_vertical_scale() const;
     void set_x11_vertical_offset(double offset);
     double x11_vertical_offset() const;
+    void set_surface_horizontal_offset(double offset);
+    void set_surface_vertical_offset(double offset);
     void apply_main_axis_end_margins(
         DockOrientation orientation);
     void register_dock_item(DockItem *item);
@@ -207,6 +222,7 @@ private:
 private:
     friend class DockWindowController;
     friend class DockAutohideController;
+    friend class PlasmaWaylandDockSurfaceBackend;
     friend class TooltipManager;
     friend class PreviewManager;
     friend class LayoutCoordinator;

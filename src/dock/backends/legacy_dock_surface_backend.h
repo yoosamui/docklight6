@@ -57,6 +57,8 @@ public:
     bool is_ordinary_wayland() const override;
     DockAutohideEffect
     default_autohide_effect() const override;
+    std::vector<DockAutohideEffect>
+    configurable_autohide_effects() const override;
     bool delegates_autohide_effect(
         DockAutohideEffect effect) const override;
     double autohide_fade_opacity() const override;

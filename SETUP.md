@@ -317,6 +317,14 @@ sudo make -C build install-plasma-geometry-bridge-system
 
 See `plasma/geometry-bridge/README.md` for its requirements and behavior.
 
+The Plasma Wayland settings dialog offers two autohide effects:
+
+- `Plasma` keeps the existing layer-surface map/unmap effect.
+- `Slide and Fade` uses DockLight's client-rendered outward slide and fade,
+  with the same hide/reveal timing direction as native X11.
+
+The corresponding configuration values are `plasma` and `slide_fade`.
+
 ### X11
 
 ```sh

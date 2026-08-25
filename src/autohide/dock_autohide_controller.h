@@ -74,7 +74,7 @@ private:
     void schedule_hide(bool refresh_pointer = true);
     void cancel_hide();
     void cancel_animation();
-    void reset_x11_visual_transform();
+    void reset_local_visual_transform();
     void apply_hidden_x11_placement(
         const ScreenPosition &shown_position);
     void request_shell_visibility(bool hidden);
@@ -82,6 +82,8 @@ private:
     void animate_effect(bool hiding);
     void animate_fade(bool hiding);
     bool advance_fade_animation();
+    void animate_slide_fade(bool hiding);
+    bool advance_slide_fade_animation();
     bool can_animate_x11() const;
     bool uses_plasma_x11_edge_effect() const;
     bool x11_slide_requires_horizontal_collapse() const;
@@ -143,6 +145,8 @@ private:
     double m_animation_target_vertical_offset = 0.0;
     double m_animation_start_opacity = 1.0;
     double m_animation_target_opacity = 1.0;
+    double m_animation_start_progress = 0.0;
+    double m_animation_target_progress = 0.0;
     gint64 m_animation_start_time_us = 0;
     int m_animation_duration_ms = 0;
     bool m_initialized = false;

@@ -27,7 +27,6 @@
 #include <gtkmm.h>
 
 #include <algorithm>
-#include <array>
 #include <string>
 #include <vector>
 
@@ -81,7 +80,8 @@ void DockSettingsDialog::show(
     Gtk::Window &parent,
     const Glib::RefPtr<Gdk::Pixbuf> &icon,
     DockAutohideEffect effective_autohide_effect,
-    bool show_x11_autohide_effects)
+    const std::vector<DockAutohideEffect>
+        &configurable_autohide_effects)
 {
     DockConfigurationManager configuration;
     const auto current =
@@ -232,7 +232,7 @@ void DockSettingsDialog::show(
             &autohide_label,
             &autohide_hide_delay_label};
 
-    if (show_x11_autohide_effects)
+    if (!configurable_autohide_effects.empty())
     {
         labels.push_back(
             &autohide_effect_label);
@@ -759,20 +759,45 @@ void DockSettingsDialog::show(
         Glib::ustring label;
     };
 
-    const std::array<AutohideEffectChoice, 3>
-        autohide_effect_choices{{
-            {
-                DockAutohideEffect::plasma,
+    std::vector<AutohideEffectChoice>
+        autohide_effect_choices;
+
+    for (const auto effect :
+         configurable_autohide_effects)
+    {
+        switch (effect)
+        {
+        case DockAutohideEffect::plasma:
+            autohide_effect_choices.push_back({
+                effect,
                 "plasma",
-                C_("autohide effect", "Plasma")},
-            {
-                DockAutohideEffect::slide,
+                C_("autohide effect", "Plasma")});
+            break;
+        case DockAutohideEffect::slide:
+            autohide_effect_choices.push_back({
+                effect,
                 "slide",
-                C_("autohide effect", "Slide")},
-            {
-                DockAutohideEffect::fade,
+                C_("autohide effect", "Slide")});
+            break;
+        case DockAutohideEffect::fade:
+            autohide_effect_choices.push_back({
+                effect,
                 "fade",
-                C_("autohide effect", "Fade")}}};
+                C_("autohide effect", "Fade")});
+            break;
+        case DockAutohideEffect::slide_fade:
+            autohide_effect_choices.push_back({
+                effect,
+                "slide_fade",
+                C_(
+                    "autohide effect",
+                    "Slide and Fade")});
+            break;
+        case DockAutohideEffect::gnome:
+        case DockAutohideEffect::scale:
+            break;
+        }
+    }
 
     Gtk::ScrolledWindow autohide_effect_scroller;
     Gtk::ListBox autohide_effect_list;
@@ -855,7 +880,7 @@ void DockSettingsDialog::show(
             &autohide_choices,
             &autohide_hide_delay_spin};
 
-    if (show_x11_autohide_effects)
+    if (!autohide_effect_choices.empty())
     {
         fields.push_back(
             &autohide_effect_scroller);
@@ -1128,7 +1153,7 @@ void DockSettingsDialog::show(
 
     int autohide_hide_delay_row = 20;
 
-    if (show_x11_autohide_effects)
+    if (!autohide_effect_choices.empty())
     {
         grid.attach(
             autohide_effect_label,
@@ -1192,7 +1217,7 @@ void DockSettingsDialog::show(
                             index)]);
             }));
 
-    if (show_x11_autohide_effects)
+    if (!autohide_effect_choices.empty())
     {
         settings_connections.push_back(
             autohide_effect_list

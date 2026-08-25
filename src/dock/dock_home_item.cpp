@@ -674,7 +674,7 @@ void DockHomeItem::open_settings()
         m_dock,
         m_source_icon,
         m_dock.effective_autohide_effect(),
-        m_dock.shows_x11_autohide_effects());
+        m_dock.configurable_autohide_effects());
     m_dock.uninhibit_autohide();
 }
 

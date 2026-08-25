@@ -348,6 +348,45 @@ int main()
     assert(right_hidden.x == 2560);
     assert(right_hidden.y == 356);
 
+    // Plasma Wayland keeps the layer surface fixed and translates its
+    // rendered content by a normalized amount. Every edge must move outward
+    // by the dock's complete thickness, including partial/reversed frames.
+    const auto top_wayland_offset =
+        autohide_slide_content_offset(
+            top_slide,
+            1504,
+            62,
+            0.5);
+    assert(top_wayland_offset.x == 0);
+    assert(top_wayland_offset.y == -31);
+
+    const auto bottom_wayland_offset =
+        autohide_slide_content_offset(
+            bottom_slide,
+            1504,
+            62,
+            1.0);
+    assert(bottom_wayland_offset.x == 0);
+    assert(bottom_wayland_offset.y == 62);
+
+    const auto left_wayland_offset =
+        autohide_slide_content_offset(
+            left_slide,
+            58,
+            728,
+            1.0);
+    assert(left_wayland_offset.x == -58);
+    assert(left_wayland_offset.y == 0);
+
+    const auto right_wayland_offset =
+        autohide_slide_content_offset(
+            right_slide,
+            58,
+            728,
+            2.0);
+    assert(right_wayland_offset.x == 58);
+    assert(right_wayland_offset.y == 0);
+
     const MonitorGeometry adjacent_right_monitor{
         1920,
         0,

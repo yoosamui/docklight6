@@ -26,6 +26,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 
 enum class DockOrientation
 {
@@ -57,8 +58,9 @@ enum class DockAutohide : int
 };
 
 // Selects the visual transition without changing the shared autohide policy.
-// Plasma and GNOME retain their current compositor-specific implementations;
-// the remaining values reserve common choices for incremental follow-up work.
+// Plasma and GNOME retain their compositor-specific implementations;
+// slide_fade is implemented by the native Plasma Wayland surface backend.
+// The remaining values reserve common choices for incremental follow-up work.
 enum class DockAutohideEffect : unsigned int
 {
     plasma = 0,
@@ -298,6 +300,49 @@ inline ScreenPosition x11_hidden_screen_position(
     }
 
     return hidden;
+}
+
+// Client-rendered Wayland surfaces cannot rely on compositor-defined
+// negative layer margins. Translate their content outward inside the fixed
+// layer surface instead. Progress is normalized so the animation controller
+// can reverse without knowing the dock's physical edge or thickness.
+inline ScreenPosition autohide_slide_content_offset(
+    const DockPlacement &placement,
+    int width,
+    int height,
+    double progress)
+{
+    const double clamped =
+        std::clamp(progress, 0.0, 1.0);
+    const int dock_width = width > 0 ? width : 1;
+    const int dock_height = height > 0 ? height : 1;
+    ScreenPosition offset;
+
+    if (placement.is_horizontal())
+    {
+        if (placement.anchor_top)
+        {
+            offset.y = -static_cast<int>(std::lround(
+                dock_height * clamped));
+        }
+        else if (placement.anchor_bottom)
+        {
+            offset.y = static_cast<int>(std::lround(
+                dock_height * clamped));
+        }
+    }
+    else if (placement.anchor_left)
+    {
+        offset.x = -static_cast<int>(std::lround(
+            dock_width * clamped));
+    }
+    else if (placement.anchor_right)
+    {
+        offset.x = static_cast<int>(std::lround(
+            dock_width * clamped));
+    }
+
+    return offset;
 }
 
 struct MonitorGeometry
