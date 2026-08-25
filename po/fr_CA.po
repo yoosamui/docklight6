@@ -7,56 +7,56 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-16 14:01+0700\n"
+"POT-Creation-Date: 2026-08-25 14:52+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language: fr_CA\n"
 "Language-Team: none\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr_CA\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: src/main.cpp:340
+#: src/main.cpp:355
 msgid "Window previews are disabled"
 msgstr "Les aperçus des fenêtres sont désactivés"
 
-#: src/main.cpp:346
+#: src/main.cpp:361
 msgid "DockLight"
 msgstr "DockLumière"
 
-#: src/main.cpp:348
+#: src/main.cpp:368
 msgid ""
 "Openbox requires an X11 compositor for complete window previews. Display "
 "Preview is disabled. Start compton or picom, then enable Display Preview in "
 "DockLight Settings."
 msgstr ""
-"Openbox nécessite un compositeur X11 pour des aperçus complets des fenêtres."
-" L'aperçu de l'affichage est désactivé. Démarrez Compton ou Picom, puis "
+"Openbox nécessite un compositeur X11 pour des aperçus complets des fenêtres. "
+"L'aperçu de l'affichage est désactivé. Démarrez Compton ou Picom, puis "
 "activez l'aperçu de l'affichage dans les paramètres DockLight."
 
-#: src/dock/dock_item.cpp:267
+#: src/dock/dock_item.cpp:272
 msgid "_Attach"
 msgstr "_Épingler au Dock"
 
-#: src/dock/dock_item.cpp:270
+#: src/dock/dock_item.cpp:275
 msgid "_Open New Window"
 msgstr "_Ouvrir une nouvelle fenêtre"
 
-#: src/dock/dock_home_item.cpp:70 src/dock/dock_item.cpp:273
+#: src/dock/dock_item.cpp:278 src/dock/dock_home_item.cpp:70
 msgid "_Close All"
 msgstr "_Fermer tout"
 
-#: src/dock/dock_item.cpp:276
+#: src/dock/dock_item.cpp:281
 msgid "_Minimize"
 msgstr "_Réduire"
 
-#: src/dock/dock_item.cpp:279
+#: src/dock/dock_item.cpp:284
 msgid "_Unminimize"
 msgstr "_Restaurer"
 
-#: src/dock/dock_item.cpp:282
+#: src/dock/dock_item.cpp:287
 msgid "_Maximize"
 msgstr "_Maximiser"
 
@@ -89,266 +89,296 @@ msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Accueil"
 
-#: src/dialogs/dock_settings_dialog.cpp:122
-#: src/dialogs/dock_settings_dialog.cpp:163
+#: src/dialogs/dock_settings_dialog.cpp:91
+#: src/dialogs/dock_settings_dialog.cpp:127
 msgid "DockLight Settings"
 msgstr "Paramètres DockLight"
 
-#: src/dialogs/dock_about_dialog.cpp:183 src/dialogs/dock_settings_dialog.cpp:191
+#: src/dialogs/dock_settings_dialog.cpp:155
+#: src/dialogs/dock_about_dialog.cpp:184
 msgid "_Close"
 msgstr "_Fermer"
 
-#: src/dialogs/dock_settings_dialog.cpp:203
+#: src/dialogs/dock_settings_dialog.cpp:167
 msgid "Monitor"
 msgstr "Moniteur"
 
-#: src/dialogs/dock_settings_dialog.cpp:205
+#: src/dialogs/dock_settings_dialog.cpp:169
 msgid "Hover Effect"
 msgstr "Effet de survol"
 
-#: src/dialogs/dock_settings_dialog.cpp:207
+#: src/dialogs/dock_settings_dialog.cpp:171
 msgid "Indicator"
 msgstr "Indicateur"
 
-#: src/dialogs/dock_settings_dialog.cpp:209
-#: src/dialogs/dock_settings_dialog.cpp:454
+#: src/dialogs/dock_settings_dialog.cpp:173
+#: src/dialogs/dock_settings_dialog.cpp:426
 msgid "Indicator Color"
 msgstr "Couleur de l'indicateur"
 
-#: src/dialogs/dock_settings_dialog.cpp:211
-#: src/dialogs/dock_settings_dialog.cpp:473
+#: src/dialogs/dock_settings_dialog.cpp:175
+#: src/dialogs/dock_settings_dialog.cpp:445
 msgid "Preview Color"
 msgstr "Couleur de l'aperçu"
 
-#: src/dialogs/dock_settings_dialog.cpp:213
+#: src/dialogs/dock_settings_dialog.cpp:177
 msgid "Display Home Icon"
 msgstr "Afficher l'icône d'accueil"
 
-#: src/dialogs/dock_settings_dialog.cpp:215
+#: src/dialogs/dock_settings_dialog.cpp:179
 msgid "Home Icon"
 msgstr "Icône Accueil"
 
-#: src/dialogs/dock_settings_dialog.cpp:217
+#: src/dialogs/dock_settings_dialog.cpp:181
 msgid "Display Tooltips"
 msgstr "Afficher les info-bulles"
 
-#: src/dialogs/dock_settings_dialog.cpp:219
+#: src/dialogs/dock_settings_dialog.cpp:183
 msgid "Display Preview"
 msgstr "Afficher l'aperçu"
 
-#: src/dialogs/dock_settings_dialog.cpp:221
+#: src/dialogs/dock_settings_dialog.cpp:185
 msgid "Close Preview After Activation"
 msgstr "Fermer l'aperçu après l'activation"
 
-#: src/dialogs/dock_settings_dialog.cpp:223
+#: src/dialogs/dock_settings_dialog.cpp:187
 msgid "Manage All Workspaces"
 msgstr "Gérer tous les espaces de travail"
 
-#: src/dialogs/dock_settings_dialog.cpp:225
+#: src/dialogs/dock_settings_dialog.cpp:189
 msgid "Icon Size"
 msgstr "Taille de l'icône"
 
-#: src/dialogs/dock_settings_dialog.cpp:227
+#: src/dialogs/dock_settings_dialog.cpp:191
 msgid "Preview Card Height"
 msgstr "Hauteur de la carte d'aperçu"
 
-#: src/dialogs/dock_settings_dialog.cpp:229
+#: src/dialogs/dock_settings_dialog.cpp:193
 msgid "Preview Show Delay (ms)"
 msgstr "Délai d'affichage de l'aperçu (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:231
+#: src/dialogs/dock_settings_dialog.cpp:195
 msgid "Location"
 msgstr "Emplacement"
 
-#: src/dialogs/dock_settings_dialog.cpp:233
+#: src/dialogs/dock_settings_dialog.cpp:197
 msgid "Gradient Background"
 msgstr "Fond Dégradé"
 
-#: src/dialogs/dock_settings_dialog.cpp:235
+#: src/dialogs/dock_settings_dialog.cpp:199
 msgid "Rounded Corners"
 msgstr "Coins arrondis"
 
-#: src/dialogs/dock_settings_dialog.cpp:237
+#: src/dialogs/dock_settings_dialog.cpp:201
 msgid "Corner Radius"
 msgstr "Rayon de coin"
 
-#: src/dialogs/dock_settings_dialog.cpp:239
+#: src/dialogs/dock_settings_dialog.cpp:203
 msgid "Alignment"
 msgstr "Alignement"
 
-#: src/dialogs/dock_settings_dialog.cpp:241
+#: src/dialogs/dock_settings_dialog.cpp:205
 msgid "Autohide"
 msgstr "Masquer automatiquement"
 
-#: src/dialogs/dock_settings_dialog.cpp:243
+#: src/dialogs/dock_settings_dialog.cpp:207
+msgid "Autohide Effect"
+msgstr "Effet de masquage automatique"
+
+#: src/dialogs/dock_settings_dialog.cpp:209
 msgid "Autohide Delay (ms)"
 msgstr "Délai de masquage automatique (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:333
+#: src/dialogs/dock_settings_dialog.cpp:305
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Moniteur principal"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:344
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Effet standard"
 
-#: src/dialogs/dock_settings_dialog.cpp:374
+#: src/dialogs/dock_settings_dialog.cpp:346
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Effet zoom"
 
-#: src/dialogs/dock_settings_dialog.cpp:376
+#: src/dialogs/dock_settings_dialog.cpp:348
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Effet de flou"
 
-#: src/dialogs/dock_settings_dialog.cpp:413
+#: src/dialogs/dock_settings_dialog.cpp:385
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Indicateurs de ligne"
 
-#: src/dialogs/dock_settings_dialog.cpp:415
+#: src/dialogs/dock_settings_dialog.cpp:387
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Indicateurs de points"
 
-#: src/dialogs/dock_settings_dialog.cpp:456
+#: src/dialogs/dock_settings_dialog.cpp:428
 msgid "Choose the indicator color"
 msgstr "Choisissez la couleur de l'indicateur"
 
-#: src/dialogs/dock_settings_dialog.cpp:475
+#: src/dialogs/dock_settings_dialog.cpp:447
 msgid "Choose the preview color"
 msgstr "Choisir la couleur de l'aperçu"
 
-#: src/dialogs/dock_settings_dialog.cpp:487
+#: src/dialogs/dock_settings_dialog.cpp:459
 msgid "Select…"
 msgstr "Sélectionnez…"
 
-#: src/dialogs/dock_settings_dialog.cpp:489
+#: src/dialogs/dock_settings_dialog.cpp:461
 msgid "Use Default"
 msgstr "Utiliser par défaut"
 
-#: src/dialogs/dock_settings_dialog.cpp:497
+#: src/dialogs/dock_settings_dialog.cpp:469
 msgid "Built-in DockLight icon"
 msgstr "Icône DockLight intégrée"
 
-#: src/dialogs/dock_settings_dialog.cpp:531
+#: src/dialogs/dock_settings_dialog.cpp:503
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "Sinon, laissez l'aperçu ouvert jusqu'à ce que le pointeur le quitte"
 
-#: src/dialogs/dock_settings_dialog.cpp:538
+#: src/dialogs/dock_settings_dialog.cpp:510
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr ""
-"Appliquez les actions des icônes et le cycle de la molette de la souris dans"
-" tous les espaces de travail"
+"Appliquez les actions des icônes et le cycle de la molette de la souris dans "
+"tous les espaces de travail"
 
-#: src/dialogs/dock_settings_dialog.cpp:569
+#: src/dialogs/dock_settings_dialog.cpp:541
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr ""
 "0 sélectionne le dimensionnement automatique ; sinon, utilisez 64 à 512 "
 "pixels"
 
-#: src/dialogs/dock_settings_dialog.cpp:586
+#: src/dialogs/dock_settings_dialog.cpp:558
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr ""
 "Délai avant l'apparition d'un aperçu de la fenêtre, de 0 à 5 000 "
 "millisecondes"
 
-#: src/dialogs/dock_settings_dialog.cpp:604
+#: src/dialogs/dock_settings_dialog.cpp:576
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "Délai avant que le dock ne se cache, de 0 à 5 000 millisecondes"
 
-#: src/dialogs/dock_settings_dialog.cpp:611
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Bord inférieur"
 
-#: src/dialogs/dock_settings_dialog.cpp:613
+#: src/dialogs/dock_settings_dialog.cpp:585
 msgctxt "dock location"
 msgid "Left"
 msgstr "Bord gauche"
 
-#: src/dialogs/dock_settings_dialog.cpp:615
+#: src/dialogs/dock_settings_dialog.cpp:587
 msgctxt "dock location"
 msgid "Top"
 msgstr "Bord supérieur"
 
-#: src/dialogs/dock_settings_dialog.cpp:617
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "dock location"
 msgid "Right"
 msgstr "Bord droit"
 
-#: src/dialogs/dock_settings_dialog.cpp:664
+#: src/dialogs/dock_settings_dialog.cpp:636
 msgid "Use the black-to-gray dock background gradient"
 msgstr "Utilisez le dégradé d'arrière-plan du dock noir à gris"
 
-#: src/dialogs/dock_settings_dialog.cpp:687
+#: src/dialogs/dock_settings_dialog.cpp:659
 msgid "-1 selects the automatic radius"
 msgstr "-1 sélectionne le rayon automatique"
 
-#: src/dialogs/dock_settings_dialog.cpp:693
+#: src/dialogs/dock_settings_dialog.cpp:665
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Aligné sur le démarrage"
 
-#: src/dialogs/dock_settings_dialog.cpp:695
+#: src/dialogs/dock_settings_dialog.cpp:667
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Centré"
 
-#: src/dialogs/dock_settings_dialog.cpp:697
+#: src/dialogs/dock_settings_dialog.cpp:669
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Aligné aux extrémités"
 
-#: src/dialogs/dock_settings_dialog.cpp:699
+#: src/dialogs/dock_settings_dialog.cpp:671
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Remplir l'espace disponible"
 
-#: src/dialogs/dock_settings_dialog.cpp:745
+#: src/dialogs/dock_settings_dialog.cpp:717
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Désactivé"
 
-#: src/dialogs/dock_settings_dialog.cpp:747
+#: src/dialogs/dock_settings_dialog.cpp:719
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Automatique"
 
-#: src/dialogs/dock_settings_dialog.cpp:749
+#: src/dialogs/dock_settings_dialog.cpp:721
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Intelligent"
 
-#: src/dialogs/dock_settings_dialog.cpp:1294
-#: src/dialogs/dock_settings_dialog.cpp:1329
+#: src/dialogs/dock_settings_dialog.cpp:774
+msgctxt "autohide effect"
+msgid "Plasma"
+msgstr "Plasma"
+
+#: src/dialogs/dock_settings_dialog.cpp:780
+msgctxt "autohide effect"
+msgid "Slide"
+msgstr "Glissement"
+
+#: src/dialogs/dock_settings_dialog.cpp:786
+msgctxt "autohide effect"
+msgid "Fade"
+msgstr "Fondu"
+
+#: src/dialogs/dock_settings_dialog.cpp:794
+msgctxt "autohide effect"
+msgid "Slide and Fade"
+msgstr "Glissement et fondu"
+
+#: src/dialogs/dock_settings_dialog.cpp:800
+msgctxt "autohide effect"
+msgid "GNOME"
+msgstr "GNOME"
+
+#: src/dialogs/dock_settings_dialog.cpp:1191
+#: src/dialogs/dock_settings_dialog.cpp:1228
 msgid "Select Home Icon"
 msgstr "Sélectionnez l'icône Accueil"
 
-#: src/dialogs/dock_settings_dialog.cpp:1299
+#: src/dialogs/dock_settings_dialog.cpp:1196
 msgid "_Cancel"
 msgstr "_Annuler"
 
-#: src/dialogs/dock_settings_dialog.cpp:1302
+#: src/dialogs/dock_settings_dialog.cpp:1199
 msgid "_Open"
 msgstr "_Ouvrir"
 
-#: src/dialogs/dock_settings_dialog.cpp:1366
+#: src/dialogs/dock_settings_dialog.cpp:1265
 msgid "Image Files"
 msgstr "Fichiers images"
 
-#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_about_dialog.cpp:156
+#: src/dialogs/dock_about_dialog.cpp:113 src/dialogs/dock_about_dialog.cpp:157
 msgid "About DockLight"
 msgstr "À propos de DockLight"
 
-#: src/dialogs/dock_about_dialog.cpp:193
+#: src/dialogs/dock_about_dialog.cpp:194
 msgid "Version %1"
 msgstr "Version du logiciel %1"
 
-#: src/dialogs/dock_about_dialog.cpp:196
+#: src/dialogs/dock_about_dialog.cpp:197
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui"
@@ -356,7 +386,7 @@ msgstr ""
 "Un dock d'application léger.\n"
 "Auteur et responsable : yoosamui"
 
-#: src/dialogs/dock_about_dialog.cpp:204
+#: src/dialogs/dock_about_dialog.cpp:205
 msgid ""
 "Presentation mode: %1\n"
 "Dock configuration loaded: %2\n"

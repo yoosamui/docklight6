@@ -7,60 +7,60 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-16 14:01+0700\n"
+"POT-Creation-Date: 2026-08-25 14:52+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language: br\n"
 "Language-Team: none\n"
-"Plural-Forms: nplurals=6; plural=(n==1 ? 0 : n%10==1 && n%100!=11 && "
-"n%100!=71 && n%100!=91 ? 1 : n%10==2 && n%100!=12 && n%100!=72 && n%100!=92 "
-"? 2 : (n%10==3 || n%10==4 || n%10==9) && n%100!=13 && n%100!=14 && n%100!=19"
-" && n%100!=73 && n%100!=74 && n%100!=79 && n%100!=93 && n%100!=94 && "
-"n%100!=99 ? 3 : n%1000000==0 ? 4 : 5);\n"
+"Language: br\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==1 ? 0 : n%10==1 && n%100!=11 && n%100!"
+"=71 && n%100!=91 ? 1 : n%10==2 && n%100!=12 && n%100!=72 && n%100!=92 ? 2 : "
+"(n%10==3 || n%10==4 || n%10==9) && n%100!=13 && n%100!=14 && n%100!=19 && "
+"n%100!=73 && n%100!=74 && n%100!=79 && n%100!=93 && n%100!=94 && n%100!=99 ? "
+"3 : n%1000000==0 ? 4 : 5);\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: src/main.cpp:340
+#: src/main.cpp:355
 msgid "Window previews are disabled"
 msgstr "Diweredekaet eo ar rakweledennoù prenestr"
 
-#: src/main.cpp:346
+#: src/main.cpp:361
 msgid "DockLight"
 msgstr "DockGouloù"
 
-#: src/main.cpp:348
+#: src/main.cpp:368
 msgid ""
 "Openbox requires an X11 compositor for complete window previews. Display "
 "Preview is disabled. Start compton or picom, then enable Display Preview in "
 "DockLight Settings."
 msgstr ""
 "Ret eo d'an Openbox kaout ur c'hefluniadur X11 evit gwelet ar prenestroù "
-"klok. Diweredekaet eo ar rakwel diskouez. Lakaat compton pe picom da vont "
-"en-dro, ha goude-se gweredekaat ar rakwel diskouez e arventennoù DockLight."
+"klok. Diweredekaet eo ar rakwel diskouez. Lakaat compton pe picom da vont en-"
+"dro, ha goude-se gweredekaat ar rakwel diskouez e arventennoù DockLight."
 
-#: src/dock/dock_item.cpp:267
+#: src/dock/dock_item.cpp:272
 msgid "_Attach"
 msgstr "_Pin to Dock"
 
-#: src/dock/dock_item.cpp:270
+#: src/dock/dock_item.cpp:275
 msgid "_Open New Window"
 msgstr "_Digeriñ ar prenestr nevez"
 
-#: src/dock/dock_home_item.cpp:70 src/dock/dock_item.cpp:273
+#: src/dock/dock_item.cpp:278 src/dock/dock_home_item.cpp:70
 msgid "_Close All"
 msgstr "_Serriñ an holl"
 
-#: src/dock/dock_item.cpp:276
+#: src/dock/dock_item.cpp:281
 msgid "_Minimize"
 msgstr "_Digreskiñ"
 
-#: src/dock/dock_item.cpp:279
+#: src/dock/dock_item.cpp:284
 msgid "_Unminimize"
 msgstr "_Adderaouekaat"
 
-#: src/dock/dock_item.cpp:282
+#: src/dock/dock_item.cpp:287
 msgid "_Maximize"
 msgstr "_Uhelaat"
 
@@ -93,262 +93,293 @@ msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Ti"
 
-#: src/dialogs/dock_settings_dialog.cpp:122
-#: src/dialogs/dock_settings_dialog.cpp:163
+#: src/dialogs/dock_settings_dialog.cpp:91
+#: src/dialogs/dock_settings_dialog.cpp:127
 msgid "DockLight Settings"
 msgstr "Arventennoù DockLight"
 
-#: src/dialogs/dock_about_dialog.cpp:183 src/dialogs/dock_settings_dialog.cpp:191
+#: src/dialogs/dock_settings_dialog.cpp:155
+#: src/dialogs/dock_about_dialog.cpp:184
 msgid "_Close"
 msgstr "_Serriñ"
 
-#: src/dialogs/dock_settings_dialog.cpp:203
+#: src/dialogs/dock_settings_dialog.cpp:167
 msgid "Monitor"
 msgstr "Monitour"
 
-#: src/dialogs/dock_settings_dialog.cpp:205
+#: src/dialogs/dock_settings_dialog.cpp:169
 msgid "Hover Effect"
 msgstr "Efed ar c'heflusker"
 
-#: src/dialogs/dock_settings_dialog.cpp:207
+#: src/dialogs/dock_settings_dialog.cpp:171
 msgid "Indicator"
 msgstr "Diskouez"
 
-#: src/dialogs/dock_settings_dialog.cpp:209
-#: src/dialogs/dock_settings_dialog.cpp:454
+#: src/dialogs/dock_settings_dialog.cpp:173
+#: src/dialogs/dock_settings_dialog.cpp:426
 msgid "Indicator Color"
 msgstr "Liv ar merker"
 
-#: src/dialogs/dock_settings_dialog.cpp:211
-#: src/dialogs/dock_settings_dialog.cpp:473
+#: src/dialogs/dock_settings_dialog.cpp:175
+#: src/dialogs/dock_settings_dialog.cpp:445
 msgid "Preview Color"
 msgstr "Liv ar rakwelet"
 
-#: src/dialogs/dock_settings_dialog.cpp:213
+#: src/dialogs/dock_settings_dialog.cpp:177
 msgid "Display Home Icon"
 msgstr "Diskouez arlun an ti"
 
-#: src/dialogs/dock_settings_dialog.cpp:215
+#: src/dialogs/dock_settings_dialog.cpp:179
 msgid "Home Icon"
 msgstr "Arouezenn an ti"
 
-#: src/dialogs/dock_settings_dialog.cpp:217
+#: src/dialogs/dock_settings_dialog.cpp:181
 msgid "Display Tooltips"
 msgstr "Diskouez alioù ostilhoù"
 
-#: src/dialogs/dock_settings_dialog.cpp:219
+#: src/dialogs/dock_settings_dialog.cpp:183
 msgid "Display Preview"
 msgstr "Diskouez ar rakweled"
 
-#: src/dialogs/dock_settings_dialog.cpp:221
+#: src/dialogs/dock_settings_dialog.cpp:185
 msgid "Close Preview After Activation"
 msgstr "Serriñ ar rakwel goude bezañ bet gweredekaet"
 
-#: src/dialogs/dock_settings_dialog.cpp:223
+#: src/dialogs/dock_settings_dialog.cpp:187
 msgid "Manage All Workspaces"
 msgstr "Merañ an holl lec'hioù labour"
 
-#: src/dialogs/dock_settings_dialog.cpp:225
+#: src/dialogs/dock_settings_dialog.cpp:189
 msgid "Icon Size"
 msgstr "Ment an arouezenn"
 
-#: src/dialogs/dock_settings_dialog.cpp:227
+#: src/dialogs/dock_settings_dialog.cpp:191
 msgid "Preview Card Height"
 msgstr "Rakwelet uhelder ar gartenn"
 
-#: src/dialogs/dock_settings_dialog.cpp:229
+#: src/dialogs/dock_settings_dialog.cpp:193
 msgid "Preview Show Delay (ms)"
 msgstr "Rakwelet Diskouez dale (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:231
+#: src/dialogs/dock_settings_dialog.cpp:195
 msgid "Location"
 msgstr "Lec'hiadur"
 
-#: src/dialogs/dock_settings_dialog.cpp:233
+#: src/dialogs/dock_settings_dialog.cpp:197
 msgid "Gradient Background"
 msgstr "Foñs gradient"
 
-#: src/dialogs/dock_settings_dialog.cpp:235
+#: src/dialogs/dock_settings_dialog.cpp:199
 msgid "Rounded Corners"
 msgstr "Kornioù ront"
 
-#: src/dialogs/dock_settings_dialog.cpp:237
+#: src/dialogs/dock_settings_dialog.cpp:201
 msgid "Corner Radius"
 msgstr "Radius ar c'horn"
 
-#: src/dialogs/dock_settings_dialog.cpp:239
+#: src/dialogs/dock_settings_dialog.cpp:203
 msgid "Alignment"
 msgstr "Aliañ"
 
-#: src/dialogs/dock_settings_dialog.cpp:241
+#: src/dialogs/dock_settings_dialog.cpp:205
 msgid "Autohide"
 msgstr "Kuzhat emgefre"
 
-#: src/dialogs/dock_settings_dialog.cpp:243
+#: src/dialogs/dock_settings_dialog.cpp:207
+msgid "Autohide Effect"
+msgstr "Efed kuzhat emgefre"
+
+#: src/dialogs/dock_settings_dialog.cpp:209
 msgid "Autohide Delay (ms)"
 msgstr "Dale kuzhat emgefre (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:333
+#: src/dialogs/dock_settings_dialog.cpp:305
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Merour pennañ"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:344
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Efed skoueriek"
 
-#: src/dialogs/dock_settings_dialog.cpp:374
+#: src/dialogs/dock_settings_dialog.cpp:346
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Efed zoumañ"
 
-#: src/dialogs/dock_settings_dialog.cpp:376
+#: src/dialogs/dock_settings_dialog.cpp:348
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Efed diverkañ"
 
-#: src/dialogs/dock_settings_dialog.cpp:413
+#: src/dialogs/dock_settings_dialog.cpp:385
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Merkoù al linenn"
 
-#: src/dialogs/dock_settings_dialog.cpp:415
+#: src/dialogs/dock_settings_dialog.cpp:387
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Merkoù poentoù"
 
-#: src/dialogs/dock_settings_dialog.cpp:456
+#: src/dialogs/dock_settings_dialog.cpp:428
 msgid "Choose the indicator color"
 msgstr "Dibabit liv ar merker"
 
-#: src/dialogs/dock_settings_dialog.cpp:475
+#: src/dialogs/dock_settings_dialog.cpp:447
 msgid "Choose the preview color"
 msgstr "Dibabit liv ar rakwelet"
 
-#: src/dialogs/dock_settings_dialog.cpp:487
+#: src/dialogs/dock_settings_dialog.cpp:459
 msgid "Select…"
 msgstr "Dibabit..."
 
-#: src/dialogs/dock_settings_dialog.cpp:489
+#: src/dialogs/dock_settings_dialog.cpp:461
 msgid "Use Default"
 msgstr "Implijout dre ziouer"
 
-#: src/dialogs/dock_settings_dialog.cpp:497
+#: src/dialogs/dock_settings_dialog.cpp:469
 msgid "Built-in DockLight icon"
 msgstr "Arlun DockLight enkorfet"
 
-#: src/dialogs/dock_settings_dialog.cpp:531
+#: src/dialogs/dock_settings_dialog.cpp:503
 msgid "Otherwise keep the preview open until the pointer leaves it"
-msgstr "A-hend-all mirout ar rakweledenn digor betek ma kuitaio ar poenter anezhañ"
+msgstr ""
+"A-hend-all mirout ar rakweledenn digor betek ma kuitaio ar poenter anezhañ"
 
-#: src/dialogs/dock_settings_dialog.cpp:538
+#: src/dialogs/dock_settings_dialog.cpp:510
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr ""
 "Arverañ oberoù arlunioù ha mont war-droad al logodenn war an holl dachennoù "
 "labour"
 
-#: src/dialogs/dock_settings_dialog.cpp:569
+#: src/dialogs/dock_settings_dialog.cpp:541
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0 a zibab ar vent emgefre; mod all implijit 64 da 512 piksel"
 
-#: src/dialogs/dock_settings_dialog.cpp:586
+#: src/dialogs/dock_settings_dialog.cpp:558
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr "Dale a-raok ma teufe war wel ur prenestr, eus 0 da 5000 milieildenn"
 
-#: src/dialogs/dock_settings_dialog.cpp:604
+#: src/dialogs/dock_settings_dialog.cpp:576
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "Dale a-raok ma kuzhfe an dock, eus 0 da 5000 milieildenn"
 
-#: src/dialogs/dock_settings_dialog.cpp:611
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Riblenn izelañ"
 
-#: src/dialogs/dock_settings_dialog.cpp:613
+#: src/dialogs/dock_settings_dialog.cpp:585
 msgctxt "dock location"
 msgid "Left"
 msgstr "Ribl kleiz"
 
-#: src/dialogs/dock_settings_dialog.cpp:615
+#: src/dialogs/dock_settings_dialog.cpp:587
 msgctxt "dock location"
 msgid "Top"
 msgstr "Ribl uhelañ"
 
-#: src/dialogs/dock_settings_dialog.cpp:617
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "dock location"
 msgid "Right"
 msgstr "Ribl dehou"
 
-#: src/dialogs/dock_settings_dialog.cpp:664
+#: src/dialogs/dock_settings_dialog.cpp:636
 msgid "Use the black-to-gray dock background gradient"
 msgstr "Implijit ar c'hementad foñs dock du-da-gris"
 
-#: src/dialogs/dock_settings_dialog.cpp:687
+#: src/dialogs/dock_settings_dialog.cpp:659
 msgid "-1 selects the automatic radius"
 msgstr "-1 a zibab ar skin emgefre"
 
-#: src/dialogs/dock_settings_dialog.cpp:693
+#: src/dialogs/dock_settings_dialog.cpp:665
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Start-aligned"
 
-#: src/dialogs/dock_settings_dialog.cpp:695
+#: src/dialogs/dock_settings_dialog.cpp:667
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Kreizennet"
 
-#: src/dialogs/dock_settings_dialog.cpp:697
+#: src/dialogs/dock_settings_dialog.cpp:669
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Aliet gant an dibenn"
 
-#: src/dialogs/dock_settings_dialog.cpp:699
+#: src/dialogs/dock_settings_dialog.cpp:671
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Leuniañ an esaouennoù digoust"
 
-#: src/dialogs/dock_settings_dialog.cpp:745
+#: src/dialogs/dock_settings_dialog.cpp:717
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Diweredekaet"
 
-#: src/dialogs/dock_settings_dialog.cpp:747
+#: src/dialogs/dock_settings_dialog.cpp:719
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Emgefreek"
 
-#: src/dialogs/dock_settings_dialog.cpp:749
+#: src/dialogs/dock_settings_dialog.cpp:721
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Fur"
 
-#: src/dialogs/dock_settings_dialog.cpp:1294
-#: src/dialogs/dock_settings_dialog.cpp:1329
+#: src/dialogs/dock_settings_dialog.cpp:774
+msgctxt "autohide effect"
+msgid "Plasma"
+msgstr "Plasma"
+
+#: src/dialogs/dock_settings_dialog.cpp:780
+msgctxt "autohide effect"
+msgid "Slide"
+msgstr "Riklañ"
+
+#: src/dialogs/dock_settings_dialog.cpp:786
+msgctxt "autohide effect"
+msgid "Fade"
+msgstr "Steuziañ"
+
+#: src/dialogs/dock_settings_dialog.cpp:794
+msgctxt "autohide effect"
+msgid "Slide and Fade"
+msgstr "Riklañ ha steuziañ"
+
+#: src/dialogs/dock_settings_dialog.cpp:800
+msgctxt "autohide effect"
+msgid "GNOME"
+msgstr "GNOME"
+
+#: src/dialogs/dock_settings_dialog.cpp:1191
+#: src/dialogs/dock_settings_dialog.cpp:1228
 msgid "Select Home Icon"
 msgstr "Dibabit an arouezenn degemer"
 
-#: src/dialogs/dock_settings_dialog.cpp:1299
+#: src/dialogs/dock_settings_dialog.cpp:1196
 msgid "_Cancel"
 msgstr "_Nullañ"
 
-#: src/dialogs/dock_settings_dialog.cpp:1302
+#: src/dialogs/dock_settings_dialog.cpp:1199
 msgid "_Open"
 msgstr "_Digeriñ"
 
-#: src/dialogs/dock_settings_dialog.cpp:1366
+#: src/dialogs/dock_settings_dialog.cpp:1265
 msgid "Image Files"
 msgstr "Restroù skeudennoù"
 
-#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_about_dialog.cpp:156
+#: src/dialogs/dock_about_dialog.cpp:113 src/dialogs/dock_about_dialog.cpp:157
 msgid "About DockLight"
 msgstr "Diwar-benn DockLight"
 
-#: src/dialogs/dock_about_dialog.cpp:193
+#: src/dialogs/dock_about_dialog.cpp:194
 msgid "Version %1"
 msgstr "Stumm meziant %1"
 
-#: src/dialogs/dock_about_dialog.cpp:196
+#: src/dialogs/dock_about_dialog.cpp:197
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui"
@@ -356,7 +387,7 @@ msgstr ""
 "Un dock arloadoù skañv.\n"
 "Aozer ha merour: yoosamui"
 
-#: src/dialogs/dock_about_dialog.cpp:204
+#: src/dialogs/dock_about_dialog.cpp:205
 msgid ""
 "Presentation mode: %1\n"
 "Dock configuration loaded: %2\n"

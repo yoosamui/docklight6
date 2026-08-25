@@ -7,56 +7,56 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-08-16 14:01+0700\n"
+"POT-Creation-Date: 2026-08-25 14:52+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language: hi\n"
 "Language-Team: none\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: hi\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: src/main.cpp:340
+#: src/main.cpp:355
 msgid "Window previews are disabled"
 msgstr "विंडो पूर्वावलोकन अक्षम हैं"
 
-#: src/main.cpp:346
+#: src/main.cpp:361
 msgid "DockLight"
 msgstr "डॉकप्रकाश"
 
-#: src/main.cpp:348
+#: src/main.cpp:368
 msgid ""
 "Openbox requires an X11 compositor for complete window previews. Display "
 "Preview is disabled. Start compton or picom, then enable Display Preview in "
 "DockLight Settings."
 msgstr ""
-"संपूर्ण विंडो पूर्वावलोकन के लिए ओपनबॉक्स को X11 कंपोज़िटर की आवश्यकता होती "
-"है। प्रदर्शन पूर्वावलोकन अक्षम है. कॉम्पटन या पिकॉम प्रारंभ करें, फिर "
-"डॉकलाइट सेटिंग्स में डिस्प्ले पूर्वावलोकन सक्षम करें।"
+"संपूर्ण विंडो पूर्वावलोकन के लिए ओपनबॉक्स को X11 कंपोज़िटर की आवश्यकता होती है। प्रदर्शन "
+"पूर्वावलोकन अक्षम है. कॉम्पटन या पिकॉम प्रारंभ करें, फिर डॉकलाइट सेटिंग्स में डिस्प्ले "
+"पूर्वावलोकन सक्षम करें।"
 
-#: src/dock/dock_item.cpp:267
+#: src/dock/dock_item.cpp:272
 msgid "_Attach"
 msgstr "_पिन टू डॉक"
 
-#: src/dock/dock_item.cpp:270
+#: src/dock/dock_item.cpp:275
 msgid "_Open New Window"
 msgstr "_नई विंडो खोलें"
 
-#: src/dock/dock_home_item.cpp:70 src/dock/dock_item.cpp:273
+#: src/dock/dock_item.cpp:278 src/dock/dock_home_item.cpp:70
 msgid "_Close All"
 msgstr "_सभी बंद करें"
 
-#: src/dock/dock_item.cpp:276
+#: src/dock/dock_item.cpp:281
 msgid "_Minimize"
 msgstr "_न्यूनतम करें"
 
-#: src/dock/dock_item.cpp:279
+#: src/dock/dock_item.cpp:284
 msgid "_Unminimize"
 msgstr "_पुनर्स्थापित करें"
 
-#: src/dock/dock_item.cpp:282
+#: src/dock/dock_item.cpp:287
 msgid "_Maximize"
 msgstr "_अधिकतम करें"
 
@@ -89,266 +89,296 @@ msgctxt "dock tooltip"
 msgid "Home"
 msgstr "घर"
 
-#: src/dialogs/dock_settings_dialog.cpp:122
-#: src/dialogs/dock_settings_dialog.cpp:163
+#: src/dialogs/dock_settings_dialog.cpp:91
+#: src/dialogs/dock_settings_dialog.cpp:127
 msgid "DockLight Settings"
 msgstr "डॉकलाइट सेटिंग्स"
 
-#: src/dialogs/dock_about_dialog.cpp:183 src/dialogs/dock_settings_dialog.cpp:191
+#: src/dialogs/dock_settings_dialog.cpp:155
+#: src/dialogs/dock_about_dialog.cpp:184
 msgid "_Close"
 msgstr "_बंद करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:203
+#: src/dialogs/dock_settings_dialog.cpp:167
 msgid "Monitor"
 msgstr "मॉनिटर"
 
-#: src/dialogs/dock_settings_dialog.cpp:205
+#: src/dialogs/dock_settings_dialog.cpp:169
 msgid "Hover Effect"
 msgstr "होवर प्रभाव"
 
-#: src/dialogs/dock_settings_dialog.cpp:207
+#: src/dialogs/dock_settings_dialog.cpp:171
 msgid "Indicator"
 msgstr "सूचक"
 
-#: src/dialogs/dock_settings_dialog.cpp:209
-#: src/dialogs/dock_settings_dialog.cpp:454
+#: src/dialogs/dock_settings_dialog.cpp:173
+#: src/dialogs/dock_settings_dialog.cpp:426
 msgid "Indicator Color"
 msgstr "सूचक रंग"
 
-#: src/dialogs/dock_settings_dialog.cpp:211
-#: src/dialogs/dock_settings_dialog.cpp:473
+#: src/dialogs/dock_settings_dialog.cpp:175
+#: src/dialogs/dock_settings_dialog.cpp:445
 msgid "Preview Color"
 msgstr "पूर्वावलोकन रंग"
 
-#: src/dialogs/dock_settings_dialog.cpp:213
+#: src/dialogs/dock_settings_dialog.cpp:177
 msgid "Display Home Icon"
 msgstr "होम आइकन प्रदर्शित करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:215
+#: src/dialogs/dock_settings_dialog.cpp:179
 msgid "Home Icon"
 msgstr "होम आइकन"
 
-#: src/dialogs/dock_settings_dialog.cpp:217
+#: src/dialogs/dock_settings_dialog.cpp:181
 msgid "Display Tooltips"
 msgstr "टूलटिप्स प्रदर्शित करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:219
+#: src/dialogs/dock_settings_dialog.cpp:183
 msgid "Display Preview"
 msgstr "पूर्वावलोकन प्रदर्शित करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:221
+#: src/dialogs/dock_settings_dialog.cpp:185
 msgid "Close Preview After Activation"
 msgstr "सक्रियण के बाद पूर्वावलोकन बंद करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:223
+#: src/dialogs/dock_settings_dialog.cpp:187
 msgid "Manage All Workspaces"
 msgstr "सभी कार्यस्थान प्रबंधित करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:225
+#: src/dialogs/dock_settings_dialog.cpp:189
 msgid "Icon Size"
 msgstr "चिह्न का आकार"
 
-#: src/dialogs/dock_settings_dialog.cpp:227
+#: src/dialogs/dock_settings_dialog.cpp:191
 msgid "Preview Card Height"
 msgstr "पूर्वावलोकन कार्ड की ऊंचाई"
 
-#: src/dialogs/dock_settings_dialog.cpp:229
+#: src/dialogs/dock_settings_dialog.cpp:193
 msgid "Preview Show Delay (ms)"
 msgstr "पूर्वावलोकन दिखाएँ विलंब (एमएस)"
 
-#: src/dialogs/dock_settings_dialog.cpp:231
+#: src/dialogs/dock_settings_dialog.cpp:195
 msgid "Location"
 msgstr "स्थान"
 
-#: src/dialogs/dock_settings_dialog.cpp:233
+#: src/dialogs/dock_settings_dialog.cpp:197
 msgid "Gradient Background"
 msgstr "ग्रेडियेंट पृष्ठभूमि"
 
-#: src/dialogs/dock_settings_dialog.cpp:235
+#: src/dialogs/dock_settings_dialog.cpp:199
 msgid "Rounded Corners"
 msgstr "गोल कोने"
 
-#: src/dialogs/dock_settings_dialog.cpp:237
+#: src/dialogs/dock_settings_dialog.cpp:201
 msgid "Corner Radius"
 msgstr "कोने की त्रिज्या"
 
-#: src/dialogs/dock_settings_dialog.cpp:239
+#: src/dialogs/dock_settings_dialog.cpp:203
 msgid "Alignment"
 msgstr "संरेखण"
 
-#: src/dialogs/dock_settings_dialog.cpp:241
+#: src/dialogs/dock_settings_dialog.cpp:205
 msgid "Autohide"
 msgstr "स्वतः छिपाएँ"
 
-#: src/dialogs/dock_settings_dialog.cpp:243
+#: src/dialogs/dock_settings_dialog.cpp:207
+msgid "Autohide Effect"
+msgstr "स्वतः छिपाने का प्रभाव"
+
+#: src/dialogs/dock_settings_dialog.cpp:209
 msgid "Autohide Delay (ms)"
 msgstr "स्वतः छिपाएँ विलंब (एमएस)"
 
-#: src/dialogs/dock_settings_dialog.cpp:333
+#: src/dialogs/dock_settings_dialog.cpp:305
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "प्राथमिक मॉनिटर"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:344
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "मानक प्रभाव"
 
-#: src/dialogs/dock_settings_dialog.cpp:374
+#: src/dialogs/dock_settings_dialog.cpp:346
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "ज़ूम प्रभाव"
 
-#: src/dialogs/dock_settings_dialog.cpp:376
+#: src/dialogs/dock_settings_dialog.cpp:348
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "धुंधला प्रभाव"
 
-#: src/dialogs/dock_settings_dialog.cpp:413
+#: src/dialogs/dock_settings_dialog.cpp:385
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "रेखा सूचक"
 
-#: src/dialogs/dock_settings_dialog.cpp:415
+#: src/dialogs/dock_settings_dialog.cpp:387
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "बिंदु संकेतक"
 
-#: src/dialogs/dock_settings_dialog.cpp:456
+#: src/dialogs/dock_settings_dialog.cpp:428
 msgid "Choose the indicator color"
 msgstr "सूचक रंग चुनें"
 
-#: src/dialogs/dock_settings_dialog.cpp:475
+#: src/dialogs/dock_settings_dialog.cpp:447
 msgid "Choose the preview color"
 msgstr "पूर्वावलोकन रंग चुनें"
 
-#: src/dialogs/dock_settings_dialog.cpp:487
+#: src/dialogs/dock_settings_dialog.cpp:459
 msgid "Select…"
 msgstr "चुनें..."
 
-#: src/dialogs/dock_settings_dialog.cpp:489
+#: src/dialogs/dock_settings_dialog.cpp:461
 msgid "Use Default"
 msgstr "डिफ़ॉल्ट का उपयोग करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:497
+#: src/dialogs/dock_settings_dialog.cpp:469
 msgid "Built-in DockLight icon"
 msgstr "अंतर्निहित डॉकलाइट आइकन"
 
-#: src/dialogs/dock_settings_dialog.cpp:531
+#: src/dialogs/dock_settings_dialog.cpp:503
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "अन्यथा पूर्वावलोकन को तब तक खुला रखें जब तक पॉइंटर उसे छोड़ न दे"
 
-#: src/dialogs/dock_settings_dialog.cpp:538
+#: src/dialogs/dock_settings_dialog.cpp:510
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr "सभी कार्यस्थानों पर आइकन क्रियाएँ और माउस-व्हील साइकलिंग लागू करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:569
+#: src/dialogs/dock_settings_dialog.cpp:541
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0 स्वचालित आकार का चयन करता है; अन्यथा 64 से 512 पिक्सेल का उपयोग करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:586
+#: src/dialogs/dock_settings_dialog.cpp:558
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr "विंडो पूर्वावलोकन प्रकट होने से पहले विलंब, 0 से 5000 मिलीसेकंड तक"
 
-#: src/dialogs/dock_settings_dialog.cpp:604
+#: src/dialogs/dock_settings_dialog.cpp:576
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "डॉक के छिपने से पहले विलंब, 0 से 5000 मिलीसेकंड तक"
 
-#: src/dialogs/dock_settings_dialog.cpp:611
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "निचला किनारा"
 
-#: src/dialogs/dock_settings_dialog.cpp:613
+#: src/dialogs/dock_settings_dialog.cpp:585
 msgctxt "dock location"
 msgid "Left"
 msgstr "बायां किनारा"
 
-#: src/dialogs/dock_settings_dialog.cpp:615
+#: src/dialogs/dock_settings_dialog.cpp:587
 msgctxt "dock location"
 msgid "Top"
 msgstr "शीर्ष किनारा"
 
-#: src/dialogs/dock_settings_dialog.cpp:617
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "dock location"
 msgid "Right"
 msgstr "दाहिना किनारा"
 
-#: src/dialogs/dock_settings_dialog.cpp:664
+#: src/dialogs/dock_settings_dialog.cpp:636
 msgid "Use the black-to-gray dock background gradient"
 msgstr "ब्लैक-टू-ग्रे डॉक बैकग्राउंड ग्रेडिएंट का उपयोग करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:687
+#: src/dialogs/dock_settings_dialog.cpp:659
 msgid "-1 selects the automatic radius"
 msgstr "-1 स्वचालित त्रिज्या का चयन करता है"
 
-#: src/dialogs/dock_settings_dialog.cpp:693
+#: src/dialogs/dock_settings_dialog.cpp:665
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "प्रारंभ-संरेखित"
 
-#: src/dialogs/dock_settings_dialog.cpp:695
+#: src/dialogs/dock_settings_dialog.cpp:667
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "केन्द्रित"
 
-#: src/dialogs/dock_settings_dialog.cpp:697
+#: src/dialogs/dock_settings_dialog.cpp:669
 msgctxt "dock alignment"
 msgid "End"
 msgstr "अंत-संरेखित"
 
-#: src/dialogs/dock_settings_dialog.cpp:699
+#: src/dialogs/dock_settings_dialog.cpp:671
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "उपलब्ध स्थान भरें"
 
-#: src/dialogs/dock_settings_dialog.cpp:745
+#: src/dialogs/dock_settings_dialog.cpp:717
 msgctxt "autohide mode"
 msgid "None"
 msgstr "विकलांग"
 
-#: src/dialogs/dock_settings_dialog.cpp:747
+#: src/dialogs/dock_settings_dialog.cpp:719
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "स्वचालित"
 
-#: src/dialogs/dock_settings_dialog.cpp:749
+#: src/dialogs/dock_settings_dialog.cpp:721
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "बुद्धिमान"
 
-#: src/dialogs/dock_settings_dialog.cpp:1294
-#: src/dialogs/dock_settings_dialog.cpp:1329
+#: src/dialogs/dock_settings_dialog.cpp:774
+msgctxt "autohide effect"
+msgid "Plasma"
+msgstr "Plasma"
+
+#: src/dialogs/dock_settings_dialog.cpp:780
+msgctxt "autohide effect"
+msgid "Slide"
+msgstr "स्लाइड"
+
+#: src/dialogs/dock_settings_dialog.cpp:786
+msgctxt "autohide effect"
+msgid "Fade"
+msgstr "फ़ेड"
+
+#: src/dialogs/dock_settings_dialog.cpp:794
+msgctxt "autohide effect"
+msgid "Slide and Fade"
+msgstr "स्लाइड और फ़ेड"
+
+#: src/dialogs/dock_settings_dialog.cpp:800
+msgctxt "autohide effect"
+msgid "GNOME"
+msgstr "GNOME"
+
+#: src/dialogs/dock_settings_dialog.cpp:1191
+#: src/dialogs/dock_settings_dialog.cpp:1228
 msgid "Select Home Icon"
 msgstr "होम आइकन चुनें"
 
-#: src/dialogs/dock_settings_dialog.cpp:1299
+#: src/dialogs/dock_settings_dialog.cpp:1196
 msgid "_Cancel"
 msgstr "_रद्द करें"
 
-#: src/dialogs/dock_settings_dialog.cpp:1302
+#: src/dialogs/dock_settings_dialog.cpp:1199
 msgid "_Open"
 msgstr "_खोलें"
 
-#: src/dialogs/dock_settings_dialog.cpp:1366
+#: src/dialogs/dock_settings_dialog.cpp:1265
 msgid "Image Files"
 msgstr "छवि फ़ाइलें"
 
-#: src/dialogs/dock_about_dialog.cpp:112 src/dialogs/dock_about_dialog.cpp:156
+#: src/dialogs/dock_about_dialog.cpp:113 src/dialogs/dock_about_dialog.cpp:157
 msgid "About DockLight"
 msgstr "डॉकलाइट के बारे में"
 
-#: src/dialogs/dock_about_dialog.cpp:193
+#: src/dialogs/dock_about_dialog.cpp:194
 msgid "Version %1"
 msgstr "सॉफ़्टवेयर संस्करण%1"
 
-#: src/dialogs/dock_about_dialog.cpp:196
+#: src/dialogs/dock_about_dialog.cpp:197
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui"
 msgstr "एक हल्का एप्लिकेशन डॉक। डॉकलाइटलाइनब्रेक लेखक और अनुरक्षक: योसामुई"
 
-#: src/dialogs/dock_about_dialog.cpp:204
+#: src/dialogs/dock_about_dialog.cpp:205
 msgid ""
 "Presentation mode: %1\n"
 "Dock configuration loaded: %2\n"
