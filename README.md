@@ -191,10 +191,10 @@ Clean and rebuild either configuration with:
 
 ```sh
 ./build.sh debug --clean
-# executable: build-debug/docklight6
+# executable: build-debug/src/docklight6
 
 ./build.sh release --clean
-# executable: build-release/docklight6
+# executable: build-release/src/docklight6
 ```
 
 Use `./build.sh --help` for installation, run, restart, GDB, job-count, and
