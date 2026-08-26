@@ -647,12 +647,16 @@ assert.match(
     "Plasma Wayland must retain its current surface effect");
 assert.match(
     plasmaSurfaceBackendSource,
-    /configurable_autohide_effects\(\) const[\s\S]*?DockAutohideEffect::plasma[\s\S]*?DockAutohideEffect::slide_fade/,
-    "Plasma Wayland settings must retain Plasma and add slide/fade as a separate choice");
+    /configurable_autohide_effects\(\) const[\s\S]*?DockAutohideEffect::plasma[\s\S]*?DockAutohideEffect::slide/,
+    "Plasma Wayland settings must retain Plasma and add movement-only Slide as a separate choice");
 assert.match(
     plasmaSurfaceBackendSource,
-    /supports_autohide_slide_fade\(\) const[\s\S]*?return true;[\s\S]*?set_autohide_slide_fade_progress\([\s\S]*?autohide_slide_content_offset\([\s\S]*?set_surface_horizontal_offset\([\s\S]*?set_surface_vertical_offset\([\s\S]*?set_opacity\(1\.0 - clamped\)[\s\S]*?finish_autohide_slide_fade\([\s\S]*?m_window\.hide\(\)/,
-    "Plasma Wayland must own slide/fade drawing and unmap only after its transparent final frame");
+    /supports_autohide_slide\(\) const[\s\S]*?return true;[\s\S]*?set_autohide_slide_progress\([\s\S]*?autohide_slide_content_offset\([\s\S]*?set_surface_horizontal_offset\([\s\S]*?set_surface_vertical_offset\([\s\S]*?set_opacity\(1\.0\)/,
+    "Plasma Wayland must own movement-only slide drawing on both axes without fading");
+assert.match(
+    plasmaSurfaceBackendSource,
+    /finish_autohide_slide\(\s*bool\)\s*\{[\s\S]*?fully clipped layer surface mapped[\s\S]*?\}/,
+    "Plasma Wayland Slide must remain mapped while hidden so KWin cannot add a conflicting reveal transform");
 assert.match(
     legacySurfaceBackendSource,
     /default_autohide_effect\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?m_native_x11[\s\S]*?DockAutohideEffect::plasma[\s\S]*?DockAutohideEffect::slide/,
@@ -678,13 +682,21 @@ assert.match(
     /effective_autohide_effect\(\) const[\s\S]*?default_autohide_effect\(\)[\s\S]*?autohide_effect\(\)[\s\S]*?configurable_autohide_effects\(\)[\s\S]*?std::find\([\s\S]*?return platform_default/,
     "unsupported desktop-specific settings must fall back to the active backend default");
 assert.match(
+    dockWindowSource,
+    /DockAutohideEffect::slide_fade[\s\S]*?supports_autohide_slide\(\)[\s\S]*?return DockAutohideEffect::slide/,
+    "Plasma Wayland must migrate its former slide/fade setting to movement-only Slide without changing GNOME");
+assert.match(
     autohideControllerSource,
     /case DockAutohideEffect::fade:[\s\S]*?animate_fade\(hiding\)/,
     "fade must have an explicit visual-transition dispatch");
 assert.match(
     autohideControllerSource,
-    /case DockAutohideEffect::slide_fade:[\s\S]*?surface_supports_autohide_slide_fade\(\)[\s\S]*?animate_slide_fade\(hiding\)[\s\S]*?animate_slide_fade\([\s\S]*?surface_autohide_slide_fade_progress\(\)[\s\S]*?progress \* progress \* progress[\s\S]*?1\.0 - std::pow\(1\.0 - progress, 3\.0\)[\s\S]*?finish_surface_autohide_slide_fade\(true\)/,
-    "Plasma Wayland slide/fade must reverse from current progress and use native-X11 timing");
+    /case DockAutohideEffect::slide:[\s\S]*?surface_supports_autohide_slide\(\)[\s\S]*?animate_surface_slide\(hiding\)[\s\S]*?animate_surface_slide\([\s\S]*?surface_autohide_slide_progress\(\)[\s\S]*?progress \* progress \* \(3\.0 - 2\.0 \* progress\)[\s\S]*?finish_surface_autohide_slide\(true\)/,
+    "Plasma Wayland Slide must reverse from current progress and ease smoothly at both endpoints");
+assert.match(
+    autohideControllerSource,
+    /m_pending_surface_slide_reveal[\s\S]*?animate_surface_slide\(false\)[\s\S]*?defer_surface_slide_reveal[\s\S]*?set_surface_autohide_slide_progress\([\s\S]*?m_window\.show\(\)/,
+    "Plasma Wayland Slide must start reveal only after its hidden-offset surface maps");
 assert.match(
     autohideControllerSource,
     /animate_fade\([\s\S]*?cancel_animation\(\)[\s\S]*?surface_autohide_fade_opacity\(\)[\s\S]*?advance_fade_animation[\s\S]*?set_surface_input_passthrough\(true\)[\s\S]*?finish_surface_autohide_fade\(true\)/,

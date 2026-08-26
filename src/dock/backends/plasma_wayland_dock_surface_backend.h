@@ -66,12 +66,12 @@ public:
         double opacity) override;
     void finish_autohide_fade(
         bool hidden) override;
-    bool supports_autohide_slide_fade() const override;
-    double autohide_slide_fade_progress() const override;
-    void set_autohide_slide_fade_progress(
+    bool supports_autohide_slide() const override;
+    double autohide_slide_progress() const override;
+    void set_autohide_slide_progress(
         const DockPlacement &placement,
         double progress) override;
-    void finish_autohide_slide_fade(
+    void finish_autohide_slide(
         bool hidden) override;
     bool initial_placement_pending() const override;
     void complete_initial_placement() override;
@@ -79,5 +79,5 @@ public:
 private:
     DockWindow &m_window;
     Glib::RefPtr<Gdk::Monitor> m_monitor;
-    double m_autohide_slide_fade_progress = 0.0;
+    double m_autohide_slide_progress = 0.0;
 };

@@ -831,6 +831,15 @@ DockWindow::effective_autohide_effect() const
     if (!configured.has_value())
         return platform_default;
 
+    // Plasma Wayland previously stored its client-rendered slide as
+    // slide_fade. Treat that value as the renamed movement-only Slide effect
+    // without changing GNOME's compositor-owned Slide and Fade selection.
+    if (*configured == DockAutohideEffect::slide_fade &&
+        m_surface_backend->supports_autohide_slide())
+    {
+        return DockAutohideEffect::slide;
+    }
+
     if (*configured == platform_default ||
         *configured == DockAutohideEffect::fade)
         return *configured;
@@ -995,36 +1004,36 @@ void DockWindow::finish_surface_autohide_fade(
 }
 
 bool DockWindow::
-    surface_supports_autohide_slide_fade() const
+    surface_supports_autohide_slide() const
 {
     return m_surface_backend
-        ->supports_autohide_slide_fade();
+        ->supports_autohide_slide();
 }
 
 double DockWindow::
-    surface_autohide_slide_fade_progress() const
+    surface_autohide_slide_progress() const
 {
     return m_surface_backend
-        ->autohide_slide_fade_progress();
+        ->autohide_slide_progress();
 }
 
 void DockWindow::
-    set_surface_autohide_slide_fade_progress(
+    set_surface_autohide_slide_progress(
     const DockPlacement &placement,
     double progress)
 {
     m_surface_backend
-        ->set_autohide_slide_fade_progress(
+        ->set_autohide_slide_progress(
             placement,
             progress);
 }
 
 void DockWindow::
-    finish_surface_autohide_slide_fade(
+    finish_surface_autohide_slide(
     bool hidden)
 {
     m_surface_backend
-        ->finish_autohide_slide_fade(hidden);
+        ->finish_autohide_slide(hidden);
 }
 
 bool DockWindow::surface_initial_placement_pending() const

@@ -277,7 +277,7 @@ PlasmaWaylandDockSurfaceBackend::
 {
     return {
         DockAutohideEffect::plasma,
-        DockAutohideEffect::slide_fade};
+        DockAutohideEffect::slide};
 }
 
 bool PlasmaWaylandDockSurfaceBackend::
@@ -309,19 +309,19 @@ void PlasmaWaylandDockSurfaceBackend::
 }
 
 bool PlasmaWaylandDockSurfaceBackend::
-    supports_autohide_slide_fade() const
+    supports_autohide_slide() const
 {
     return true;
 }
 
 double PlasmaWaylandDockSurfaceBackend::
-    autohide_slide_fade_progress() const
+    autohide_slide_progress() const
 {
-    return m_autohide_slide_fade_progress;
+    return m_autohide_slide_progress;
 }
 
 void PlasmaWaylandDockSurfaceBackend::
-    set_autohide_slide_fade_progress(
+    set_autohide_slide_progress(
         const DockPlacement &placement,
         double progress)
 {
@@ -345,20 +345,22 @@ void PlasmaWaylandDockSurfaceBackend::
             height,
             clamped);
 
-    m_autohide_slide_fade_progress = clamped;
+    m_autohide_slide_progress = clamped;
     m_window.set_surface_horizontal_offset(
         offset.x);
     m_window.set_surface_vertical_offset(
         offset.y);
-    m_window.set_opacity(1.0 - clamped);
+    // Plasma's Slide effect is deliberately movement-only.
+    m_window.set_opacity(1.0);
 }
 
 void PlasmaWaylandDockSurfaceBackend::
-    finish_autohide_slide_fade(
-        bool hidden)
+    finish_autohide_slide(
+        bool)
 {
-    if (hidden)
-        m_window.hide();
+    // Keep the fully clipped layer surface mapped. Remapping it on reveal
+    // makes KWin animate the surface while DockLight simultaneously moves
+    // its contents, producing the visible deviation this effect must avoid.
 }
 
 bool PlasmaWaylandDockSurfaceBackend::

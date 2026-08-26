@@ -178,12 +178,12 @@ private:
         double opacity);
     void finish_surface_autohide_fade(
         bool hidden);
-    bool surface_supports_autohide_slide_fade() const;
-    double surface_autohide_slide_fade_progress() const;
-    void set_surface_autohide_slide_fade_progress(
+    bool surface_supports_autohide_slide() const;
+    double surface_autohide_slide_progress() const;
+    void set_surface_autohide_slide_progress(
         const DockPlacement &placement,
         double progress);
-    void finish_surface_autohide_slide_fade(
+    void finish_surface_autohide_slide(
         bool hidden);
     bool surface_initial_placement_pending() const;
     void complete_surface_initial_placement();

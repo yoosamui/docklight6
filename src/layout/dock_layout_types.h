@@ -58,10 +58,10 @@ enum class DockAutohide : int
 };
 
 // Selects the visual transition without changing the shared autohide policy.
-// Plasma and GNOME retain their compositor-specific implementations;
-// slide_fade is implemented by the native Plasma Wayland surface backend and
-// by GNOME Shell for GNOME Wayland surfaces. The remaining values reserve
-// common choices for incremental follow-up work.
+// Plasma and GNOME retain their compositor-specific implementations. Native
+// Plasma Wayland implements slide locally, while slide_fade remains delegated
+// to GNOME Shell. The remaining values reserve common choices for incremental
+// follow-up work.
 enum class DockAutohideEffect : unsigned int
 {
     plasma = 0,

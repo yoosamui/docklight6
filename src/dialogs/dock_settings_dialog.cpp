@@ -821,9 +821,10 @@ void DockSettingsDialog::show(
     autohide_effect_list.set_activate_on_single_click(
         true);
 
+    // The backend-normalized value also migrates Plasma Wayland's former
+    // slide_fade setting to its movement-only Slide choice.
     const auto selected_autohide_effect =
-        current.settings.autohide_effect().value_or(
-            effective_autohide_effect);
+        effective_autohide_effect;
     Gtk::ListBoxRow *selected_autohide_effect_row =
         nullptr;
 

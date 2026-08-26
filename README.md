@@ -232,7 +232,7 @@ and fading, matching Plasma Wayland's map/unmap behavior. `Slide and Fade`
 instead combines outward movement with opacity. The GNOME Shell extension
 owns both effects for native Wayland and XWayland presentation.
 On Plasma Wayland, **Autohide Effect** offers the existing `Plasma` behavior
-and the KDE-specific `Slide and Fade` behavior.
+and the KDE-specific movement-only `Slide` behavior.
 
 List the monitor names available for monitor-specific placement with:
 

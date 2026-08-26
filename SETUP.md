@@ -287,8 +287,7 @@ effects:
 
 - `GNOME` matches the Plasma Wayland effect: the dock stays fixed at its edge
   while the complete dock scales around its centre and fades.
-- `Slide and Fade` moves the dock outward while fading it, using the same
-  200 ms cubic hide/reveal timing as the Plasma Wayland implementation.
+- `Slide and Fade` moves the dock outward while fading it over 200 ms.
 
 The corresponding configuration values are `gnome` and `slide_fade`.
 
@@ -330,10 +329,12 @@ See `plasma/geometry-bridge/README.md` for its requirements and behavior.
 The Plasma Wayland settings dialog offers two autohide effects:
 
 - `Plasma` keeps the existing layer-surface map/unmap effect.
-- `Slide and Fade` uses DockLight's client-rendered outward slide and fade,
-  with the same hide/reveal timing direction as native X11.
+- `Slide` uses a smooth client-rendered outward movement without fading. Its
+  fully clipped layer surface remains mapped while hidden so KWin does not add
+  a second animation during reveal.
 
-The corresponding configuration values are `plasma` and `slide_fade`.
+The corresponding configuration values are `plasma` and `slide`. Existing
+Plasma Wayland `slide_fade` settings are interpreted as `slide`.
 
 ### X11
 

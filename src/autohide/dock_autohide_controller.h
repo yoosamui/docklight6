@@ -82,8 +82,8 @@ private:
     void animate_effect(bool hiding);
     void animate_fade(bool hiding);
     bool advance_fade_animation();
-    void animate_slide_fade(bool hiding);
-    bool advance_slide_fade_animation();
+    void animate_surface_slide(bool hiding);
+    bool advance_surface_slide_animation();
     bool can_animate_x11() const;
     bool uses_plasma_x11_edge_effect() const;
     bool x11_slide_requires_horizontal_collapse() const;
@@ -153,6 +153,7 @@ private:
     bool m_hidden = false;
     bool m_has_shown_position = false;
     bool m_animating_to_hidden = false;
+    bool m_pending_surface_slide_reveal = false;
     bool m_animation_collapses_horizontally = false;
     bool m_animation_collapses_vertically = false;
     bool m_animation_clips_top = false;
