@@ -124,7 +124,7 @@ Build and install DockLight into `/usr/local`:
 
 ```sh
 ./build.sh debug --clean --check
-./build.sh release --clean --install
+./build.sh release --clean --install 
 ```
 
 The build script requests `sudo` only for the installation step. The core
@@ -164,6 +164,7 @@ DockLight can then be launched from the application menu or with:
 ```sh
 docklight6
 ```
+On the next login, DockLight will start automatically.
 
 ### Development builds
 
@@ -190,7 +191,10 @@ Clean and rebuild either configuration with:
 
 ```sh
 ./build.sh debug --clean
+# executable: build-debug/docklight6
+
 ./build.sh release --clean
+# executable: build-release/docklight6
 ```
 
 Use `./build.sh --help` for installation, run, restart, GDB, job-count, and
