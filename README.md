@@ -117,6 +117,8 @@ desktop-specific window actions and previews may not be available.**
 Install the build and runtime dependencies:
 
 ```sh
+git clone https://github.com/yoosamui/docklight6.git
+cd docklight6
 sudo ./install_dependencies.sh
 ```
 
@@ -134,15 +136,6 @@ desktop integration separately as the logged-in desktop user (without
 
 ```sh
 ./setup_backend.sh auto
-```
-
-Backend integrations can coexist for a user. Install them explicitly when the
-same system is used with more than one desktop:
-
-```sh
-./setup_backend.sh gnome
-./setup_backend.sh plasma
-./setup_backend.sh x11
 ```
 
 The GNOME command installs and enables the Shell extension. A newly installed
