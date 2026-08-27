@@ -40,6 +40,15 @@ const dockTooltipWindowPath = path.resolve(
 const dockWindowPath = path.resolve(
     __dirname,
     "../dock/dock_window.cpp");
+const dockWindowDndPath = path.resolve(
+    __dirname,
+    "../dock/dock_window_dnd.cpp");
+const dockWindowSurfacePath = path.resolve(
+    __dirname,
+    "../dock/dock_window_surface.cpp");
+const dockWindowItemsPath = path.resolve(
+    __dirname,
+    "../dock/dock_window_items.cpp");
 const legacySurfaceBackendPath = path.resolve(
     __dirname,
     "../dock/backends/legacy_dock_surface_backend.cpp");
@@ -52,12 +61,33 @@ const dockLayoutTypesPath = path.resolve(
 const dockItemPath = path.resolve(
     __dirname,
     "../dock/dock_item.cpp");
+const dockItemContextMenuPath = path.resolve(
+    __dirname,
+    "../dock/dock_item_context_menu.cpp");
+const dockItemEffectsPath = path.resolve(
+    __dirname,
+    "../dock/dock_item_effects.cpp");
+const dockItemDndPath = path.resolve(
+    __dirname,
+    "../dock/dock_item_dnd.cpp");
 const revealWindowPath = path.resolve(
     __dirname,
     "../autohide/dock_reveal_window.cpp");
 const previewWindowPath = path.resolve(
     __dirname,
     "../preview/dock_preview_window.cpp");
+const previewWindowInternalPath = path.resolve(
+    __dirname,
+    "../preview/dock_preview_window_internal.h");
+const previewLayoutPath = path.resolve(
+    __dirname,
+    "../preview/dock_preview_layout.cpp");
+const previewThumbnailCachePath = path.resolve(
+    __dirname,
+    "../preview/dock_preview_thumbnail_cache.cpp");
+const previewAnimationPath = path.resolve(
+    __dirname,
+    "../preview/dock_preview_animation.cpp");
 const thumbnailProviderPath = path.resolve(
     __dirname,
     "../preview/dock_window_thumbnail_provider.cpp");
@@ -67,6 +97,9 @@ const windowSystemControllerPath = path.resolve(
 const desktopSessionIdentityPath = path.resolve(
     __dirname,
     "../integrations/desktop_session_identity.h");
+const dockSettingsDialogPath = path.resolve(
+    __dirname,
+    "../dialogs/dock_settings_dialog.cpp");
 
 // gnome-extensions pack only bundles its conventional entry points unless
 // imported modules are explicitly listed as extra sources. Keep the package
@@ -94,28 +127,43 @@ const layoutCoordinatorSource = fs.readFileSync(
     layoutCoordinatorPath, "utf8");
 const dockTooltipWindowSource = fs.readFileSync(
     dockTooltipWindowPath, "utf8");
-const dockWindowSource = fs.readFileSync(
-    dockWindowPath, "utf8");
+const dockWindowSource = [
+    dockWindowPath,
+    dockWindowDndPath,
+    dockWindowSurfacePath,
+    dockWindowItemsPath,
+].map(sourcePath => fs.readFileSync(sourcePath, "utf8")).join("\n");
 const legacySurfaceBackendSource = fs.readFileSync(
     legacySurfaceBackendPath, "utf8");
 const plasmaSurfaceBackendSource = fs.readFileSync(
     plasmaSurfaceBackendPath, "utf8");
 const dockLayoutTypesSource = fs.readFileSync(
     dockLayoutTypesPath, "utf8");
-const dockItemSource = fs.readFileSync(
-    dockItemPath, "utf8");
+const dockItemSource = [
+    dockItemPath,
+    dockItemContextMenuPath,
+    dockItemEffectsPath,
+    dockItemDndPath,
+].map(sourcePath => fs.readFileSync(sourcePath, "utf8")).join("\n");
 const registryChangedHandler = dockWindowControllerSource.match(
     /m_window_registry_changed\s*=[\s\S]*?m_window_geometry_changed\s*=/)?.[0];
 const revealWindowSource = fs.readFileSync(
     revealWindowPath, "utf8");
-const previewWindowSource = fs.readFileSync(
-    previewWindowPath, "utf8");
+const previewWindowSource = [
+    previewWindowInternalPath,
+    previewWindowPath,
+    previewLayoutPath,
+    previewThumbnailCachePath,
+    previewAnimationPath,
+].map(sourcePath => fs.readFileSync(sourcePath, "utf8")).join("\n");
 const thumbnailProviderSource = fs.readFileSync(
     thumbnailProviderPath, "utf8");
 const windowSystemControllerSource = fs.readFileSync(
     windowSystemControllerPath, "utf8");
 const desktopSessionIdentitySource = fs.readFileSync(
     desktopSessionIdentityPath, "utf8");
+const dockSettingsDialogSource = fs.readFileSync(
+    dockSettingsDialogPath, "utf8");
 
 assert.match(
     extensionSource,
@@ -328,7 +376,7 @@ assert.match(
     "the replacement must rebuild and remap only after its unmap settle phase");
 assert.match(
     previewWindowSource,
-    /GNOME_PREVIEW_REVEAL_DELAY_MS = 50[\s\S]*?signal_size_allocate[\s\S]*?complete_presentation\(\)[\s\S]*?DockPreviewWindow::complete_presentation[\s\S]*?if \(m_replacing_gnome_wayland_preview\)[\s\S]*?start_live_streams\([\s\S]*?generation != m_generation[\s\S]*?!get_visible\(\)[\s\S]*?queue_draw\(\);[\s\S]*?m_gnome_preview_reveal_delay[\s\S]*?generation == m_generation[\s\S]*?set_opacity\(1\.0\);[\s\S]*?GNOME_PREVIEW_REVEAL_DELAY_MS[\s\S]*?m_replacing_gnome_wayland_preview = false;[\s\S]*?return;[\s\S]*?start_opacity_animation\(false\);/,
+    /signal_size_allocate[\s\S]*?complete_presentation\(\)[\s\S]*?GNOME_PREVIEW_REVEAL_DELAY_MS = 50[\s\S]*?DockPreviewWindow::complete_presentation[\s\S]*?if \(m_replacing_gnome_wayland_preview\)[\s\S]*?start_live_streams\([\s\S]*?generation != m_generation[\s\S]*?!get_visible\(\)[\s\S]*?queue_draw\(\);[\s\S]*?m_gnome_preview_reveal_delay[\s\S]*?generation == m_generation[\s\S]*?set_opacity\(1\.0\);[\s\S]*?GNOME_PREVIEW_REVEAL_DELAY_MS[\s\S]*?m_replacing_gnome_wayland_preview = false;[\s\S]*?return;[\s\S]*?start_opacity_animation\(false\);/,
     "GNOME Wayland replacements must repaint and settle after Shell acknowledgement before GTK is revealed");
 assert.match(
     previewWindowSource,
@@ -665,6 +713,10 @@ assert.match(
     legacySurfaceBackendSource,
     /configurable_autohide_effects\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?DockAutohideEffect::slide_fade/,
     "GNOME Wayland settings must retain the GNOME effect and add slide/fade");
+assert.match(
+    dockSettingsDialogSource,
+    /gnome_wayland_effects[\s\S]*?DockAutohideEffect::gnome[\s\S]*?case DockAutohideEffect::slide_fade:[\s\S]*?gnome_wayland_effects[\s\S]*?"Slide"[\s\S]*?:[\s\S]*?"Slide and Fade"/,
+    "GNOME Wayland must name its slide/fade effect Slide without renaming it on other backends");
 assert.match(
     dockWindowControllerSource,
     /set_effect\([\s\S]*?m_window\.effective_autohide_effect\(\)[\s\S]*?m_autohide_controller->initialize\(\)/,

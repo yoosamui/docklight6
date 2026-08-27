@@ -117,7 +117,11 @@ docklight6_SOURCES = \
     zkde-screencast-unstable-v1-client-protocol.h \
     zkde-screencast-unstable-v1-protocol.c \
     preview/dock_preview_window.h \
+    preview/dock_preview_window_internal.h \
     preview/dock_preview_window.cpp \
+    preview/dock_preview_thumbnail_cache.cpp \
+    preview/dock_preview_animation.cpp \
+    preview/dock_preview_layout.cpp \
     autohide/dock_reveal_window.h \
     autohide/dock_reveal_window.cpp \
     autohide/dock_autohide_controller.h \
@@ -130,6 +134,9 @@ docklight6_SOURCES = \
     dock/dock_constants.h \
     dock/dock_window.h \
     dock/dock_window.cpp \
+    dock/dock_window_dnd.cpp \
+    dock/dock_window_surface.cpp \
+    dock/dock_window_items.cpp \
     dock/dock_window_controller.h \
     dock/dock_window_controller.cpp \
     dock/tooltip_manager.h \
@@ -142,6 +149,9 @@ docklight6_SOURCES = \
     dock/dock_home_item.cpp \
     dock/dock_item.h \
     dock/dock_item.cpp \
+    dock/dock_item_context_menu.cpp \
+    dock/dock_item_effects.cpp \
+    dock/dock_item_dnd.cpp \
     dock/dock_tooltip_window.h \
     dock/dock_tooltip_window.cpp \
     dialogs/dock_settings_dialog.h \

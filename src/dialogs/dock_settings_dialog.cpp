@@ -761,6 +761,12 @@ void DockSettingsDialog::show(
 
     std::vector<AutohideEffectChoice>
         autohide_effect_choices;
+    const bool gnome_wayland_effects =
+        std::find(
+            configurable_autohide_effects.begin(),
+            configurable_autohide_effects.end(),
+            DockAutohideEffect::gnome) !=
+        configurable_autohide_effects.end();
 
     for (const auto effect :
          configurable_autohide_effects)
@@ -789,9 +795,11 @@ void DockSettingsDialog::show(
             autohide_effect_choices.push_back({
                 effect,
                 "slide_fade",
-                C_(
-                    "autohide effect",
-                    "Slide and Fade")});
+                gnome_wayland_effects
+                    ? C_("autohide effect", "Slide")
+                    : C_(
+                          "autohide effect",
+                          "Slide and Fade")});
             break;
         case DockAutohideEffect::gnome:
             autohide_effect_choices.push_back({
