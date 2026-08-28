@@ -166,6 +166,8 @@ void verifies_registration_and_snapshot()
                .supports_kwin_minimize_effect);
     assert(capabilities
                .provides_dock_pointer_tracking);
+    assert(capabilities
+               .provides_dock_screen_edge_reveal);
     assert(capabilities.thumbnail_policy ==
            WindowThumbnailPolicy::
                cache_mapped_windows_after_settle);
@@ -284,6 +286,8 @@ void verifies_legacy_script_uses_present_fallback()
             "window-1",
             "window-2"
         }));
+    assert(!backend.capabilities()
+                .provides_dock_screen_edge_reveal);
 
     std::vector<KWinWindowCommand>
         commands;

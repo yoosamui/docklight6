@@ -101,7 +101,10 @@ private:
     bool pointer_inside() const;
     bool has_shell_reveal_trigger() const;
     bool uses_shell_reveal_trigger() const;
+    bool uses_backend_screen_edge_reveal() const;
     bool uses_backend_pointer_tracking() const;
+    void show_reveal_trigger();
+    void publish_backend_hidden_state(bool hidden);
 
 private:
     DockWindow &m_window;

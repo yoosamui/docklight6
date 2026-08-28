@@ -121,6 +121,15 @@ dockWindow.output = {
     }
 };
 
+const secondOutput = {
+    geometry: {
+        x: 1920,
+        y: 0,
+        width: 1920,
+        height: 1080
+    }
+};
+
 const dockPopup =
     createWindow(
         "dock-popup",
@@ -187,6 +196,9 @@ const workspace = {
         x: 400,
         y: 300
     },
+    screens: [
+        dockWindow.output
+    ],
     clientArea(option, window) {
         assert.strictEqual(
             option,
@@ -203,6 +215,8 @@ const workspace = {
     currentDesktopChanged:
         new Signal(),
     cursorPosChanged:
+        new Signal(),
+    screensChanged:
         new Signal(),
     activatedWindow: null,
     raisedWindow: null,
@@ -245,6 +259,7 @@ Object.defineProperty(
 
 const calls = [];
 const messages = [];
+const screenEdgeCallbacks = new Map();
 
 function print(...arguments_) {
     messages.push(arguments_);
@@ -271,6 +286,18 @@ function callDBus(
         arguments: arguments_,
         callback
     });
+}
+
+function registerScreenEdge(
+    edge,
+    callback) {
+    screenEdgeCallbacks.set(
+        edge,
+        callback);
+}
+
+function unregisterScreenEdge(edge) {
+    screenEdgeCallbacks.delete(edge);
 }
 
 const scriptPath =
@@ -308,10 +335,16 @@ const context = {
     encodeURIComponent,
     isFinite,
     KWin: {
-        MaximizeArea: 3
+        MaximizeArea: 3,
+        ElectricTop: 0,
+        ElectricRight: 1,
+        ElectricBottom: 2,
+        ElectricLeft: 3
     },
     callDBus,
     print,
+    registerScreenEdge,
+    unregisterScreenEdge,
     workspace
 };
 
@@ -333,11 +366,11 @@ assert.strictEqual(
     "Register");
 assert.deepStrictEqual(
     calls[0].arguments,
-    ["9"]);
+    ["10"]);
 
 calls[0].callback(
     true,
-    "9");
+    "10");
 
 const dockPlacementRequest =
     calls.find(
@@ -605,6 +638,192 @@ assert.deepStrictEqual(
         600,
         64
     ]);
+
+// Plasma's own panel can cover Docklight's layer-shell trigger. Register the
+// corresponding KWin screen edge so reveal activation remains compositor-
+// owned and does not rewrite Docklight's ordinary hover state.
+replacementDockWindow.frameGeometry = {
+    x: 100,
+    y: 44,
+    width: 600,
+    height: 64
+};
+replacementDockWindow
+    .frameGeometryChanged
+    .emit();
+
+const topScreenEdgeCallback =
+    screenEdgeCallbacks.get(
+        context.KWin.ElectricTop);
+const callsFor = methodName =>
+    calls.filter(
+        call =>
+            call.methodName === methodName);
+
+assert(topScreenEdgeCallback);
+assert.strictEqual(
+    screenEdgeCallbacks.has(
+        context.KWin.ElectricBottom),
+    false);
+
+const hiddenQueriesBeforeEdge =
+    callsFor("GetDockHidden").length;
+const revealRequestsBeforeEdge =
+    callsFor("RequestDockReveal").length;
+const pointerPublishesBeforeReveal =
+    callsFor("PublishDockPointerInside")
+        .length;
+
+workspace.cursorPos = {
+    x: 400,
+    y: 0
+};
+
+topScreenEdgeCallback();
+
+const hiddenQueryAtEdge =
+    callsFor("GetDockHidden").at(-1);
+
+assert.strictEqual(
+    callsFor("GetDockHidden").length,
+    hiddenQueriesBeforeEdge + 1);
+
+hiddenQueryAtEdge.callback(true);
+
+const revealAtCoveredEdge =
+    callsFor("RequestDockReveal").at(-1);
+
+assert.strictEqual(
+    callsFor("RequestDockReveal").length,
+    revealRequestsBeforeEdge + 1);
+
+revealAtCoveredEdge.callback(true);
+
+assert.strictEqual(
+    callsFor("PublishDockPointerInside")
+        .length,
+    pointerPublishesBeforeReveal);
+
+workspace.cursorPos = {
+    x: 800,
+    y: 0
+};
+topScreenEdgeCallback();
+
+assert.strictEqual(
+    callsFor("GetDockHidden").length,
+    hiddenQueriesBeforeEdge + 1);
+
+workspace.cursorPos = {
+    x: 400,
+    y: 0
+};
+topScreenEdgeCallback();
+
+const visibleDockQuery =
+    callsFor("GetDockHidden").at(-1);
+
+visibleDockQuery.callback(false);
+
+assert.strictEqual(
+    callsFor("RequestDockReveal").length,
+    revealRequestsBeforeEdge + 1);
+
+// KWin's ElectricRight edge is the outer edge of the whole desktop, not an
+// internal border. Reject its far-monitor callback and reveal when the cursor
+// actually crosses the dock output's shared boundary instead.
+workspace.screens.push(secondOutput);
+workspace.screensChanged.emit();
+replacementDockWindow.frameGeometry = {
+    x: 1856,
+    y: 200,
+    width: 64,
+    height: 600
+};
+replacementDockWindow
+    .frameGeometryChanged
+    .emit();
+
+const rightScreenEdgeCallback =
+    screenEdgeCallbacks.get(
+        context.KWin.ElectricRight);
+const hiddenQueriesBeforeFarEdge =
+    callsFor("GetDockHidden").length;
+
+assert(rightScreenEdgeCallback);
+
+workspace.cursorPos = {
+    x: 3839,
+    y: 400
+};
+rightScreenEdgeCallback();
+
+assert.strictEqual(
+    callsFor("GetDockHidden").length,
+    hiddenQueriesBeforeFarEdge);
+
+workspace.cursorPos = {
+    x: 1919,
+    y: 400
+};
+workspace.cursorPosChanged.emit();
+workspace.cursorPos = {
+    x: 1920,
+    y: 400
+};
+workspace.cursorPosChanged.emit();
+
+const internalBoundaryQuery =
+    callsFor("GetDockHidden").at(-1);
+
+assert.strictEqual(
+    callsFor("GetDockHidden").length,
+    hiddenQueriesBeforeFarEdge + 1);
+
+internalBoundaryQuery.callback(true);
+
+const internalBoundaryReveal =
+    callsFor("RequestDockReveal").at(-1);
+
+assert.strictEqual(
+    callsFor("RequestDockReveal").length,
+    revealRequestsBeforeEdge + 2);
+
+internalBoundaryReveal.callback(true);
+
+// KWin may push the cursor one pixel inward while delivering an outer screen
+// edge callback. Accept that coordinate on the dock's own output.
+replacementDockWindow.frameGeometry = {
+    x: 0,
+    y: 200,
+    width: 64,
+    height: 600
+};
+replacementDockWindow
+    .frameGeometryChanged
+    .emit();
+
+const leftScreenEdgeCallback =
+    screenEdgeCallbacks.get(
+        context.KWin.ElectricLeft);
+const hiddenQueriesBeforeLeftEdge =
+    callsFor("GetDockHidden").length;
+
+assert(leftScreenEdgeCallback);
+
+workspace.cursorPos = {
+    x: 1,
+    y: 400
+};
+leftScreenEdgeCallback();
+
+assert.strictEqual(
+    callsFor("GetDockHidden").length,
+    hiddenQueriesBeforeLeftEdge + 1);
+
+callsFor("GetDockHidden")
+    .at(-1)
+    .callback(false);
 
 function deliverCommand(
     command,

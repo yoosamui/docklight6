@@ -336,6 +336,13 @@ The Plasma Wayland settings dialog offers two autohide effects:
 The corresponding configuration values are `plasma` and `slide`. Existing
 Plasma Wayland `slide_fade` settings are interpreted as `slide`.
 
+The KWin integration owns the Plasma Wayland screen-edge reveal trigger.
+DockLight does not map its GTK reveal strip in this mode, preventing both
+input conflicts with an overlapping Plasma panel and immediate hide/reveal
+reversal beneath a stationary edge pointer. If the configured dock edge is an
+internal boundary between monitors, the KWin script uses an actual pointer
+crossing within the dock span; the far edge of the adjacent monitor is ignored.
+
 ### X11
 
 ```sh

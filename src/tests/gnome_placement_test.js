@@ -851,8 +851,12 @@ assert.match(
     "a hidden native X11 dock must remain mapped and input-pass-through so reveal does not trigger a compositor map effect");
 assert.match(
     autohideControllerSource,
-    /hide_now\([\s\S]*?m_window\.hide_tooltip_immediately\(\);[\s\S]*?m_reveal_window\.show\(\);[\s\S]*?surface_is_native_x11\(\)[\s\S]*?set_surface_input_passthrough\(true\);[\s\S]*?animate_effect\(true\);/,
+    /hide_now\([\s\S]*?m_window\.hide_tooltip_immediately\(\);[\s\S]*?show_reveal_trigger\(\);[\s\S]*?surface_is_native_x11\(\)[\s\S]*?set_surface_input_passthrough\(true\);[\s\S]*?animate_effect\(true\);/,
     "native X11 input must be disabled before hiding so XFWM crossing events cannot reopen overlays during the transition");
+assert.match(
+    autohideControllerSource,
+    /show_reveal_trigger\(\)[\s\S]*?uses_backend_screen_edge_reveal\(\)[\s\S]*?m_reveal_window\.hide\(\);[\s\S]*?return;[\s\S]*?m_reveal_window\.show\(\);/,
+    "Plasma Wayland must not map its GTK reveal strip underneath a stationary edge pointer");
 assert.match(
     autohideControllerSource,
     /m_animation_translates_content =[\s\S]*?DockAutohideEffect::slide[\s\S]*?autohide_slide_content_offset\([\s\S]*?m_animation_start_horizontal_offset =[\s\S]*?x11_horizontal_offset\(\)[\s\S]*?m_animation_target_horizontal_offset = hiding[\s\S]*?m_animation_start_vertical_offset =[\s\S]*?x11_vertical_offset\(\)[\s\S]*?m_animation_target_vertical_offset = hiding/,
@@ -883,11 +887,11 @@ assert.match(
     "changing dock placement must clear an interrupted X11 transform");
 assert.match(
     autohideControllerSource,
-    /set_placement\([\s\S]*?preserve_hidden_wayland_surface[\s\S]*?was_hidden &&[\s\S]*?!m_window\.surface_is_native_x11\(\)[\s\S]*?if \(preserve_hidden_wayland_surface\)[\s\S]*?m_reveal_window\.apply_placement\(placement\)[\s\S]*?uses_shell_reveal_trigger\(\)[\s\S]*?finish_surface_autohide_fade\(true\)[\s\S]*?m_reveal_window\.show\(\);[\s\S]*?return;[\s\S]*?if \(was_hidden\)[\s\S]*?reveal_immediately\(\)/,
+    /set_placement\([\s\S]*?preserve_hidden_wayland_surface[\s\S]*?was_hidden &&[\s\S]*?!m_window\.surface_is_native_x11\(\)[\s\S]*?if \(preserve_hidden_wayland_surface\)[\s\S]*?m_reveal_window\.apply_placement\(placement\)[\s\S]*?uses_shell_reveal_trigger\(\)[\s\S]*?finish_surface_autohide_fade\(true\)[\s\S]*?show_reveal_trigger\(\);[\s\S]*?return;[\s\S]*?if \(was_hidden\)[\s\S]*?reveal_immediately\(\)/,
     "Wayland placement changes must preserve autohide instead of exposing the dock during launcher updates");
 assert.match(
     autohideControllerSource,
-    /set_placement\([\s\S]*?was_hidden &&[\s\S]*?surface_is_native_x11\(\)[\s\S]*?apply_hidden_x11_placement\([\s\S]*?shown_position\);[\s\S]*?m_reveal_window\.apply_placement\(placement\);[\s\S]*?m_reveal_window\.show\(\);[\s\S]*?return;[\s\S]*?apply_hidden_x11_placement\([\s\S]*?set_surface_input_passthrough\(true\);[\s\S]*?set_opacity\(0\.0\)[\s\S]*?m_shown_x = shown_position\.x;[\s\S]*?m_shown_y = shown_position\.y;/,
+    /set_placement\([\s\S]*?was_hidden &&[\s\S]*?surface_is_native_x11\(\)[\s\S]*?apply_hidden_x11_placement\([\s\S]*?shown_position\);[\s\S]*?m_reveal_window\.apply_placement\(placement\);[\s\S]*?show_reveal_trigger\(\);[\s\S]*?return;[\s\S]*?apply_hidden_x11_placement\([\s\S]*?set_surface_input_passthrough\(true\);[\s\S]*?set_opacity\(0\.0\)[\s\S]*?m_shown_x = shown_position\.x;[\s\S]*?m_shown_y = shown_position\.y;/,
     "native X11 placement changes must rebuild the hidden transform without exposing the dock");
 assert.match(
     autohideControllerSource,

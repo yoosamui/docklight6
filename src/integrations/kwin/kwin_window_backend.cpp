@@ -67,6 +67,9 @@ KWinWindowBackend::capabilities() const
         true;
     capabilities.supports_kwin_minimize_effect =
         true;
+    capabilities.provides_dock_screen_edge_reveal =
+        m_registered_protocol_version >=
+        KWinIntegrationProtocol::VERSION;
     capabilities.provides_dock_pointer_tracking =
         true;
     // ScreenShot2 can include compositor transforms while a window is

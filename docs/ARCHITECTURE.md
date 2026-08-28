@@ -291,11 +291,11 @@ side effects belong in a dock-surface backend.
 | --- | --- |
 | `src/autohide/dock_autohide_controller.*` | Visibility lifecycle, configured effect, delays, pointer state, reveal coordination, inhibition, and compositor handshakes. |
 | `src/autohide/dock_intellihide_policy.*` | Pure decision about whether eligible managed windows overlap the dock. |
-| `src/autohide/dock_reveal_window.*` | Transparent edge surface that emits reveal requests when the pointer enters. |
+| `src/autohide/dock_reveal_window.*` | Transparent fallback edge surface that emits reveal requests when the pointer enters. Native Plasma Wayland uses KWin's screen-edge reservation instead. |
 
 GTK owns autohide/intellihide policy and final visibility state. GNOME Shell or
-KWin may own compositor animation and native pointer/geometry reporting where
-the application cannot implement them directly.
+KWin may own compositor animation, edge activation, and native pointer/geometry
+reporting where the application cannot implement them directly.
 
 ### Launchers
 
@@ -336,17 +336,18 @@ corresponding explicit make target.
 | Directory | Component | Role |
 | --- | --- | --- |
 | `gnome/docklight-window-integration@docklight6/` | GNOME Shell extension | Publishes normalized Mutter state, executes window commands, captures or presents previews, places DockLight surfaces, and performs compositor-owned autohide animation. `placement.js` contains independently testable geometry helpers. |
-| `kwin/org.docklight6.windowintegration/` | KWin workspace script | Tracks KWin windows and dock geometry, sends revisioned snapshots over session D-Bus, waits for commands, and reports pointer/animation state. |
+| `kwin/org.docklight6.windowintegration/` | KWin workspace script | Tracks KWin windows and dock geometry, registers outer compositor screen edges, detects internal monitor-boundary crossings, sends revisioned snapshots over session D-Bus, waits for commands, and reports pointer/animation state. |
 | `kwin/org.docklight6.minimize/` | Optional KWin effect | Animates windows toward DockLight launcher geometry while coexisting with other docks. |
 | `plasma/geometry-bridge/package/` | Hidden Plasma applet | Uses Plasma's task model to publish launcher geometry through Plasma's private window-management path. |
 | `plasma/geometry-bridge/plugin/` | Qt 6 QML plug-in | Watches DockLight's D-Bus service and exposes icon and surface geometry to the applet. |
 | `plasma/geometry-bridge/ensure-geometry-bridge.js` | Plasma repair script | Ensures exactly one hidden applet instance exists on a suitable panel. |
 | `protocols/zkde-screencast-unstable-v1.xml` | Wayland protocol description | Generates the client code used for KWin live preview streams. |
 
-The Shell protocol version is currently defined in the C++ protocol header
-and duplicated in both Shell producers. Any wire-format or semantic change
-must update the C++ service/backend, the KWin script, the GNOME extension, and
-their contract tests together.
+The integration service advertises the current protocol from the C++ header
+and accepts one legacy version during producer upgrades. A producer may remain
+on that legacy version only when capability gating preserves its existing
+fallback behavior, as GNOME does for KWin-specific screen-edge reveal. Shared
+wire-format changes must update both producers and their contract tests.
 
 ## Important data and control flows
 

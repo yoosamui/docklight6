@@ -359,7 +359,7 @@ void DockAutohideController::set_placement(
         apply_hidden_x11_placement(
             shown_position);
         m_reveal_window.apply_placement(placement);
-        m_reveal_window.show();
+        show_reveal_trigger();
         return;
     }
 
@@ -387,7 +387,7 @@ void DockAutohideController::set_placement(
                 m_placement,
                 1.0);
             m_window.finish_surface_autohide_slide(true);
-            m_reveal_window.show();
+            show_reveal_trigger();
             return;
         }
 
@@ -399,7 +399,7 @@ void DockAutohideController::set_placement(
         m_window.set_surface_autohide_fade_opacity(0.0);
         m_window.finish_surface_autohide_fade(true);
         m_window.set_surface_autohide_fade_opacity(1.0);
-        m_reveal_window.show();
+        show_reveal_trigger();
         return;
     }
 
@@ -1452,7 +1452,7 @@ void DockAutohideController::
     m_window.hide_tooltip_immediately();
     m_hidden = true;
 
-    m_reveal_window.show();
+    show_reveal_trigger();
     set_surface_input_passthrough(true);
 
     int current_x = 0;
@@ -1526,6 +1526,7 @@ void DockAutohideController::reveal_immediately()
     cancel_hide();
     cancel_animation();
     m_pending_x11_reveal_animation = false;
+    publish_backend_hidden_state(false);
 
     if (uses_shell_reveal_trigger())
     {
@@ -1584,6 +1585,7 @@ void DockAutohideController::hide_now(
 
     m_window.hide_tooltip_immediately();
     m_hidden = true;
+    publish_backend_hidden_state(true);
 
     if (uses_shell_reveal_trigger())
     {
@@ -1595,7 +1597,7 @@ void DockAutohideController::hide_now(
         return;
     }
 
-    m_reveal_window.show();
+    show_reveal_trigger();
 
     // Native X11 keeps the dock mapped while its hide animation runs. Stop
     // routing input to it before the first frame moves or clips the surface;
@@ -1615,6 +1617,7 @@ void DockAutohideController::reveal()
     if (m_hidden)
     {
         m_hidden = false;
+        publish_backend_hidden_state(false);
 
         if (uses_shell_reveal_trigger())
         {
@@ -1780,6 +1783,16 @@ bool DockAutohideController::uses_shell_reveal_trigger() const
 }
 
 bool DockAutohideController::
+    uses_backend_screen_edge_reveal() const
+{
+    return m_window.m_window_registry &&
+           m_window.m_window_registry->connected() &&
+           m_window.m_window_registry
+               ->capabilities()
+               .provides_dock_screen_edge_reveal;
+}
+
+bool DockAutohideController::
     uses_backend_pointer_tracking() const
 {
     return m_window.m_window_registry &&
@@ -1787,4 +1800,33 @@ bool DockAutohideController::
            m_window.m_window_registry
                ->capabilities()
                .provides_dock_pointer_tracking;
+}
+
+void DockAutohideController::show_reveal_trigger()
+{
+    if (uses_backend_screen_edge_reveal())
+    {
+        // KWin owns the physical edge reservation on Plasma Wayland. Mapping
+        // the GTK two-pixel strip underneath a stationary edge pointer emits
+        // an immediate enter event and reverses the hide that just started.
+        m_reveal_window.hide();
+        return;
+    }
+
+    m_reveal_window.show();
+}
+
+void DockAutohideController::
+    publish_backend_hidden_state(bool hidden)
+{
+    // KWin's Wayland script owns the compositor screen-edge trigger because
+    // another Plasma panel can cover Docklight's layer-shell reveal strip.
+    // Publish local autohide state only to that compositor-owned path; GNOME
+    // continues to publish state as part of its delegated Shell transition.
+    if (uses_backend_screen_edge_reveal() &&
+        m_window.m_window_registry)
+    {
+        m_window.m_window_registry
+            ->set_dock_hidden(hidden);
+    }
 }

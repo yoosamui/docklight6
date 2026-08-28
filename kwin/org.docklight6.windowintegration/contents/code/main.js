@@ -7,7 +7,7 @@
         "/org/docklight6/WindowIntegration";
     const INTERFACE_NAME =
         "org.docklight6.WindowIntegration1";
-    const PROTOCOL_VERSION = "9";
+    const PROTOCOL_VERSION = "10";
     const DOCKLIGHT_APPLICATION_RESOURCE =
         "docklight6";
     const DOCKLIGHT_MAIN_ROLE =
@@ -21,6 +21,10 @@
     // (3); reveal, tooltip, and preview surfaces use the overlay layer and
     // must never become the dock geometry source.
     const KWIN_DOCK_LAYER = 3;
+    // KWin can hold the cursor one logical pixel inside a physical edge while
+    // dispatching its screen-edge callback. Keep the ownership check tolerant
+    // of that pushback without accepting another monitor's distant edge.
+    const SCREEN_EDGE_POSITION_TOLERANCE = 2;
 
     let connected = false;
     let registering = false;
@@ -36,7 +40,12 @@
     const baseDockWorkAreas = {};
     let dockSurface = null;
     let lastDockWorkAreaGeometry = null;
+    let lastDockSurfaceGeometry = null;
+    let lastDockOutputGeometry = null;
     let lastPublishedDockPointerInside = null;
+    let registeredDockScreenEdge = null;
+    let dockRevealRequestPending = false;
+    let lastCursorPosition = null;
 
     function windowId(window) {
         if (!window || !window.internalId)
@@ -469,6 +478,31 @@
             isDocklightDockSurface(dockSurface)
                 ? dockSurface.frameGeometry || {}
                 : {};
+
+        if (Number(geometry.width) > 0 &&
+            Number(geometry.height) > 0) {
+            lastDockSurfaceGeometry = {
+                x: Number(geometry.x || 0),
+                y: Number(geometry.y || 0),
+                width: Number(geometry.width || 0),
+                height: Number(geometry.height || 0)
+            };
+
+            const output =
+                dockSurface.output &&
+                dockSurface.output.geometry || {};
+            if (Number(output.width) > 0 &&
+                Number(output.height) > 0) {
+                lastDockOutputGeometry = {
+                    x: Number(output.x || 0),
+                    y: Number(output.y || 0),
+                    width: Number(output.width || 0),
+                    height: Number(output.height || 0)
+                };
+            }
+
+            updateDockScreenEdgeRegistration();
+        }
 
         callDBus(
             SERVICE_NAME,
@@ -955,6 +989,284 @@
             handlePublishReply);
     }
 
+    function dockScreenEdge() {
+        const dock = lastDockSurfaceGeometry;
+        const output = lastDockOutputGeometry;
+
+        if (!dock || !output ||
+            dock.width <= 0 || dock.height <= 0 ||
+            output.width <= 0 || output.height <= 0) {
+            return null;
+        }
+
+        const horizontal = dock.width >= dock.height;
+
+        if (horizontal) {
+            const dockCenter = dock.y + dock.height / 2;
+            const outputCenter = output.y + output.height / 2;
+            return dockCenter <= outputCenter
+                ? KWin.ElectricTop
+                : KWin.ElectricBottom;
+        }
+
+        const dockCenter = dock.x + dock.width / 2;
+        const outputCenter = output.x + output.width / 2;
+        return dockCenter <= outputCenter
+            ? KWin.ElectricLeft
+            : KWin.ElectricRight;
+    }
+
+    function pointerIsAlongDockMainAxis() {
+        const dock = lastDockSurfaceGeometry;
+        if (!dock)
+            return false;
+
+        const position = workspace.cursorPos || {};
+        const horizontal = dock.width >= dock.height;
+        const coordinate = horizontal
+            ? Number(position.x || 0)
+            : Number(position.y || 0);
+        const start = horizontal ? dock.x : dock.y;
+        const size = horizontal
+            ? dock.width
+            : dock.height;
+
+        return size > 0 &&
+            coordinate >= start &&
+            coordinate < start + size;
+    }
+
+    function pointerIsAtDockOutputEdge() {
+        const output = lastDockOutputGeometry;
+        const edge = dockScreenEdge();
+        if (!output || edge === null)
+            return false;
+
+        const position = workspace.cursorPos || {};
+        const x = Number(position.x || 0);
+        const y = Number(position.y || 0);
+        const atEdge = function (
+            coordinate,
+            edgeCoordinate) {
+            return Math.abs(
+                coordinate - edgeCoordinate) <=
+                SCREEN_EDGE_POSITION_TOLERANCE;
+        };
+
+        if (edge === KWin.ElectricTop)
+            return atEdge(y, output.y);
+        if (edge === KWin.ElectricRight)
+            return atEdge(
+                x,
+                output.x + output.width - 1);
+        if (edge === KWin.ElectricBottom)
+            return atEdge(
+                y,
+                output.y + output.height - 1);
+        if (edge === KWin.ElectricLeft)
+            return atEdge(x, output.x);
+
+        return false;
+    }
+
+    function outputTouchesDockBoundary(
+        geometry,
+        edge,
+        mainAxisCoordinate) {
+        const output = lastDockOutputGeometry;
+        if (!output || !geometry)
+            return false;
+
+        const x = Number(geometry.x || 0);
+        const y = Number(geometry.y || 0);
+        const width = Number(geometry.width || 0);
+        const height = Number(geometry.height || 0);
+        if (width <= 0 || height <= 0)
+            return false;
+
+        if (x === output.x &&
+            y === output.y &&
+            width === output.width &&
+            height === output.height) {
+            return false;
+        }
+
+        if (edge === KWin.ElectricTop) {
+            return y + height === output.y &&
+                mainAxisCoordinate >= x &&
+                mainAxisCoordinate < x + width;
+        }
+        if (edge === KWin.ElectricRight) {
+            return x === output.x + output.width &&
+                mainAxisCoordinate >= y &&
+                mainAxisCoordinate < y + height;
+        }
+        if (edge === KWin.ElectricBottom) {
+            return y === output.y + output.height &&
+                mainAxisCoordinate >= x &&
+                mainAxisCoordinate < x + width;
+        }
+        if (edge === KWin.ElectricLeft) {
+            return x + width === output.x &&
+                mainAxisCoordinate >= y &&
+                mainAxisCoordinate < y + height;
+        }
+
+        return false;
+    }
+
+    function dockBoundaryHasAdjacentOutput(
+        edge,
+        mainAxisCoordinate) {
+        const screens = workspace.screens || [];
+
+        for (let index = 0;
+             index < screens.length;
+             ++index) {
+            if (outputTouchesDockBoundary(
+                    screens[index] &&
+                        screens[index].geometry,
+                    edge,
+                    mainAxisCoordinate)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function cursorCrossedInternalDockBoundary(
+        previous,
+        current) {
+        const dock = lastDockSurfaceGeometry;
+        const output = lastDockOutputGeometry;
+        const edge = dockScreenEdge();
+        if (!previous || !current || !dock || !output ||
+            edge === null) {
+            return false;
+        }
+
+        const horizontal = dock.width >= dock.height;
+        const mainAxisCoordinate = horizontal
+            ? current.x
+            : current.y;
+        const mainAxisStart = horizontal ? dock.x : dock.y;
+        const mainAxisSize = horizontal
+            ? dock.width
+            : dock.height;
+        if (mainAxisSize <= 0 ||
+            mainAxisCoordinate < mainAxisStart ||
+            mainAxisCoordinate >=
+                mainAxisStart + mainAxisSize ||
+            !dockBoundaryHasAdjacentOutput(
+                edge,
+                mainAxisCoordinate)) {
+            return false;
+        }
+
+        if (edge === KWin.ElectricTop ||
+            edge === KWin.ElectricBottom) {
+            const boundary = edge === KWin.ElectricTop
+                ? output.y
+                : output.y + output.height;
+            return (previous.y < boundary &&
+                    current.y >= boundary) ||
+                (previous.y >= boundary &&
+                 current.y < boundary);
+        }
+
+        const boundary = edge === KWin.ElectricLeft
+            ? output.x
+            : output.x + output.width;
+        return (previous.x < boundary &&
+                current.x >= boundary) ||
+            (previous.x >= boundary &&
+             current.x < boundary);
+    }
+
+    function requestDockReveal(
+        requirePointerAtOutputEdge) {
+        if (!connected ||
+            dockRevealRequestPending ||
+            !pointerIsAlongDockMainAxis() ||
+            (requirePointerAtOutputEdge &&
+             !pointerIsAtDockOutputEdge())) {
+            return;
+        }
+
+        dockRevealRequestPending = true;
+
+        callDBus(
+            SERVICE_NAME,
+            OBJECT_PATH,
+            INTERFACE_NAME,
+            "GetDockHidden",
+            function (hidden) {
+                if (hidden !== true ||
+                    !pointerIsAlongDockMainAxis() ||
+                    (requirePointerAtOutputEdge &&
+                     !pointerIsAtDockOutputEdge())) {
+                    dockRevealRequestPending = false;
+                    return;
+                }
+
+                callDBus(
+                    SERVICE_NAME,
+                    OBJECT_PATH,
+                    INTERFACE_NAME,
+                    "RequestDockReveal",
+                    function () {
+                        dockRevealRequestPending = false;
+                    });
+            });
+    }
+
+    function requestDockRevealFromScreenEdge() {
+        requestDockReveal(true);
+    }
+
+    function handleCursorPositionChanged() {
+        const position = workspace.cursorPos || {};
+        const current = {
+            x: Number(position.x || 0),
+            y: Number(position.y || 0)
+        };
+        const crossedInternalBoundary =
+            cursorCrossedInternalDockBoundary(
+                lastCursorPosition,
+                current);
+
+        lastCursorPosition = current;
+        publishDockPointerInside();
+
+        if (crossedInternalBoundary)
+            requestDockReveal(false);
+    }
+
+    function updateDockScreenEdgeRegistration() {
+        const edge = dockScreenEdge();
+        if (edge === registeredDockScreenEdge)
+            return;
+
+        if (registeredDockScreenEdge !== null &&
+            typeof unregisterScreenEdge ===
+                "function") {
+            unregisterScreenEdge(
+                registeredDockScreenEdge);
+        }
+
+        registeredDockScreenEdge = null;
+
+        if (edge !== null &&
+            typeof registerScreenEdge ===
+                "function") {
+            registerScreenEdge(
+                edge,
+                requestDockRevealFromScreenEdge);
+            registeredDockScreenEdge = edge;
+        }
+    }
+
     function connectWorkAreaWindow(window) {
         if (!window ||
             !window.dock ||
@@ -1014,8 +1326,10 @@
         connectSignal(
             window.outputChanged,
             function () {
-                if (dockSurface === window)
+                if (dockSurface === window) {
+                    publishDockSurfaceGeometry();
                     publishDockWorkAreaGeometry();
+                }
             });
 
         return true;
@@ -1453,6 +1767,11 @@
         publishStackingOrder();
     }
 
+    function onScreensChanged() {
+        publishDockSurfaceGeometry();
+        publishDockWorkAreaGeometry();
+    }
+
     const initialWindows =
         workspace.stackingOrder || [];
 
@@ -1480,13 +1799,23 @@
         publishCurrentDesktop);
     connectSignal(
         workspace.cursorPosChanged,
-        publishDockPointerInside);
+        handleCursorPositionChanged);
+    connectSignal(
+        workspace.screensChanged,
+        onScreensChanged);
     connectSignal(
         workspace.screenAdded,
-        publishDockWorkAreaGeometry);
+        onScreensChanged);
     connectSignal(
         workspace.screenRemoved,
-        publishDockWorkAreaGeometry);
+        onScreensChanged);
+
+    const initialCursorPosition =
+        workspace.cursorPos || {};
+    lastCursorPosition = {
+        x: Number(initialCursorPosition.x || 0),
+        y: Number(initialCursorPosition.y || 0)
+    };
 
     registerIntegration();
 }());

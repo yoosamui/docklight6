@@ -286,7 +286,7 @@ vm.runInContext(
 
 assert.strictEqual(calls.length, 1);
 assert.strictEqual(calls[0].methodName, "Register");
-calls[0].callback(true, "9");
+calls[0].callback(true, "10");
 
 const geometryCalls = () =>
     calls.filter(

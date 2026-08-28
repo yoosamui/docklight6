@@ -58,6 +58,7 @@ struct WindowBackendCapabilities
     bool accepts_icon_geometry = false;
     bool supports_kwin_minimize_effect = false;
     bool provides_dock_reveal_trigger = false;
+    bool provides_dock_screen_edge_reveal = false;
     bool provides_dock_pointer_tracking = false;
     WindowThumbnailPolicy thumbnail_policy =
         WindowThumbnailPolicy::capture_on_demand;

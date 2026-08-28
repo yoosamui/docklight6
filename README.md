@@ -229,7 +229,11 @@ and fading, matching Plasma Wayland's map/unmap behavior. `Slide and Fade`
 instead combines outward movement with opacity. The GNOME Shell extension
 owns both effects for native Wayland and XWayland presentation.
 On Plasma Wayland, **Autohide Effect** offers the existing `Plasma` behavior
-and the KDE-specific movement-only `Slide` behavior.
+and the KDE-specific movement-only `Slide` behavior. KWin owns DockLight's
+screen-edge reveal activation, so an overlapping Plasma panel cannot cover the
+trigger and a newly mapped GTK edge strip cannot reverse a pending hide. At a
+boundary shared by two monitors, KWin detects crossing that boundary along the
+dock instead of activating at the adjacent monitor's outer edge.
 
 List the monitor names available for monitor-specific placement with:
 
