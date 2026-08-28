@@ -825,6 +825,10 @@ assert.match(
     /delegates_autohide_effect\([\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::fade[\s\S]*?DockAutohideEffect::slide_fade[\s\S]*?finish_autohide_fade\([\s\S]*?!m_native_x11[\s\S]*?m_window\.hide\(\)/,
     "the legacy backend must delegate GNOME compositor effects while retaining X11's mapped hidden surface");
 assert.match(
+    legacySurfaceBackendSource,
+    /is_gnome_shell_x11_session\(\)[\s\S]*?m_native_x11[\s\S]*?DockAutohideEffect::gnome[\s\S]*?DockAutohideEffect::plasma/,
+    "GNOME Shell X11 must delegate persisted Plasma choices instead of silently bypassing its healthy extension");
+assert.match(
     plasmaSurfaceBackendSource,
     /set_autohide_fade_opacity\([\s\S]*?m_window\.set_opacity\(opacity\)[\s\S]*?finish_autohide_fade\([\s\S]*?m_window\.hide\(\)/,
     "Plasma fade must use layer-surface opacity before its existing unmapped hidden state");

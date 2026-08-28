@@ -49,11 +49,14 @@ that monitor. GTK continues to own autohide and intellihide policy, delays,
 input pass-through, and the final hidden state; Shell reports animation
 completion over the existing integration protocol.
 
-On GNOME Shell X11, the `GNOME` choice uses the same centred actor scale,
-opacity, 200 ms duration, and cubic easing. The existing GTK/X11 reveal strip,
-input pass-through, EWMH placement, struts, application-window actions, and
-XComposite previews remain unchanged. `Plasma` and `Slide` remain available
-as fully native X11 alternatives.
+On GNOME Shell X11, the `GNOME` and `Plasma` choices use the same centred actor
+scale, opacity, 200 ms duration, and cubic easing. Delegating `Plasma` keeps
+configurations written before the GNOME-specific choice from silently
+bypassing the extension. The existing GTK/X11 reveal strip, input
+pass-through, EWMH placement, struts, application-window actions, and
+XComposite previews remain unchanged. `Slide` remains a fully native X11
+alternative, and every effect falls back to its native path if the extension
+is unavailable.
 
 From the source directory, install the extension as the logged-in desktop
 user (without `sudo`):

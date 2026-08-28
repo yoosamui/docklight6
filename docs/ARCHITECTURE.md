@@ -297,8 +297,9 @@ side effects belong in a dock-surface backend.
 GTK owns autohide/intellihide policy and final visibility state. GNOME Shell or
 KWin may own compositor animation, edge activation, and native pointer/geometry
 reporting where the application cannot implement them directly. GNOME Shell
-X11 delegates only the `GNOME` animation: its GTK reveal trigger and all
-EWMH/XComposite behavior remain native and provide the fallback path.
+X11 delegates the `GNOME` animation and the compatible persisted `Plasma`
+choice: its GTK reveal trigger and all EWMH/XComposite behavior remain native
+and provide the fallback path whenever the Shell bridge is unavailable.
 
 ### Launchers
 

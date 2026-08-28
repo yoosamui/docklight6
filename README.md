@@ -229,10 +229,12 @@ keeps the dock at its edge while scaling the complete dock around its centre
 and fading, matching Plasma Wayland's map/unmap behavior. `Slide and Fade`
 instead combines outward movement with opacity. The GNOME Shell extension
 owns both effects for native Wayland and XWayland presentation.
-On GNOME Shell X11, `GNOME` uses the same Shell-owned centred scale and fade
-while application-window discovery and previews remain native EWMH/XComposite.
-The existing `Plasma` and `Slide` choices remain native X11 effects and the
-native path is used automatically if the Shell bridge is unavailable.
+On GNOME Shell X11, `GNOME` and `Plasma` use the same Shell-owned centred scale
+and fade while application-window discovery and previews remain native
+EWMH/XComposite. This also upgrades existing configurations which persisted
+`Plasma` before the GNOME-specific choice existed. `Slide` remains a native X11
+effect, and the native path is used automatically for every choice if the
+Shell bridge is unavailable.
 On Plasma Wayland, **Autohide Effect** offers the existing `Plasma` behavior
 and the KDE-specific movement-only `Slide` behavior. KWin owns DockLight's
 screen-edge reveal activation, so an overlapping Plasma panel cannot cover the

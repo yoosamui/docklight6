@@ -411,13 +411,18 @@ bool LegacyDockSurfaceBackend::
                effect == DockAutohideEffect::slide_fade;
     }
 
-    // GNOME Shell X11 delegates only the new compositor-quality GNOME
-    // effect. Plasma and Slide stay on the established native X11 path and
-    // remain available as explicit fallbacks.
+    // GNOME Shell X11 delegates both scale-and-fade choices when the optional
+    // bridge is ready. Existing installations commonly have "plasma"
+    // persisted from before the GNOME choice existed; leaving that value on
+    // the native path silently bypasses a healthy extension. The controller
+    // still selects the native X11 implementation automatically while the
+    // bridge is disconnected or has not discovered the dock. Slide remains
+    // an explicitly native alternative.
     return DesktopSessionIdentity::
                is_gnome_shell_x11_session() &&
            m_native_x11 &&
-           effect == DockAutohideEffect::gnome;
+           (effect == DockAutohideEffect::gnome ||
+            effect == DockAutohideEffect::plasma);
 }
 
 double LegacyDockSurfaceBackend::
