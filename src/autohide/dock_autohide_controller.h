@@ -86,9 +86,7 @@ private:
     bool advance_surface_slide_animation();
     bool can_animate_x11() const;
     bool uses_plasma_x11_edge_effect() const;
-    bool x11_slide_requires_horizontal_collapse() const;
-    bool collapses_x11_horizontally(
-        bool include_partial_slide = false) const;
+    bool collapses_x11_horizontally() const;
     bool collapses_x11_vertically() const;
     double x11_horizontal_collapse_anchor() const;
     void animate_x11(
@@ -143,6 +141,8 @@ private:
     double m_animation_target_scale = 1.0;
     double m_animation_start_vertical_offset = 0.0;
     double m_animation_target_vertical_offset = 0.0;
+    double m_animation_start_horizontal_offset = 0.0;
+    double m_animation_target_horizontal_offset = 0.0;
     double m_animation_start_opacity = 1.0;
     double m_animation_target_opacity = 1.0;
     double m_animation_start_progress = 0.0;
@@ -156,7 +156,7 @@ private:
     bool m_pending_surface_slide_reveal = false;
     bool m_animation_collapses_horizontally = false;
     bool m_animation_collapses_vertically = false;
-    bool m_animation_clips_top = false;
+    bool m_animation_translates_content = false;
     bool m_animation_fades = false;
     double m_animation_scale_anchor = 1.0;
     bool m_pointer_inside = false;

@@ -383,8 +383,7 @@ LegacyDockSurfaceBackend::
 
     return {
         DockAutohideEffect::plasma,
-        DockAutohideEffect::slide,
-        DockAutohideEffect::fade};
+        DockAutohideEffect::slide};
 }
 
 bool LegacyDockSurfaceBackend::

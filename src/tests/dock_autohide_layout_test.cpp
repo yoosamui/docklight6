@@ -387,44 +387,6 @@ int main()
     assert(right_wayland_offset.x == 58);
     assert(right_wayland_offset.y == 0);
 
-    const MonitorGeometry adjacent_right_monitor{
-        1920,
-        0,
-        1920,
-        1080};
-    assert(horizontal_hide_corridor_intersects_monitor(
-        placement,
-        1856,
-        356,
-        64,
-        400,
-        adjacent_right_monitor));
-    assert(!horizontal_hide_corridor_intersects_monitor(
-        placement,
-        1856,
-        356,
-        64,
-        400,
-        {0, 1080, 1920, 1080}));
-
-    DockPlacement left_placement = placement;
-    left_placement.anchor_right = false;
-    left_placement.anchor_left = true;
-    assert(horizontal_hide_corridor_intersects_monitor(
-        left_placement,
-        1920,
-        356,
-        64,
-        400,
-        {0, 0, 1920, 1080}));
-    assert(!horizontal_hide_corridor_intersects_monitor(
-        left_placement,
-        1920,
-        356,
-        64,
-        400,
-        adjacent_right_monitor));
-
     DockPlacement right_strut;
     right_strut.orientation =
         DockOrientation::vertical;

@@ -786,10 +786,6 @@ void DockSettingsDialog::show(
                 C_("autohide effect", "Slide")});
             break;
         case DockAutohideEffect::fade:
-            autohide_effect_choices.push_back({
-                effect,
-                "fade",
-                C_("autohide effect", "Fade")});
             break;
         case DockAutohideEffect::slide_fade:
             autohide_effect_choices.push_back({

@@ -667,8 +667,12 @@ assert.match(
     "the native X11 reveal strip must remain outside asynchronous window-manager placement");
 assert.match(
     revealWindowSource,
-    /DockRevealWindow::start_x11_edge_poll[\s\S]*?if \(!x11_reveal_surface_is_inset\(\)\)[\s\S]*?return;[\s\S]*?signal_timeout/,
-    "an X11 reveal strip at the physical edge must use enter events without an idle poll");
+    /DockRevealWindow::start_x11_edge_poll[\s\S]*?uses_xwayland_presentation\(\) &&[\s\S]*?!x11_reveal_surface_is_inset\(\)[\s\S]*?return;[\s\S]*?signal_timeout/,
+    "native X11 must poll the physical edge while XWayland retains its inset-only fallback");
+assert.match(
+    revealWindowSource,
+    /uses_xwayland_presentation[\s\S]*?DOCKLIGHT_XWAYLAND_PRESENTATION/,
+    "physical-edge polling must distinguish native X11 from an XWayland presentation");
 assert.match(
     extensionSource,
     /_isX11DockWindow\(window\)[\s\S]*?_removeDockStrut\(\)[\s\S]*?_publishDockSurfaceGeometry\(rect\)/,
@@ -711,8 +715,20 @@ assert.match(
     "native X11 must use the Plasma-style effect without changing ordinary Wayland defaults");
 assert.match(
     legacySurfaceBackendSource,
+    /set_type_hint\([\s\S]*?WINDOW_TYPE_HINT_DOCK[\s\S]*?set_keep_above\(true\)/,
+    "the dock must retain its established EWMH type and keep-above policy");
+assert.match(
+    legacySurfaceBackendSource,
+    /configurable_autohide_effects\(\) const[\s\S]*?if \(!m_native_x11\)[\s\S]*?return \{[\s\S]*?DockAutohideEffect::plasma,[\s\S]*?DockAutohideEffect::slide\};/,
+    "native X11 settings must offer Plasma and Slide without standalone Fade");
+assert.match(
+    legacySurfaceBackendSource,
     /configurable_autohide_effects\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?DockAutohideEffect::slide_fade/,
     "GNOME Wayland settings must retain the GNOME effect and add slide/fade");
+assert.match(
+    dockSettingsDialogSource,
+    /case DockAutohideEffect::fade:\s*break;/,
+    "the settings dialog must not expose standalone Fade even if a backend reports it");
 assert.match(
     dockSettingsDialogSource,
     /gnome_wayland_effects[\s\S]*?DockAutohideEffect::gnome[\s\S]*?case DockAutohideEffect::slide_fade:[\s\S]*?gnome_wayland_effects[\s\S]*?"Slide"[\s\S]*?:[\s\S]*?"Slide and Fade"/,
@@ -839,12 +855,12 @@ assert.match(
     "native X11 input must be disabled before hiding so XFWM crossing events cannot reopen overlays during the transition");
 assert.match(
     autohideControllerSource,
-    /x11_slide_requires_horizontal_collapse\(\)[\s\S]*?horizontal_hide_corridor_intersects_monitor\([\s\S]*?m_animation_collapses_horizontally[\s\S]*?set_x11_horizontal_scale\([\s\S]*?0\.0,[\s\S]*?m_animation_target_scale/,
-    "a native X11 vertical dock facing another monitor must collapse at its fixed edge");
+    /m_animation_translates_content =[\s\S]*?DockAutohideEffect::slide[\s\S]*?autohide_slide_content_offset\([\s\S]*?m_animation_start_horizontal_offset =[\s\S]*?x11_horizontal_offset\(\)[\s\S]*?m_animation_target_horizontal_offset = hiding[\s\S]*?m_animation_start_vertical_offset =[\s\S]*?x11_vertical_offset\(\)[\s\S]*?m_animation_target_vertical_offset = hiding/,
+    "native X11 Slide must translate clipped content on every horizontal and vertical edge");
 assert.match(
     autohideControllerSource,
-    /collapses_x11_horizontally\([\s\S]*?include_partial_slide[\s\S]*?m_placement\.is_vertical\(\)[\s\S]*?x11_slide_requires_horizontal_collapse\(\)[\s\S]*?include_partial_slide[\s\S]*?m_window\.x11_horizontal_scale\(\) < 1\.0/,
-    "a partial vertical collapse must not leak into a horizontal dock edge");
+    /collapses_x11_horizontally\(\) const[\s\S]*?uses_plasma_x11_edge_effect\(\)[\s\S]*?m_placement\.is_horizontal\(\);/,
+    "horizontal X11 collapse must remain exclusive to the Plasma effect");
 assert.match(
     autohideControllerSource,
     /uses_plasma_x11_edge_effect\(\) const[\s\S]*?DockAutohideEffect::plasma[\s\S]*?surface_is_native_x11\(\)[\s\S]*?m_has_placement[\s\S]*?collapses_x11_horizontally\([\s\S]*?m_placement\.is_horizontal\(\)[\s\S]*?collapses_x11_vertically\(\) const[\s\S]*?m_placement\.is_vertical\(\)[\s\S]*?m_animation_collapses_horizontally[\s\S]*?m_animation_collapses_vertically[\s\S]*?m_animation_fades = plasma_edge_effect[\s\S]*?SCALE_ANCHOR_CENTER[\s\S]*?m_animation_start_opacity[\s\S]*?m_animation_target_opacity/,
@@ -856,7 +872,11 @@ assert.match(
 assert.match(
     dockWindowSource,
     /set_horizontal_offset\([\s\S]*?m_horizontal_offset = offset[\s\S]*?context->translate\([\s\S]*?m_horizontal_offset/,
-    "the dock drawing transform must support Wayland slide translation on vertical edges");
+    "the dock drawing transform must support clipped slide translation on vertical edges");
+assert.match(
+    dockWindowSource,
+    /fully_translated[\s\S]*?Cairo::OPERATOR_CLEAR[\s\S]*?context->paint\(\)[\s\S]*?return true;/,
+    "a fully hidden slide must clear stale backing pixels before reveal");
 assert.match(
     autohideControllerSource,
     /set_placement\([\s\S]*?cancel_animation\(\);\s*reset_local_visual_transform\(\);/,
@@ -871,8 +891,12 @@ assert.match(
     "native X11 placement changes must rebuild the hidden transform without exposing the dock");
 assert.match(
     autohideControllerSource,
-    /const double eased = m_animating_to_hidden[\s\S]*?progress \* progress \* progress[\s\S]*?1\.0 - std::pow\(1\.0 - progress, 3\.0\)/,
-    "every native X11 edge must use the standard hide and reveal curves");
+    /advance_x11_animation\(\)[\s\S]*?smooth_slide[\s\S]*?DockAutohideEffect::slide[\s\S]*?3\.0 - 2\.0 \* progress[\s\S]*?m_animating_to_hidden[\s\S]*?progress \* progress \* progress[\s\S]*?std::pow\(1\.0 - progress, 3\.0\)/,
+    "native X11 Slide must use stable endpoint easing without changing Plasma's established curves");
+assert.match(
+    autohideControllerSource,
+    /!hiding &&[\s\S]*?DockAutohideEffect::slide &&[\s\S]*?m_animation_translates_content[\s\S]*?m_window\.set_opacity\(1\.0\)[\s\S]*?if \(!\(smooth_slide &&[\s\S]*?m_animation_translates_content\)\)/,
+    "X11 Slide must stage full opacity while clipped instead of exposing a stale frame beside another dock");
 assert.match(
     extensionSource,
     /signalName === 'DockHiddenChanged'[\s\S]*?this\._dockHidden = Boolean[\s\S]*?this\._startDockVisibilityTransition/,

@@ -69,6 +69,7 @@ public:
     void set_vertical_offset(double offset);
     double vertical_offset() const;
     void set_horizontal_offset(double offset);
+    double horizontal_offset() const;
 
 protected:
     bool on_draw(
@@ -198,6 +199,8 @@ private:
         double scale,
         double anchor);
     double x11_vertical_scale() const;
+    void set_x11_horizontal_offset(double offset);
+    double x11_horizontal_offset() const;
     void set_x11_vertical_offset(double offset);
     double x11_vertical_offset() const;
     void set_surface_horizontal_offset(double offset);

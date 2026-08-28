@@ -110,17 +110,38 @@ void DockSurfaceBox::set_horizontal_offset(
     queue_draw();
 }
 
+double DockSurfaceBox::horizontal_offset() const
+{
+    return m_horizontal_offset;
+}
+
 bool DockSurfaceBox::on_draw(
     const Cairo::RefPtr<Cairo::Context>
         &context)
 {
-    if (m_horizontal_scale <= 0.0 ||
-        m_vertical_scale <= 0.0 ||
+    const bool fully_translated =
         std::abs(m_horizontal_offset) >=
             get_allocated_width() ||
         std::abs(m_vertical_offset) >=
-            get_allocated_height())
+            get_allocated_height();
+    if (fully_translated)
+    {
+        // A fully clipped slide still owns an X11 backing pixmap. Clear the
+        // last rendered frame explicitly so raising the window opacity for
+        // reveal cannot expose stale dock pixels below another edge panel.
+        context->save();
+        context->set_operator(
+            Cairo::OPERATOR_CLEAR);
+        context->paint();
+        context->restore();
         return true;
+    }
+
+    if (m_horizontal_scale <= 0.0 ||
+        m_vertical_scale <= 0.0)
+    {
+        return true;
+    }
 
     if (m_horizontal_scale >= 1.0 &&
         m_vertical_scale >= 1.0 &&
@@ -179,6 +200,17 @@ void DockWindow::set_x11_vertical_scale(
 double DockWindow::x11_vertical_scale() const
 {
     return m_dock_box.vertical_scale();
+}
+
+void DockWindow::set_x11_horizontal_offset(
+    double offset)
+{
+    m_dock_box.set_horizontal_offset(offset);
+}
+
+double DockWindow::x11_horizontal_offset() const
+{
+    return m_dock_box.horizontal_offset();
 }
 
 void DockWindow::set_x11_vertical_offset(

@@ -34,6 +34,13 @@ namespace
 
 constexpr int X11_EDGE_POLL_INTERVAL_MS = 50;
 
+bool uses_xwayland_presentation()
+{
+    return g_getenv(
+               "DOCKLIGHT_XWAYLAND_PRESENTATION") !=
+           nullptr;
+}
+
 Gtk::WindowType reveal_window_type()
 {
     auto *display = gdk_display_get_default();
@@ -355,11 +362,20 @@ void DockRevealWindow::start_x11_edge_poll()
 {
     stop_x11_edge_poll();
 
-    // When the reveal surface already touches the physical edge, X11 enter
-    // events provide an immediate, idle-free trigger. Poll only when a panel
-    // inset keeps that surface away from the edge it represents.
-    if (!x11_reveal_surface_is_inset())
+    // Keep polling even when the transparent strip itself touches the edge.
+    // Another X11 dock can be stacked above that two-pixel input window and
+    // consume its crossing event. Root-pointer polling remains independent
+    // of X11 window stacking, while the enter event still provides the
+    // immediate path when the reveal strip is unobstructed.
+    //
+    // Preserve the established XWayland behavior: its root cursor can be
+    // stale outside X surfaces, so it polls only for an inset trigger. Native
+    // Wayland reveal backends never enter this path.
+    if (uses_xwayland_presentation() &&
+        !x11_reveal_surface_is_inset())
+    {
         return;
+    }
 
     m_pointer_was_on_physical_edge = false;
     m_x11_edge_poll_timer =
@@ -379,7 +395,8 @@ void DockRevealWindow::stop_x11_edge_poll()
 bool DockRevealWindow::poll_x11_physical_edge()
 {
     if (!get_mapped() ||
-        !x11_reveal_surface_is_inset())
+        (uses_xwayland_presentation() &&
+         !x11_reveal_surface_is_inset()))
         return false;
 
     auto *display = gdk_display_get_default();
