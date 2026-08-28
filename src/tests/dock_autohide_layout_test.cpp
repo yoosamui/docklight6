@@ -176,10 +176,10 @@ int main()
         monitor,
         2);
     assert(top_reveal.x == 760);
-    // Cinnamon and other X11 desktops keep their panel above ordinary
-    // clients. The trigger must therefore sit at the dock-facing side of the
-    // panel rather than underneath it at the physical screen edge.
-    assert(top_reveal.y == 32);
+    // Cinnamon and other X11 desktops can reserve the same edge as Docklight.
+    // The reveal trigger must remain on the physical monitor edge; native X11
+    // root-pointer polling handles a panel stacked above the input window.
+    assert(top_reveal.y == 0);
     assert(top_reveal.width == 400);
     assert(top_reveal.height == 2);
     assert(point_on_physical_reveal_edge(
@@ -210,7 +210,7 @@ int main()
         bottom_reveal_placement,
         monitor,
         2);
-    assert(bottom_reveal.y == 1054);
+    assert(bottom_reveal.y == 1078);
     assert(point_on_physical_reveal_edge(
         bottom_reveal_placement,
         monitor,
@@ -230,7 +230,7 @@ int main()
         left_reveal_placement,
         monitor,
         2);
-    assert(left_reveal.x == 32);
+    assert(left_reveal.x == 0);
     assert(left_reveal.y == 340);
     assert(left_reveal.width == 2);
     assert(left_reveal.height == 400);
@@ -251,7 +251,7 @@ int main()
         right_reveal_placement,
         monitor,
         2);
-    assert(right_reveal.x == 1854);
+    assert(right_reveal.x == 1918);
     assert(point_on_physical_reveal_edge(
         right_reveal_placement,
         monitor,

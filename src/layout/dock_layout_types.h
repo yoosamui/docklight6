@@ -491,11 +491,13 @@ inline MonitorGeometry x11_scoped_monitor_workarea(
         false);
 }
 
-// Place an ordinary toplevel reveal trigger beside the dock's shown edge.
-// On X11, desktop panels can own the physical output edge above every client
-// window. A trigger left underneath such a panel is mapped but can never
-// receive pointer input, so include the dock's cross-axis panel inset. A zero
-// inset still places the trigger directly on the physical output edge.
+// Place an ordinary toplevel reveal trigger at the physical monitor edge.
+// Placement margins can include space reserved by another desktop panel, but
+// applying that cross-axis inset here makes the trigger difficult or
+// impossible to reach. Native X11 additionally polls the root pointer, so an
+// overlapping panel cannot prevent activation even when it is stacked above
+// this input window. Main-axis margins are retained to align the trigger span
+// with the dock.
 inline MonitorGeometry edge_reveal_geometry(
     const DockPlacement &placement,
     const MonitorGeometry &monitor,
@@ -529,11 +531,8 @@ inline MonitorGeometry edge_reveal_geometry(
             geometry.x +=
                 (monitor.width - geometry.width) / 2;
 
-        if (placement.anchor_top)
-            geometry.y += placement.margin_top;
-        else if (placement.anchor_bottom)
-            geometry.y += monitor.height -
-                placement.margin_bottom - thickness;
+        if (placement.anchor_bottom)
+            geometry.y += monitor.height - thickness;
     }
     else
     {
@@ -554,11 +553,8 @@ inline MonitorGeometry edge_reveal_geometry(
             geometry.y +=
                 (monitor.height - geometry.height) / 2;
 
-        if (placement.anchor_left)
-            geometry.x += placement.margin_left;
-        else if (placement.anchor_right)
-            geometry.x += monitor.width -
-                placement.margin_right - thickness;
+        if (placement.anchor_right)
+            geometry.x += monitor.width - thickness;
     }
 
     return geometry;
