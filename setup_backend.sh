@@ -17,7 +17,7 @@ Configure Docklight integration for one desktop backend.
 
 Backends:
   auto      Detect the current desktop session
-  gnome     Install and enable the GNOME Wayland extension
+  gnome     Install and enable the GNOME Shell extension
   plasma    Install and enable the KWin Wayland integration
   x11       No companion integration is required
 
@@ -46,11 +46,13 @@ detect_backend()
     desktop="${desktop^^}"
     session_type="${session_type,,}"
 
-    if [[ "${session_type}" == "x11" ]]; then
-        echo x11
-    elif [[ "${session_type}" == "wayland" &&
-            "${desktop}" == *GNOME* ]]; then
+    if [[ ("${session_type}" == "wayland" ||
+           "${session_type}" == "x11") &&
+          "${desktop}" == *GNOME* &&
+          "${desktop}" != *FLASHBACK* ]]; then
         echo gnome
+    elif [[ "${session_type}" == "x11" ]]; then
+        echo x11
     elif [[ "${session_type}" == "wayland" &&
             ("${desktop}" == *KDE* ||
              "${desktop}" == *PLASMA*) ]]; then
@@ -87,7 +89,7 @@ print_gnome_status()
     local info=""
     local development_enabled=false
 
-    echo "Backend: GNOME Wayland"
+    echo "Backend: GNOME Shell"
 
     if ! command -v gnome-extensions >/dev/null 2>&1; then
         echo "  Tooling available: no"

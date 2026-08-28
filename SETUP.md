@@ -262,7 +262,7 @@ Available commands:
 
 Integrations may coexist for users who log into multiple desktop sessions.
 
-### GNOME Wayland
+### GNOME Shell (Wayland and X11)
 
 ```sh
 ./setup_backend.sh gnome
@@ -290,6 +290,12 @@ effects:
 - `Slide and Fade` moves the dock outward while fading it over 200 ms.
 
 The corresponding configuration values are `gnome` and `slide_fade`.
+
+On GNOME Shell X11, `GNOME` delegates the same centred scale-and-fade drawing
+to the extension while retaining native EWMH/XComposite window handling and
+the GTK edge trigger. `Plasma` and `Slide` remain native X11 alternatives. If
+the extension is absent or cannot identify the main dock, DockLight stays on
+the existing native animation path.
 
 See `gnome/README.md` for GNOME-specific architecture and presentation notes.
 

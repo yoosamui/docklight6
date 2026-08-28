@@ -99,6 +99,7 @@ private:
     void reveal();
     bool can_hide() const;
     bool pointer_inside() const;
+    bool uses_shell_autohide_animation() const;
     bool has_shell_reveal_trigger() const;
     bool uses_shell_reveal_trigger() const;
     bool uses_backend_screen_edge_reveal() const;
@@ -157,6 +158,7 @@ private:
     bool m_has_shown_position = false;
     bool m_animating_to_hidden = false;
     bool m_pending_surface_slide_reveal = false;
+    bool m_shell_animation_active = false;
     bool m_animation_collapses_horizontally = false;
     bool m_animation_collapses_vertically = false;
     bool m_animation_translates_content = false;

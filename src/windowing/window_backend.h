@@ -57,6 +57,11 @@ struct WindowBackendCapabilities
     bool provides_icons = false;
     bool accepts_icon_geometry = false;
     bool supports_kwin_minimize_effect = false;
+    // The compositor can animate DockLight's main surface independently of
+    // who owns application-window discovery and the screen-edge trigger.
+    // GNOME Shell X11 uses this narrow capability while retaining the native
+    // EWMH/XComposite window backend and GTK reveal strip.
+    bool provides_dock_autohide_animation = false;
     bool provides_dock_reveal_trigger = false;
     bool provides_dock_screen_edge_reveal = false;
     bool provides_dock_pointer_tracking = false;

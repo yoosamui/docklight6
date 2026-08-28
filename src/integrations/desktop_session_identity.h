@@ -86,4 +86,22 @@ inline bool is_gnome_wayland_session()
            identifies_gnome_shell(desktop);
 }
 
+inline bool is_gnome_shell_x11_session()
+{
+    const auto session_type = normalized(
+        environment_value("XDG_SESSION_TYPE"));
+    if (session_type != "x11")
+        return false;
+
+    auto desktop = environment_value(
+        "XDG_CURRENT_DESKTOP");
+    if (desktop.empty())
+    {
+        desktop = environment_value(
+            "XDG_SESSION_DESKTOP");
+    }
+
+    return identifies_gnome_shell(desktop);
+}
+
 }

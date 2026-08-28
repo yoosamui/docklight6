@@ -174,7 +174,8 @@ is presented through XWayland.
 | KWin X11 | `KWinX11WindowBackend` | libwnck, Xlib, and EWMH |
 | MATE/Marco or Metacity X11 | `MarcoWindowBackend` | Shared EWMH base with restore specialization |
 | Cinnamon/Muffin X11 | `MuffinWindowBackend` | Shared EWMH base with Cinnamon action specialization |
-| GNOME Shell or standalone Mutter X11 | `MutterWindowBackend` | Shared EWMH base and native XComposite capture |
+| GNOME Shell X11 | `GnomeX11WindowBackend` | `MutterWindowBackend` EWMH/XComposite behavior plus optional main-dock-only Shell animation bridge |
+| Standalone Mutter X11 | `MutterWindowBackend` | Shared EWMH base and native XComposite capture |
 | LXDE/LXQt Openbox X11 | `OpenboxWindowBackend` | Shared EWMH base with group-hide behavior |
 | XFCE/xfwm4 X11 | `Xfwm4WindowBackend` | Shared EWMH base with restore specialization |
 | Other EWMH-compatible X11 | `EwmhFallbackWindowBackend` | Generic EWMH behavior |
@@ -295,7 +296,9 @@ side effects belong in a dock-surface backend.
 
 GTK owns autohide/intellihide policy and final visibility state. GNOME Shell or
 KWin may own compositor animation, edge activation, and native pointer/geometry
-reporting where the application cannot implement them directly.
+reporting where the application cannot implement them directly. GNOME Shell
+X11 delegates only the `GNOME` animation: its GTK reveal trigger and all
+EWMH/XComposite behavior remain native and provide the fallback path.
 
 ### Launchers
 

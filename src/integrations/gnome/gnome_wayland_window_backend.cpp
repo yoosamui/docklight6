@@ -21,6 +21,7 @@ GnomeWaylandWindowBackend::capabilities() const
     capabilities.provides_frame_geometry = true;
     capabilities.provides_icons = true;
     capabilities.accepts_icon_geometry = true;
+    capabilities.provides_dock_autohide_animation = true;
     capabilities.provides_dock_reveal_trigger = true;
 
     return capabilities;

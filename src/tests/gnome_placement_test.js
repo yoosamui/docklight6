@@ -94,6 +94,9 @@ const thumbnailProviderPath = path.resolve(
 const windowSystemControllerPath = path.resolve(
     __dirname,
     "../integrations/window_system_controller.cpp");
+const gnomeX11WindowBackendPath = path.resolve(
+    __dirname,
+    "../integrations/gnome/gnome_x11_window_backend.cpp");
 const desktopSessionIdentityPath = path.resolve(
     __dirname,
     "../integrations/desktop_session_identity.h");
@@ -163,6 +166,8 @@ const thumbnailProviderSource = fs.readFileSync(
     thumbnailProviderPath, "utf8");
 const windowSystemControllerSource = fs.readFileSync(
     windowSystemControllerPath, "utf8");
+const gnomeX11WindowBackendSource = fs.readFileSync(
+    gnomeX11WindowBackendPath, "utf8");
 const desktopSessionIdentitySource = fs.readFileSync(
     desktopSessionIdentityPath, "utf8");
 const dockSettingsDialogSource = fs.readFileSync(
@@ -172,8 +177,16 @@ const dockAboutDialogSource = fs.readFileSync(
 
 assert.match(
     extensionSource,
-    /enable\(\)\s*\{[\s\S]*?this\._enabled\s*=\s*Meta\.is_wayland_compositor\(\);[\s\S]*?if \(!this\._enabled\)[\s\S]*?return;/,
-    "the GNOME extension must remain inert in a native X11 session");
+    /this\._waylandIntegration\s*=\s*Meta\.is_wayland_compositor\(\);[\s\S]*?if \(this\._waylandIntegration\) \{[\s\S]*?Gio\.DBusExportedObject\.wrapJSObject\([\s\S]*?THUMBNAIL_IFACE/,
+    "native GNOME X11 must not export or use the Shell thumbnail service");
+assert.match(
+    extensionSource,
+    /if \(!this\._waylandIntegration\)[\s\S]*?return false;[\s\S]*?_considerDockWindow\(window,[\s\S]*?if \(this\._waylandIntegration\) \{[\s\S]*?_considerAuxiliaryWindow/,
+    "the X11 extension mode must recognize only the explicit main-dock identity and leave every auxiliary surface to EWMH");
+assert.match(
+    extensionSource,
+    /else \{[\s\S]*?this\._publishAnimationOnlySnapshot\(\);[\s\S]*?_publishAnimationOnlySnapshot\(\) \{[\s\S]*?BeginSnapshot[\s\S]*?CommitSnapshot[\s\S]*?\[revision, '', ''\]/,
+    "the X11 animation bridge must connect with an empty snapshot and never publish application-window state");
 assert.match(
     previewWindowSource,
     /is_gnome_wayland_session\(\)[\s\S]*?"Docklight 6 Preview@"[\s\S]*?else[\s\S]*?set_title\("Docklight 6 Preview"\)/,
@@ -534,8 +547,12 @@ assert.match(
     "moving or resizing the selected output must invalidate cached X11 placement state");
 assert.match(
     windowSystemControllerSource,
-    /const bool gnome_wayland\s*=\s*gnome_shell && !x11;[\s\S]*?uses_shell_protocol\s*=\s*kde_wayland \|\| gnome_wayland;[\s\S]*?if \(gnome_wayland\)[\s\S]*?GnomeWaylandWindowBackend>\(\);[\s\S]*?else if \(x11\)/,
-    "GNOME X11 must select its native EWMH backend instead of the Shell bridge");
+    /const bool gnome_shell_x11\s*=[\s\S]*?is_gnome_shell_x11_session\(\);[\s\S]*?case X11BackendKind::mutter:[\s\S]*?if \(gnome_shell_x11\)[\s\S]*?GnomeX11WindowBackend>[\s\S]*?else[\s\S]*?MutterWindowBackend>/,
+    "only an explicit GNOME Shell X11 identity may select the hybrid backend; standalone Mutter must keep the original backend");
+assert.match(
+    gnomeX11WindowBackendSource,
+    /MutterWindowBackend::start\(\)[\s\S]*?m_shell_backend\.start\(\)[\s\S]*?KWinIntegrationService[\s\S]*?set_dock_placement_geometry[\s\S]*?set_dock_hidden[\s\S]*?signal_dock_animation_completed/,
+    "the GNOME X11 hybrid must preserve EWMH as authoritative and mirror only dock animation state through Shell");
 assert.match(
     windowSystemControllerSource,
     /std::optional<bool> g_x11_compositor_cache[\s\S]*?x11_compositor_is_running_cached\(\)[\s\S]*?g_x11_compositor_cache\.has_value\(\)[\s\S]*?XOpenDisplay\(nullptr\)[\s\S]*?g_x11_compositor_cache = running/,
@@ -737,8 +754,8 @@ assert.match(
     "Plasma Wayland Slide must remain mapped while hidden so KWin cannot add a conflicting reveal transform");
 assert.match(
     legacySurfaceBackendSource,
-    /default_autohide_effect\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?m_native_x11[\s\S]*?DockAutohideEffect::plasma[\s\S]*?DockAutohideEffect::slide/,
-    "native X11 must use the Plasma-style effect without changing ordinary Wayland defaults");
+    /default_autohide_effect\(\) const[\s\S]*?uses_gnome_wayland_autohide_effect\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?DesktopSessionIdentity::[\s\S]*?is_gnome_shell_x11_session\(\)[\s\S]*?DockAutohideEffect::gnome[\s\S]*?m_native_x11[\s\S]*?DockAutohideEffect::plasma[\s\S]*?DockAutohideEffect::slide/,
+    "GNOME X11 must default to its Shell effect while every other native X11 backend retains Plasma-style behavior");
 assert.match(
     legacySurfaceBackendSource,
     /set_type_hint\([\s\S]*?WINDOW_TYPE_HINT_DOCK[\s\S]*?set_keep_above\(true\)/,
@@ -765,8 +782,16 @@ assert.match(
     "the shared autohide controller must own the backend-normalized effect");
 assert.match(
     autohideControllerSource,
-    /can_animate_x11\(\) const[\s\S]*?m_effect == DockAutohideEffect::slide[\s\S]*?m_effect == DockAutohideEffect::plasma[\s\S]*?m_effect == DockAutohideEffect::gnome[\s\S]*?!has_shell_reveal_trigger\(\)[\s\S]*?surface_is_native_x11\(\)/,
-    "native X11 must animate both its Plasma-style default and legacy fallback effects");
+    /can_animate_x11\(\) const[\s\S]*?m_effect == DockAutohideEffect::slide[\s\S]*?m_effect == DockAutohideEffect::plasma[\s\S]*?m_effect == DockAutohideEffect::gnome[\s\S]*?!uses_shell_autohide_animation\(\)[\s\S]*?surface_is_native_x11\(\)/,
+    "native X11 must retain its local animation whenever the optional Shell animation bridge is unavailable");
+assert.match(
+    autohideControllerSource,
+    /m_shell_animation_active[\s\S]*?hide_immediately_for_x11_startup\(\)[\s\S]*?m_shell_animation_active = false;[\s\S]*?hide_now\([\s\S]*?uses_shell_autohide_animation\(\)[\s\S]*?m_shell_animation_active = true;[\s\S]*?reveal\(\)[\s\S]*?m_shell_animation_active &&[\s\S]*?uses_shell_autohide_animation\(\)/,
+    "a dock hidden by the native fallback must finish that cycle natively before a newly available Shell bridge takes ownership");
+assert.match(
+    autohideControllerSource,
+    /uses_shell_autohide_animation\(\) const[\s\S]*?surface_delegates_autohide_effect\([\s\S]*?provides_dock_autohide_animation[\s\S]*?dock_surface_geometry\(\)[\s\S]*?has_value\(\)/,
+    "Shell animation ownership must require both the narrow capability and a discovered dock actor");
 assert.match(
     autohideControllerSource,
     /uses_shell_reveal_trigger\(\) const[\s\S]*?surface_delegates_autohide_effect\([\s\S]*?m_effect[\s\S]*?has_shell_reveal_trigger\(\)/,
@@ -969,7 +994,7 @@ assert.match(
     "private reveal surfaces must resist Mutter's late initial placement");
 assert.match(
     extensionSource,
-    /if \(this\._isAuxiliaryWindow\(window\)\)\s*this\._beginAuxiliaryTransition\(window, actor\)/,
+    /if \(this\._waylandIntegration && this\._isAuxiliaryWindow\(window\)\)\s*this\._beginAuxiliaryTransition\(window, actor\)/,
     "ordinary Wayland auxiliary actors must be hidden during their first map");
 assert.match(
     extensionSource,

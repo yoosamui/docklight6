@@ -120,6 +120,12 @@ assert_calls()
 run_setup GNOME wayland auto
 assert_calls gnome
 
+run_setup GNOME x11 auto
+assert_calls gnome
+
+run_setup GNOME-Flashback:GNOME x11 auto
+assert_calls ""
+
 run_setup KDE wayland auto
 assert_calls plasma
 

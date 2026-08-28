@@ -1,9 +1,12 @@
-# GNOME Wayland integration
+# GNOME Shell integration
 
-The extension activates its integration only when Mutter is running as a
-Wayland compositor. In a GNOME X11 session it returns from `enable()` without
-exporting services or managing DockLight surfaces; DockLight uses its native
-EWMH/XComposite backend there.
+On GNOME Wayland the extension provides the complete window, placement,
+preview, reveal, and animation integration. On GNOME Shell X11 it enters a
+strict animation-only mode: application windows and previews remain owned by
+DockLight's native EWMH/XComposite backend, auxiliary DockLight surfaces are
+ignored, and only the explicitly identified main dock actor may be animated.
+If that optional Shell handshake is unavailable, DockLight retains its native
+X11 animation fallback.
 
 ## XWayland presentation
 
@@ -46,6 +49,12 @@ that monitor. GTK continues to own autohide and intellihide policy, delays,
 input pass-through, and the final hidden state; Shell reports animation
 completion over the existing integration protocol.
 
+On GNOME Shell X11, the `GNOME` choice uses the same centred actor scale,
+opacity, 200 ms duration, and cubic easing. The existing GTK/X11 reveal strip,
+input pass-through, EWMH placement, struts, application-window actions, and
+XComposite previews remain unchanged. `Plasma` and `Slide` remain available
+as fully native X11 alternatives.
+
 From the source directory, install the extension as the logged-in desktop
 user (without `sudo`):
 
@@ -57,8 +66,8 @@ The backend dispatcher calls `gnome/install-window-integration.sh`. The
 equivalent Autotools target is also available from a configured build
 directory, for example `make -C build install-gnome-integration`.
 
-GNOME Shell does not discover a brand-new local extension or reload an updated
-ES module during an existing Wayland session. After installing or updating,
+GNOME Shell does not reliably discover a brand-new local extension or reload
+an updated ES module during the current session. After installing or updating,
 log out and back in once and run:
 
 ```sh

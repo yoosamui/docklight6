@@ -22,6 +22,7 @@ int main()
     assert(capabilities.provides_virtual_desktops);
     assert(capabilities.provides_frame_geometry);
     assert(capabilities.provides_icons);
+    assert(capabilities.provides_dock_autohide_animation);
     assert(capabilities.provides_dock_reveal_trigger);
     assert(!capabilities.provides_activities);
     assert(capabilities.accepts_icon_geometry);

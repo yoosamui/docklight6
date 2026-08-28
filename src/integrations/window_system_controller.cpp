@@ -25,6 +25,7 @@
 #include "docklight_log.h"
 #include "integrations/desktop_session_identity.h"
 #include "integrations/gnome/gnome_wayland_window_backend.h"
+#include "integrations/gnome/gnome_x11_window_backend.h"
 #include "integrations/kwin/kwin_integration_service.h"
 #include "integrations/kwin/kwin_script_manager.h"
 #include "integrations/kwin/kwin_window_backend.h"
@@ -322,6 +323,9 @@ void WindowSystemController::start()
             identifies_gnome_shell(desktop);
     const bool gnome_wayland =
         gnome_shell && !x11;
+    const bool gnome_shell_x11 =
+        x11 && DesktopSessionIdentity::
+            is_gnome_shell_x11_session();
     const bool uses_shell_protocol =
         kde_wayland || gnome_wayland;
 
@@ -371,9 +375,22 @@ void WindowSystemController::start()
                     MuffinWindowBackend>();
             break;
         case X11BackendKind::mutter:
-            m_backend =
-                std::make_unique<
-                    MutterWindowBackend>();
+            if (gnome_shell_x11)
+            {
+                m_backend =
+                    std::make_unique<
+                        GnomeX11WindowBackend>();
+                m_details.backend =
+                    "GNOME Shell/Mutter X11";
+            }
+            else
+            {
+                // Standalone Mutter and uncertain desktop identities retain
+                // the original pure EWMH/XComposite fallback unchanged.
+                m_backend =
+                    std::make_unique<
+                        MutterWindowBackend>();
+            }
             break;
         case X11BackendKind::openbox:
             m_backend =
@@ -394,8 +411,7 @@ void WindowSystemController::start()
 
         DocklightLog::startup(
             "selected backend: %s",
-            x11_backend_kind_name(
-                backend_kind));
+            m_details.backend.c_str());
 
         if (m_backend
                 ->capabilities()

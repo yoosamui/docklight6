@@ -15,6 +15,7 @@
 #include "legacy_dock_surface_backend.h"
 
 #include "dock/dock_window.h"
+#include "integrations/desktop_session_identity.h"
 #include "layout/dock_layout_geometry.h"
 
 #include <gdk/gdkwayland.h>
@@ -362,6 +363,10 @@ LegacyDockSurfaceBackend::
     if (uses_gnome_wayland_autohide_effect())
         return DockAutohideEffect::gnome;
 
+    if (DesktopSessionIdentity::
+            is_gnome_shell_x11_session())
+        return DockAutohideEffect::gnome;
+
     return m_native_x11
                ? DockAutohideEffect::plasma
                : DockAutohideEffect::slide;
@@ -381,6 +386,15 @@ LegacyDockSurfaceBackend::
     if (!m_native_x11)
         return {};
 
+    if (DesktopSessionIdentity::
+            is_gnome_shell_x11_session())
+    {
+        return {
+            DockAutohideEffect::gnome,
+            DockAutohideEffect::plasma,
+            DockAutohideEffect::slide};
+    }
+
     return {
         DockAutohideEffect::plasma,
         DockAutohideEffect::slide};
@@ -390,10 +404,20 @@ bool LegacyDockSurfaceBackend::
     delegates_autohide_effect(
         DockAutohideEffect effect) const
 {
-    return uses_gnome_wayland_autohide_effect() &&
-           (effect == DockAutohideEffect::gnome ||
-            effect == DockAutohideEffect::fade ||
-            effect == DockAutohideEffect::slide_fade);
+    if (uses_gnome_wayland_autohide_effect())
+    {
+        return effect == DockAutohideEffect::gnome ||
+               effect == DockAutohideEffect::fade ||
+               effect == DockAutohideEffect::slide_fade;
+    }
+
+    // GNOME Shell X11 delegates only the new compositor-quality GNOME
+    // effect. Plasma and Slide stay on the established native X11 path and
+    // remain available as explicit fallbacks.
+    return DesktopSessionIdentity::
+               is_gnome_shell_x11_session() &&
+           m_native_x11 &&
+           effect == DockAutohideEffect::gnome;
 }
 
 double LegacyDockSurfaceBackend::

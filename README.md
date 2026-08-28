@@ -46,8 +46,8 @@ available.
     <tr><td>Cinnamon</td><td>X11</td><td>Muffin</td><td>Muffin</td><td><code>MuffinWindowBackend</code></td><td>PASS</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> Uses the desktop-specific X11 backend.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
-    <tr><td>GNOME</td><td>X11</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>MutterWindowBackend</code></td><td>PASS</td></tr>
-    <tr><td colspan="6"><strong>Comments:</strong> Uses native X11/EWMH window integration and XComposite previews; the GNOME Shell extension is inert.</td></tr>
+    <tr><td>GNOME</td><td>X11</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>GnomeX11WindowBackend</code></td><td>PENDING</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Keeps native X11/EWMH window integration and XComposite previews; the GNOME Shell extension is restricted to the main dock's GNOME autohide animation. The original native animation remains the fallback.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
     <tr><td>GNOME</td><td>Wayland</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>GnomeWaylandWindowBackend</code></td><td>PASS</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> Uses the GNOME Shell extension bridge.</td></tr>
@@ -90,9 +90,10 @@ available.
 Important current-code details:
 
 - KWin, xfwm4, Marco/Metacity, Muffin, Mutter, and Openbox have separate X11
-  backends. GNOME Wayland uses `GnomeWaylandWindowBackend`; GNOME X11 uses
-  `MutterWindowBackend` with native EWMH window management and XComposite
-  previews.
+  backends. GNOME Wayland uses `GnomeWaylandWindowBackend`; GNOME Shell X11
+  uses `GnomeX11WindowBackend`, which retains `MutterWindowBackend`'s native
+  EWMH/XComposite behavior and adds an optional dock-animation-only Shell
+  bridge. Standalone Mutter keeps `MutterWindowBackend` unchanged.
 - Openbox window previews require an X11 compositor such as `compton` or
   `picom`. Without one, DockLight continues running, sets `display_preview`
   to `false`, and displays a warning.
@@ -228,6 +229,10 @@ keeps the dock at its edge while scaling the complete dock around its centre
 and fading, matching Plasma Wayland's map/unmap behavior. `Slide and Fade`
 instead combines outward movement with opacity. The GNOME Shell extension
 owns both effects for native Wayland and XWayland presentation.
+On GNOME Shell X11, `GNOME` uses the same Shell-owned centred scale and fade
+while application-window discovery and previews remain native EWMH/XComposite.
+The existing `Plasma` and `Slide` choices remain native X11 effects and the
+native path is used automatically if the Shell bridge is unavailable.
 On Plasma Wayland, **Autohide Effect** offers the existing `Plasma` behavior
 and the KDE-specific movement-only `Slide` behavior. KWin owns DockLight's
 screen-edge reveal activation, so an overlapping Plasma panel cannot cover the

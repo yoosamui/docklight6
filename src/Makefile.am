@@ -66,6 +66,8 @@ docklight6_SOURCES = \
     integrations/window_system_controller.cpp \
     integrations/gnome/gnome_wayland_window_backend.h \
     integrations/gnome/gnome_wayland_window_backend.cpp \
+    integrations/gnome/gnome_x11_window_backend.h \
+    integrations/gnome/gnome_x11_window_backend.cpp \
     integrations/x11/ewmh_window_backend.h \
     integrations/x11/ewmh_window_backend.cpp \
     integrations/x11/ewmh_fallback_window_backend.h \

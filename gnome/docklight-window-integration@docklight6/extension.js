@@ -104,12 +104,8 @@ function integerText(value) {
 
 export default class DocklightWindowIntegration extends Extension {
     enable() {
-        // Native GNOME X11 uses DockLight's ordinary EWMH/XComposite backend.
-        // Do not classify, hide, translate, or restack any of its X11
-        // surfaces; those operations are required only for GNOME Wayland.
-        this._enabled = Meta.is_wayland_compositor();
-        if (!this._enabled)
-            return;
+        this._enabled = true;
+        this._waylandIntegration = Meta.is_wayland_compositor();
 
         this._proxy = Gio.DBusProxy.new_for_bus_sync(
             Gio.BusType.SESSION,
@@ -189,52 +185,62 @@ export default class DocklightWindowIntegration extends Extension {
         this._previewSelectorOutline =
             'rgba(105, 170, 255, 0.95)';
 
-        this._thumbnailDbus = Gio.DBusExportedObject.wrapJSObject(
-            THUMBNAIL_IFACE, this);
-        this._thumbnailDbus.export(Gio.DBus.session, THUMBNAIL_PATH);
-        this._thumbnailNameId = Gio.bus_own_name_on_connection(
-            Gio.DBus.session,
-            THUMBNAIL_SERVICE,
-            Gio.BusNameOwnerFlags.NONE,
-            null,
-            null);
+        this._thumbnailDbus = null;
+        this._thumbnailNameId = 0;
+        if (this._waylandIntegration) {
+            this._thumbnailDbus = Gio.DBusExportedObject.wrapJSObject(
+                THUMBNAIL_IFACE, this);
+            this._thumbnailDbus.export(Gio.DBus.session, THUMBNAIL_PATH);
+            this._thumbnailNameId = Gio.bus_own_name_on_connection(
+                Gio.DBus.session,
+                THUMBNAIL_SERVICE,
+                Gio.BusNameOwnerFlags.NONE,
+                null,
+                null);
+        }
 
         this._loadDockPlacement();
         this._refreshNativeWorkAreas();
         this._watchDockConfiguration();
-        this._ensureDockRevealActor();
-        this._updateDockRevealActor();
-        this._pointerPollSource = GLib.timeout_add(
-            GLib.PRIORITY_DEFAULT,
-            25,
-            () => {
-                const [position] = this._cursorTracker.get_pointer();
-                const restore = this._previewPointerRestorePosition;
-                if (restore) {
-                    if (restore.restoring) {
-                        const restored =
-                            Math.abs(position.x - restore.x) <= 1 &&
-                            Math.abs(position.y - restore.y) <= 1;
-                        const expired = GLib.get_monotonic_time() >=
-                            restore.deadline;
-                        if (restored || expired) {
-                            this._previewPointerRestorePosition = null;
-                            this._pointerPosition = {
-                                x: position.x,
-                                y: position.y,
-                            };
+        this._pointerPollSource = 0;
+        if (this._waylandIntegration) {
+            this._ensureDockRevealActor();
+            this._updateDockRevealActor();
+            this._pointerPollSource = GLib.timeout_add(
+                GLib.PRIORITY_DEFAULT,
+                25,
+                () => {
+                    const [position] = this._cursorTracker.get_pointer();
+                    const restore = this._previewPointerRestorePosition;
+                    if (restore) {
+                        if (restore.restoring) {
+                            const restored =
+                                Math.abs(position.x - restore.x) <= 1 &&
+                                Math.abs(position.y - restore.y) <= 1;
+                            const expired = GLib.get_monotonic_time() >=
+                                restore.deadline;
+                            if (restored || expired) {
+                                this._previewPointerRestorePosition = null;
+                                this._pointerPosition = {
+                                    x: position.x,
+                                    y: position.y,
+                                };
+                            }
                         }
+                    } else {
+                        this._pointerPosition = {x: position.x, y: position.y};
                     }
-                } else {
-                    this._pointerPosition = {x: position.x, y: position.y};
-                }
-                this._publishDockPointerInside();
-                this._publishPreviewPointerInside();
-                return GLib.SOURCE_CONTINUE;
-            });
+                    this._publishDockPointerInside();
+                    this._publishPreviewPointerInside();
+                    return GLib.SOURCE_CONTINUE;
+                });
+        }
 
         this._connect(global.display, 'window-created', (_display, window) => {
-            this._onWindowAdded(window);
+            if (this._waylandIntegration)
+                this._onWindowAdded(window);
+            else
+                this._considerDockWindow(window);
         });
         this._connect(global.window_manager, 'map', (_windowManager, actor) => {
             const window = actor?.meta_window;
@@ -244,7 +250,7 @@ export default class DocklightWindowIntegration extends Extension {
             // Auxiliary GTK toplevels are subject to Mutter's provisional
             // centred placement too. Hide their first actor before any
             // classification work can expose it.
-            if (this._isAuxiliaryWindow(window))
+            if (this._waylandIntegration && this._isAuxiliaryWindow(window))
                 this._beginAuxiliaryTransition(window, actor);
 
             // window-created can precede the compositor actor. Reconsider the
@@ -257,20 +263,22 @@ export default class DocklightWindowIntegration extends Extension {
                 this._scheduleDockPlacement(true);
             }
         });
-        this._connect(global.display, 'window-demands-attention', (_display, window) => {
-            this._publishWindow(window);
-        });
-        this._connect(global.display, 'notify::focus-window', () => {
-            this._publishActiveWindow();
-        });
-        this._connect(global.display, 'restacked', () => {
-            this._enforceDockWindowLayer();
-            this._publishStackingOrder();
-        });
-        this._connect(global.workspace_manager, 'active-workspace-changed', () => {
-            this._publishCurrentDesktop();
-            this._publishAllWindows();
-        });
+        if (this._waylandIntegration) {
+            this._connect(global.display, 'window-demands-attention',
+                (_display, window) => this._publishWindow(window));
+            this._connect(global.display, 'notify::focus-window', () => {
+                this._publishActiveWindow();
+            });
+            this._connect(global.display, 'restacked', () => {
+                this._enforceDockWindowLayer();
+                this._publishStackingOrder();
+            });
+            this._connect(global.workspace_manager,
+                'active-workspace-changed', () => {
+                    this._publishCurrentDesktop();
+                    this._publishAllWindows();
+                });
+        }
         this._connect(Main.layoutManager, 'monitors-changed', () => {
             this._removeDockStrut();
             this._refreshNativeWorkAreas();
@@ -282,7 +290,8 @@ export default class DocklightWindowIntegration extends Extension {
         for (const actor of global.get_window_actors()) {
             const window = actor.meta_window;
             this._considerDockWindow(window);
-            this._trackWindow(window);
+            if (this._waylandIntegration)
+                this._trackWindow(window);
         }
 
         this._nameWatch = Gio.bus_watch_name(
@@ -484,6 +493,13 @@ export default class DocklightWindowIntegration extends Extension {
             role.toLowerCase() === 'docklight6-dock')
             return true;
 
+        // Native X11 is deliberately animation-only. Never infer its dock
+        // from the shared application id: preview, tooltip, reveal, and
+        // dialog windows belong entirely to GTK/EWMH and must remain outside
+        // the Shell integration even while their metadata is incomplete.
+        if (!this._waylandIntegration)
+            return false;
+
         // Explicit private-surface identities always win over the shared GTK
         // application id. In particular, the reveal trigger maps immediately
         // after the dock unmaps and can otherwise steal the dock identity.
@@ -511,10 +527,12 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _considerDockWindow(window, allowRetry = true) {
-        if (this._considerDialogWindow(window))
-            return;
-        if (this._considerAuxiliaryWindow(window))
-            return;
+        if (this._waylandIntegration) {
+            if (this._considerDialogWindow(window))
+                return;
+            if (this._considerAuxiliaryWindow(window))
+                return;
+        }
 
         if (this._isDockWindow(window)) {
             this._setDockWindow(window);
@@ -530,7 +548,8 @@ export default class DocklightWindowIntegration extends Extension {
         let attempts = 0;
         const source = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
             const isDock = this._isDockWindow(window);
-            const isAuxiliary = this._considerAuxiliaryWindow(window);
+            const isAuxiliary = this._waylandIntegration &&
+                this._considerAuxiliaryWindow(window);
             if (!this._enabled || ++attempts > 10 || isDock || isAuxiliary) {
                 this._dockDiscoverySources.delete(source);
                 if (this._enabled && isDock)
@@ -760,7 +779,8 @@ export default class DocklightWindowIntegration extends Extension {
         this._clearDockWindow();
         this._dockWindow = window;
         this._dockDiscoveredOnce = true;
-        this._enforceDockWindowLayer();
+        if (this._waylandIntegration)
+            this._enforceDockWindowLayer();
         this._updateDockRevealActor();
         this._beginDockTransition();
 
@@ -821,6 +841,8 @@ export default class DocklightWindowIntegration extends Extension {
         // compositor actor. Do not restore or otherwise dereference it; the
         // actor owns and discards its transitions and clip during disposal.
         this._cancelDockAnimationClip(!unmanaged);
+        if (!unmanaged && !this._waylandIntegration)
+            this._restoreX11DockActor();
         if (unmanaged) {
             this._dockTransitioning = false;
             this._dockPlacementAttempts = 0;
@@ -849,12 +871,37 @@ export default class DocklightWindowIntegration extends Extension {
         this._updateDockRevealActor();
     }
 
+    _restoreX11DockActor() {
+        if (this._waylandIntegration)
+            return;
+
+        const actor = this._dockWindow?.get_compositor_private?.();
+        if (!actor)
+            return;
+
+        try {
+            this._dockVisibilityAnimationSerial++;
+            actor.remove_all_transitions();
+            actor.remove_clip();
+            actor.translation_x = 0;
+            actor.translation_y = 0;
+            actor.scale_x = 1;
+            actor.scale_y = 1;
+            actor.set_pivot_point(0.5, 0.5);
+            actor.set_opacity(this._dockActorOpacity || 255);
+        } catch (_error) {
+            // Mutter can dispose the actor while the X11 client is closing.
+        }
+        this._dockVisibilityState = 'visible';
+    }
+
     _beginDockTransition() {
         if (!this._dockWindow)
             return;
 
-        // In a native X11 Shell, placement and autohide are owned by GTK/EWMH.
-        // An XWayland dock in a Wayland Shell still needs this transition.
+        // Native X11 placement and initial-map visibility remain owned by
+        // GTK/EWMH. Its later autohide transitions may still animate this
+        // actor through the narrow animation-only bridge.
         if (!Meta.is_wayland_compositor()) {
             this._dockTransitioning = false;
             this._dockActor = null;
@@ -1122,7 +1169,7 @@ export default class DocklightWindowIntegration extends Extension {
         // Match Plasma Wayland's map/unmap effect: keep the window fixed at
         // its edge while the complete actor scales into or out of its centre
         // and its compositor opacity fades. Shell owns this transform for
-        // both native Wayland and XWayland presentation.
+        // GNOME Wayland and native GNOME Shell X11 presentation.
         const base = this._dockActorBaseTranslation ?? {x: 0, y: 0};
         actor.translation_x = base.x;
         actor.translation_y = base.y;
@@ -1758,12 +1805,20 @@ export default class DocklightWindowIntegration extends Extension {
 
             this._revision = 0;
             this._pendingWaits = 0;
-            this._call('GetIconGeometries', null, null, reply => {
-                if (!this._connected)
-                    return;
-                for (const geometry of reply?.[0] || [])
-                    this._setIconGeometry(...geometry);
-            });
+            if (this._waylandIntegration) {
+                this._call('GetIconGeometries', null, null, reply => {
+                    if (!this._connected)
+                        return;
+                    for (const geometry of reply?.[0] || [])
+                        this._setIconGeometry(...geometry);
+                });
+            } else {
+                // The bridge backend accepts incremental dock geometry only
+                // after its initial snapshot commits. Establish that protocol
+                // connection with an intentionally empty snapshot: native
+                // EWMH/XComposite remains the sole owner of X11 app windows.
+                this._publishAnimationOnlySnapshot();
+            }
             this._requestDockPlacement();
             this._call('GetDockHidden', null, null, reply => {
                 this._dockHidden = Boolean(reply?.[0]);
@@ -1782,9 +1837,11 @@ export default class DocklightWindowIntegration extends Extension {
                 this._considerDockWindow(actor.meta_window);
             this._scheduleDockDiscoveryScan();
 
-            this._publishSnapshot();
-            this._publishCurrentDesktop();
-            this._waitForCommands();
+            if (this._waylandIntegration) {
+                this._publishSnapshot();
+                this._publishCurrentDesktop();
+                this._waitForCommands();
+            }
         });
     }
 
@@ -1804,6 +1861,9 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _disconnectBackend() {
+        if (!this._waylandIntegration)
+            this._restoreX11DockActor();
+
         this._connected = false;
         this._registering = false;
         this._pendingWaits = 0;
@@ -2608,6 +2668,12 @@ export default class DocklightWindowIntegration extends Extension {
         this._call('CommitSnapshot', '(sss)', [
             revision, this._activeWindowId(), this._stackingOrder(),
         ]);
+    }
+
+    _publishAnimationOnlySnapshot() {
+        const revision = this._nextRevision();
+        this._call('BeginSnapshot', '(s)', [revision]);
+        this._call('CommitSnapshot', '(sss)', [revision, '', '']);
     }
 
     _waitForCommands() {

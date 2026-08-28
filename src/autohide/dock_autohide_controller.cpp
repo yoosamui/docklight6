@@ -351,6 +351,25 @@ void DockAutohideController::set_placement(
     if (was_hidden &&
         m_window.surface_is_native_x11())
     {
+        if (m_shell_animation_active &&
+            uses_shell_autohide_animation())
+        {
+            // The compositor actor owns the hidden transform. GTK/EWMH has
+            // already moved the real X11 frame to its newly calculated shown
+            // position; moving that frame offscreen here would make Shell's
+            // later scale/fade reveal appear at the stale edge.
+            cancel_hide();
+            cancel_animation();
+            m_shown_x = shown_position.x;
+            m_shown_y = shown_position.y;
+            m_has_shown_position = true;
+            m_reveal_window.apply_placement(placement);
+            set_surface_input_passthrough(true);
+            show_reveal_trigger();
+            request_shell_visibility(true);
+            return;
+        }
+
         // apply_dock_layout() has already submitted the new shown geometry.
         // Keep the mapped native-X11 surface transparent and input-pass-
         // through while rebuilding its hidden transform around that geometry.
@@ -530,7 +549,8 @@ void DockAutohideController::set_backend_pointer_inside(
 void DockAutohideController::finish_shell_animation(
     bool hidden)
 {
-    if (!uses_shell_reveal_trigger())
+    if (!m_shell_animation_active ||
+        !uses_shell_autohide_animation())
         return;
 
     if (hidden)
@@ -547,6 +567,7 @@ void DockAutohideController::finish_shell_animation(
         return;
 
     m_shell_state = ShellDockState::visible;
+    m_shell_animation_active = false;
     set_surface_input_passthrough(false);
     m_signal_fully_revealed.emit();
     if (!pointer_inside())
@@ -558,7 +579,8 @@ bool DockAutohideController::is_fully_revealed() const
     if (m_hidden || m_pending_x11_reveal_animation)
         return false;
 
-    if (uses_shell_reveal_trigger())
+    if (m_shell_animation_active &&
+        uses_shell_autohide_animation())
         return m_shell_state == ShellDockState::visible;
 
     return !m_animation_timer.connected();
@@ -1019,7 +1041,8 @@ bool DockAutohideController::can_animate_x11() const
         m_effect == DockAutohideEffect::slide ||
         m_effect == DockAutohideEffect::plasma ||
         (m_effect == DockAutohideEffect::gnome &&
-         !has_shell_reveal_trigger());
+         (!uses_shell_autohide_animation() ||
+          !m_shell_animation_active));
 
     return use_native_animation &&
            m_window.surface_is_native_x11() &&
@@ -1449,6 +1472,7 @@ void DockAutohideController::
 {
     cancel_animation();
     m_pending_x11_reveal_animation = false;
+    m_shell_animation_active = false;
     m_window.hide_tooltip_immediately();
     m_hidden = true;
 
@@ -1528,7 +1552,8 @@ void DockAutohideController::reveal_immediately()
     m_pending_x11_reveal_animation = false;
     publish_backend_hidden_state(false);
 
-    if (uses_shell_reveal_trigger())
+    if (m_shell_animation_active &&
+        uses_shell_autohide_animation())
     {
         request_shell_visibility(false);
         m_hidden = false;
@@ -1547,6 +1572,7 @@ void DockAutohideController::reveal_immediately()
     }
 
     reset_local_visual_transform();
+    m_shell_animation_active = false;
     set_surface_input_passthrough(false);
 
     if (m_hidden)
@@ -1587,16 +1613,24 @@ void DockAutohideController::hide_now(
     m_hidden = true;
     publish_backend_hidden_state(true);
 
-    if (uses_shell_reveal_trigger())
+    if (uses_shell_autohide_animation())
     {
-        m_reveal_window.hide();
-        // Keep the already-placed Wayland surface mapped. Unmapping it makes
-        // Mutter create the next surface at the screen centre and was also
-        // the source of the repeated hide/reveal cycle.
+        m_shell_animation_active = true;
+        if (uses_shell_reveal_trigger())
+            m_reveal_window.hide();
+        else
+            show_reveal_trigger();
+
+        // Keep the already-placed surface mapped while Shell animates its
+        // compositor actor. Native X11 retains its GTK edge trigger and
+        // disables input before the first transformed frame.
+        if (m_window.surface_is_native_x11())
+            set_surface_input_passthrough(true);
         request_shell_visibility(true);
         return;
     }
 
+    m_shell_animation_active = false;
     show_reveal_trigger();
 
     // Native X11 keeps the dock mapped while its hide animation runs. Stop
@@ -1619,8 +1653,10 @@ void DockAutohideController::reveal()
         m_hidden = false;
         publish_backend_hidden_state(false);
 
-        if (uses_shell_reveal_trigger())
+        if (m_shell_animation_active &&
+            uses_shell_autohide_animation())
         {
+            set_surface_input_passthrough(false);
             request_shell_visibility(false);
             m_reveal_window.hide();
             return;
@@ -1760,6 +1796,21 @@ bool DockAutohideController::pointer_inside() const
         return m_backend_pointer_inside;
 
     return m_pointer_inside;
+}
+
+bool DockAutohideController::
+    uses_shell_autohide_animation() const
+{
+    return m_window.m_window_registry &&
+           m_window.surface_delegates_autohide_effect(
+               m_effect) &&
+           m_window.m_window_registry->connected() &&
+           m_window.m_window_registry
+               ->capabilities()
+               .provides_dock_autohide_animation &&
+           m_window.m_window_registry
+               ->dock_surface_geometry()
+               .has_value();
 }
 
 bool DockAutohideController::
