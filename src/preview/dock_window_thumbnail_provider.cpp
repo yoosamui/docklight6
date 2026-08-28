@@ -1144,12 +1144,15 @@ DockWindowThumbnailProvider::
     const auto normalized_desktop =
         DesktopSessionIdentity::normalized(
             desktop ? desktop : "");
+    const bool wayland_session =
+        DesktopSessionIdentity::is_wayland_session();
 
-    // The GNOME Shell registry publishes Mutter stable-sequence ids on both
-    // Wayland and X11. They can be numeric but are not X11 window handles.
-    // Route them through the same Shell compositor capture service that owns
-    // the registry so static and live previews address the correct actors.
+    // GNOME Wayland publishes Mutter stable-sequence ids rather than X11
+    // window handles, so its previews must use the Shell compositor service.
+    // GNOME X11 uses the ordinary EWMH backend and publishes real XIDs; keep
+    // it on the same native XComposite capture path as the other X11 WMs.
     m_state->gnome_shell_capture =
+        wayland_session &&
         DesktopSessionIdentity::
             identifies_gnome_shell(
                 normalized_desktop);
@@ -1157,11 +1160,10 @@ DockWindowThumbnailProvider::
     // ScreenShot2 is a KWin-only API. On other Wayland compositors, avoid
     // connecting unless their own capture transport is active.
     const bool kwin_wayland =
-        !m_state->x11 &&
+        wayland_session &&
         (normalized_desktop.find("kde") != std::string::npos ||
          normalized_desktop.find("plasma") != std::string::npos);
     if (!m_state->gnome_shell_capture &&
-        !m_state->x11 &&
         !kwin_wayland)
         return;
 

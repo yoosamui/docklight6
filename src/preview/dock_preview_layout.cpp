@@ -13,6 +13,7 @@
 
 #include "dock_preview_window.h"
 #include "dock_preview_window_internal.h"
+#include "integrations/desktop_session_identity.h"
 
 #include <gtk-layer-shell.h>
 #include <glib/gstdio.h>
@@ -832,13 +833,23 @@ void DockPreviewWindow::apply_position(
         const int global_y =
             m_monitor_geometry.y + position.y;
 
-        // GNOME Wayland ignores client-requested toplevel coordinates. The
-        // Shell integration consumes this private title payload and moves the
-        // preview after Mutter creates its surface.
-        set_title(
-            "Docklight 6 Preview@" +
-            std::to_string(global_x) + "," +
-            std::to_string(global_y));
+        if (DesktopSessionIdentity::
+                is_gnome_wayland_session())
+        {
+            // GNOME Wayland ignores client-requested toplevel coordinates.
+            // Its Shell integration consumes this private title payload.
+            set_title(
+                "Docklight 6 Preview@" +
+                std::to_string(global_x) + "," +
+                std::to_string(global_y));
+        }
+        else
+        {
+            // A coordinate payload would make an installed GNOME extension
+            // mistake this native X11 utility for a Shell-owned surface and
+            // suppress its compositor actor. X11 placement is handled below.
+            set_title("Docklight 6 Preview");
+        }
 
         // Apply mapped X11/XWayland geometry atomically. Separate move and
         // resize requests can expose the previous allocation for one frame.

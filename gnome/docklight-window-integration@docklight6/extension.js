@@ -104,7 +104,13 @@ function integerText(value) {
 
 export default class DocklightWindowIntegration extends Extension {
     enable() {
-        this._enabled = true;
+        // Native GNOME X11 uses DockLight's ordinary EWMH/XComposite backend.
+        // Do not classify, hide, translate, or restack any of its X11
+        // surfaces; those operations are required only for GNOME Wayland.
+        this._enabled = Meta.is_wayland_compositor();
+        if (!this._enabled)
+            return;
+
         this._proxy = Gio.DBusProxy.new_for_bus_sync(
             Gio.BusType.SESSION,
             Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES,
@@ -294,6 +300,9 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     disable() {
+        if (!this._enabled)
+            return;
+
         this._enabled = false;
         this._connected = false;
 

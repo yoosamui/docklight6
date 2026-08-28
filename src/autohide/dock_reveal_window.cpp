@@ -18,8 +18,9 @@
 // ------------------------------------------------------------
 
 #include "dock_reveal_window.h"
-#include "presentation/docklight_surface_identity.h"
 #include "dock/dock_constants.h"
+#include "integrations/desktop_session_identity.h"
+#include "presentation/docklight_surface_identity.h"
 
 #include <gtk-layer-shell.h>
 #include <gdk/gdk.h>
@@ -67,10 +68,13 @@ DockRevealWindow::DockRevealWindow()
     set_focus_on_map(false);
     set_skip_taskbar_hint(true);
     set_skip_pager_hint(true);
-    // Give Mutter an explicit private-surface identity before the first map.
-    // The GNOME integration uses the coordinates to place this ordinary
-    // Wayland toplevel and the kind to keep it distinct from the main dock.
-    set_title("Docklight 6 Reveal@0,0");
+    // Only GNOME Wayland needs a coordinate-bearing Shell identity. Native
+    // X11 owns this override-redirect surface directly.
+    set_title(
+        DesktopSessionIdentity::
+                is_gnome_wayland_session()
+            ? "Docklight 6 Reveal@0,0"
+            : "Docklight 6 Reveal");
     gtk_window_set_role(
         GTK_WINDOW(gobj()),
         DocklightSurfaceIdentity::REVEAL_ROLE);

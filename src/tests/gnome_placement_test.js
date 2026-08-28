@@ -172,6 +172,23 @@ const dockAboutDialogSource = fs.readFileSync(
 
 assert.match(
     extensionSource,
+    /enable\(\)\s*\{[\s\S]*?this\._enabled\s*=\s*Meta\.is_wayland_compositor\(\);[\s\S]*?if \(!this\._enabled\)[\s\S]*?return;/,
+    "the GNOME extension must remain inert in a native X11 session");
+assert.match(
+    previewWindowSource,
+    /is_gnome_wayland_session\(\)[\s\S]*?"Docklight 6 Preview@"[\s\S]*?else[\s\S]*?set_title\("Docklight 6 Preview"\)/,
+    "native X11 previews must not expose a Shell-owned coordinate title");
+assert.match(
+    dockTooltipWindowSource,
+    /is_gnome_wayland_session\(\)[\s\S]*?"Docklight 6 Tooltip@"[\s\S]*?else[\s\S]*?set_title\("Docklight 6 Tooltip"\)/,
+    "native X11 tooltips must not expose a Shell-owned coordinate title");
+assert.match(
+    revealWindowSource,
+    /is_gnome_wayland_session\(\)[\s\S]*?"Docklight 6 Reveal@0,0"[\s\S]*?: "Docklight 6 Reveal"/,
+    "the native X11 reveal strip must not expose a Shell-owned coordinate title");
+
+assert.match(
+    extensionSource,
     /signalName === 'IconGeometryChanged'[\s\S]*?_setIconGeometry\(\.\.\.parameters\.deepUnpack\(\)\)[\s\S]*?signalName === 'IconGeometryRemoved'[\s\S]*?_removeIconGeometry/,
     "GNOME must consume Docklight icon-geometry updates and removals");
 assert.match(
@@ -340,9 +357,13 @@ assert.match(
     /m_gnome_live_previews_requested = true;[\s\S]*?hide_gnome_live_previews\(\)[\s\S]*?if \(!m_gnome_live_previews_requested\)[\s\S]*?m_gnome_live_previews_requested = false;/,
     "GNOME live-preview teardown must be idempotent");
 assert.match(
+    desktopSessionIdentitySource,
+    /is_wayland_session\(\)[\s\S]*?XDG_SESSION_TYPE[\s\S]*?session_type == "wayland"[\s\S]*?session_type\.empty\(\)[\s\S]*?WAYLAND_DISPLAY/,
+    "the shared session identity must prefer XDG_SESSION_TYPE and only use WAYLAND_DISPLAY as a fallback");
+assert.match(
     thumbnailProviderSource,
-    /gnome_shell_capture\s*=\s*DesktopSessionIdentity::[\s\S]*?identifies_gnome_shell\([\s\S]*?normalized_desktop\)/,
-    "thumbnail capture must use the shared GNOME Shell identity instead of treating Flashback as Shell");
+    /wayland_session\s*=\s*DesktopSessionIdentity::is_wayland_session\(\);[\s\S]*?gnome_shell_capture\s*=\s*wayland_session\s*&&[\s\S]*?DesktopSessionIdentity::[\s\S]*?identifies_gnome_shell\([\s\S]*?normalized_desktop\)/,
+    "GNOME must choose the Shell thumbnail service by session type so X11 uses XComposite while XWayland presentation remains supported");
 assert.match(
     thumbnailProviderSource,
     /set_gnome_preview_color[\s\S]*?SetPreviewColor[\s\S]*?\(dddd\)/,
@@ -513,8 +534,8 @@ assert.match(
     "moving or resizing the selected output must invalidate cached X11 placement state");
 assert.match(
     windowSystemControllerSource,
-    /GnomeWaylandWindowBackend>\(\s*!x11\s*\)/,
-    "native GNOME X11 must not advertise the Shell-only dock reveal trigger");
+    /const bool gnome_wayland\s*=\s*gnome_shell && !x11;[\s\S]*?uses_shell_protocol\s*=\s*kde_wayland \|\| gnome_wayland;[\s\S]*?if \(gnome_wayland\)[\s\S]*?GnomeWaylandWindowBackend>\(\);[\s\S]*?else if \(x11\)/,
+    "GNOME X11 must select its native EWMH backend instead of the Shell bridge");
 assert.match(
     windowSystemControllerSource,
     /std::optional<bool> g_x11_compositor_cache[\s\S]*?x11_compositor_is_running_cached\(\)[\s\S]*?g_x11_compositor_cache\.has_value\(\)[\s\S]*?XOpenDisplay\(nullptr\)[\s\S]*?g_x11_compositor_cache = running/,

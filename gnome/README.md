@@ -1,5 +1,10 @@
 # GNOME Wayland integration
 
+The extension activates its integration only when Mutter is running as a
+Wayland compositor. In a GNOME X11 session it returns from `enable()` without
+exporting services or managing DockLight surfaces; DockLight uses its native
+EWMH/XComposite backend there.
+
 ## XWayland presentation
 
 Configure the presentation choice without changing the GNOME integration:

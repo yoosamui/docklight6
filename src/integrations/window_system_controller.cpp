@@ -320,8 +320,10 @@ void WindowSystemController::start()
     const bool gnome_shell =
         DesktopSessionIdentity::
             identifies_gnome_shell(desktop);
+    const bool gnome_wayland =
+        gnome_shell && !x11;
     const bool uses_shell_protocol =
-        kde_wayland || gnome_shell;
+        kde_wayland || gnome_wayland;
 
     if (!uses_shell_protocol && !x11)
     {
@@ -330,13 +332,12 @@ void WindowSystemController::start()
         return;
     }
 
-    if (gnome_shell)
+    if (gnome_wayland)
     {
         m_details.backend = "GNOME Shell";
         m_backend =
             std::make_unique<
-                GnomeWaylandWindowBackend>(
-                    !x11);
+                GnomeWaylandWindowBackend>();
 
         DocklightLog::startup(
             "selected backend: GNOME Shell");

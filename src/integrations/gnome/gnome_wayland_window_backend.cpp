@@ -1,13 +1,5 @@
 #include "gnome_wayland_window_backend.h"
 
-GnomeWaylandWindowBackend::
-    GnomeWaylandWindowBackend(
-        bool provides_dock_reveal_trigger)
-    : m_provides_dock_reveal_trigger(
-          provides_dock_reveal_trigger)
-{
-}
-
 std::string
 GnomeWaylandWindowBackend::name() const
 {
@@ -29,8 +21,7 @@ GnomeWaylandWindowBackend::capabilities() const
     capabilities.provides_frame_geometry = true;
     capabilities.provides_icons = true;
     capabilities.accepts_icon_geometry = true;
-    capabilities.provides_dock_reveal_trigger =
-        m_provides_dock_reveal_trigger;
+    capabilities.provides_dock_reveal_trigger = true;
 
     return capabilities;
 }

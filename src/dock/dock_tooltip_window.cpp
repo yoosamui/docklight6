@@ -21,6 +21,7 @@
 #include "dock_tooltip_window.h"
 
 #include "dock_constants.h"
+#include "integrations/desktop_session_identity.h"
 #include "layout/dock_layout_metrics.h"
 #include "presentation/docklight_surface_identity.h"
 
@@ -578,13 +579,20 @@ void DockTooltipWindow::apply_position(
         const int global_y =
             m_monitor_geometry.y + position.y;
 
-        // GNOME Wayland ignores client-requested toplevel coordinates. The
-        // Shell integration consumes this private title payload and moves the
-        // tooltip after Mutter creates its surface.
-        set_title(
-            "Docklight 6 Tooltip@" +
-            std::to_string(global_x) + "," +
-            std::to_string(global_y));
+        if (DesktopSessionIdentity::
+                is_gnome_wayland_session())
+        {
+            // GNOME Wayland ignores client-requested toplevel coordinates.
+            // Its Shell integration consumes this private title payload.
+            set_title(
+                "Docklight 6 Tooltip@" +
+                std::to_string(global_x) + "," +
+                std::to_string(global_y));
+        }
+        else
+        {
+            set_title("Docklight 6 Tooltip");
+        }
 
         // Adjacent labels usually have different widths. Moving the mapped
         // XWayland surface and letting GTK resize it in a later configure

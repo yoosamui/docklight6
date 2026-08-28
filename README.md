@@ -46,8 +46,8 @@ available.
     <tr><td>Cinnamon</td><td>X11</td><td>Muffin</td><td>Muffin</td><td><code>MuffinWindowBackend</code></td><td>PASS</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> Uses the desktop-specific X11 backend.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
-    <tr><td>GNOME</td><td>X11</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>GnomeWaylandWindowBackend</code></td><td>PASS</td></tr>
-    <tr><td colspan="6"><strong>Comments:</strong> Uses the GNOME Shell extension bridge.</td></tr>
+    <tr><td>GNOME</td><td>X11</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>MutterWindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Uses native X11/EWMH window integration and XComposite previews; the GNOME Shell extension is inert.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
     <tr><td>GNOME</td><td>Wayland</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>GnomeWaylandWindowBackend</code></td><td>PASS</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> Uses the GNOME Shell extension bridge.</td></tr>
@@ -90,9 +90,9 @@ available.
 Important current-code details:
 
 - KWin, xfwm4, Marco/Metacity, Muffin, Mutter, and Openbox have separate X11
-  backends. GNOME Shell sessions use `GnomeWaylandWindowBackend`; the X11
-  `MutterWindowBackend` is selected only when Mutter is detected outside a
-  GNOME Shell desktop identity.
+  backends. GNOME Wayland uses `GnomeWaylandWindowBackend`; GNOME X11 uses
+  `MutterWindowBackend` with native EWMH window management and XComposite
+  previews.
 - Openbox window previews require an X11 compositor such as `compton` or
   `picom`. Without one, DockLight continues running, sets `display_preview`
   to `false`, and displays a warning.

@@ -62,15 +62,18 @@ inline std::string environment_value(
     return value ? value : "";
 }
 
-inline bool is_gnome_wayland_session()
+inline bool is_wayland_session()
 {
     const auto session_type = normalized(
         environment_value("XDG_SESSION_TYPE"));
-    const bool wayland =
-        session_type == "wayland" ||
-        (session_type.empty() &&
-         !environment_value("WAYLAND_DISPLAY").empty());
 
+    return session_type == "wayland" ||
+           (session_type.empty() &&
+            !environment_value("WAYLAND_DISPLAY").empty());
+}
+
+inline bool is_gnome_wayland_session()
+{
     auto desktop = environment_value(
         "XDG_CURRENT_DESKTOP");
     if (desktop.empty())
@@ -79,7 +82,7 @@ inline bool is_gnome_wayland_session()
             "XDG_SESSION_DESKTOP");
     }
 
-    return wayland &&
+    return is_wayland_session() &&
            identifies_gnome_shell(desktop);
 }
 

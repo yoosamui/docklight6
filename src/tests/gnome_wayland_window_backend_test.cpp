@@ -27,12 +27,6 @@ int main()
     assert(capabilities.accepts_icon_geometry);
     assert(!capabilities.supports_kwin_minimize_effect);
 
-    GnomeWaylandWindowBackend x11_backend(false);
-    assert(!x11_backend.capabilities()
-                .provides_dock_reveal_trigger);
-    assert(!x11_backend.capabilities()
-                .supports_kwin_minimize_effect);
-
     backend.start();
     assert(backend.register_integration(
         KWinIntegrationProtocol::VERSION));

@@ -170,11 +170,11 @@ is presented through XWayland.
 | Session | Selected implementation | Native bridge |
 | --- | --- | --- |
 | KDE Plasma Wayland | `KWinWindowBackend` | Versioned session D-Bus service and KWin script |
-| GNOME Shell, Wayland or X11 | `GnomeWaylandWindowBackend` | Shared versioned D-Bus service and GNOME Shell extension |
+| GNOME Shell Wayland | `GnomeWaylandWindowBackend` | Shared versioned D-Bus service and GNOME Shell extension |
 | KWin X11 | `KWinX11WindowBackend` | libwnck, Xlib, and EWMH |
 | MATE/Marco or Metacity X11 | `MarcoWindowBackend` | Shared EWMH base with restore specialization |
 | Cinnamon/Muffin X11 | `MuffinWindowBackend` | Shared EWMH base with Cinnamon action specialization |
-| Mutter outside GNOME Shell X11 | `MutterWindowBackend` | Shared EWMH base |
+| GNOME Shell or standalone Mutter X11 | `MutterWindowBackend` | Shared EWMH base and native XComposite capture |
 | LXDE/LXQt Openbox X11 | `OpenboxWindowBackend` | Shared EWMH base with group-hide behavior |
 | XFCE/xfwm4 X11 | `Xfwm4WindowBackend` | Shared EWMH base with restore specialization |
 | Other EWMH-compatible X11 | `EwmhFallbackWindowBackend` | Generic EWMH behavior |
