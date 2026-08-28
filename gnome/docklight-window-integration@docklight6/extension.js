@@ -164,7 +164,6 @@ export default class DocklightWindowIntegration extends Extension {
         this._pointerPollSource = 0;
         this._auxiliaryWindowSignals = new Map();
         this._auxiliaryTransitions = new Map();
-        this._dialogWindowSignals = new Map();
         this._configurationReloadSource = 0;
         this._dockStrut = null;
         this._dockRevealActor = null;
@@ -340,8 +339,6 @@ export default class DocklightWindowIntegration extends Extension {
         this._destroyDockRevealActor();
         for (const window of [...this._auxiliaryWindowSignals.keys()])
             this._clearAuxiliaryWindow(window);
-        for (const window of [...this._dialogWindowSignals.keys()])
-            this._clearDialogWindow(window);
 
         if (this._configurationMonitor) {
             this._configurationMonitor.cancel();
@@ -593,62 +590,12 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _considerDialogWindow(window) {
-        if (!this._isDockDialog(window))
-            return false;
-
-        if (!this._dialogWindowSignals.has(window)) {
-            const signals = [];
-            for (const [signal, callback] of [
-                ['size-changed', () => this._placeDialogWindow(window)],
-                ['position-changed', () => this._placeDialogWindow(window)],
-                ['notify::monitor', () => this._placeDialogWindow(window)],
-                ['unmanaged', () => this._clearDialogWindow(window)],
-            ]) {
-                try {
-                    signals.push(window.connect(signal, callback));
-                } catch (_error) {
-                    // Signal availability differs between Mutter releases.
-                }
-            }
-            this._dialogWindowSignals.set(window, signals);
-        }
-        this._placeDialogWindow(window);
-        return true;
-    }
-
-    _placeDialogWindow(window) {
-        // Do not call Meta.Window.move_frame() for a GTK Wayland dialog.
-        // Mutter 16 can follow the surface's transient/subsurface parent to
-        // a null Meta.Window and crash the whole Shell. Moving the compositor
-        // actor keeps painting and picking at the requested coordinates
-        // without mutating Mutter's native window geometry.
-        const actor = window?.get_compositor_private?.();
-        if (!actor)
-            return;
-
-        const monitorIndex = this._dockMonitorIndex();
-        const area = this._workAreaForMonitor(monitorIndex);
-        if (!area)
-            return;
-        const rect = window.get_frame_rect();
-        const x = Math.round(area.x + (area.width - rect.width) / 2);
-        const y = Math.round(area.y + (area.height - rect.height) / 2);
-        actor.remove_all_transitions();
-        actor.scale_x = 1;
-        actor.scale_y = 1;
-        actor.translation_x = x - rect.x;
-        actor.translation_y = y - rect.y;
-    }
-
-    _clearDialogWindow(window) {
-        for (const id of this._dialogWindowSignals.get(window) || []) {
-            try {
-                window.disconnect(id);
-            } catch (_error) {
-                // The Meta.Window may already be finalized.
-            }
-        }
-        this._dialogWindowSignals.delete(window);
+        // Settings and About are ordinary unparented Wayland toplevels.
+        // Classify them here so the shared application id cannot make them
+        // the dock, but leave placement and interactive movement entirely to
+        // Mutter. Translating their compositor actors separates the visible
+        // input surface from the native frame and breaks mouse move grabs.
+        return this._isDockDialog(window);
     }
 
     _auxiliaryPosition(window) {

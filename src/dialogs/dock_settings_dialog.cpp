@@ -19,6 +19,7 @@
 
 #include "dock_settings_dialog.h"
 #include "config/dock_configuration_manager.h"
+#include "integrations/desktop_session_identity.h"
 #include "monitors/dock_monitor_manager.h"
 #include "presentation/docklight_surface_identity.h"
 
@@ -95,12 +96,17 @@ void DockSettingsDialog::show(
     dialog.set_type_hint(
         Gdk::WINDOW_TYPE_HINT_DIALOG);
 
-    // A normal dialog cannot be transient for the layer-shell dock on
-    // Wayland. Keeping Settings as an independent decorated toplevel also
-    // lets its own native chooser dialogs use normal transient modality.
+    // A normal dialog cannot be transient for the layer-shell dock on native
+    // Wayland. GNOME's default XWayland presentation needs the same policy:
+    // attach-modal-dialogs otherwise attaches Settings to the immovable edge
+    // dock and an interactive title-bar move stalls after its drag threshold.
+    // Keeping Settings independent also lets its chooser dialogs use normal
+    // transient modality.
     auto *display = gdk_display_get_default();
-    if (display &&
-        GDK_IS_WAYLAND_DISPLAY(display))
+    if ((display &&
+         GDK_IS_WAYLAND_DISPLAY(display)) ||
+        DesktopSessionIdentity::
+            is_gnome_wayland_session())
     {
         dialog.unset_transient_for();
     }

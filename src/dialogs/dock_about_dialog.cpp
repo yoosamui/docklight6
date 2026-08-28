@@ -17,8 +17,9 @@
 // ------------------------------------------------------------
 
 #include "dock_about_dialog.h"
-#include "presentation/docklight_surface_identity.h"
 #include "config.h"
+#include "integrations/desktop_session_identity.h"
+#include "presentation/docklight_surface_identity.h"
 
 #include <glibmm/i18n.h>
 #include <gdk/gdkwayland.h>
@@ -117,12 +118,15 @@ void DockAboutDialog::show(
     dialog.set_type_hint(
         Gdk::WINDOW_TYPE_HINT_DIALOG);
 
-    // A modal transient is positioned relative to the edge dock by Mutter,
-    // not relative to the monitor. The GNOME integration recognizes this
-    // dialog by its role and centres the ordinary Wayland toplevel itself.
+    // A modal transient is attached to the immovable edge dock by Mutter.
+    // This applies to GNOME's default XWayland presentation as well as a
+    // native Wayland surface and makes an interactive dialog move stall.
+    // Keep About as an independent toplevel and centre it below.
     auto *display = gdk_display_get_default();
-    if (display &&
-        GDK_IS_WAYLAND_DISPLAY(display) &&
+    if (((display &&
+          GDK_IS_WAYLAND_DISPLAY(display)) ||
+         DesktopSessionIdentity::
+             is_gnome_wayland_session()) &&
         !gtk_layer_is_supported())
     {
         dialog.unset_transient_for();

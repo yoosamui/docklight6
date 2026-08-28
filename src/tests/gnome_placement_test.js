@@ -100,6 +100,9 @@ const desktopSessionIdentityPath = path.resolve(
 const dockSettingsDialogPath = path.resolve(
     __dirname,
     "../dialogs/dock_settings_dialog.cpp");
+const dockAboutDialogPath = path.resolve(
+    __dirname,
+    "../dialogs/dock_about_dialog.cpp");
 
 // gnome-extensions pack only bundles its conventional entry points unless
 // imported modules are explicitly listed as extra sources. Keep the package
@@ -164,6 +167,8 @@ const desktopSessionIdentitySource = fs.readFileSync(
     desktopSessionIdentityPath, "utf8");
 const dockSettingsDialogSource = fs.readFileSync(
     dockSettingsDialogPath, "utf8");
+const dockAboutDialogSource = fs.readFileSync(
+    dockAboutDialogPath, "utf8");
 
 assert.match(
     extensionSource,
@@ -961,10 +966,19 @@ assert.match(
     extensionSource,
     /_scheduleDockDiscoveryScan\(\)[\s\S]*?global\.get_window_actors\(\)[\s\S]*?_considerDockWindow\([\s\S]*?false\)/,
     "registration must rescan mapped actors until delayed dock metadata is available");
-assert.match(
-    extensionSource,
-    /_placeDialogWindow\(window\) \{[\s\S]*?const actor = window\?\.get_compositor_private\?\.\(\)[\s\S]*?actor\.translation_x = x - rect\.x[\s\S]*?actor\.translation_y = y - rect\.y/,
-    "GNOME dialogs must use safe compositor placement after mapping");
+const dialogTrackingSource = extensionSource.match(
+    /_considerDialogWindow\(window\) \{[\s\S]*?return this\._isDockDialog\(window\);\s*\}/)?.[0];
+assert.ok(dialogTrackingSource, "GNOME dialog tracking must remain available");
+assert.doesNotMatch(
+    dialogTrackingSource,
+    /get_compositor_private|translation_[xy]|move_frame|\.connect\(/,
+    "GNOME dialog placement and movement must remain owned by Mutter");
+for (const dialogSource of [dockSettingsDialogSource, dockAboutDialogSource]) {
+    assert.match(
+        dialogSource,
+        /DesktopSessionIdentity::\s*is_gnome_wayland_session\(\)[\s\S]*?unset_transient_for\(\)/,
+        "GNOME Wayland dialogs must detach from an XWayland dock transient");
+}
 assert.match(
     extensionSource,
     /_placeAuxiliaryWindow[\s\S]*?actor\.translation_y = resolvedTarget\.y - rect\.y;[\s\S]*?this\._finishAuxiliaryTransition\(window\)/,
