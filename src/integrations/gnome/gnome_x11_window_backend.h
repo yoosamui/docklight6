@@ -1,7 +1,28 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// GNOME Shell/Mutter X11 hybrid backend.
+// ------------------------------------------------------------
+//
+// File:
+// gnome_x11_window_backend.h
+//
+// Purpose:
+// Declares the GNOME Shell/Mutter X11 hybrid window backend.
+//
+// Responsibilities:
+// - Retain Mutter EWMH/XComposite application-window behavior.
+// - Host the optional GNOME Shell surface-animation bridge.
+// - Mirror dock placement and hidden state into the Shell transport.
+// - Forward Shell surface geometry and animation completion signals.
+//
+// Dependencies and ownership:
+// The backend inherits the Mutter X11 backend and owns its private Shell
+// backend, D-Bus service, and bridge signal connections.
+//
+// Design notes:
+// Application windows remain authoritative in the X11 backend; the Shell
+// bridge carries only Docklight surface state and animation messages.
+//
 // ------------------------------------------------------------
 
 #pragma once
@@ -16,9 +37,6 @@
 
 class KWinIntegrationService;
 
-// Application windows remain entirely owned by MutterWindowBackend's mature
-// EWMH/XComposite implementation.  The private Shell backend carries only
-// DockLight surface geometry and autohide animation messages.
 class GnomeX11WindowBackend final : public MutterWindowBackend
 {
 public:

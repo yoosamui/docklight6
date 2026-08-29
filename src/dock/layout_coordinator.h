@@ -1,3 +1,29 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// layout_coordinator.h
+//
+// Purpose:
+// Declares monitor and work-area normalization for dock overlay layout.
+//
+// Responsibilities:
+// - Resolve output, native work-area, and sizing geometry.
+// - Produce monitor-local usable geometry for tooltip and preview layout.
+// - Intersect compositor-reported work areas with the selected output.
+//
+// Dependencies and ownership:
+// LayoutCoordinator borrows DockWindow and returns plain geometry values; it
+// owns no GTK surfaces or compositor resources.
+//
+// Design notes:
+// This module calculates coordinate spaces but does not apply placement side
+// effects to dock surfaces.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "config/dock_configuration.h"
@@ -19,8 +45,6 @@ struct DockMonitorLayout
     }
 };
 
-// Resolves compositor-specific output/work-area reports into the three
-// coordinate spaces consumed by dock, tooltip, and preview layout.
 class LayoutCoordinator
 {
 public:

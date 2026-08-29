@@ -1,7 +1,27 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// MATE/Marco and Metacity X11 backend.
+// ------------------------------------------------------------
+//
+// File:
+// marco_window_backend.h
+//
+// Purpose:
+// Declares the MATE/Marco and Metacity specialization of the EWMH backend.
+//
+// Responsibilities:
+// - Advertise the supported thumbnail caching policy.
+// - Restore minimized windows without activating them.
+// - Preserve each restored window's assigned workspace.
+//
+// Dependencies and ownership:
+// The class borrows WnckWindow objects from EwmhWindowBackend and uses the
+// active GDK X11 display for its restore override.
+//
+// Design notes:
+// Only restore behavior differs; common discovery and other actions remain in
+// EwmhWindowBackend.
+//
 // ------------------------------------------------------------
 
 #pragma once

@@ -1,3 +1,23 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// tooltip_manager.cpp
+//
+// Implementation overview:
+// Applies tooltip configuration, hover timing, geometry calculation, and
+// overlay-window visibility changes.
+//
+// Important implementation decisions:
+// - Request generations invalidate stale timeout callbacks.
+// - Monitor-local geometry is used for placement calculations.
+// - Native placement receives an overlay work area derived from dock bounds.
+// - Coordination with previews is emitted through manager signals.
+//
+// ------------------------------------------------------------
+
 #include "tooltip_manager.h"
 
 #include "dock_constants.h"

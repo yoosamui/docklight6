@@ -1,3 +1,28 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// gnome_wayland_window_backend_test.cpp
+//
+// Purpose:
+// Verifies the GNOME Wayland backend's declared capabilities and lifecycle.
+//
+// Responsibilities:
+// - Check the GNOME-specific capability set.
+// - Exercise integration registration and revisioned snapshot commit.
+// - Check connection state across start and stop.
+//
+// Dependencies and ownership:
+// The test constructs its backend on the stack and uses in-process protocol
+// methods without requiring a live GNOME Shell session.
+//
+// Design notes:
+// This is a contract-level unit test, not a real-session verification result.
+//
+// ------------------------------------------------------------
+
 #include "integrations/gnome/gnome_wayland_window_backend.h"
 #include "integrations/kwin/kwin_integration_protocol.h"
 

@@ -1,3 +1,30 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// preview_manager.h
+//
+// Purpose:
+// Declares dock-item preview intent, surface lifetime, and window actions.
+//
+// Responsibilities:
+// - Schedule and display window-group previews for hovered dock items.
+// - Coordinate thumbnail policy, live refresh, and cache priming.
+// - Route preview activation, reload, and close requests.
+// - Maintain preview-related autohide inhibition and pointer state.
+//
+// Dependencies and ownership:
+// PreviewManager borrows DockWindow, autohide, and tooltip services. It owns
+// the preview window, media monitor, timers, and signal connections.
+//
+// Design notes:
+// Delayed previews wait for a fully revealed dock so placement uses stable
+// surface coordinates.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "config/dock_configuration.h"
@@ -22,10 +49,6 @@ class DockPreviewWindow;
 class DockWindow;
 class TooltipManager;
 
-// Owns the preview surface, media monitor, delayed-show intent, window
-// actions, and the autohide inhibition associated with a visible preview.
-// A delayed preview remains pending until the dock is fully revealed so its
-// position is calculated from stable surface coordinates.
 class PreviewManager
 {
 public:

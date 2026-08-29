@@ -1,7 +1,27 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// LXDE/LXQt Openbox X11 backend.
+// ------------------------------------------------------------
+//
+// File:
+// openbox_window_backend.h
+//
+// Purpose:
+// Declares the LXDE/LXQt Openbox specialization of the EWMH backend.
+//
+// Responsibilities:
+// - Advertise compositor-dependent mapped-window thumbnail behavior.
+// - Hide or restore complete application groups through EWMH state requests.
+// - Restore individual windows without activation or workspace movement.
+//
+// Dependencies and ownership:
+// The class borrows WnckWindow objects from EwmhWindowBackend and uses the
+// active GDK X11 display for batched state changes.
+//
+// Design notes:
+// Group targets are resolved before dispatch so stale IDs cannot leave a
+// partially transitioned application group.
+//
 // ------------------------------------------------------------
 
 #pragma once

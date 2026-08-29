@@ -1,7 +1,28 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Generic EWMH/X11 window backend implemented through libwnck.
+// ------------------------------------------------------------
+//
+// File:
+// ewmh_window_backend.h
+//
+// Purpose:
+// Declares the shared libwnck/EWMH implementation for X11 window backends.
+//
+// Responsibilities:
+// - Observe and normalize X11 windows, stacking, focus, and workspaces.
+// - Implement generic activation, presentation, state, and geometry actions.
+// - Publish backend connection and snapshot changes.
+// - Expose narrow hooks for window-manager-specific action behavior.
+//
+// Dependencies and ownership:
+// The backend owns its WnckHandle, borrows libwnck objects exposed by that
+// handle, and retains only normalized IDs for deferred activation.
+//
+// Design notes:
+// Desktop specializations override exceptional actions while shared EWMH
+// discovery and model normalization remain centralized here.
+//
 // ------------------------------------------------------------
 
 #pragma once

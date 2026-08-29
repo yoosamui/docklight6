@@ -1,8 +1,22 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Keeps presentation transport selection orthogonal to GNOME, Plasma, and
-// X11 window integration selection.
+// ------------------------------------------------------------
+//
+// File:
+// presentation_selector.cpp
+//
+// Implementation overview:
+// Parses presentation inputs, resolves an available mode, and prepares the
+// GDK backend environment before GTK initialization.
+//
+// Important implementation decisions:
+// - Command-line selection takes precedence over configuration.
+// - Automatic mode prefers XWayland only for GNOME Wayland when available.
+// - XWayland requires both a Wayland session and an X display.
+// - Presentation policy remains orthogonal to window-integration selection.
+// - Child application launches have Docklight-only overrides removed.
+//
 // ------------------------------------------------------------
 
 #include "presentation_selector.h"

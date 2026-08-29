@@ -1,7 +1,27 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Pure X11 backend classification used by startup and regression tests.
+// ------------------------------------------------------------
+//
+// File:
+// x11_backend_selection.h
+//
+// Purpose:
+// Declares pure X11 backend and desktop-file identity classification.
+//
+// Responsibilities:
+// - Classify supported X11 window managers into backend kinds.
+// - Provide stable diagnostic names for backend kinds.
+// - Resolve known X11 application identities requiring caption metadata.
+//
+// Dependencies and ownership:
+// Functions accept and return owned or borrowed string values and retain no
+// window-manager, display, or application resources.
+//
+// Design notes:
+// Pure classification keeps startup decisions deterministic and independently
+// testable without opening an X display.
+//
 // ------------------------------------------------------------
 
 #pragma once

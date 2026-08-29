@@ -1,7 +1,22 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Cinnamon/Muffin-specific X11 window actions.
+// ------------------------------------------------------------
+//
+// File:
+// muffin_window_backend.cpp
+//
+// Implementation overview:
+// Implements Cinnamon-native activation, minimization, and restoration by
+// evaluating focused scripts through Cinnamon's session D-Bus API.
+//
+// Important implementation decisions:
+// - XIDs bridge normalized EWMH windows to Muffin MetaWindow objects.
+// - Group presentation restores all members and focuses one intended target.
+// - Failed native actions do not fall through to workspace-moving libwnck
+//   activation.
+// - Every D-Bus connection, reply, and error is released locally.
+//
 // ------------------------------------------------------------
 
 #include "muffin_window_backend.h"

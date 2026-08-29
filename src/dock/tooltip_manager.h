@@ -1,3 +1,30 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// tooltip_manager.h
+//
+// Purpose:
+// Declares tooltip hover intent, timing, placement, and visibility control.
+//
+// Responsibilities:
+// - Track pending, hovered, and visible dock items.
+// - Schedule tooltip show and hide transitions.
+// - Calculate tooltip placement from dock and monitor geometry.
+// - Signal cross-surface policy events to DockWindowController.
+//
+// Dependencies and ownership:
+// TooltipManager borrows DockWindow and item widgets, owns timer connections,
+// and delegates the actual tooltip surface to DockWindow's overlay window.
+//
+// Design notes:
+// Preview coordination stays in DockWindowController rather than being
+// coupled directly into this focused manager.
+//
+// ------------------------------------------------------------
+
 #pragma once
 
 #include "config/dock_configuration.h"
@@ -18,9 +45,6 @@ namespace Gtk
 class Widget;
 }
 
-// Owns tooltip intent, timing and placement. Cross-surface policy is exposed
-// as signals so DockWindowController remains the only object coordinating a
-// tooltip with a preview.
 class TooltipManager
 {
 public:

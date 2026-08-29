@@ -1,8 +1,28 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Selects how Docklight's GTK surfaces are presented independently from the
-// desktop-specific window integration used for discovery and actions.
+// ------------------------------------------------------------
+//
+// File:
+// presentation_selector.h
+//
+// Purpose:
+// Declares selection and preparation of Docklight's GTK presentation mode.
+//
+// Responsibilities:
+// - Parse native, XWayland, and automatic presentation requests.
+// - Resolve command-line and persisted configuration precedence.
+// - Prepare process and child-launch environments before GTK starts.
+// - Report the actual GTK presentation backend.
+//
+// Dependencies and ownership:
+// Selection values own their strings. Launch-context helpers borrow the
+// supplied GLib context and process-environment access is non-owning.
+//
+// Design notes:
+// Presentation of Docklight surfaces is independent from the integration
+// used to discover and control application windows.
+//
 // ------------------------------------------------------------
 
 #pragma once

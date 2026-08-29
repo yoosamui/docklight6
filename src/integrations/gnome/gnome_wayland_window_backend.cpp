@@ -1,3 +1,22 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// gnome_wayland_window_backend.cpp
+//
+// Implementation overview:
+// Supplies the GNOME Shell backend name and its supported window, geometry,
+// preview, and dock-surface capabilities.
+//
+// Important implementation decisions:
+// - Capabilities are declared explicitly rather than inherited wholesale.
+// - Activities and KWin-specific minimize effects remain disabled.
+// - Snapshot and command mechanics stay in the shared base implementation.
+//
+// ------------------------------------------------------------
+
 #include "gnome_wayland_window_backend.h"
 
 std::string

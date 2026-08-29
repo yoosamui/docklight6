@@ -1,5 +1,29 @@
-// Private implementation details shared by the DockPreviewWindow build
-// units. This header is not part of the public preview-window API.
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// dock_preview_window_internal.h
+//
+// Purpose:
+// Shares private preview-card drawing helpers across the preview window
+// implementation units.
+//
+// Responsibilities:
+// - Build rounded Cairo paths for preview cards.
+// - Paint the card selection state, image base, and thumbnail pixbuf.
+// - Keep the internal preview canvas definition in one place.
+//
+// Dependencies and ownership:
+// This private header depends on DockPreviewWindow drawing types. The canvas
+// owns its pixbuf reference and is owned by the preview window's GTK tree.
+//
+// Design notes:
+// This file is not part of the public preview-window API. Card layers are
+// painted in one Cairo pass so capture alpha cannot expose the selector.
+//
+// ------------------------------------------------------------
 
 #pragma once
 

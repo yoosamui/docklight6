@@ -1,3 +1,22 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// xfwm4_window_backend.cpp
+//
+// Implementation overview:
+// Implements xfwm4's non-activating restore path for minimized windows.
+//
+// Important implementation decisions:
+// - Minimization falls through to the common EWMH behavior.
+// - Restore maps the X11 window instead of calling libwnck unminimize.
+// - Mapping preserves the window's existing workspace assignment.
+// - X11 requests are protected by the GDK error trap.
+//
+// ------------------------------------------------------------
+
 #include "xfwm4_window_backend.h"
 
 #include <gdk/gdkx.h>

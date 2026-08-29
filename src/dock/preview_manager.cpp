@@ -1,3 +1,24 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// preview_manager.cpp
+//
+// Implementation overview:
+// Coordinates delayed preview display, card data, media-driven refresh,
+// window actions, and autohide inhibition.
+//
+// Important implementation decisions:
+// - Preview placement waits until the dock is fully revealed.
+// - Application-auxiliary windows sort ahead of ordinary caption order.
+// - Closing the last card removes the empty preview intentionally.
+// - Tooltip and preview timers cancel one another through focused managers.
+// - Owned signal connections are disconnected during destruction.
+//
+// ------------------------------------------------------------
+
 #include "preview_manager.h"
 
 #include "autohide/dock_autohide_controller.h"

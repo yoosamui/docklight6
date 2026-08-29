@@ -1,3 +1,23 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// marco_window_backend.cpp
+//
+// Implementation overview:
+// Implements Marco/Metacity preview policy and non-activating window restore.
+//
+// Important implementation decisions:
+// - Mapped-window thumbnails are cached rather than redirected.
+// - Restore uses XMapWindow because libwnck unminimize activates the window.
+// - The cached workspace is reasserted before grouped presentation focuses a
+//   single intended target.
+// - X11 requests are protected by the GDK error trap.
+//
+// ------------------------------------------------------------
+
 #include "marco_window_backend.h"
 
 #include <gdk/gdkx.h>

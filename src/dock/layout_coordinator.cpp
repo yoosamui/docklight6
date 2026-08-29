@@ -1,3 +1,24 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// layout_coordinator.cpp
+//
+// Implementation overview:
+// Normalizes GTK, surface-backend, and window-integration geometry into the
+// coordinate spaces consumed by dock, tooltip, and preview layout.
+//
+// Important implementation decisions:
+// - EWMH remains authoritative for native X11 and XWayland surfaces.
+// - Native Wayland may use compositor-reported monitor work areas.
+// - Configured bottom inset requirements affect sizing without changing the
+//   recorded native work area.
+// - Reported work areas are clipped to the selected output.
+//
+// ------------------------------------------------------------
+
 #include "layout_coordinator.h"
 
 #include "dock_window.h"

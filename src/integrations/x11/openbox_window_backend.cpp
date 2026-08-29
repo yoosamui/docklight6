@@ -1,3 +1,24 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// openbox_window_backend.cpp
+//
+// Implementation overview:
+// Implements Openbox thumbnail policy and native EWMH hidden-state handling
+// for individual windows and complete application groups.
+//
+// Important implementation decisions:
+// - All group members are resolved before any state request is sent.
+// - Pager-originated _NET_WM_STATE_HIDDEN requests avoid activation.
+// - Group changes share one request batch and XFlush boundary.
+// - Thumbnails require a compositor and mapped-window redirection.
+// - X11 requests are protected by the GDK error trap.
+//
+// ------------------------------------------------------------
+
 #include "openbox_window_backend.h"
 
 #include <gdk/gdkx.h>

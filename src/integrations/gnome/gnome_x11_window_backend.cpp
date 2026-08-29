@@ -1,3 +1,23 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// gnome_x11_window_backend.cpp
+//
+// Implementation overview:
+// Combines Mutter's X11 window model with an optional GNOME Shell bridge for
+// Docklight surface geometry and autohide animation.
+//
+// Important implementation decisions:
+// - The ordinary X11 backend starts first and remains authoritative.
+// - Shell bridge availability gates only Shell-provided capabilities.
+// - Pre-service dock state is replayed after D-Bus startup.
+// - Every bridge signal is disconnected before either backend stops.
+//
+// ------------------------------------------------------------
+
 #include "gnome_x11_window_backend.h"
 
 #include "integrations/kwin/kwin_integration_service.h"

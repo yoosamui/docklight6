@@ -1,8 +1,26 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Verifies that each desktop-specific X11 backend remains isolated and that
-// unknown EWMH window managers use the fallback implementation.
+// ------------------------------------------------------------
+//
+// File:
+// x11_backend_selection_test.cpp
+//
+// Purpose:
+// Verifies pure X11 backend and desktop-file identity selection.
+//
+// Responsibilities:
+// - Check window-manager-name precedence over desktop metadata.
+// - Check desktop fallbacks when the manager name is unavailable.
+// - Check GNOME Flashback identity and LibreOffice launcher resolution.
+//
+// Dependencies and ownership:
+// The test uses only value-returning classification helpers and owns no
+// desktop or display-server resources.
+//
+// Design notes:
+// Unknown explicit window managers must remain on the generic EWMH path.
+//
 // ------------------------------------------------------------
 
 #include "integrations/x11/x11_backend_selection.h"

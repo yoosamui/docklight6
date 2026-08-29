@@ -1,3 +1,24 @@
+// ------------------------------------------------------------
+// Docklight 6.0
+//
+// ------------------------------------------------------------
+//
+// File:
+// x11_backend_selection.cpp
+//
+// Implementation overview:
+// Maps normalized window-manager and desktop identities to X11 backend kinds
+// and resolves special X11 launcher identities.
+//
+// Important implementation decisions:
+// - An explicit window-manager name always outranks desktop metadata.
+// - Unknown explicit managers select the generic EWMH fallback.
+// - Desktop identity is consulted only before EWMH exposes a manager name.
+// - GNOME Flashback follows Marco or Metacity instead of GNOME Shell.
+// - LibreOffice module captions disambiguate its generic X11 window class.
+//
+// ------------------------------------------------------------
+
 #include "x11_backend_selection.h"
 #include "integrations/desktop_session_identity.h"
 

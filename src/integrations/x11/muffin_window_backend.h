@@ -1,8 +1,27 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Cinnamon/Muffin X11 backend. Common EWMH behavior is inherited while
-// Cinnamon-only window actions remain isolated in this class.
+// ------------------------------------------------------------
+//
+// File:
+// muffin_window_backend.h
+//
+// Purpose:
+// Declares the Cinnamon/Muffin specialization of the shared EWMH backend.
+//
+// Responsibilities:
+// - Activate complete application groups through Cinnamon.
+// - Minimize and restore individual windows through native Muffin objects.
+// - Retain common EWMH discovery and normalized window state.
+//
+// Dependencies and ownership:
+// The class borrows WnckWindow objects from EwmhWindowBackend; transient
+// Cinnamon D-Bus resources are created and released by the implementation.
+//
+// Design notes:
+// Cinnamon-specific actions stay isolated because generic libwnck activation
+// can move off-workspace windows to the current workspace.
+//
 // ------------------------------------------------------------
 
 #pragma once

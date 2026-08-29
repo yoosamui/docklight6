@@ -1,8 +1,27 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Verifies command-line precedence, persistent presentation selection, and
-// XWayland environment validation without opening a display.
+// ------------------------------------------------------------
+//
+// File:
+// presentation_selector_test.cpp
+//
+// Purpose:
+// Verifies presentation parsing, precedence, persistence, and preparation.
+//
+// Responsibilities:
+// - Check command-line extraction and invalid option handling.
+// - Check configuration and automatic desktop selection.
+// - Check XWayland availability and launch-context environment behavior.
+//
+// Dependencies and ownership:
+// Tests use temporary configuration directories and process environment
+// variables, restoring or removing their local fixtures before exit.
+//
+// Design notes:
+// Selection tests avoid opening a display so transport policy stays testable
+// independently from GTK initialization.
+//
 // ------------------------------------------------------------
 
 #include "presentation/presentation_selector.h"

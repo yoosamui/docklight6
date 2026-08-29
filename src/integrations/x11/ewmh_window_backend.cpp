@@ -1,7 +1,22 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Generic EWMH/X11 window backend implemented through libwnck.
+// ------------------------------------------------------------
+//
+// File:
+// ewmh_window_backend.cpp
+//
+// Implementation overview:
+// Implements X11 window discovery, normalized snapshots, actions, workspace
+// transitions, icon geometry, and native XComposite preview metadata.
+//
+// Important implementation decisions:
+// - libwnck runs as a pager and remains the shared EWMH authority.
+// - User-time fallback preserves trusted activation after delayed UI work.
+// - Window-manager-specific behavior enters only through narrow overrides.
+// - Off-workspace grouped presentation defers focus until workspace change.
+// - Native objects are converted to ManagedWindow values before publication.
+//
 // ------------------------------------------------------------
 
 #include "ewmh_window_backend.h"

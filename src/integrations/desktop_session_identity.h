@@ -1,7 +1,27 @@
 // ------------------------------------------------------------
 // Docklight 6.0
 //
-// Shared desktop-session identity helpers.
+// ------------------------------------------------------------
+//
+// File:
+// desktop_session_identity.h
+//
+// Purpose:
+// Declares shared, header-only desktop-session identity helpers.
+//
+// Responsibilities:
+// - Normalize desktop identity strings.
+// - Distinguish GNOME Shell from GNOME Flashback.
+// - Detect Wayland and GNOME Shell X11 sessions from the environment.
+//
+// Dependencies and ownership:
+// Helpers read process environment values and return owned strings or plain
+// booleans; they retain no environment pointers or session resources.
+//
+// Design notes:
+// Session identity is shared by presentation and window-backend selection so
+// GNOME Flashback is not mistaken for GNOME Shell.
+//
 // ------------------------------------------------------------
 
 #pragma once
