@@ -171,6 +171,7 @@ is presented through XWayland.
 | --- | --- | --- |
 | KDE Plasma Wayland | `KWinWindowBackend` | Versioned session D-Bus service and KWin script |
 | GNOME Shell Wayland | `GnomeWaylandWindowBackend` | Shared versioned D-Bus service and GNOME Shell extension |
+| Hyprland Wayland | `HyprlandWindowBackend` | Hyprland JSON request and event sockets |
 | KWin X11 | `KWinX11WindowBackend` | libwnck, Xlib, and EWMH |
 | MATE/Marco or Metacity X11 | `MarcoWindowBackend` | Shared EWMH base with restore specialization |
 | Cinnamon/Muffin X11 | `MuffinWindowBackend` | Shared EWMH base with Cinnamon action specialization |
@@ -190,16 +191,24 @@ geometry. It does not place DockLight's own GTK surface.
 `IDockSurfaceBackend` isolates placement and screen-reservation side effects
 for the main dock surface:
 
-- `PlasmaWaylandDockSurfaceBackend` uses gtk-layer-shell anchors, monitor
-  selection, margins, exclusive zones, and native Plasma Wayland effects.
+- `LayerShellDockSurfaceBackend` is the native layer-shell implementation. It
+  uses gtk-layer-shell anchors, monitor selection, margins, and exclusive zones
+  on every compositor advertising the protocol. Plasma additionally exposes
+  its compositor-style effect; other layer-shell compositors use DockLight's
+  client-rendered slide effect.
 - `LegacyDockSurfaceBackend` owns ordinary GTK toplevel placement, X11
-  work-area/strut behavior, and compatibility paths used outside native Plasma
-  Wayland.
+  work-area/strut behavior, and compatibility paths used outside native
+  layer-shell presentation. Under the default Hyprland XWayland presentation,
+  it also owns the lifetime of an invisible native layer-shell reservation
+  companion. The visible surface remains XWayland to preserve correct GTK 3
+  drag behavior; the companion supplies only the exclusive zone that Hyprland
+  does not derive from EWMH struts and compensates for the dock-edge
+  `general:gaps_out` value.
 
-`create_dock_surface_backend()` selects the Plasma implementation only for a
-native KDE Wayland display with layer-shell support. This interface is
-deliberately separate from `WindowBackend`: changing where the dock is drawn
-must not change how application windows are observed.
+`create_dock_surface_backend()` selects the layer-shell implementation for a
+native Wayland display with layer-shell support. This interface is deliberately
+separate from `WindowBackend`: changing where the dock is drawn must not change
+how application windows are observed.
 
 ## Core code modules
 
@@ -313,7 +322,8 @@ desktop application database changes.
 | Module | Responsibility |
 | --- | --- |
 | `src/preview/dock_preview_window.*` | Interactive grouped-window preview cards, placement, cached frames, animations, and window actions. |
-| `src/preview/dock_window_thumbnail_provider.*` | Asynchronous static capture through XComposite/XRender, KWin `ScreenShot2`, or the GNOME Shell thumbnail service. |
+| `src/preview/dock_window_thumbnail_provider.*` | Asynchronous static capture through XComposite/XRender, KWin `ScreenShot2`, GNOME Shell, or Hyprland's standard Wayland image-copy path. |
+| `src/preview/hyprland_thumbnail_capture.*` | Resolves Hyprland `stableId` values through `ext-foreign-toplevel-list-v1` and copies individual toplevel buffers with `ext-image-copy-capture-v1`. |
 | `src/preview/dock_window_stream_provider.*` | Persistent KWin Wayland window streams using the KDE screencast protocol and PipeWire frame transport. |
 | `src/media/dock_media_playback_monitor.*` | Watches MPRIS services and reports whether a launcher is actively playing media, informing live-stream policy. |
 
@@ -408,7 +418,8 @@ icon while preserving desktop-neutral layout calculations.
 
 ```text
 DockItem hover -> PreviewManager -> DockPreviewWindow
-    -> thumbnail provider -> XComposite, KWin ScreenShot2, or GNOME service
+    -> thumbnail provider -> XComposite, KWin ScreenShot2, GNOME service,
+                             or Wayland toplevel image-copy capture
     -> stream provider    -> KDE screencast protocol -> PipeWire
     -> pixbuf frame       -> GTK preview card
 ```

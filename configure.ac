@@ -73,7 +73,7 @@ AC_PATH_PROG(
     [no])
 AS_IF(
     [test "x$WAYLAND_SCANNER" = "xno"],
-    [AC_MSG_ERROR([wayland-scanner is required to build KWin live previews])])
+    [AC_MSG_ERROR([wayland-scanner is required to build Wayland preview protocols])])
 
 ##CXXFLAGS="$CXXFLAGS -std=c++17"
 # current

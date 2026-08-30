@@ -129,6 +129,9 @@ assert_calls ""
 run_setup KDE wayland auto
 assert_calls plasma
 
+run_setup Hyprland wayland auto
+assert_calls ""
+
 run_setup XFCE x11 auto
 assert_calls ""
 

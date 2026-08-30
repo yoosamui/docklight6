@@ -7,8 +7,8 @@
 // dock_window_thumbnail_provider.h
 //
 // Purpose:
-// Declares asynchronous static window capture through native X11, KWin's
-// screenshot interface, or Docklight's GNOME Shell integration.
+// Declares asynchronous static window capture through native X11, KWin,
+// GNOME Shell, or Hyprland's standard Wayland image-copy protocols.
 //
 // Responsibilities:
 // - Request a thumbnail for a managed window.
@@ -61,6 +61,7 @@ public:
         GDBusConnection *connection = nullptr;
         bool x11 = false;
         bool gnome_shell_capture = false;
+        bool hyprland_capture = false;
     };
 
     using Callback = std::function<

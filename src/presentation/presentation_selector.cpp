@@ -12,7 +12,8 @@
 //
 // Important implementation decisions:
 // - Command-line selection takes precedence over configuration.
-// - Automatic mode prefers XWayland only for GNOME Wayland when available.
+// - Automatic mode prefers XWayland for GNOME and Hyprland Wayland when
+//   available.
 // - XWayland requires both a Wayland session and an X display.
 // - Presentation policy remains orthogonal to window-integration selection.
 // - Child application launches have Docklight-only overrides removed.
@@ -134,7 +135,7 @@ bool presentation_mode_available(
            !environment_value("DISPLAY").empty();
 }
 
-bool is_gnome_wayland_session()
+bool prefers_xwayland_automatically()
 {
     const auto session_type = normalized(
         environment_value("XDG_SESSION_TYPE"));
@@ -152,13 +153,15 @@ bool is_gnome_wayland_session()
     desktop = normalized(desktop);
 
     return wayland &&
-           desktop.find("gnome") !=
-               std::string::npos;
+           (desktop.find("gnome") !=
+                std::string::npos ||
+            desktop.find("hyprland") !=
+                std::string::npos);
 }
 
 PresentationMode resolve_automatic_mode()
 {
-    return is_gnome_wayland_session() &&
+    return prefers_xwayland_automatically() &&
                    presentation_mode_available(
                        PresentationMode::xwayland)
                ? PresentationMode::xwayland

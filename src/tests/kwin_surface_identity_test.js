@@ -219,7 +219,7 @@ for (const [relativePath, constant] of [
     ["dialogs/dock_settings_dialog.cpp", "ICON_CHOOSER_ROLE"],
     ["dialogs/dock_about_dialog.cpp", "ABOUT_ROLE"],
     ["main.cpp", "COMPOSITOR_WARNING_ROLE"],
-    ["dock/backends/plasma_wayland_dock_surface_backend.cpp",
+    ["dock/backends/layer_shell_dock_surface_backend.cpp",
         "DOCK_NAMESPACE"],
     ["autohide/dock_reveal_window.cpp", "REVEAL_NAMESPACE"],
     ["dock/dock_tooltip_window.cpp", "TOOLTIP_NAMESPACE"],

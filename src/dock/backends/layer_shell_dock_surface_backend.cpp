@@ -4,15 +4,15 @@
 // ------------------------------------------------------------
 //
 // File:
-// plasma_wayland_dock_surface_backend.cpp
+// layer_shell_dock_surface_backend.cpp
 //
 // Implementation overview:
 // Owns gtk-layer-shell setup, placement, monitor selection, and exclusive
-// zone handling for the main dock surface on native Plasma Wayland.
+// zone handling for the main dock surface on native Wayland compositors.
 //
 // ------------------------------------------------------------
 
-#include "plasma_wayland_dock_surface_backend.h"
+#include "layer_shell_dock_surface_backend.h"
 #include "presentation/docklight_surface_identity.h"
 
 #include "dock/dock_window.h"
@@ -84,16 +84,15 @@ create_dock_surface_backend(
     const Glib::RefPtr<Gdk::Monitor> &monitor)
 {
     auto *display = gdk_display_get_default();
-    const bool plasma_wayland_surface =
+    const bool native_layer_surface =
         display &&
         GDK_IS_WAYLAND_DISPLAY(display) &&
-        is_kde_wayland_session() &&
         gtk_layer_is_supported();
 
-    if (plasma_wayland_surface)
+    if (native_layer_surface)
     {
         return std::make_unique<
-            PlasmaWaylandDockSurfaceBackend>(
+            LayerShellDockSurfaceBackend>(
                 window,
                 monitor);
     }
@@ -104,13 +103,15 @@ create_dock_surface_backend(
             monitor);
 }
 
-PlasmaWaylandDockSurfaceBackend::
-    PlasmaWaylandDockSurfaceBackend(
+LayerShellDockSurfaceBackend::
+    LayerShellDockSurfaceBackend(
         DockWindow &window,
         const Glib::RefPtr<Gdk::Monitor>
             &monitor)
     : m_window(window),
-      m_monitor(monitor)
+      m_monitor(monitor),
+      m_plasma_session(
+          is_kde_wayland_session())
 {
     auto *gtk_window =
         GTK_WINDOW(m_window.gobj());
@@ -129,7 +130,7 @@ PlasmaWaylandDockSurfaceBackend::
     set_monitor(monitor);
 }
 
-void PlasmaWaylandDockSurfaceBackend::set_monitor(
+void LayerShellDockSurfaceBackend::set_monitor(
     const Glib::RefPtr<Gdk::Monitor>
         &monitor)
 {
@@ -143,7 +144,7 @@ void PlasmaWaylandDockSurfaceBackend::set_monitor(
 }
 
 MonitorGeometry
-PlasmaWaylandDockSurfaceBackend::
+LayerShellDockSurfaceBackend::
     output_geometry() const
 {
     DockLayoutGeometry geometry;
@@ -151,21 +152,21 @@ PlasmaWaylandDockSurfaceBackend::
 }
 
 MonitorGeometry
-PlasmaWaylandDockSurfaceBackend::work_area() const
+LayerShellDockSurfaceBackend::work_area() const
 {
     DockLayoutGeometry geometry;
     return geometry.monitor_geometry(m_monitor);
 }
 
 MonitorGeometry
-PlasmaWaylandDockSurfaceBackend::effective_work_area(
+LayerShellDockSurfaceBackend::effective_work_area(
     const MonitorGeometry &,
     const MonitorGeometry &work_area)
 {
     return work_area;
 }
 
-void PlasmaWaylandDockSurfaceBackend::
+void LayerShellDockSurfaceBackend::
     apply_dock_placement(
         const DockPlacement &placement,
     const MonitorGeometry &,
@@ -219,7 +220,7 @@ void PlasmaWaylandDockSurfaceBackend::
     reserve_space(placement);
 }
 
-void PlasmaWaylandDockSurfaceBackend::reserve_space(
+void LayerShellDockSurfaceBackend::reserve_space(
     const DockPlacement &placement)
 {
     auto *gtk_window =
@@ -238,7 +239,7 @@ void PlasmaWaylandDockSurfaceBackend::reserve_space(
     }
 }
 
-void PlasmaWaylandDockSurfaceBackend::
+void LayerShellDockSurfaceBackend::
     clear_reserved_space()
 {
     gtk_layer_set_exclusive_zone(
@@ -246,61 +247,68 @@ void PlasmaWaylandDockSurfaceBackend::
         0);
 }
 
-bool PlasmaWaylandDockSurfaceBackend::
+bool LayerShellDockSurfaceBackend::
     uses_native_placement() const
 {
     return true;
 }
 
-bool PlasmaWaylandDockSurfaceBackend::
+bool LayerShellDockSurfaceBackend::
     is_native_x11() const
 {
     return false;
 }
 
-bool PlasmaWaylandDockSurfaceBackend::
+bool LayerShellDockSurfaceBackend::
     is_ordinary_wayland() const
 {
     return false;
 }
 
 DockAutohideEffect
-PlasmaWaylandDockSurfaceBackend::
+LayerShellDockSurfaceBackend::
     default_autohide_effect() const
 {
-    return DockAutohideEffect::plasma;
+    return m_plasma_session
+               ? DockAutohideEffect::plasma
+               : DockAutohideEffect::slide;
 }
 
 std::vector<DockAutohideEffect>
-PlasmaWaylandDockSurfaceBackend::
+LayerShellDockSurfaceBackend::
     configurable_autohide_effects() const
 {
-    return {
-        DockAutohideEffect::plasma,
-        DockAutohideEffect::slide};
+    if (m_plasma_session)
+    {
+        return {
+            DockAutohideEffect::plasma,
+            DockAutohideEffect::slide};
+    }
+
+    return {DockAutohideEffect::slide};
 }
 
-bool PlasmaWaylandDockSurfaceBackend::
+bool LayerShellDockSurfaceBackend::
     delegates_autohide_effect(
         DockAutohideEffect) const
 {
     return false;
 }
 
-double PlasmaWaylandDockSurfaceBackend::
+double LayerShellDockSurfaceBackend::
     autohide_fade_opacity() const
 {
     return m_window.get_opacity();
 }
 
-void PlasmaWaylandDockSurfaceBackend::
+void LayerShellDockSurfaceBackend::
     set_autohide_fade_opacity(
         double opacity)
 {
     m_window.set_opacity(opacity);
 }
 
-void PlasmaWaylandDockSurfaceBackend::
+void LayerShellDockSurfaceBackend::
     finish_autohide_fade(
         bool hidden)
 {
@@ -308,19 +316,19 @@ void PlasmaWaylandDockSurfaceBackend::
         m_window.hide();
 }
 
-bool PlasmaWaylandDockSurfaceBackend::
+bool LayerShellDockSurfaceBackend::
     supports_autohide_slide() const
 {
     return true;
 }
 
-double PlasmaWaylandDockSurfaceBackend::
+double LayerShellDockSurfaceBackend::
     autohide_slide_progress() const
 {
     return m_autohide_slide_progress;
 }
 
-void PlasmaWaylandDockSurfaceBackend::
+void LayerShellDockSurfaceBackend::
     set_autohide_slide_progress(
         const DockPlacement &placement,
         double progress)
@@ -354,7 +362,7 @@ void PlasmaWaylandDockSurfaceBackend::
     m_window.set_opacity(1.0);
 }
 
-void PlasmaWaylandDockSurfaceBackend::
+void LayerShellDockSurfaceBackend::
     finish_autohide_slide(
         bool)
 {
@@ -363,13 +371,13 @@ void PlasmaWaylandDockSurfaceBackend::
     // its contents, producing the visible deviation this effect must avoid.
 }
 
-bool PlasmaWaylandDockSurfaceBackend::
+bool LayerShellDockSurfaceBackend::
     initial_placement_pending() const
 {
     return false;
 }
 
-void PlasmaWaylandDockSurfaceBackend::
+void LayerShellDockSurfaceBackend::
     complete_initial_placement()
 {
 }

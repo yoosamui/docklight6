@@ -252,10 +252,12 @@ Available commands:
 
 ```sh
 ./setup_backend.sh gnome
+./setup_backend.sh hyprland
 ./setup_backend.sh plasma
 ./setup_backend.sh x11
 ./setup_backend.sh status
 ./setup_backend.sh status gnome
+./setup_backend.sh status hyprland
 ./setup_backend.sh status plasma
 ./setup_backend.sh status x11
 ```
@@ -388,6 +390,42 @@ qdbus6 org.kde.KWin /Effects \
     org.kde.kwin.Effects.loadEffect screenedge
 ```
 
+### Hyprland Wayland
+
+Hyprland support is built in and requires no compositor plugin or companion
+package:
+
+```sh
+./setup_backend.sh hyprland
+```
+
+DockLight uses Hyprland's JSON IPC and event socket to discover application
+windows and keep their stable identities, titles, workspaces, geometry, and
+focus order current. Clicking an existing application switches to and focuses
+its window, including across workspaces. Close and maximize are supported on
+current Hyprland releases. Traditional minimize is intentionally unavailable
+because it does not match Hyprland's tiling and workspace model.
+
+The default `auto` presentation uses XWayland for DockLight's GTK surfaces on
+Hyprland while keeping `HyprlandWindowBackend` and its native compositor IPC.
+This avoids a native GTK 3 drag-icon hotspot shift confirmed during
+real-session testing. Explicit `native` presentation uses layer shell for edge
+placement and remains available for diagnostics.
+
+When autohide is disabled, the default XWayland presentation starts the
+installed `docklight6-hyprland-reservation` helper. Its invisible native
+layer-shell surface supplies Hyprland's exclusive zone while the visible dock
+continues using XWayland. DockLight compensates for the configured
+`general:gaps_out` value at the dock edge, so tiled windows retain no extra gap
+to the dock. The helper follows the DockLight process lifetime and requires no
+manual setup.
+
+On Hyprland 0.54 and newer, preview cards capture individual windows through
+the standard Wayland foreign-toplevel and image-copy protocols. Capture is
+requested only when a preview is opened; it does not require PipeWire, a portal
+prompt, or an external screenshot program. Older Hyprland releases fall back
+to application icons when those compositor protocols are unavailable.
+
 ### X11
 
 ```sh
@@ -409,9 +447,10 @@ the window-integration backend:
 ```
 
 `auto` is the default and recommended mode. It selects XWayland on GNOME
-Wayland when an XWayland display is available, and selects native presentation
-on Plasma Wayland, X11, and other sessions. `native` and `xwayland` remain
-explicit overrides for testing or compatibility.
+Wayland and Hyprland when an XWayland display is available, and selects native
+presentation on Plasma Wayland, X11, and other sessions. Hyprland currently
+uses XWayland to avoid a native GTK 3 drag-icon hotspot shift. `native` and
+`xwayland` remain explicit overrides for testing or compatibility.
 
 The per-user choice is stored as `mode=auto`, `mode=native`, or
 `mode=xwayland` in

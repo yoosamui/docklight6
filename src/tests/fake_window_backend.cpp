@@ -46,7 +46,8 @@ FakeWindowBackend::capabilities() const
     capabilities.can_activate = true;
     capabilities.can_raise = true;
     capabilities.can_close = true;
-    capabilities.can_minimize = true;
+    capabilities.can_minimize =
+        m_minimize_supported;
     capabilities.can_maximize = true;
     capabilities.provides_stacking_order =
         true;
@@ -383,6 +384,12 @@ void FakeWindowBackend::
 
     m_dock_surface_geometry = geometry;
     notify_dock_surface_geometry_changed();
+}
+
+void FakeWindowBackend::set_minimize_supported(
+    bool supported)
+{
+    m_minimize_supported = supported;
 }
 
 ManagedWindow *

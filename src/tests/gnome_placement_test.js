@@ -54,7 +54,7 @@ const legacySurfaceBackendPath = path.resolve(
     "../dock/backends/legacy_dock_surface_backend.cpp");
 const plasmaSurfaceBackendPath = path.resolve(
     __dirname,
-    "../dock/backends/plasma_wayland_dock_surface_backend.cpp");
+    "../dock/backends/layer_shell_dock_surface_backend.cpp");
 const dockLayoutTypesPath = path.resolve(
     __dirname,
     "../layout/dock_layout_types.h");
@@ -141,7 +141,7 @@ const dockWindowSource = [
 ].map(sourcePath => fs.readFileSync(sourcePath, "utf8")).join("\n");
 const legacySurfaceBackendSource = fs.readFileSync(
     legacySurfaceBackendPath, "utf8");
-const plasmaSurfaceBackendSource = fs.readFileSync(
+const layerShellSurfaceBackendSource = fs.readFileSync(
     plasmaSurfaceBackendPath, "utf8");
 const dockLayoutTypesSource = fs.readFileSync(
     dockLayoutTypesPath, "utf8");
@@ -498,20 +498,20 @@ assert.match(
     /if \(!m_window\.surface_uses_native_placement\(\)\)[\s\S]*?apply_workarea_insets/,
     "layer-shell placement must not count compositor work-area insets twice");
 assert.match(
-    plasmaSurfaceBackendSource,
-    /GDK_IS_WAYLAND_DISPLAY[\s\S]*?is_kde_wayland_session\(\)[\s\S]*?gtk_layer_is_supported\(\)[\s\S]*?PlasmaWaylandDockSurfaceBackend/,
-    "the Plasma surface backend requires an actual native Wayland display and layer-shell support");
+    layerShellSurfaceBackendSource,
+    /GDK_IS_WAYLAND_DISPLAY[\s\S]*?gtk_layer_is_supported\(\)[\s\S]*?LayerShellDockSurfaceBackend/,
+    "the native layer-shell surface backend requires an actual Wayland display and layer-shell support");
 assert.match(
-    plasmaSurfaceBackendSource,
+    layerShellSurfaceBackendSource,
     /return std::make_unique<[\s\S]*?LegacyDockSurfaceBackend/,
-    "X11 and ordinary Wayland must remain on the legacy surface backend");
+    "X11 and Wayland compositors without layer shell must remain on the legacy surface backend");
 assert.doesNotMatch(
     dockWindowSource,
     /gtk_layer_(?:init_for_window|set_monitor|set_anchor|set_margin|set_exclusive_zone|auto_exclusive_zone_enable)/,
-    "DockWindow must delegate native Plasma layer-surface operations");
+    "DockWindow must delegate native layer-surface operations");
 assert.doesNotMatch(
     dockWindowSource,
-    /(?:PlasmaWayland|Legacy)DockSurfaceBackend|GDK_IS_WAYLAND_DISPLAY|XDG_CURRENT_DESKTOP/,
+    /(?:LayerShell|Legacy)DockSurfaceBackend|GDK_IS_WAYLAND_DISPLAY|XDG_CURRENT_DESKTOP/,
     "DockWindow must not select or identify platform surface implementations");
 assert.doesNotMatch(
     dockWindowControllerSource,
@@ -520,7 +520,7 @@ assert.doesNotMatch(
 assert.doesNotMatch(
     legacySurfaceBackendSource,
     /gtk_layer_/,
-    "the legacy X11 and ordinary-Wayland backend must not apply Plasma layer-surface operations");
+    "the legacy X11 and ordinary-Wayland backend must not apply layer-surface operations");
 for (const operation of [
     "gtk_layer_init_for_window",
     "gtk_layer_set_monitor",
@@ -530,8 +530,8 @@ for (const operation of [
     "gtk_layer_auto_exclusive_zone_enable"
 ]) {
     assert.ok(
-        plasmaSurfaceBackendSource.includes(operation),
-        `the Plasma surface backend must own ${operation}`);
+        layerShellSurfaceBackendSource.includes(operation),
+        `the native layer-shell surface backend must own ${operation}`);
 }
 assert.match(
     legacySurfaceBackendSource,
@@ -737,19 +737,19 @@ assert.match(
     /enum class DockAutohideEffect[\s\S]*?plasma[\s\S]*?gnome[\s\S]*?slide[\s\S]*?fade[\s\S]*?scale[\s\S]*?slide_fade/,
     "autohide effect selection must use one desktop-neutral common type");
 assert.match(
-    plasmaSurfaceBackendSource,
+    layerShellSurfaceBackendSource,
     /default_autohide_effect\(\) const[\s\S]*?DockAutohideEffect::plasma/,
     "Plasma Wayland must retain its current surface effect");
 assert.match(
-    plasmaSurfaceBackendSource,
+    layerShellSurfaceBackendSource,
     /configurable_autohide_effects\(\) const[\s\S]*?DockAutohideEffect::plasma[\s\S]*?DockAutohideEffect::slide/,
     "Plasma Wayland settings must retain Plasma and add movement-only Slide as a separate choice");
 assert.match(
-    plasmaSurfaceBackendSource,
+    layerShellSurfaceBackendSource,
     /supports_autohide_slide\(\) const[\s\S]*?return true;[\s\S]*?set_autohide_slide_progress\([\s\S]*?autohide_slide_content_offset\([\s\S]*?set_surface_horizontal_offset\([\s\S]*?set_surface_vertical_offset\([\s\S]*?set_opacity\(1\.0\)/,
     "Plasma Wayland must own movement-only slide drawing on both axes without fading");
 assert.match(
-    plasmaSurfaceBackendSource,
+    layerShellSurfaceBackendSource,
     /finish_autohide_slide\(\s*bool\)\s*\{[\s\S]*?fully clipped layer surface mapped[\s\S]*?\}/,
     "Plasma Wayland Slide must remain mapped while hidden so KWin cannot add a conflicting reveal transform");
 assert.match(
@@ -829,7 +829,7 @@ assert.match(
     /is_gnome_shell_x11_session\(\)[\s\S]*?m_native_x11[\s\S]*?DockAutohideEffect::gnome[\s\S]*?DockAutohideEffect::plasma/,
     "GNOME Shell X11 must delegate persisted Plasma choices instead of silently bypassing its healthy extension");
 assert.match(
-    plasmaSurfaceBackendSource,
+    layerShellSurfaceBackendSource,
     /set_autohide_fade_opacity\([\s\S]*?m_window\.set_opacity\(opacity\)[\s\S]*?finish_autohide_fade\([\s\S]*?m_window\.hide\(\)/,
     "Plasma fade must use layer-surface opacity before its existing unmapped hidden state");
 assert.match(

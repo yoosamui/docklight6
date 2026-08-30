@@ -35,6 +35,9 @@ EXTRA_DIST = \
     plasma/geometry-bridge/package/metadata.json \
     plasma/geometry-bridge/package/contents/ui/main.qml \
     plasma/geometry-bridge/package/contents/ui/bridge/qmldir \
+    protocols/ext-foreign-toplevel-list-v1.xml \
+    protocols/ext-image-capture-source-v1.xml \
+    protocols/ext-image-copy-capture-v1.xml \
     protocols/zkde-screencast-unstable-v1.xml
 
 TESTS = \

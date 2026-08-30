@@ -66,6 +66,15 @@ plasma_status="$(env \
     "${SOURCE_DIRECTORY}/setup_presentation.sh" status)"
 grep -Fq 'Resolved mode: native' <<<"${plasma_status}"
 
+hyprland_status="$(env \
+    XDG_CONFIG_HOME="${TEST_DIRECTORY}/config" \
+    XDG_SESSION_TYPE=wayland \
+    WAYLAND_DISPLAY=wayland-test \
+    DISPLAY=:99 \
+    XDG_CURRENT_DESKTOP=Hyprland \
+    "${SOURCE_DIRECTORY}/setup_presentation.sh" status)"
+grep -Fq 'Resolved mode: xwayland' <<<"${hyprland_status}"
+
 mkdir -p "${TEST_DIRECTORY}/invalid/docklight6"
 printf 'mode=invalid\n' > \
     "${TEST_DIRECTORY}/invalid/docklight6/presentation.conf"

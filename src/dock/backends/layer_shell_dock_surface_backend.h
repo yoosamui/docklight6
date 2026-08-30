@@ -4,11 +4,11 @@
 // ------------------------------------------------------------
 //
 // File:
-// plasma_wayland_dock_surface_backend.h
+// layer_shell_dock_surface_backend.h
 //
 // Purpose:
-// Applies native Plasma Wayland placement and reservation policy to the
-// main DockWindow layer surface.
+// Applies native Wayland layer-shell placement and reservation policy to the
+// main DockWindow. Plasma additionally exposes its compositor-style effect.
 //
 // ------------------------------------------------------------
 
@@ -18,11 +18,11 @@
 
 class DockWindow;
 
-class PlasmaWaylandDockSurfaceBackend final
+class LayerShellDockSurfaceBackend final
     : public IDockSurfaceBackend
 {
 public:
-    PlasmaWaylandDockSurfaceBackend(
+    LayerShellDockSurfaceBackend(
         DockWindow &window,
         const Glib::RefPtr<Gdk::Monitor>
             &monitor);
@@ -80,4 +80,5 @@ private:
     DockWindow &m_window;
     Glib::RefPtr<Gdk::Monitor> m_monitor;
     double m_autohide_slide_progress = 0.0;
+    bool m_plasma_session = false;
 };

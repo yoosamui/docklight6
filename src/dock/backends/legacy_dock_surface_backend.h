@@ -16,6 +16,10 @@
 
 #include "dock_surface_backend.h"
 
+#include <gio/gio.h>
+
+#include <string>
+
 class DockWindow;
 
 class LegacyDockSurfaceBackend final
@@ -26,6 +30,7 @@ public:
         DockWindow &window,
         const Glib::RefPtr<Gdk::Monitor>
             &monitor);
+    ~LegacyDockSurfaceBackend() override;
 
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor>
@@ -79,6 +84,12 @@ private:
         int y,
         int width,
         int height);
+    void apply_hyprland_reservation(
+        const DockPlacement &placement,
+        const MonitorGeometry &output,
+        int width,
+        int height);
+    void clear_hyprland_reservation();
 
 private:
     DockWindow &m_window;
@@ -89,4 +100,6 @@ private:
     bool m_has_x11_base_workarea = false;
     MonitorGeometry m_x11_base_workarea;
     MonitorGeometry m_x11_base_output;
+    GSubprocess *m_hyprland_reservation = nullptr;
+    std::string m_hyprland_reservation_key;
 };

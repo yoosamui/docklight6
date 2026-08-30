@@ -171,6 +171,31 @@ bool DockApplicationController::
         current_desktop_windows(
             *running_application);
 
+    // Tiling compositors such as Hyprland intentionally do not expose
+    // traditional minimize semantics. In that model a primary click is a
+    // cross-workspace focus action, and repeated clicks cycle the group.
+    if (!m_registry
+             ->capabilities()
+             .can_minimize)
+    {
+        if (running_application->active_window_id)
+        {
+            return cycle_window(
+                WindowCycleDirection::next);
+        }
+
+        auto target_windows = current_windows;
+        if (target_windows.empty())
+        {
+            target_windows =
+                most_recent_desktop_group(
+                    *running_application,
+                    false);
+        }
+
+        return activate_windows(target_windows);
+    }
+
     // Backend window-state notifications are asynchronous. A second click
     // can therefore arrive after hide was accepted but before the registry
     // reports the ordinary windows as minimized. Remember the transition we

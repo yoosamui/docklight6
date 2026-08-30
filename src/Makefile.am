@@ -1,4 +1,6 @@
-bin_PROGRAMS = docklight6
+bin_PROGRAMS = \
+    docklight6 \
+    docklight6-hyprland-reservation
 
 check_PROGRAMS = \
     dock_application_controller_test \
@@ -7,6 +9,8 @@ check_PROGRAMS = \
     dock_icon_renderer_test \
     dock_process_application_test \
     gnome_wayland_window_backend_test \
+    hyprland_reserved_area_test \
+    hyprland_window_backend_test \
     launcher_manager_test \
     presentation_selector_test \
     window_registry_test \
@@ -34,10 +38,34 @@ AM_CPPFLAGS = \
   -DSOURCE_DIR=\"$(abs_top_srcdir)/src\"
 
 BUILT_SOURCES = \
+    ext-foreign-toplevel-list-v1-client-protocol.h \
+    ext-foreign-toplevel-list-v1-protocol.c \
+    ext-image-capture-source-v1-client-protocol.h \
+    ext-image-capture-source-v1-protocol.c \
+    ext-image-copy-capture-v1-client-protocol.h \
+    ext-image-copy-capture-v1-protocol.c \
     zkde-screencast-unstable-v1-client-protocol.h \
     zkde-screencast-unstable-v1-protocol.c
 
 CLEANFILES = $(BUILT_SOURCES)
+
+ext-foreign-toplevel-list-v1-client-protocol.h: $(top_srcdir)/protocols/ext-foreign-toplevel-list-v1.xml
+	$(WAYLAND_SCANNER) client-header $< $@
+
+ext-foreign-toplevel-list-v1-protocol.c: $(top_srcdir)/protocols/ext-foreign-toplevel-list-v1.xml
+	$(WAYLAND_SCANNER) private-code $< $@
+
+ext-image-capture-source-v1-client-protocol.h: $(top_srcdir)/protocols/ext-image-capture-source-v1.xml
+	$(WAYLAND_SCANNER) client-header $< $@
+
+ext-image-capture-source-v1-protocol.c: $(top_srcdir)/protocols/ext-image-capture-source-v1.xml
+	$(WAYLAND_SCANNER) private-code $< $@
+
+ext-image-copy-capture-v1-client-protocol.h: $(top_srcdir)/protocols/ext-image-copy-capture-v1.xml
+	$(WAYLAND_SCANNER) client-header $< $@
+
+ext-image-copy-capture-v1-protocol.c: $(top_srcdir)/protocols/ext-image-copy-capture-v1.xml
+	$(WAYLAND_SCANNER) private-code $< $@
 
 zkde-screencast-unstable-v1-client-protocol.h: $(top_srcdir)/protocols/zkde-screencast-unstable-v1.xml
 	$(WAYLAND_SCANNER) client-header $< $@
@@ -46,6 +74,10 @@ zkde-screencast-unstable-v1-protocol.c: $(top_srcdir)/protocols/zkde-screencast-
 	$(WAYLAND_SCANNER) private-code $< $@
 
 preview/docklight6-dock_window_stream_provider.$(OBJEXT): zkde-screencast-unstable-v1-client-protocol.h
+preview/docklight6-hyprland_thumbnail_capture.$(OBJEXT): \
+    ext-foreign-toplevel-list-v1-client-protocol.h \
+    ext-image-capture-source-v1-client-protocol.h \
+    ext-image-copy-capture-v1-client-protocol.h
 
 docklight6_SOURCES = \
     main.cpp \
@@ -68,6 +100,10 @@ docklight6_SOURCES = \
     integrations/gnome/gnome_wayland_window_backend.cpp \
     integrations/gnome/gnome_x11_window_backend.h \
     integrations/gnome/gnome_x11_window_backend.cpp \
+    integrations/hyprland/hyprland_window_backend.h \
+    integrations/hyprland/hyprland_window_backend.cpp \
+    integrations/hyprland/hyprland_reserved_area.h \
+    integrations/hyprland/hyprland_reserved_area.cpp \
     integrations/x11/ewmh_window_backend.h \
     integrations/x11/ewmh_window_backend.cpp \
     integrations/x11/ewmh_fallback_window_backend.h \
@@ -114,6 +150,14 @@ docklight6_SOURCES = \
     media/dock_media_playback_monitor.cpp \
     preview/dock_window_thumbnail_provider.h \
     preview/dock_window_thumbnail_provider.cpp \
+    preview/hyprland_thumbnail_capture.h \
+    preview/hyprland_thumbnail_capture.cpp \
+    ext-foreign-toplevel-list-v1-client-protocol.h \
+    ext-foreign-toplevel-list-v1-protocol.c \
+    ext-image-capture-source-v1-client-protocol.h \
+    ext-image-capture-source-v1-protocol.c \
+    ext-image-copy-capture-v1-client-protocol.h \
+    ext-image-copy-capture-v1-protocol.c \
     preview/dock_window_stream_provider.h \
     preview/dock_window_stream_provider.cpp \
     zkde-screencast-unstable-v1-client-protocol.h \
@@ -129,8 +173,8 @@ docklight6_SOURCES = \
     autohide/dock_autohide_controller.h \
     autohide/dock_autohide_controller.cpp \
     dock/backends/dock_surface_backend.h \
-    dock/backends/plasma_wayland_dock_surface_backend.h \
-    dock/backends/plasma_wayland_dock_surface_backend.cpp \
+    dock/backends/layer_shell_dock_surface_backend.h \
+    dock/backends/layer_shell_dock_surface_backend.cpp \
     dock/backends/legacy_dock_surface_backend.h \
     dock/backends/legacy_dock_surface_backend.cpp \
     dock/dock_constants.h \
@@ -174,6 +218,22 @@ docklight6_SOURCES = \
     layout/dock_layout_metrics.cpp \
     layout/dock_layout_engine.h \
     layout/dock_layout_engine.cpp
+
+docklight6_hyprland_reservation_SOURCES = \
+    integrations/hyprland/hyprland_reserved_area_helper.cpp
+
+docklight6_hyprland_reservation_CPPFLAGS = \
+    $(GTKMM_CFLAGS) \
+    $(GTK_LAYER_SHELL_CFLAGS)
+
+docklight6_hyprland_reservation_LDADD = \
+    $(GTKMM_LIBS) \
+    $(GTK_LAYER_SHELL_LIBS)
+
+hyprland_reserved_area_test_SOURCES = \
+    tests/hyprland_reserved_area_test.cpp \
+    integrations/hyprland/hyprland_reserved_area.h \
+    integrations/hyprland/hyprland_reserved_area.cpp
 
 docklight6_CPPFLAGS = \
     $(AM_CPPFLAGS) \
@@ -336,6 +396,21 @@ gnome_wayland_window_backend_test_CPPFLAGS = \
 gnome_wayland_window_backend_test_LDADD = \
     $(GTKMM_LIBS)
 
+hyprland_window_backend_test_SOURCES = \
+    tests/hyprland_window_backend_test.cpp \
+    windowing/managed_window.h \
+    windowing/window_icon_geometry.h \
+    windowing/window_backend.h \
+    windowing/window_backend.cpp \
+    integrations/hyprland/hyprland_window_backend.h \
+    integrations/hyprland/hyprland_window_backend.cpp
+
+hyprland_window_backend_test_CPPFLAGS = \
+    $(GTKMM_CFLAGS)
+
+hyprland_window_backend_test_LDADD = \
+    $(GTKMM_LIBS)
+
 kwin_protocol_codec_test_SOURCES = \
     tests/kwin_protocol_codec_test.cpp \
     windowing/managed_window.h \
@@ -392,5 +467,6 @@ EXTRA_DIST = \
     tests/kwin_script_test.js \
     tests/kwin_surface_identity_test.js \
     tests/plasma_geometry_bridge_test.js \
+    tests/marco_restore_test.js \
     tests/openbox_group_minimize_test.js \
     tests/xfwm4_restore_test.js

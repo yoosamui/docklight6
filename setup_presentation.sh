@@ -11,11 +11,11 @@ usage()
 Usage: ./setup_presentation.sh <native|xwayland|auto|status>
 
 Select how Docklight's GTK windows are presented. This is independent from
-the GNOME, Plasma, or X11 window-integration backend.
+the GNOME, Hyprland, Plasma, or X11 window-integration backend.
 
   native     Use the desktop session's native GTK presentation
   xwayland   Use X11 dock windows through XWayland in a Wayland session
-  auto       Use XWayland on GNOME Wayland and native presentation elsewhere
+  auto       Use XWayland on GNOME/Hyprland Wayland; native elsewhere
   status     Report configuration and current-session availability
 
 The setting is stored per user and does not modify Docklight's desktop entry.
@@ -63,7 +63,8 @@ automatic_mode()
 
     if { [[ ${session} == wayland ]] ||
          { [[ -z ${session} ]] && [[ -n ${WAYLAND_DISPLAY:-} ]]; }; } &&
-       [[ ${desktop} == *gnome* ]] &&
+       { [[ ${desktop} == *gnome* ]] ||
+         [[ ${desktop} == *hyprland* ]]; } &&
        [[ -n ${DISPLAY:-} ]]
     then
         echo xwayland

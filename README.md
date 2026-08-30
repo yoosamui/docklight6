@@ -12,6 +12,35 @@ previews, multi-monitor placement, and configurable auto-hide behavior.
 
 **Current version:** `6.0.32`
 
+## Regression matrix
+
+The following supported session and presentation combinations must retain a
+working autohide reveal path. For an explicitly selected presentation that
+cannot provide a reliable reveal trigger, DockLight must keep autohide safely
+disabled instead of leaving the dock unreachable.
+
+| Desktop/session | Presentation setting | Expected presentation | Autohide reveal expectation |
+| --- | --- | --- | --- |
+| KDE Plasma Wayland | `auto` | Native Wayland/layer-shell | KWin screen-edge reveal must work |
+| KDE Plasma Wayland | `native` | Native Wayland/layer-shell | KWin screen-edge reveal must work |
+| KDE Plasma Wayland | `xwayland` | XWayland | Reveal must work, or autohide must remain safely disabled |
+| KDE Plasma X11 | `auto` | Native X11 | X11 edge trigger must reveal the dock |
+| XFCE X11 | `auto` | Native X11 | X11 edge trigger must reveal the dock |
+| MATE/Marco X11 | `auto` | Native X11 | X11 edge trigger must reveal the dock |
+| MATE/Metacity X11 | `auto` | Native X11 | X11 edge trigger must reveal the dock |
+| Cinnamon X11 | `auto` | Native X11 | X11 edge trigger must reveal the dock |
+| GNOME Shell X11 | `auto` | Native X11 | X11 edge trigger must work with and without the optional Shell animation bridge |
+| GNOME Wayland | `auto` | XWayland | GNOME Shell reveal must work |
+| GNOME Wayland | `native` | Native Wayland | GNOME Shell reveal must work |
+| GNOME Wayland | `xwayland` | XWayland | GNOME Shell reveal must work |
+| GNOME Flashback X11 | `auto` | Native X11 | X11 edge trigger must reveal the dock |
+| LXDE/Openbox X11 | `auto` | Native X11 | X11 edge trigger must reveal the dock |
+| LXQt/Openbox X11 | `auto` | Native X11 | X11 edge trigger must reveal the dock |
+| Other EWMH-compatible X11 desktops | `auto` | Native X11 | Generic X11 edge trigger must reveal the dock |
+| Hyprland Wayland | `auto` | XWayland | XWayland edge trigger must reveal the dock |
+| Hyprland Wayland | `xwayland` | XWayland | XWayland edge trigger must reveal the dock |
+| Hyprland Wayland | `native` | Native Wayland/layer-shell | Layer-shell edge trigger must reveal the dock; the known drag-icon limitation remains |
+
 ## Integration tests
 
 `PASS` means confirmed in a real desktop session. `PENDING` means the backend
@@ -70,8 +99,8 @@ available.
     <tr><td>Sway</td><td>Wayland</td><td>N/A</td><td>Sway / wlroots</td><td>None</td><td>NOT IMPLEMENTED</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> No supported Wayland integration backend.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
-    <tr><td>Hyprland</td><td>Wayland</td><td>N/A</td><td>Hyprland</td><td>None</td><td>NOT IMPLEMENTED</td></tr>
-    <tr><td colspan="6"><strong>Comments:</strong> No supported Wayland integration backend.</td></tr>
+    <tr><td>Hyprland</td><td>Wayland</td><td>Hyprland</td><td>Hyprland</td><td><code>HyprlandWindowBackend</code></td><td>PASS</td></tr>
+    <tr><td colspan="6"><strong>Comments:</strong> Real-session verification uses the default XWayland presentation with native Hyprland JSON IPC for stable window identity, cross-workspace focus, close, maximize, geometry, workspace state, standard Wayland image-copy previews, and compositor-native reserved space when autohide is disabled. Traditional minimize is intentionally unavailable. Explicit native GTK Wayland presentation remains available for testing, but currently has a drag-icon hotspot shift.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
     <tr><td>Wayfire</td><td>Wayland</td><td>N/A</td><td>Wayfire / wlroots</td><td>None</td><td>NOT IMPLEMENTED</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> No supported Wayland integration backend.</td></tr>
@@ -99,7 +128,13 @@ Important current-code details:
   to `false`, and displays a warning.
 - KWin on X11 selects `KWinX11WindowBackend`; unknown EWMH-compatible window
   managers select `EwmhFallbackWindowBackend`.
-- KDE Plasma/KWin and GNOME Shell are the enabled Wayland environments.
+- KDE Plasma/KWin, GNOME Shell, and Hyprland are the enabled Wayland
+  environments.
+- Automatic presentation uses XWayland on Hyprland while retaining
+  `HyprlandWindowBackend`. A small native layer-shell companion reserves the
+  work area when autohide is disabled because Hyprland does not consume the
+  visible XWayland dock's EWMH strut. Explicit native presentation remains
+  available for testing the full layer-shell path.
 - Other Wayland sessions exit window-integration startup without creating a
   backend.
 

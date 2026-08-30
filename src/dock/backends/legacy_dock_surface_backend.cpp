@@ -16,11 +16,14 @@
 
 #include "dock/dock_window.h"
 #include "integrations/desktop_session_identity.h"
+#include "integrations/hyprland/hyprland_reserved_area.h"
 #include "layout/dock_layout_geometry.h"
 
 #include <gdk/gdkwayland.h>
 #include <gdk/gdkx.h>
 #include <X11/Xatom.h>
+
+#include <glib/gstdio.h>
 
 #include <algorithm>
 #include <cctype>
@@ -141,6 +144,72 @@ bool is_cinnamon_x11_session()
                 "cinnamon"));
 }
 
+std::string sibling_executable(
+    const std::string &name)
+{
+    char path[4096] = {};
+    const auto length = readlink(
+        "/proc/self/exe",
+        path,
+        sizeof(path) - 1);
+    if (length > 0)
+    {
+        path[length] = '\0';
+        const std::string executable(path);
+        const auto separator = executable.find_last_of('/');
+        if (separator != std::string::npos)
+        {
+            return executable.substr(0, separator + 1) + name;
+        }
+    }
+
+    auto *found = g_find_program_in_path(name.c_str());
+    if (!found)
+        return {};
+    std::string result(found);
+    g_free(found);
+    return result;
+}
+
+int hyprland_outer_gap(
+    const std::string &edge)
+{
+    char *standard_output = nullptr;
+    int status = 0;
+    GError *error = nullptr;
+    char *arguments[] = {
+        const_cast<char *>("hyprctl"),
+        const_cast<char *>("getoption"),
+        const_cast<char *>("general:gaps_out"),
+        const_cast<char *>("-j"),
+        nullptr};
+    const bool spawned = g_spawn_sync(
+        nullptr,
+        arguments,
+        nullptr,
+        G_SPAWN_SEARCH_PATH,
+        nullptr,
+        nullptr,
+        &standard_output,
+        nullptr,
+        &status,
+        &error);
+    if (!spawned ||
+        !g_spawn_check_wait_status(status, nullptr) ||
+        !standard_output)
+    {
+        g_clear_error(&error);
+        g_free(standard_output);
+        return 0;
+    }
+
+    const std::string json(standard_output);
+    g_free(standard_output);
+    g_clear_error(&error);
+
+    return hyprland_outer_gap_from_option_json(json, edge);
+}
+
 }
 
 LegacyDockSurfaceBackend::
@@ -177,6 +246,11 @@ LegacyDockSurfaceBackend::
         m_initial_placement_pending = true;
         m_window.set_opacity(0.0);
     }
+}
+
+LegacyDockSurfaceBackend::~LegacyDockSurfaceBackend()
+{
+    clear_hyprland_reservation();
 }
 
 void LegacyDockSurfaceBackend::set_monitor(
@@ -290,6 +364,11 @@ void LegacyDockSurfaceBackend::
         y,
         width,
         height);
+    apply_hyprland_reservation(
+        placement,
+        output,
+        width,
+        height);
 }
 
 void LegacyDockSurfaceBackend::reserve_space(
@@ -302,6 +381,7 @@ void LegacyDockSurfaceBackend::reserve_space(
 
 void LegacyDockSurfaceBackend::clear_reserved_space()
 {
+    clear_hyprland_reservation();
     m_has_x11_base_workarea = false;
 
     if (!m_window.get_realized())
@@ -337,6 +417,122 @@ void LegacyDockSurfaceBackend::clear_reserved_space()
             "_NET_WM_STRUT_PARTIAL",
             False));
     XFlush(xdisplay);
+}
+
+void LegacyDockSurfaceBackend::apply_hyprland_reservation(
+    const DockPlacement &placement,
+    const MonitorGeometry &output,
+    int width,
+    int height)
+{
+    if (!m_native_x11 ||
+        !DesktopSessionIdentity::is_hyprland_wayland_session() ||
+        placement.exclusive_zone >= 0)
+    {
+        clear_hyprland_reservation();
+        return;
+    }
+
+    std::string edge;
+    int size = 0;
+    if (placement.is_horizontal() && placement.anchor_top)
+    {
+        edge = "top";
+        size = height + placement.margin_top;
+    }
+    else if (placement.is_horizontal() && placement.anchor_bottom)
+    {
+        edge = "bottom";
+        size = height + placement.margin_bottom;
+    }
+    else if (placement.is_vertical() && placement.anchor_left)
+    {
+        edge = "left";
+        size = width + placement.margin_left;
+    }
+    else if (placement.is_vertical() && placement.anchor_right)
+    {
+        edge = "right";
+        size = width + placement.margin_right;
+    }
+
+    if (edge.empty() || size <= 0)
+    {
+        clear_hyprland_reservation();
+        return;
+    }
+
+    const int outer_gap = hyprland_outer_gap(edge);
+    const int dock_reservation = size;
+    size = hyprland_reservation_size(size, outer_gap);
+
+    const std::string geometry =
+        std::to_string(output.x) + "," +
+        std::to_string(output.y) + "," +
+        std::to_string(output.width) + "," +
+        std::to_string(output.height);
+    const std::string key = geometry + ":" + edge + ":" +
+        std::to_string(size);
+    if (m_hyprland_reservation &&
+        key == m_hyprland_reservation_key)
+    {
+        return;
+    }
+
+    clear_hyprland_reservation();
+    const auto helper = sibling_executable(
+        "docklight6-hyprland-reservation");
+    if (helper.empty() ||
+        !g_file_test(
+            helper.c_str(),
+            G_FILE_TEST_IS_EXECUTABLE))
+    {
+        g_warning("Cannot find the Hyprland reservation helper");
+        return;
+    }
+
+    const auto size_argument = std::to_string(size);
+    GError *error = nullptr;
+    m_hyprland_reservation = g_subprocess_new(
+        G_SUBPROCESS_FLAGS_NONE,
+        &error,
+        helper.c_str(),
+        "--geometry",
+        geometry.c_str(),
+        "--edge",
+        edge.c_str(),
+        "--size",
+        size_argument.c_str(),
+        nullptr);
+    if (!m_hyprland_reservation)
+    {
+        g_warning(
+            "Cannot start the Hyprland reservation helper: %s",
+            error ? error->message : "unknown error");
+        g_clear_error(&error);
+        return;
+    }
+
+    m_hyprland_reservation_key = key;
+    g_message(
+        "Hyprland reserved area: %s %d on output %s "
+        "(dock %d, outer gap %d)",
+        edge.c_str(),
+        size,
+        geometry.c_str(),
+        dock_reservation,
+        outer_gap);
+}
+
+void LegacyDockSurfaceBackend::clear_hyprland_reservation()
+{
+    if (!m_hyprland_reservation)
+        return;
+
+    g_subprocess_force_exit(m_hyprland_reservation);
+    g_object_unref(m_hyprland_reservation);
+    m_hyprland_reservation = nullptr;
+    m_hyprland_reservation_key.clear();
 }
 
 bool LegacyDockSurfaceBackend::

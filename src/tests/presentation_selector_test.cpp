@@ -191,6 +191,13 @@ void verifies_automatic_desktop_selection()
     assert(selection.mode ==
            PresentationMode::native);
 
+    g_setenv("XDG_CURRENT_DESKTOP", "Hyprland", true);
+    selection = select_presentation(
+        std::nullopt,
+        path);
+    assert(selection.mode ==
+           PresentationMode::xwayland);
+
     g_setenv("XDG_CURRENT_DESKTOP", "GNOME", true);
     g_unsetenv("DISPLAY");
     selection = select_presentation(

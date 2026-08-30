@@ -19,6 +19,7 @@
 // ------------------------------------------------------------
 
 #include "dock_window_thumbnail_provider.h"
+#include "hyprland_thumbnail_capture.h"
 #include "integrations/desktop_session_identity.h"
 
 #include <gdk/gdk.h>
@@ -905,6 +906,20 @@ void capture(
         return;
     }
 
+    if (active_state->hyprland_capture)
+    {
+        const auto captured =
+            capture_hyprland_toplevel(completion->window_id);
+        if (captured)
+        {
+            completion->source_width = captured->width;
+            completion->source_height = captured->height;
+            completion->rgba = captured->rgba;
+        }
+        schedule_delivery(std::move(completion));
+        return;
+    }
+
     if (active_state->x11 &&
         is_x11_window_id(completion->window_id))
     {
@@ -1156,6 +1171,11 @@ DockWindowThumbnailProvider::
         DesktopSessionIdentity::
             identifies_gnome_shell(
                 normalized_desktop);
+    m_state->hyprland_capture =
+        wayland_session &&
+        DesktopSessionIdentity::
+            identifies_hyprland(
+                normalized_desktop);
 
     // ScreenShot2 is a KWin-only API. On other Wayland compositors, avoid
     // connecting unless their own capture transport is active.
@@ -1164,6 +1184,7 @@ DockWindowThumbnailProvider::
         (normalized_desktop.find("kde") != std::string::npos ||
          normalized_desktop.find("plasma") != std::string::npos);
     if (!m_state->gnome_shell_capture &&
+        !m_state->hyprland_capture &&
         !kwin_wayland)
         return;
 

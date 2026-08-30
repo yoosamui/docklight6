@@ -26,6 +26,7 @@
 #include "integrations/desktop_session_identity.h"
 #include "integrations/gnome/gnome_wayland_window_backend.h"
 #include "integrations/gnome/gnome_x11_window_backend.h"
+#include "integrations/hyprland/hyprland_window_backend.h"
 #include "integrations/kwin/kwin_integration_service.h"
 #include "integrations/kwin/kwin_script_manager.h"
 #include "integrations/kwin/kwin_window_backend.h"
@@ -326,17 +327,34 @@ void WindowSystemController::start()
     const bool gnome_shell_x11 =
         x11 && DesktopSessionIdentity::
             is_gnome_shell_x11_session();
+    const bool hyprland_wayland =
+        DesktopSessionIdentity::
+            is_hyprland_wayland_session();
     const bool uses_shell_protocol =
         kde_wayland || gnome_wayland;
 
-    if (!uses_shell_protocol && !x11)
+    if (!uses_shell_protocol &&
+        !hyprland_wayland &&
+        !x11)
     {
         g_message(
             "Window integration is not enabled for this desktop session");
         return;
     }
 
-    if (gnome_wayland)
+    if (hyprland_wayland)
+    {
+        m_details.backend = "Hyprland";
+        m_details.window_manager = "Hyprland";
+        m_details.compositor = "Hyprland";
+        m_backend =
+            std::make_unique<
+                HyprlandWindowBackend>();
+
+        DocklightLog::startup(
+            "selected backend: Hyprland");
+    }
+    else if (gnome_wayland)
     {
         m_details.backend = "GNOME Shell";
         m_backend =
@@ -471,6 +489,21 @@ void WindowSystemController::start()
         {
             g_warning(
                 "No EWMH-compatible X11 window manager was detected");
+        }
+        return;
+    }
+
+    if (hyprland_wayland)
+    {
+        if (m_registry->connected())
+        {
+            g_message(
+                "Hyprland window integration is ready");
+        }
+        else
+        {
+            g_warning(
+                "Hyprland window integration could not connect");
         }
         return;
     }

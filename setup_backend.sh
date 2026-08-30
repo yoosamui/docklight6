@@ -10,14 +10,15 @@ readonly SCRIPT_DIRECTORY="$(
 usage()
 {
     cat <<'EOF'
-Usage: ./setup_backend.sh <auto|gnome|plasma|x11> [OPTIONS]
-       ./setup_backend.sh status [all|gnome|plasma|x11]
+Usage: ./setup_backend.sh <auto|gnome|hyprland|plasma|x11> [OPTIONS]
+       ./setup_backend.sh status [all|gnome|hyprland|plasma|x11]
 
 Configure Docklight integration for one desktop backend.
 
 Backends:
   auto      Detect the current desktop session
   gnome     Install and enable the GNOME Shell extension
+  hyprland  Use the built-in Hyprland IPC integration
   plasma    Install and enable the KWin Wayland integration
   x11       No companion integration is required
 
@@ -40,7 +41,7 @@ fail()
 
 detect_backend()
 {
-    local desktop="${XDG_CURRENT_DESKTOP:-}"
+    local desktop="${XDG_CURRENT_DESKTOP:-${XDG_SESSION_DESKTOP:-}}"
     local session_type="${XDG_SESSION_TYPE:-}"
 
     desktop="${desktop^^}"
@@ -57,6 +58,9 @@ detect_backend()
             ("${desktop}" == *KDE* ||
              "${desktop}" == *PLASMA*) ]]; then
         echo plasma
+    elif [[ "${session_type}" == "wayland" &&
+            "${desktop}" == *HYPRLAND* ]]; then
+        echo hyprland
     else
         return 1
     fi
@@ -220,6 +224,22 @@ print_x11_status()
     echo "  Companion integration required: no"
 }
 
+print_hyprland_status()
+{
+    local active=false
+    local desktop="${XDG_CURRENT_DESKTOP:-${XDG_SESSION_DESKTOP:-}}"
+
+    if [[ "${XDG_SESSION_TYPE:-}" == "wayland" &&
+          "${desktop^^}" == *HYPRLAND* ]]; then
+        active=true
+    fi
+
+    echo "Backend: Hyprland"
+    echo "  Built into Docklight: yes"
+    echo "  Current Hyprland session: $(yes_or_no "${active}")"
+    echo "  Companion integration required: no"
+}
+
 print_status()
 {
     local target="${1:-all}"
@@ -235,6 +255,8 @@ print_status()
         echo
         print_plasma_status
         echo
+        print_hyprland_status
+        echo
         print_x11_status
         ;;
     gnome)
@@ -242,6 +264,9 @@ print_status()
         ;;
     plasma)
         print_plasma_status
+        ;;
+    hyprland)
+        print_hyprland_status
         ;;
     x11)
         print_x11_status
@@ -329,6 +354,9 @@ plasma)
     ;;
 x11)
     echo "Docklight X11 integration uses the window manager's EWMH interface; no companion installation is required"
+    ;;
+hyprland)
+    echo "Docklight Hyprland integration is built in; no companion installation is required"
     ;;
 *)
     fail "unknown backend: ${backend}"

@@ -75,6 +75,13 @@ inline bool identifies_gnome_shell(
            !identifies_gnome_flashback(desktop);
 }
 
+inline bool identifies_hyprland(
+    const std::string &desktop)
+{
+    return normalized(desktop).find("hyprland") !=
+           std::string::npos;
+}
+
 inline std::string environment_value(
     const char *name)
 {
@@ -104,6 +111,20 @@ inline bool is_gnome_wayland_session()
 
     return is_wayland_session() &&
            identifies_gnome_shell(desktop);
+}
+
+inline bool is_hyprland_wayland_session()
+{
+    auto desktop = environment_value(
+        "XDG_CURRENT_DESKTOP");
+    if (desktop.empty())
+    {
+        desktop = environment_value(
+            "XDG_SESSION_DESKTOP");
+    }
+
+    return is_wayland_session() &&
+           identifies_hyprland(desktop);
 }
 
 inline bool is_gnome_shell_x11_session()

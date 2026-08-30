@@ -94,6 +94,7 @@ public:
     void set_dock_surface_geometry(
         const std::optional<
             WindowIconGeometry> &geometry);
+    void set_minimize_supported(bool supported);
 
 private:
     ManagedWindow *find_window(
@@ -108,4 +109,5 @@ private:
         m_dock_surface_geometry;
 
     bool m_connected = false;
+    bool m_minimize_supported = true;
 };

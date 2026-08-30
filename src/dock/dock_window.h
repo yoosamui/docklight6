@@ -46,7 +46,7 @@
 
 class DockWindowController;
 class DockAutohideController;
-class PlasmaWaylandDockSurfaceBackend;
+class LayerShellDockSurfaceBackend;
 class TooltipManager;
 class PreviewManager;
 class LayoutCoordinator;
@@ -221,7 +221,7 @@ private:
 private:
     friend class DockWindowController;
     friend class DockAutohideController;
-    friend class PlasmaWaylandDockSurfaceBackend;
+    friend class LayerShellDockSurfaceBackend;
     friend class TooltipManager;
     friend class PreviewManager;
     friend class LayoutCoordinator;

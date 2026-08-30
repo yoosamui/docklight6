@@ -1349,6 +1349,39 @@ void verifies_pip_group_reveals_before_hide_state_arrives()
            std::optional<WindowId>{"browser-window"});
 }
 
+void verifies_tiling_backend_focuses_and_cycles()
+{
+    FakeWindowBackend backend;
+    backend.set_minimize_supported(false);
+    backend.set_snapshot(
+        {
+            window("window-1"),
+            window("window-2"),
+            window(
+                "other-window",
+                false,
+                "org.mozilla.firefox")
+        },
+        {"window-1", "window-2", "other-window"},
+        "other-window");
+
+    WindowRegistry registry(backend);
+    registry.start();
+    DockApplicationController controller(
+        &registry,
+        {"org.kde.dolphin.desktop"});
+
+    assert(!controller.can_minimize());
+    assert(controller.toggle_minimized());
+    assert(registry.active_window() ==
+           std::optional<WindowId>{"window-2"});
+    assert(controller.toggle_minimized());
+    assert(registry.active_window() ==
+           std::optional<WindowId>{"window-1"});
+    assert(!registry.find_window("window-1")->minimized);
+    assert(!registry.find_window("window-2")->minimized);
+}
+
 }
 
 int main()
@@ -1375,6 +1408,7 @@ int main()
     verifies_remote_normal_group_toggles_instead_of_current_pip();
     verifies_normal_group_reveals_while_pip_stays_visible();
     verifies_pip_group_reveals_before_hide_state_arrives();
+    verifies_tiling_backend_focuses_and_cycles();
 
     return 0;
 }
