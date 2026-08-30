@@ -46,7 +46,7 @@ available.
     <tr><td>Cinnamon</td><td>X11</td><td>Muffin</td><td>Muffin</td><td><code>MuffinWindowBackend</code></td><td>PASS</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> Uses the desktop-specific X11 backend.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
-    <tr><td>GNOME</td><td>X11</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>GnomeX11WindowBackend</code></td><td>PENDING</td></tr>
+    <tr><td>GNOME</td><td>X11</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>GnomeX11WindowBackend</code></td><td>PASS</td></tr>
     <tr><td colspan="6"><strong>Comments:</strong> Keeps native X11/EWMH window integration and XComposite previews; the GNOME Shell extension is restricted to the main dock's GNOME autohide animation. The original native animation remains the fallback.</td></tr>
     <tr><td colspan="6"><hr></td></tr>
     <tr><td>GNOME</td><td>Wayland</td><td>Mutter / GNOME Shell</td><td>Mutter</td><td><code>GnomeWaylandWindowBackend</code></td><td>PASS</td></tr>
