@@ -94,9 +94,9 @@ private:
 
     // Configuration templates provide the same values for new installations;
     // these defaults also protect direct construction and invalid input.
-    int m_preview_card_height = 200;
-    int m_preview_show_delay = 500;
-    int m_autohide_hide_delay = 1200;
+    int m_preview_card_height = 512;
+    int m_preview_show_delay = 200;
+    int m_autohide_hide_delay = 400;
     std::optional<DockAutohideEffect>
         m_autohide_effect;
 
@@ -122,5 +122,5 @@ private:
     bool m_display_preview = true;
     bool m_close_preview_after_activation = false;
     bool m_manage_all_workspaces = true;
-    bool m_gradient_background = false;
+    bool m_gradient_background = true;
 };
