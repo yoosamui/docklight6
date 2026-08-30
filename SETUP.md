@@ -350,6 +350,38 @@ reversal beneath a stationary edge pointer. If the configured dock edge is an
 internal boundary between monitors, the KWin script uses an actual pointer
 crossing within the dock span; the far edge of the adjacent monitor is ignored.
 
+#### Disable KWin's blue screen-edge indication
+
+KWin's built-in `screenedge` effect draws the blue indication as the pointer
+approaches an active edge. It is separate from DockLight's screen-edge callback
+and might not appear as a toggle in Plasma's Desktop Effects settings. To
+disable the indication, run these commands as the logged-in Plasma user,
+without `sudo`:
+
+```sh
+kwriteconfig6 --file kwinrc --group Plugins \
+    --key screenedgeEnabled --type bool false
+
+qdbus6 org.kde.KWin /Effects \
+    org.kde.kwin.Effects.unloadEffect screenedge
+```
+
+The first command makes the change persistent. The second applies it
+immediately. If the second command fails, log out and back in. DockLight reveal
+continues to work because its screen-edge callback is separate from KWin's
+visual `screenedge` effect. The blue indication is disabled globally for all
+active screen edges and hot corners, not only DockLight's edge.
+
+To restore the indication:
+
+```sh
+kwriteconfig6 --file kwinrc --group Plugins \
+    --key screenedgeEnabled --type bool true
+
+qdbus6 org.kde.KWin /Effects \
+    org.kde.kwin.Effects.loadEffect screenedge
+```
+
 ### X11
 
 ```sh
