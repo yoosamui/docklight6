@@ -354,9 +354,15 @@ crossing within the dock span; the far edge of the adjacent monitor is ignored.
 
 KWin's built-in `screenedge` effect draws the blue indication as the pointer
 approaches an active edge. It is separate from DockLight's screen-edge callback
-and might not appear as a toggle in Plasma's Desktop Effects settings. To
-disable the indication, run these commands as the logged-in Plasma user,
-without `sudo`:
+and can be disabled graphically in Plasma System Settings:
+
+1. Open **Desktop Effects**.
+2. Under **Appearance**, disable **Highlight Screen Edges and Hot Corners**.
+3. Select **Apply**.
+
+The command-line equivalent is useful if that entry is not exposed by the
+installed Plasma version or distribution. Run these commands as the logged-in
+Plasma user, without `sudo`:
 
 ```sh
 kwriteconfig6 --file kwinrc --group Plugins \
@@ -366,11 +372,11 @@ qdbus6 org.kde.KWin /Effects \
     org.kde.kwin.Effects.unloadEffect screenedge
 ```
 
-The first command makes the change persistent. The second applies it
-immediately. If the second command fails, log out and back in. DockLight reveal
-continues to work because its screen-edge callback is separate from KWin's
-visual `screenedge` effect. The blue indication is disabled globally for all
-active screen edges and hot corners, not only DockLight's edge.
+The first command makes the command-line change persistent. The second applies
+it immediately. If the second command fails, log out and back in. DockLight
+reveal continues to work because its screen-edge callback is separate from
+KWin's visual `screenedge` effect. Both methods disable the blue indication
+globally for all active screen edges and hot corners, not only DockLight's edge.
 
 To restore the indication:
 

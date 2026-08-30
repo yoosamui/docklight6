@@ -241,7 +241,9 @@ screen-edge reveal activation, so an overlapping Plasma panel cannot cover the
 trigger and a newly mapped GTK edge strip cannot reverse a pending hide. At a
 boundary shared by two monitors, KWin detects crossing that boundary along the
 dock instead of activating at the adjacent monitor's outer edge. To suppress
-KWin's blue screen-edge indication without disabling DockLight reveal, see
+KWin's blue screen-edge indication without disabling DockLight reveal, disable
+**Desktop Effects → Appearance → Highlight Screen Edges and Hot Corners**. For
+the command-line equivalent and restoration instructions, see
 [Disable KWin's blue screen-edge indication](SETUP.md#disable-kwins-blue-screen-edge-indication).
 
 List the monitor names available for monitor-specific placement with:
