@@ -72,6 +72,6 @@ namespace DockConstants
 
     // Safety limits
 
-    constexpr int MAX_DOCK_ITEMS = 30; // Maximum applications shown in the dock
+    constexpr int MAX_DOCK_ITEMS = 50; // Maximum applications shown in the dock
     constexpr int TOOLTIP_MARGIN = 8;  // Minimum tooltip margin in pixels
 }
