@@ -40,6 +40,7 @@ const THUMBNAIL_IFACE = `
     <method name="ShowLivePreviews">
       <arg type="a(siiii)" direction="in" name="previews"/>
     </method>
+    <method name="HoldLivePreviewSurface"/>
     <method name="SetPreviewColor">
       <arg type="d" direction="in" name="red"/>
       <arg type="d" direction="in" name="green"/>
@@ -51,9 +52,7 @@ const THUMBNAIL_IFACE = `
       <arg type="d" direction="in" name="normalized_x"/>
       <arg type="d" direction="in" name="normalized_y"/>
     </method>
-    <method name="HideLivePreviews">
-      <arg type="b" direction="in" name="animated"/>
-    </method>
+    <method name="HideLivePreviews"/>
   </interface>
 </node>`;
 const PROTOCOL_VERSION = '9';
@@ -80,6 +79,9 @@ const PREVIEW_DOUBLE_CLICK_DISTANCE_PX = 12;
 const PREVIEW_VISIBILITY_ANIMATION_MS = 180;
 const PREVIEW_VISIBILITY_MIN_SCALE = 0.96;
 const PREVIEW_VISIBILITY_INITIAL_OPACITY = 46;
+const PREVIEW_CLONE_FADE_MS = 100;
+const PREVIEW_REPLACEMENT_REVEAL_DELAY_MS = 50;
+const PREVIEW_REPLACEMENT_CROSSFADE_MS = 100;
 
 const TRACKABLE_TYPES = new Set([
     Meta.WindowType.NORMAL,
@@ -178,6 +180,9 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockRevealSignal = 0;
         this._nativeWorkAreas = [];
         this._livePreviewOverlay = null;
+        this._previewSessionOpen = false;
+        this._previewReplacementShield = null;
+        this._previewReplacementShieldReleaseSource = 0;
         this._livePreviewRects = [];
         this._previewPointerInside = null;
         this._previewPointerDevice = null;
@@ -765,11 +770,12 @@ export default class DocklightWindowIntegration extends Extension {
             if (preview && Meta.is_wayland_compositor()) {
                 transition.actor.set_pivot_point(0.5, 0.5);
 
-                // The old live overlay intentionally survives GTK's short
-                // unmap/remap when the pointer crosses to another DockItem.
-                // Revealing this replacement at full opacity avoids replaying
-                // the opening effect as a visible flash between items.
-                if (this._livePreviewOverlay) {
+                // Overlay construction is asynchronous relative to GTK's
+                // unmap/remap. Keep logical visibility separate from actor
+                // lifetime so adjacent DockItems never replay the opening
+                // effect merely because the replacement overlay is between
+                // its destroy and install steps.
+                if (this._previewSessionOpen) {
                     transition.actor.scale_x = 1;
                     transition.actor.scale_y = 1;
                     transition.actor.set_opacity(transition.opacity);
@@ -795,30 +801,6 @@ export default class DocklightWindowIntegration extends Extension {
             // The actor can disappear while its GTK window is closing.
         }
         this._auxiliaryTransitions.delete(window);
-    }
-
-    _animatePreviewWindowActor(visible) {
-        if (!Meta.is_wayland_compositor())
-            return;
-
-        for (const window of this._auxiliaryWindowSignals.keys()) {
-            if (this._auxiliaryPosition(window)?.type !== 'preview')
-                continue;
-
-            const actor = window.get_compositor_private?.();
-            if (!actor || actor.is_destroyed?.())
-                continue;
-
-            actor.remove_all_transitions();
-            actor.set_pivot_point(0.5, 0.5);
-            actor.ease({
-                scale_x: visible ? 1 : PREVIEW_VISIBILITY_MIN_SCALE,
-                scale_y: visible ? 1 : PREVIEW_VISIBILITY_MIN_SCALE,
-                opacity: visible ? 255 : 0,
-                duration: PREVIEW_VISIBILITY_ANIMATION_MS,
-                mode: Clutter.AnimationMode.EASE_IN_OUT_QUINT,
-            });
-        }
     }
 
     _clearAuxiliaryWindow(window) {
@@ -2091,6 +2073,74 @@ export default class DocklightWindowIntegration extends Extension {
         }
     }
 
+    HoldLivePreviewSurfaceAsync(_params, invocation) {
+        if (!this._isThumbnailCallerAuthorized(invocation) ||
+            !Meta.is_wayland_compositor()) {
+            invocation.return_value(null);
+            return;
+        }
+
+        try {
+            for (const window of this._auxiliaryWindowSignals.keys()) {
+                const position = this._auxiliaryPosition(window);
+                if (position?.type !== 'preview')
+                    continue;
+
+                const actor = window.get_compositor_private?.();
+                if (!actor || actor.is_destroyed?.())
+                    continue;
+
+                // GTK deliberately remaps replacements at near-zero opacity.
+                // Never replace a good held frame with that transparent
+                // staging actor during a fast multi-item crossing.
+                if ((actor.get_paint_opacity?.() ?? 255) < 128)
+                    continue;
+
+                const rect = window.get_frame_rect();
+                if (rect.width <= 0 || rect.height <= 0)
+                    continue;
+
+                // Capture the complete GTK surface before XWayland unmaps it.
+                // The retained live-clone overlay is raised above this shield,
+                // preserving both the background/header and moving video.
+                const content = actor.paint_to_content(null);
+                if (!content?.get_texture?.())
+                    continue;
+
+                const target = clampAuxiliaryToWorkArea(
+                    position,
+                    rect,
+                    this._workAreaForMonitor(this._dockMonitorIndex()));
+                const shield = new Clutter.Actor({
+                    reactive: false,
+                    content,
+                    content_gravity: Clutter.ContentGravity.RESIZE_FILL,
+                    x: target.x,
+                    y: target.y,
+                    width: rect.width,
+                    height: rect.height,
+                });
+                // A rapid pointer crossing can request another replacement
+                // while GTK is already unmapped. Replace the prior shield
+                // only after a new complete surface was captured; otherwise
+                // keep the prior frame covering the whole remap chain.
+                this._destroyPreviewReplacementShield();
+                Main.uiGroup.add_child(shield);
+                this._previewReplacementShield = shield;
+
+                if (this._livePreviewOverlay) {
+                    Main.uiGroup.set_child_above_sibling(
+                        this._livePreviewOverlay, shield);
+                }
+                break;
+            }
+        } catch (error) {
+            logError(error, 'Failed to hold Docklight preview surface');
+        }
+
+        invocation.return_value(null);
+    }
+
     ShowLivePreviewsAsync(params, invocation) {
         const [previews] = params;
         if (!this._isThumbnailCallerAuthorized(invocation)) {
@@ -2098,14 +2148,16 @@ export default class DocklightWindowIntegration extends Extension {
             return;
         }
 
-        const replacingPreviews = Boolean(this._livePreviewOverlay);
-        if (!replacingPreviews)
-            this._animatePreviewWindowActor(true);
+        const openingSession = !this._previewSessionOpen;
+        this._previewSessionOpen = true;
 
         // Do not publish a transient outside state while replacing one set of
         // previews with another. The new rectangles are installed below and
         // immediately reconciled against Shell's compositor pointer.
-        this._destroyLivePreviews(false);
+        this._destroyLivePreviews({
+            publishPointerOutside: false,
+            preserveSession: true,
+        });
 
         // WindowPreviewLayout actors must remain in Shell's UI layer. Making
         // them children of a real MetaWindowActor creates an unsupported
@@ -2121,13 +2173,14 @@ export default class DocklightWindowIntegration extends Extension {
             height: global.stage.height,
         });
 
-        let previewCount = 0;
         const previewRects = [];
         // Animate a closed-to-open transition only. Adjacent DockItems reuse
         // the live-overlay lifetime and replace their actors without passing
         // through a low-opacity frame.
+        const waylandPreviewOpening =
+            Meta.is_wayland_compositor() && openingSession;
         const animatePreviews =
-            Meta.is_wayland_compositor() && !replacingPreviews;
+            !Meta.is_wayland_compositor() || waylandPreviewOpening;
         const previewFadeActors = [];
         for (const [windowId, x, y, width, height] of previews) {
             if (width <= 0 || height <= 0)
@@ -2153,7 +2206,7 @@ export default class DocklightWindowIntegration extends Extension {
             const preview = new Clutter.Actor({
                 reactive: false,
                 clip_to_allocation: true,
-                opacity: 255,
+                opacity: animatePreviews && !waylandPreviewOpening ? 0 : 255,
                 x: previewOffsetX,
                 y: previewOffsetY,
                 width: previewWidth,
@@ -2180,7 +2233,7 @@ export default class DocklightWindowIntegration extends Extension {
                 style: 'background-color: transparent; ' +
                     'border-radius: 6px;',
             });
-            if (animatePreviews) {
+            if (waylandPreviewOpening) {
                 selector.set_pivot_point(0.5, 0.5);
                 selector.scale_x = PREVIEW_VISIBILITY_MIN_SCALE;
                 selector.scale_y = PREVIEW_VISIBILITY_MIN_SCALE;
@@ -2226,11 +2279,11 @@ export default class DocklightWindowIntegration extends Extension {
                 selected: false,
             });
             if (animatePreviews)
-                previewFadeActors.push(selector);
-            previewCount++;
+                previewFadeActors.push(
+                    waylandPreviewOpening ? selector : preview);
         }
 
-        if (previewCount > 0) {
+        if (previewRects.length > 0) {
             Main.uiGroup.add_child(overlay);
             this._livePreviewOverlay = overlay;
             this._livePreviewRects = previewRects;
@@ -2238,18 +2291,27 @@ export default class DocklightWindowIntegration extends Extension {
             // Keep the full-stage overlay untransformed; only bounded cards
             // participate in the opening effect.
             for (const previewActor of previewFadeActors) {
-                previewActor.ease({
-                    scale_x: 1,
-                    scale_y: 1,
-                    opacity: 255,
-                    duration: PREVIEW_VISIBILITY_ANIMATION_MS,
-                    mode: Clutter.AnimationMode.EASE_IN_OUT_QUINT,
-                });
+                if (waylandPreviewOpening) {
+                    previewActor.ease({
+                        scale_x: 1,
+                        scale_y: 1,
+                        opacity: 255,
+                        duration: PREVIEW_VISIBILITY_ANIMATION_MS,
+                        mode: Clutter.AnimationMode.EASE_IN_OUT_QUINT,
+                    });
+                } else {
+                    previewActor.ease({
+                        opacity: 255,
+                        duration: PREVIEW_CLONE_FADE_MS,
+                        mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                    });
+                }
             }
+            if (!openingSession)
+                this._releasePreviewReplacementShield();
         } else {
             overlay.destroy();
-            this._livePreviewRects = [];
-            this._publishPreviewPointerInside(true);
+            this._destroyLivePreviews();
         }
 
         invocation.return_value(null);
@@ -2509,48 +2571,75 @@ export default class DocklightWindowIntegration extends Extension {
         }
     }
 
-    HideLivePreviewsAsync(params, invocation) {
-        const [animated] = params;
-        if (this._isThumbnailCallerAuthorized(invocation)) {
-            if (animated)
-                this._animatePreviewWindowActor(false);
-            this._destroyLivePreviews(true, animated);
-        }
+    HideLivePreviewsAsync(_params, invocation) {
+        if (this._isThumbnailCallerAuthorized(invocation))
+            this._destroyLivePreviews();
         invocation.return_value(null);
     }
 
-    _destroyLivePreviews(publishPointerOutside = true, animated = false) {
+    _destroyLivePreviews({
+        publishPointerOutside = true,
+        preserveSession = false,
+    } = {}) {
+        if (!preserveSession) {
+            this._previewSessionOpen = false;
+            this._destroyPreviewReplacementShield();
+        }
+
         if (this._livePreviewOverlay) {
             this._livePreviewOverlay.remove_all_transitions();
-            const overlay = this._livePreviewOverlay;
-            if (animated && Meta.is_wayland_compositor()) {
-                for (const {selector} of this._livePreviewRects) {
-                    selector.remove_all_transitions();
-                    selector.set_pivot_point(0.5, 0.5);
-                    selector.ease({
-                        scale_x: PREVIEW_VISIBILITY_MIN_SCALE,
-                        scale_y: PREVIEW_VISIBILITY_MIN_SCALE,
-                        opacity: 0,
-                        duration: PREVIEW_VISIBILITY_ANIMATION_MS,
-                        mode: Clutter.AnimationMode.EASE_IN_OUT_QUINT,
-                    });
-                }
-                GLib.timeout_add(
-                    GLib.PRIORITY_DEFAULT,
-                    PREVIEW_VISIBILITY_ANIMATION_MS,
-                    () => {
-                        overlay.destroy();
-                        return GLib.SOURCE_REMOVE;
-                    });
-            } else {
-                overlay.destroy();
-            }
+            this._livePreviewOverlay.destroy();
             this._livePreviewOverlay = null;
         }
 
         this._livePreviewRects = [];
         if (publishPointerOutside)
             this._publishPreviewPointerInside(true);
+    }
+
+    _releasePreviewReplacementShield() {
+        if (!this._previewReplacementShield)
+            return;
+
+        if (this._previewReplacementShieldReleaseSource)
+            GLib.source_remove(this._previewReplacementShieldReleaseSource);
+
+        this._previewReplacementShieldReleaseSource = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            PREVIEW_REPLACEMENT_REVEAL_DELAY_MS,
+            () => {
+                this._previewReplacementShieldReleaseSource = 0;
+                const shield = this._previewReplacementShield;
+                if (!shield || shield.is_destroyed?.())
+                    return GLib.SOURCE_REMOVE;
+
+                shield.remove_all_transitions();
+                shield.ease({
+                    opacity: 0,
+                    duration: PREVIEW_REPLACEMENT_CROSSFADE_MS,
+                    mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                    onComplete: () => {
+                        if (this._previewReplacementShield === shield)
+                            this._previewReplacementShield = null;
+                        if (!shield.is_destroyed?.())
+                            shield.destroy();
+                    },
+                });
+                return GLib.SOURCE_REMOVE;
+            });
+    }
+
+    _destroyPreviewReplacementShield() {
+        if (this._previewReplacementShieldReleaseSource) {
+            GLib.source_remove(this._previewReplacementShieldReleaseSource);
+            this._previewReplacementShieldReleaseSource = 0;
+        }
+
+        if (this._previewReplacementShield) {
+            this._previewReplacementShield.remove_all_transitions();
+            this._previewReplacementShield.destroy();
+            this._previewReplacementShield = null;
+        }
     }
 
     _isTrackable(window) {

@@ -98,12 +98,13 @@ public:
         const std::vector<GnomeLivePreviewRect>
             &previews,
         LivePreviewsCallback callback = {});
+    void hold_gnome_live_preview_surface(
+        LivePreviewsCallback callback);
     void forward_gnome_preview_primary_click(
         const WindowId &window_id,
         double normalized_x,
         double normalized_y);
-    void hide_gnome_live_previews(
-        bool animated = false);
+    void hide_gnome_live_previews();
 
 private:
     std::shared_ptr<State> m_state;

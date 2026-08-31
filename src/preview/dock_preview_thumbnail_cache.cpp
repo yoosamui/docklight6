@@ -2115,14 +2115,10 @@ void DockPreviewWindow::start_live_streams(
     }
 }
 
-void DockPreviewWindow::stop_live_streams(
-    bool animate_gnome_hide)
+void DockPreviewWindow::stop_live_streams()
 {
     if (!m_replacing_gnome_wayland_preview)
-    {
-        m_thumbnail_provider.hide_gnome_live_previews(
-            animate_gnome_hide);
-    }
+        m_thumbnail_provider.hide_gnome_live_previews();
     m_gnome_thumbnail_fallback.disconnect();
     m_x11_live_refresh.disconnect();
     m_x11_probe_refresh.disconnect();

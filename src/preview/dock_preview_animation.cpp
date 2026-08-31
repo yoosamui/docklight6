@@ -78,34 +78,49 @@ void DockPreviewWindow::show_preview(
     {
         // Resizing a mapped XWayland surface can make Mutter tile its previous
         // backing pixels across the new allocation before GTK repaints. That
-        // is the visible phantom card. Keep the GTK surface unmapped across
-        // compositor frame boundaries while retaining Shell's clone actors,
-        // then rebuild and remap it with a freshly painted backing buffer.
-        set_opacity(0.01);
-        hide();
-
+        // is the visible phantom card. Ask Shell to snapshot the complete old
+        // surface before unmapping it, so the background and headers remain
+        // continuous alongside the retained live clone actors.
         const auto generation = m_generation;
-        m_gnome_preview_remap_delay =
-            Glib::signal_timeout().connect(
+        m_thumbnail_provider
+            .hold_gnome_live_preview_surface(
                 [this,
                  entries,
                  location,
                  position,
                  size,
-                 generation]()
+                 generation](bool)
                 {
-                    if (generation == m_generation)
-                    {
-                        present_preview(
-                            entries,
-                            location,
-                            position,
-                            size);
-                    }
+                    // Continue on a rejected or timed-out optional handoff so
+                    // an older Shell extension cannot strand the preview.
+                    if (generation != m_generation)
+                        return;
 
-                    return false;
-                },
-                GNOME_PREVIEW_REMAP_DELAY_MS);
+                    set_opacity(0.01);
+                    hide();
+
+                    m_gnome_preview_remap_delay =
+                        Glib::signal_timeout().connect(
+                            [this,
+                             entries,
+                             location,
+                             position,
+                             size,
+                             generation]()
+                            {
+                                if (generation == m_generation)
+                                {
+                                    present_preview(
+                                        entries,
+                                        location,
+                                        position,
+                                        size);
+                                }
+
+                                return false;
+                            },
+                            GNOME_PREVIEW_REMAP_DELAY_MS);
+                });
         return;
     }
 
@@ -159,7 +174,7 @@ void DockPreviewWindow::hide_preview()
     m_gnome_preview_remap_delay.disconnect();
     m_gnome_preview_reveal_delay.disconnect();
     m_replacing_gnome_wayland_preview = false;
-    stop_live_streams(true);
+    stop_live_streams();
     m_media_title.clear();
     m_live_window_ids.clear();
     m_dynamic_refresh = false;
@@ -306,19 +321,8 @@ void DockPreviewWindow::start_opacity_animation(
         cancel_opacity_animation();
         if (hiding)
         {
-            // Shell owns the GNOME Wayland surface actor and live clones.
-            // Keep GTK mapped until their tooltip-style transition finishes.
-            m_opacity_timer =
-                Glib::signal_timeout().connect(
-                    [this]()
-                    {
-                        hide();
-                        clear_cards();
-                        set_opacity(1.0);
-                        return false;
-                    },
-                    DockConstants::
-                        TOOLTIP_FADE_DURATION_MS);
+            hide();
+            clear_cards();
         }
         set_opacity(1.0);
         return;

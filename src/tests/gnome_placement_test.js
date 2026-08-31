@@ -227,8 +227,12 @@ assert.match(
 
 assert.match(
     extensionSource,
-    /<method name="ShowLivePreviews">[\s\S]*?a\(siiii\)[\s\S]*?<method name="HideLivePreviews"/,
+    /<method name="ShowLivePreviews">[\s\S]*?a\(siiii\)[\s\S]*?<method name="HideLivePreviews"\/>/,
     "the GNOME thumbnail service must expose the compositor overlay lifecycle");
+assert.doesNotMatch(
+    extensionSource,
+    /<method name="HideLivePreviews">[\s\S]*?<arg/,
+    "HideLivePreviews must remain argument-free for installed-version compatibility");
 assert.match(
     extensionSource,
     /ShowLivePreviewsAsync[\s\S]*?new Shell\.WindowPreviewLayout\(\)[\s\S]*?layout\.add_window\(window\)/,
@@ -275,7 +279,7 @@ assert.doesNotMatch(
     "live thumbnails must not be selector siblings that Mutter can stack underneath the selector");
 assert.match(
     extensionSource,
-    /_destroyLivePreviews\(false\)[\s\S]*?const previewRects = \[\][\s\S]*?this\._livePreviewRects = previewRects[\s\S]*?_publishPreviewPointerInside\(true\)/,
+    /_destroyLivePreviews\(\{[\s\S]*?publishPointerOutside: false,[\s\S]*?preserveSession: true,[\s\S]*?\}\)[\s\S]*?const previewRects = \[\][\s\S]*?this\._livePreviewRects = previewRects[\s\S]*?_publishPreviewPointerInside\(true\)/,
     "replacing live previews must atomically install and publish their pointer hitboxes");
 assert.match(
     extensionSource,
@@ -283,12 +287,24 @@ assert.match(
     "the GNOME Wayland preview surface must use the tooltip-style centred reveal transition");
 assert.match(
     extensionSource,
-    /const replacingPreviews = Boolean\(this\._livePreviewOverlay\)[\s\S]*?if \(!replacingPreviews\)[\s\S]*?_animatePreviewWindowActor\(true\)[\s\S]*?const animatePreviews =[\s\S]*?Meta\.is_wayland_compositor\(\) && !replacingPreviews[\s\S]*?previewFadeActors\.push\(selector\)/,
+    /this\._previewSessionOpen = false[\s\S]*?const openingSession = !this\._previewSessionOpen[\s\S]*?this\._previewSessionOpen = true[\s\S]*?_destroyLivePreviews\(\{[\s\S]*?preserveSession: true,[\s\S]*?\}\)[\s\S]*?const waylandPreviewOpening =[\s\S]*?Meta\.is_wayland_compositor\(\) && openingSession[\s\S]*?waylandPreviewOpening \? selector : preview/,
     "adjacent GNOME Wayland preview replacements must not replay the entrance animation");
 assert.match(
     extensionSource,
-    /_finishAuxiliaryTransition\(window\)[\s\S]*?if \(this\._livePreviewOverlay\)[\s\S]*?scale_x = 1;[\s\S]*?set_opacity\(transition\.opacity\)[\s\S]*?else \{[\s\S]*?PREVIEW_VISIBILITY_INITIAL_OPACITY/,
-    "a remapped GTK preview must remain fully visible while Shell replaces an existing live overlay");
+    /<method name="HoldLivePreviewSurface"\/>[\s\S]*?HoldLivePreviewSurfaceAsync\(_params, invocation\)[\s\S]*?_isThumbnailCallerAuthorized\(invocation\)[\s\S]*?actor\.paint_to_content\(null\)[\s\S]*?new Clutter\.Actor\(\{[\s\S]*?content_gravity: Clutter\.ContentGravity\.RESIZE_FILL[\s\S]*?Main\.uiGroup\.add_child\(shield\)[\s\S]*?set_child_above_sibling\([\s\S]*?this\._livePreviewOverlay, shield/,
+    "Shell must hold the complete old preview surface beneath live clones before XWayland unmaps it");
+assert.match(
+    extensionSource,
+    /if \(!openingSession\)[\s\S]*?_releasePreviewReplacementShield\(\)[\s\S]*?_releasePreviewReplacementShield\(\)[\s\S]*?PREVIEW_REPLACEMENT_REVEAL_DELAY_MS[\s\S]*?opacity: 0,[\s\S]*?PREVIEW_REPLACEMENT_CROSSFADE_MS[\s\S]*?_destroyPreviewReplacementShield\(\)/,
+    "the held surface must crossfade only after replacement actors arrive and be destroyed on teardown");
+assert.match(
+    extensionSource,
+    /PREVIEW_CLONE_FADE_MS = 100[\s\S]*?const animatePreviews =[\s\S]*?!Meta\.is_wayland_compositor\(\) \|\| waylandPreviewOpening[\s\S]*?opacity: animatePreviews && !waylandPreviewOpening \? 0 : 255[\s\S]*?duration: PREVIEW_CLONE_FADE_MS,[\s\S]*?EASE_OUT_QUAD/,
+    "the GNOME Wayland-only reveal fix must preserve the existing GNOME X11 thumbnail fade");
+assert.match(
+    extensionSource,
+    /_finishAuxiliaryTransition\(window\)[\s\S]*?if \(this\._previewSessionOpen\)[\s\S]*?scale_x = 1;[\s\S]*?set_opacity\(transition\.opacity\)[\s\S]*?else \{[\s\S]*?PREVIEW_VISIBILITY_INITIAL_OPACITY/,
+    "a remapped GTK preview must use logical session state rather than transient overlay lifetime");
 assert.doesNotMatch(
     extensionSource,
     /Main\.layoutManager\.trackChrome\(preview, \{/,
@@ -415,8 +431,8 @@ assert.match(
     "GNOME fallback capture must start after the preview entrance fade settles");
 assert.match(
     previewWindowSource,
-    /GNOME_PREVIEW_REMAP_DELAY_MS = 34[\s\S]*?uses_wayland_session\(\)[\s\S]*?XDG_SESSION_TYPE[\s\S]*?wayland[\s\S]*?DockPreviewWindow::show_preview[\s\S]*?remap_was_pending[\s\S]*?m_replacing_gnome_wayland_preview\s*=[\s\S]*?get_mapped\(\) \|\| remap_was_pending[\s\S]*?uses_wayland_session\(\)[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?if \(m_replacing_gnome_wayland_preview\)[\s\S]*?set_opacity\(0\.01\);[\s\S]*?hide\(\);[\s\S]*?m_gnome_preview_remap_delay[\s\S]*?present_preview\([\s\S]*?GNOME_PREVIEW_REMAP_DELAY_MS[\s\S]*?return;[\s\S]*?set_opacity\(0\.0\);[\s\S]*?present_preview\(entries, location, position, size\)/,
-    "mapped GNOME XWayland replacements must unmap before resizing so Mutter cannot tile the previous backing store");
+    /GNOME_PREVIEW_REMAP_DELAY_MS = 34[\s\S]*?uses_wayland_session\(\)[\s\S]*?XDG_SESSION_TYPE[\s\S]*?wayland[\s\S]*?DockPreviewWindow::show_preview[\s\S]*?remap_was_pending[\s\S]*?m_replacing_gnome_wayland_preview\s*=[\s\S]*?get_mapped\(\) \|\| remap_was_pending[\s\S]*?uses_wayland_session\(\)[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?if \(m_replacing_gnome_wayland_preview\)[\s\S]*?hold_gnome_live_preview_surface\([\s\S]*?generation != m_generation[\s\S]*?set_opacity\(0\.01\);[\s\S]*?hide\(\);[\s\S]*?m_gnome_preview_remap_delay[\s\S]*?present_preview\([\s\S]*?GNOME_PREVIEW_REMAP_DELAY_MS[\s\S]*?return;[\s\S]*?set_opacity\(0\.0\);[\s\S]*?present_preview\(entries, location, position, size\)/,
+    "mapped GNOME XWayland replacements must hold the old compositor surface before unmapping and resizing");
 assert.match(
     previewWindowSource,
     /DockPreviewWindow::present_preview[\s\S]*?stop_live_streams\(\);[\s\S]*?rebuild\(entries, size\)[\s\S]*?resize\(size\.width, size\.height\)[\s\S]*?m_presentation_pending = true;[\s\S]*?show_all\(\);/,
@@ -427,28 +443,36 @@ assert.match(
     "GNOME Wayland replacements must repaint and settle after Shell acknowledgement before GTK is revealed");
 assert.match(
     previewWindowSource,
-    /DockPreviewWindow::start_opacity_animation[\s\S]*?uses_wayland_session\(\)[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?if \(hiding\)[\s\S]*?m_opacity_timer[\s\S]*?hide\(\);[\s\S]*?clear_cards\(\);[\s\S]*?TOOLTIP_FADE_DURATION_MS[\s\S]*?return;[\s\S]*?m_opacity_animation_hiding = hiding/,
-    "GNOME Wayland must keep GTK mapped until Shell's hide transition completes");
+    /DockPreviewWindow::start_opacity_animation[\s\S]*?uses_wayland_session\(\)[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?if \(hiding\)[\s\S]*?hide\(\);[\s\S]*?clear_cards\(\);[\s\S]*?set_opacity\(1\.0\);[\s\S]*?return;[\s\S]*?m_opacity_animation_hiding = hiding/,
+    "GNOME Wayland must close GTK immediately without exposing an XWayland fade frame");
 assert.match(
     thumbnailProviderSource,
     /LivePreviewsCompletion[\s\S]*?g_dbus_connection_call_finish[\s\S]*?callback\(success\)[\s\S]*?show_gnome_live_previews[\s\S]*?ready = complete_gnome_live_previews[\s\S]*?g_dbus_connection_call\([\s\S]*?ready,[\s\S]*?completion_data/,
     "ShowLivePreviews must report its asynchronous Shell acknowledgement to the preview handoff");
+assert.match(
+    thumbnailProviderSource,
+    /hold_gnome_live_preview_surface\([\s\S]*?LivePreviewsCompletion[\s\S]*?"HoldLivePreviewSurface"[\s\S]*?complete_gnome_live_previews/,
+    "the GTK remap must wait for Shell to hold the old preview surface");
 assert.match(
     previewWindowSource,
     /DockPreviewWindow::apply_position[\s\S]*?if \(!m_uses_layer_shell\)[\s\S]*?get_window\(\)[\s\S]*?move_resize\([\s\S]*?global_x,[\s\S]*?global_y,[\s\S]*?width,[\s\S]*?height\)/,
     "an X11 or XWayland preview must move and resize atomically");
 assert.match(
     previewWindowSource,
-    /DockPreviewWindow::stop_live_streams\([\s\S]*?bool animate_gnome_hide[\s\S]*?if \(!m_replacing_gnome_wayland_preview\)[\s\S]*?hide_gnome_live_previews\([\s\S]*?animate_gnome_hide\)[\s\S]*?m_gnome_thumbnail_fallback\.disconnect\(\)/,
+    /DockPreviewWindow::stop_live_streams\(\)[\s\S]*?if \(!m_replacing_gnome_wayland_preview\)[\s\S]*?hide_gnome_live_previews\(\)[\s\S]*?m_gnome_thumbnail_fallback\.disconnect\(\)/,
     "an adjacent GNOME Wayland update must preserve live actors while a real hide still tears them down");
 assert.match(
     previewWindowSource,
-    /DockPreviewWindow::hide_preview\(\)[\s\S]*?m_replacing_gnome_wayland_preview = false;[\s\S]*?stop_live_streams\(true\)[\s\S]*?DockPreviewWindow::hide_preview_immediately\(\)[\s\S]*?m_replacing_gnome_wayland_preview = false;[\s\S]*?stop_live_streams\(\)/,
-    "normal GNOME closure must animate while immediate teardown remains immediate");
+    /DockPreviewWindow::hide_preview\(\)[\s\S]*?m_replacing_gnome_wayland_preview = false;[\s\S]*?stop_live_streams\(\)[\s\S]*?DockPreviewWindow::hide_preview_immediately\(\)[\s\S]*?m_replacing_gnome_wayland_preview = false;[\s\S]*?stop_live_streams\(\)/,
+    "normal and forced GNOME closure must use the same reliable teardown contract");
+assert.match(
+    thumbnailProviderSource,
+    /hide_gnome_live_previews\(\)[\s\S]*?"HideLivePreviews",[\s\S]*?nullptr,[\s\S]*?G_DBUS_CALL_FLAGS_NONE/,
+    "the GNOME bridge must preserve the established argument-free hide call");
 assert.match(
     extensionSource,
-    /<method name="HideLivePreviews">[\s\S]*?name="animated"[\s\S]*?HideLivePreviewsAsync\(params, invocation\)[\s\S]*?_animatePreviewWindowActor\(false\)[\s\S]*?_destroyLivePreviews\(true, animated\)[\s\S]*?selector\.ease\([\s\S]*?opacity: 0/,
-    "the GNOME bridge must animate both the preview surface and live clones on normal hide");
+    /HideLivePreviewsAsync\(_params, invocation\)[\s\S]*?_destroyLivePreviews\(\)[\s\S]*?_destroyLivePreviews\(\{[\s\S]*?preserveSession = false[\s\S]*?if \(!preserveSession\)[\s\S]*?this\._previewSessionOpen = false[\s\S]*?this\._livePreviewOverlay\.destroy\(\)/,
+    "hiding must synchronously reset session state and destroy compositor previews");
 assert.match(
     previewWindowSource,
     /DockPreviewCardCanvas\([\s\S]*?preview_color[\s\S]*?m_preview_color\.get_red\(\)[\s\S]*?set_preview_color[\s\S]*?new DockPreviewCardCanvas\([\s\S]*?m_preview_color/,

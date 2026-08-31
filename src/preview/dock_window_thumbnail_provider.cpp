@@ -1463,6 +1463,37 @@ void DockWindowThumbnailProvider::
 }
 
 void DockWindowThumbnailProvider::
+    hold_gnome_live_preview_surface(
+        LivePreviewsCallback callback)
+{
+    if (!supports_gnome_live_previews())
+    {
+        if (callback)
+            callback(false);
+        return;
+    }
+
+    auto completion =
+        std::make_unique<LivePreviewsCompletion>();
+    completion->state = m_state;
+    completion->callback = std::move(callback);
+
+    g_dbus_connection_call(
+        m_state->connection,
+        GNOME_THUMBNAIL_SERVICE,
+        GNOME_THUMBNAIL_PATH,
+        GNOME_THUMBNAIL_INTERFACE,
+        "HoldLivePreviewSurface",
+        nullptr,
+        nullptr,
+        G_DBUS_CALL_FLAGS_NONE,
+        250,
+        nullptr,
+        complete_gnome_live_previews,
+        completion.release());
+}
+
+void DockWindowThumbnailProvider::
     forward_gnome_preview_primary_click(
         const WindowId &window_id,
         double normalized_x,
@@ -1494,8 +1525,7 @@ void DockWindowThumbnailProvider::
 }
 
 void DockWindowThumbnailProvider::
-    hide_gnome_live_previews(
-        bool animated)
+    hide_gnome_live_previews()
 {
     if (!m_gnome_live_previews_requested)
         return;
@@ -1511,7 +1541,7 @@ void DockWindowThumbnailProvider::
         GNOME_THUMBNAIL_PATH,
         GNOME_THUMBNAIL_INTERFACE,
         "HideLivePreviews",
-        g_variant_new("(b)", animated),
+        nullptr,
         nullptr,
         G_DBUS_CALL_FLAGS_NONE,
         1000,
