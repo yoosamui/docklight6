@@ -15,6 +15,8 @@ import {
     calculateDockRevealRect,
     calculateDockStrut,
     clampAuxiliaryToWorkArea,
+    dockMonitorIndexForRect,
+    dockPlacementChangesMonitor,
     isDockPlacementCommitted,
     isPointerInsideDockInterior,
     isSyntheticApplicationId,
@@ -475,8 +477,16 @@ export default class DocklightWindowIntegration extends Extension {
                     CONFIGURATION_SETTLE_MS,
                     () => {
                         this._configurationReloadSource = 0;
+                        const previousAlignment = this._dockAlignment;
+                        const previousLocation = this._dockLocation;
                         if (this._loadDockPlacement()) {
-                            this._scheduleDockPlacement();
+                            const placementPolicyChanged =
+                                previousAlignment !== this._dockAlignment ||
+                                previousLocation !== this._dockLocation;
+                            if (placementPolicyChanged)
+                                this._beginDockTransition();
+                            this._scheduleDockPlacement(
+                                placementPolicyChanged);
                             this._updateDockRevealActor();
                         }
                         return GLib.SOURCE_REMOVE;
@@ -833,17 +843,26 @@ export default class DocklightWindowIntegration extends Extension {
             ['position-changed', () => {
                 // Mutter can apply its ordinary-toplevel initial placement
                 // after window-created. Reassert the configured edge when
-                // that late placement moves the dock back to the centre.
-                this._beginDockTransition();
+                // that late placement moves the dock back to the centre. A
+                // steady-state XWayland resize can also change the frame
+                // origin to preserve centre/end alignment; do not hide the
+                // already visible actor for that routine correction.
                 this._scheduleDockPlacement(
-                    true, DOCK_PLACEMENT_DELAY_MS);
+                    this._dockTransitioning,
+                    DOCK_PLACEMENT_DELAY_MS);
             }],
             ['size-changed', () => {
                 this._scheduleDockPlacement(this._dockTransitioning);
             }],
             ['notify::monitor', () => {
-                this._beginDockTransition();
-                this._scheduleDockPlacement(true);
+                // Mutter can notify the monitor property while an XWayland
+                // frame is merely resizing on the same output. Placement
+                // geometry is the authoritative source for a real configured
+                // monitor change, so this noisy signal must not blank the
+                // already visible actor.
+                this._scheduleDockPlacement(
+                    this._dockTransitioning,
+                    DOCK_PLACEMENT_DELAY_MS);
             }],
             ['unmanaged', () => this._clearDockWindow(true)],
         ]) {
@@ -1479,18 +1498,19 @@ export default class DocklightWindowIntegration extends Extension {
                 const committed = this._placeDockWindow();
                 if (committed) {
                     this._finishDockTransition();
-                } else if (this._dockTransitioning &&
-                    ++this._dockPlacementAttempts <
-                        DOCK_PLACEMENT_MAX_ATTEMPTS) {
+                } else if (++this._dockPlacementAttempts <
+                    DOCK_PLACEMENT_MAX_ATTEMPTS) {
                     // move_frame() is asynchronous on Wayland. Keep the
-                    // provisional frame out of the scene until Mutter's
-                    // frame rectangle (plus any strut compensation) proves
-                    // that the painted dock has reached the requested edge.
+                    // painted actor at the requested edge and retry until
+                    // Mutter's frame rectangle (plus any strut compensation)
+                    // proves that the dock has committed. Only an explicitly
+                    // guarded transition suppresses actor opacity meanwhile.
                     this._scheduleDockPlacement(
                         false, DOCK_PLACEMENT_DELAY_MS);
                 } else {
-                    // Do not leave DockLight permanently invisible if a
-                    // compositor rejects movement or a window disappears.
+                    // Do not retry forever or leave DockLight permanently
+                    // invisible if a compositor rejects movement or a window
+                    // disappears.
                     this._finishDockTransition();
                 }
                 return GLib.SOURCE_REMOVE;
@@ -1517,9 +1537,20 @@ export default class DocklightWindowIntegration extends Extension {
             current.width === placement.width && current.height === placement.height)
             return;
 
+        const monitorChanged = dockPlacementChangesMonitor(
+            current,
+            placement,
+            Main.layoutManager.monitors,
+            Main.layoutManager.primaryIndex);
+        this._dockPlacementAttempts = 0;
         this._dockPlacement = placement;
         this._updateDockRevealActor();
-        this._beginDockTransition();
+        // Routine DockItem, home-item, or icon-size changes resize the mapped
+        // dock without creating a provisional surface. Keep its actor visible
+        // and preserve any current autohide transform. Moving the placement to
+        // another monitor still needs the guarded compositor transition.
+        if (monitorChanged)
+            this._beginDockTransition();
         this._scheduleDockPlacement(true);
     }
 
@@ -1621,27 +1652,10 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _dockMonitorIndex() {
-        if (!this._dockPlacement)
-            return Main.layoutManager.primaryIndex;
-
-        const rect = this._dockPlacement;
-        let bestIndex = Main.layoutManager.primaryIndex;
-        let bestArea = -1;
-        for (let index = 0; index < Main.layoutManager.monitors.length; index++) {
-            const monitor = Main.layoutManager.monitors[index];
-            const overlapWidth = Math.max(0,
-                Math.min(rect.x + rect.width, monitor.x + monitor.width) -
-                Math.max(rect.x, monitor.x));
-            const overlapHeight = Math.max(0,
-                Math.min(rect.y + rect.height, monitor.y + monitor.height) -
-                Math.max(rect.y, monitor.y));
-            const area = overlapWidth * overlapHeight;
-            if (area > bestArea) {
-                bestArea = area;
-                bestIndex = index;
-            }
-        }
-        return bestIndex;
+        return dockMonitorIndexForRect(
+            this._dockPlacement,
+            Main.layoutManager.monitors,
+            Main.layoutManager.primaryIndex);
     }
 
     _refreshNativeWorkAreas() {

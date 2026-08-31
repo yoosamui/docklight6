@@ -1046,6 +1046,26 @@ assert.match(
     "GNOME's normal-window map animation must not expose the centred dock actor");
 assert.match(
     extensionSource,
+    /\['position-changed', \(\) => \{[\s\S]*?this\._scheduleDockPlacement\(\s*this\._dockTransitioning,[\s\S]*?DOCK_PLACEMENT_DELAY_MS\);/,
+    "a steady-state frame-origin change must not begin an opacity-suppressing dock transition");
+assert.match(
+    extensionSource,
+    /\['notify::monitor', \(\) => \{[\s\S]*?this\._scheduleDockPlacement\(\s*this\._dockTransitioning,[\s\S]*?DOCK_PLACEMENT_DELAY_MS\);[\s\S]*?\}\]/,
+    "a noisy XWayland monitor notification during resize must not begin an opacity-suppressing dock transition");
+assert.match(
+    extensionSource,
+    /const previousAlignment = this\._dockAlignment;[\s\S]*?const previousLocation = this\._dockLocation;[\s\S]*?const placementPolicyChanged =[\s\S]*?previousAlignment !== this\._dockAlignment[\s\S]*?previousLocation !== this\._dockLocation[\s\S]*?if \(placementPolicyChanged\)\s*this\._beginDockTransition\(\)/,
+    "real alignment or edge changes must retain the guarded dock transition");
+assert.match(
+    extensionSource,
+    /const monitorChanged = dockPlacementChangesMonitor\([\s\S]*?this\._dockPlacement = placement;[\s\S]*?if \(monitorChanged\)\s*this\._beginDockTransition\(\);[\s\S]*?this\._scheduleDockPlacement\(true\)/,
+    "placement geometry must suppress actor visibility only when it changes monitors");
+assert.match(
+    extensionSource,
+    /const committed = this\._placeDockWindow\(\);[\s\S]*?if \(committed\)[\s\S]*?else if \(\+\+this\._dockPlacementAttempts <[\s\S]*?DOCK_PLACEMENT_MAX_ATTEMPTS\)[\s\S]*?this\._scheduleDockPlacement/,
+    "a visible native Wayland resize must keep retrying asynchronous placement without requiring an opacity transition");
+assert.match(
+    extensionSource,
     /_disconnectBackend\(\) \{[\s\S]*?this\._dockDiscoveredOnce = false/,
     "an app-only restart must rearm early GNOME dock discovery");
 assert.match(
@@ -1112,6 +1132,7 @@ const source = fs.readFileSync(helperPath, "utf8")
     .replaceAll("export function ", "function ") +
     "\nthis.testApi = {calculateDockHideOffset, calculateDockRevealRect, calculateDockStrut, " +
     "clampAuxiliaryToWorkArea, inferDockEdge, " +
+    "dockMonitorIndexForRect, dockPlacementChangesMonitor, " +
     "isDockPlacementCommitted, isPointerInsideDockInterior, " +
     "isSyntheticApplicationId, " +
     "parseAuxiliaryPosition, placeDockInWorkArea, rightHideCorridorIntersectsMonitor};";
@@ -1124,6 +1145,8 @@ const {
     calculateDockRevealRect,
     calculateDockStrut,
     clampAuxiliaryToWorkArea,
+    dockMonitorIndexForRect,
+    dockPlacementChangesMonitor,
     inferDockEdge,
     isDockPlacementCommitted,
     isPointerInsideDockInterior,
@@ -1134,6 +1157,31 @@ const {
 } = context.testApi;
 const primary = {x: 0, y: 0, width: 1170, height: 1080};
 const primaryWorkArea = {x: 0, y: 32, width: 1170, height: 1048};
+const secondary = {x: 1170, y: 164, width: 877, height: 916};
+
+assert.strictEqual(dockMonitorIndexForRect(
+    {x: 385, y: 1016, width: 400, height: 64},
+    [primary, secondary],
+    0), 0);
+assert.strictEqual(dockMonitorIndexForRect(
+    {x: 1350, y: 1016, width: 400, height: 64},
+    [primary, secondary],
+    0), 1);
+assert.strictEqual(dockPlacementChangesMonitor(
+    {x: 385, y: 1016, width: 400, height: 64},
+    {x: 417, y: 1016, width: 336, height: 64},
+    [primary, secondary],
+    0), false);
+assert.strictEqual(dockPlacementChangesMonitor(
+    null,
+    {x: 417, y: 1016, width: 336, height: 64},
+    [primary, secondary],
+    0), false);
+assert.strictEqual(dockPlacementChangesMonitor(
+    {x: 385, y: 1016, width: 400, height: 64},
+    {x: 1350, y: 1016, width: 400, height: 64},
+    [primary, secondary],
+    0), true);
 
 assert.strictEqual(rightHideCorridorIntersectsMonitor(
     {x: 1112, y: 32, width: 58, height: 1048, edge: "right"},
@@ -1265,7 +1313,6 @@ assert.deepStrictEqual(
         actorOffset: {x: 64, y: 0},
     });
 
-const secondary = {x: 1170, y: 164, width: 877, height: 916};
 assert.deepStrictEqual(
     {...placeDockInWorkArea(
         secondary,

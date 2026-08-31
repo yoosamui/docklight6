@@ -175,6 +175,51 @@ export function isDockPlacementCommitted(frameRect, placement, actorOffset) {
         Math.round(frameRect.y + offset.y) === Math.round(placement.y);
 }
 
+export function dockMonitorIndexForRect(
+    rect, monitors, primaryIndex = 0) {
+    const availableMonitors = Array.isArray(monitors) ? monitors : [];
+    const requestedPrimary = Number.isInteger(primaryIndex) && primaryIndex >= 0
+        ? primaryIndex
+        : 0;
+    const fallbackIndex = availableMonitors.length === 0 ||
+        availableMonitors[requestedPrimary]
+        ? requestedPrimary
+        : 0;
+    if (!rect || availableMonitors.length === 0)
+        return fallbackIndex;
+
+    let bestIndex = fallbackIndex;
+    let bestArea = -1;
+    for (let index = 0; index < availableMonitors.length; index++) {
+        const monitor = availableMonitors[index];
+        if (!monitor)
+            continue;
+
+        const overlapWidth = Math.max(0,
+            Math.min(rect.x + rect.width, monitor.x + monitor.width) -
+            Math.max(rect.x, monitor.x));
+        const overlapHeight = Math.max(0,
+            Math.min(rect.y + rect.height, monitor.y + monitor.height) -
+            Math.max(rect.y, monitor.y));
+        const area = overlapWidth * overlapHeight;
+        if (area > bestArea) {
+            bestArea = area;
+            bestIndex = index;
+        }
+    }
+    return bestIndex;
+}
+
+export function dockPlacementChangesMonitor(
+    previous, next, monitors, primaryIndex = 0) {
+    if (!previous || !next)
+        return false;
+
+    return dockMonitorIndexForRect(
+        previous, monitors, primaryIndex) !==
+        dockMonitorIndexForRect(next, monitors, primaryIndex);
+}
+
 export function isPointerInsideDockInterior(
     placement, pointerX, pointerY, edgeMargin = 0) {
     const insideRect =
