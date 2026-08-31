@@ -1494,7 +1494,8 @@ void DockWindowThumbnailProvider::
 }
 
 void DockWindowThumbnailProvider::
-    hide_gnome_live_previews()
+    hide_gnome_live_previews(
+        bool animated)
 {
     if (!m_gnome_live_previews_requested)
         return;
@@ -1510,7 +1511,7 @@ void DockWindowThumbnailProvider::
         GNOME_THUMBNAIL_PATH,
         GNOME_THUMBNAIL_INTERFACE,
         "HideLivePreviews",
-        nullptr,
+        g_variant_new("(b)", animated),
         nullptr,
         G_DBUS_CALL_FLAGS_NONE,
         1000,

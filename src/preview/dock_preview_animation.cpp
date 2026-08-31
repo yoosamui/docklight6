@@ -159,7 +159,7 @@ void DockPreviewWindow::hide_preview()
     m_gnome_preview_remap_delay.disconnect();
     m_gnome_preview_reveal_delay.disconnect();
     m_replacing_gnome_wayland_preview = false;
-    stop_live_streams();
+    stop_live_streams(true);
     m_media_title.clear();
     m_live_window_ids.clear();
     m_dynamic_refresh = false;
@@ -306,8 +306,19 @@ void DockPreviewWindow::start_opacity_animation(
         cancel_opacity_animation();
         if (hiding)
         {
-            hide();
-            clear_cards();
+            // Shell owns the GNOME Wayland surface actor and live clones.
+            // Keep GTK mapped until their tooltip-style transition finishes.
+            m_opacity_timer =
+                Glib::signal_timeout().connect(
+                    [this]()
+                    {
+                        hide();
+                        clear_cards();
+                        set_opacity(1.0);
+                        return false;
+                    },
+                    DockConstants::
+                        TOOLTIP_FADE_DURATION_MS);
         }
         set_opacity(1.0);
         return;

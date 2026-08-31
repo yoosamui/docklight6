@@ -51,7 +51,9 @@ const THUMBNAIL_IFACE = `
       <arg type="d" direction="in" name="normalized_x"/>
       <arg type="d" direction="in" name="normalized_y"/>
     </method>
-    <method name="HideLivePreviews"/>
+    <method name="HideLivePreviews">
+      <arg type="b" direction="in" name="animated"/>
+    </method>
   </interface>
 </node>`;
 const PROTOCOL_VERSION = '9';
@@ -74,6 +76,10 @@ const DOCK_CLIP_FRAME_MS = 16;
 // window-management gesture.
 const PREVIEW_DOUBLE_CLICK_GUARD_US = 500000;
 const PREVIEW_DOUBLE_CLICK_DISTANCE_PX = 12;
+// Match the GTK tooltip's subtle centred fade/scale on GNOME Wayland.
+const PREVIEW_VISIBILITY_ANIMATION_MS = 180;
+const PREVIEW_VISIBILITY_MIN_SCALE = 0.96;
+const PREVIEW_VISIBILITY_INITIAL_OPACITY = 46;
 
 const TRACKABLE_TYPES = new Set([
     Meta.WindowType.NORMAL,
@@ -705,9 +711,13 @@ export default class DocklightWindowIntegration extends Extension {
                 target,
                 rect,
                 this._workAreaForMonitor(this._dockMonitorIndex()));
-        actor.remove_all_transitions();
-        actor.scale_x = 1;
-        actor.scale_y = 1;
+        const previewVisibilityAnimation =
+            target.type === 'preview' && Meta.is_wayland_compositor();
+        if (!previewVisibilityAnimation) {
+            actor.remove_all_transitions();
+            actor.scale_x = 1;
+            actor.scale_y = 1;
+        }
         actor.translation_x = resolvedTarget.x - rect.x;
         actor.translation_y = resolvedTarget.y - rect.y;
 
@@ -751,11 +761,64 @@ export default class DocklightWindowIntegration extends Extension {
             return;
 
         try {
-            transition.actor.set_opacity(transition.opacity);
+            const preview = this._auxiliaryPosition(window)?.type === 'preview';
+            if (preview && Meta.is_wayland_compositor()) {
+                transition.actor.set_pivot_point(0.5, 0.5);
+
+                // The old live overlay intentionally survives GTK's short
+                // unmap/remap when the pointer crosses to another DockItem.
+                // Revealing this replacement at full opacity avoids replaying
+                // the opening effect as a visible flash between items.
+                if (this._livePreviewOverlay) {
+                    transition.actor.scale_x = 1;
+                    transition.actor.scale_y = 1;
+                    transition.actor.set_opacity(transition.opacity);
+                } else {
+                    transition.actor.scale_x =
+                        PREVIEW_VISIBILITY_MIN_SCALE;
+                    transition.actor.scale_y =
+                        PREVIEW_VISIBILITY_MIN_SCALE;
+                    transition.actor.set_opacity(
+                        PREVIEW_VISIBILITY_INITIAL_OPACITY);
+                    transition.actor.ease({
+                        scale_x: 1,
+                        scale_y: 1,
+                        opacity: transition.opacity,
+                        duration: PREVIEW_VISIBILITY_ANIMATION_MS,
+                        mode: Clutter.AnimationMode.EASE_IN_OUT_QUINT,
+                    });
+                }
+            } else {
+                transition.actor.set_opacity(transition.opacity);
+            }
         } catch (_error) {
             // The actor can disappear while its GTK window is closing.
         }
         this._auxiliaryTransitions.delete(window);
+    }
+
+    _animatePreviewWindowActor(visible) {
+        if (!Meta.is_wayland_compositor())
+            return;
+
+        for (const window of this._auxiliaryWindowSignals.keys()) {
+            if (this._auxiliaryPosition(window)?.type !== 'preview')
+                continue;
+
+            const actor = window.get_compositor_private?.();
+            if (!actor || actor.is_destroyed?.())
+                continue;
+
+            actor.remove_all_transitions();
+            actor.set_pivot_point(0.5, 0.5);
+            actor.ease({
+                scale_x: visible ? 1 : PREVIEW_VISIBILITY_MIN_SCALE,
+                scale_y: visible ? 1 : PREVIEW_VISIBILITY_MIN_SCALE,
+                opacity: visible ? 255 : 0,
+                duration: PREVIEW_VISIBILITY_ANIMATION_MS,
+                mode: Clutter.AnimationMode.EASE_IN_OUT_QUINT,
+            });
+        }
     }
 
     _clearAuxiliaryWindow(window) {
@@ -2035,6 +2098,10 @@ export default class DocklightWindowIntegration extends Extension {
             return;
         }
 
+        const replacingPreviews = Boolean(this._livePreviewOverlay);
+        if (!replacingPreviews)
+            this._animatePreviewWindowActor(true);
+
         // Do not publish a transient outside state while replacing one set of
         // previews with another. The new rectangles are installed below and
         // immediately reconciled against Shell's compositor pointer.
@@ -2056,10 +2123,11 @@ export default class DocklightWindowIntegration extends Extension {
 
         let previewCount = 0;
         const previewRects = [];
-        // Mutter can expose an intermediate clone frame when opacity is
-        // animated on Wayland. Show those previews immediately; retain the
-        // existing entrance effect for GNOME X11.
-        const animatePreviews = !Meta.is_wayland_compositor();
+        // Animate a closed-to-open transition only. Adjacent DockItems reuse
+        // the live-overlay lifetime and replace their actors without passing
+        // through a low-opacity frame.
+        const animatePreviews =
+            Meta.is_wayland_compositor() && !replacingPreviews;
         const previewFadeActors = [];
         for (const [windowId, x, y, width, height] of previews) {
             if (width <= 0 || height <= 0)
@@ -2085,7 +2153,7 @@ export default class DocklightWindowIntegration extends Extension {
             const preview = new Clutter.Actor({
                 reactive: false,
                 clip_to_allocation: true,
-                opacity: animatePreviews ? 0 : 255,
+                opacity: 255,
                 x: previewOffsetX,
                 y: previewOffsetY,
                 width: previewWidth,
@@ -2112,6 +2180,12 @@ export default class DocklightWindowIntegration extends Extension {
                 style: 'background-color: transparent; ' +
                     'border-radius: 6px;',
             });
+            if (animatePreviews) {
+                selector.set_pivot_point(0.5, 0.5);
+                selector.scale_x = PREVIEW_VISIBILITY_MIN_SCALE;
+                selector.scale_y = PREVIEW_VISIBILITY_MIN_SCALE;
+                selector.opacity = PREVIEW_VISIBILITY_INITIAL_OPACITY;
+            }
             // Keep a border above the live clone. The selector fill must stay
             // below the clone so alpha in a PiP surface cannot tint the video,
             // but a fill alone is then invisible over the image and makes the
@@ -2152,7 +2226,7 @@ export default class DocklightWindowIntegration extends Extension {
                 selected: false,
             });
             if (animatePreviews)
-                previewFadeActors.push(preview);
+                previewFadeActors.push(selector);
             previewCount++;
         }
 
@@ -2161,13 +2235,15 @@ export default class DocklightWindowIntegration extends Extension {
             this._livePreviewOverlay = overlay;
             this._livePreviewRects = previewRects;
             this._publishPreviewPointerInside(true);
-            // On X11, fade only the thumbnail-sized clones. Animating the
-            // full-stage overlay would require a screen-sized blended surface.
-            for (const preview of previewFadeActors) {
-                preview.ease({
+            // Keep the full-stage overlay untransformed; only bounded cards
+            // participate in the opening effect.
+            for (const previewActor of previewFadeActors) {
+                previewActor.ease({
+                    scale_x: 1,
+                    scale_y: 1,
                     opacity: 255,
-                    duration: 100,
-                    mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                    duration: PREVIEW_VISIBILITY_ANIMATION_MS,
+                    mode: Clutter.AnimationMode.EASE_IN_OUT_QUINT,
                 });
             }
         } else {
@@ -2433,16 +2509,42 @@ export default class DocklightWindowIntegration extends Extension {
         }
     }
 
-    HideLivePreviewsAsync(_params, invocation) {
-        if (this._isThumbnailCallerAuthorized(invocation))
-            this._destroyLivePreviews();
+    HideLivePreviewsAsync(params, invocation) {
+        const [animated] = params;
+        if (this._isThumbnailCallerAuthorized(invocation)) {
+            if (animated)
+                this._animatePreviewWindowActor(false);
+            this._destroyLivePreviews(true, animated);
+        }
         invocation.return_value(null);
     }
 
-    _destroyLivePreviews(publishPointerOutside = true) {
+    _destroyLivePreviews(publishPointerOutside = true, animated = false) {
         if (this._livePreviewOverlay) {
             this._livePreviewOverlay.remove_all_transitions();
-            this._livePreviewOverlay.destroy();
+            const overlay = this._livePreviewOverlay;
+            if (animated && Meta.is_wayland_compositor()) {
+                for (const {selector} of this._livePreviewRects) {
+                    selector.remove_all_transitions();
+                    selector.set_pivot_point(0.5, 0.5);
+                    selector.ease({
+                        scale_x: PREVIEW_VISIBILITY_MIN_SCALE,
+                        scale_y: PREVIEW_VISIBILITY_MIN_SCALE,
+                        opacity: 0,
+                        duration: PREVIEW_VISIBILITY_ANIMATION_MS,
+                        mode: Clutter.AnimationMode.EASE_IN_OUT_QUINT,
+                    });
+                }
+                GLib.timeout_add(
+                    GLib.PRIORITY_DEFAULT,
+                    PREVIEW_VISIBILITY_ANIMATION_MS,
+                    () => {
+                        overlay.destroy();
+                        return GLib.SOURCE_REMOVE;
+                    });
+            } else {
+                overlay.destroy();
+            }
             this._livePreviewOverlay = null;
         }
 

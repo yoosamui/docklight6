@@ -102,7 +102,8 @@ public:
         const WindowId &window_id,
         double normalized_x,
         double normalized_y);
-    void hide_gnome_live_previews();
+    void hide_gnome_live_previews(
+        bool animated = false);
 
 private:
     std::shared_ptr<State> m_state;

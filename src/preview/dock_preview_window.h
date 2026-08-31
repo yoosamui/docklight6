@@ -189,7 +189,8 @@ private:
     void start_live_streams(
         DockWindowThumbnailProvider::LivePreviewsCallback
             callback = {});
-    void stop_live_streams();
+    void stop_live_streams(
+        bool animate_gnome_hide = false);
     void clear_cards();
     void complete_presentation();
     void cancel_opacity_animation();
