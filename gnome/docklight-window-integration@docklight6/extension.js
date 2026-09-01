@@ -2210,6 +2210,7 @@ export default class DocklightWindowIntegration extends Extension {
             const windowActor = window?.get_compositor_private?.();
             if (!window || !windowActor || windowActor.is_destroyed?.())
                 continue;
+            const contentActor = windowActor.get_last_child?.();
 
             const frame = window.get_frame_rect();
             if (frame.width <= 0 || frame.height <= 0)
@@ -2237,6 +2238,15 @@ export default class DocklightWindowIntegration extends Extension {
             // match GNOME Shell's own construction order instead of passing
             // it as a construct property.
             preview.layout_manager = layout;
+            const clone = layout.add_window(window);
+            if (!clone)
+                continue;
+            // Keep the layout's geometry and lifetime tracking, but exclude
+            // compositor effects attached to the WindowActor from its clone.
+            // The final child is the X11 surface actor or Wayland container.
+            if (contentActor && contentActor !== windowActor &&
+                contentActor.is_destroyed?.() !== true)
+                clone.source = contentActor;
             // Keep the compositor clone paint-only so repeatedly replacing
             // previews cannot leave stale Shell chrome in the stage input
             // region. The GTK card underneath remains responsible for mouse
@@ -2277,7 +2287,6 @@ export default class DocklightWindowIntegration extends Extension {
             selector.add_child(selectionOutline);
             selector.set_child_above_sibling(selectionOutline, preview);
             overlay.add_child(selector);
-            layout.add_window(window);
             // WindowPreviewLayout owns the compositor clone actors it creates.
             // Keep those descendants non-reactive as well: preview layouts
             // may add clone actors after constructing the container.

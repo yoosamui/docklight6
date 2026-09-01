@@ -235,8 +235,16 @@ assert.doesNotMatch(
     "HideLivePreviews must remain argument-free for installed-version compatibility");
 assert.match(
     extensionSource,
-    /ShowLivePreviewsAsync[\s\S]*?new Shell\.WindowPreviewLayout\(\)[\s\S]*?layout\.add_window\(window\)/,
-    "premium GNOME previews must clone live compositor actors instead of polling screenshots");
+    /ShowLivePreviewsAsync[\s\S]*?windowActor\.get_last_child\?\.\(\)[\s\S]*?new Shell\.WindowPreviewLayout\(\)[\s\S]*?const clone = layout\.add_window\(window\)[\s\S]*?clone\.source = contentActor/,
+    "premium GNOME previews must clone the live content actor without compositor window effects");
+assert.match(
+    extensionSource,
+    /CaptureWindowAsync[\s\S]*?const content = actor\.paint_to_content\(null\)/,
+    "GNOME snapshot fallback must use the WindowActor capture API");
+assert.doesNotMatch(
+    extensionSource,
+    /const (?:surface|content)Actor\s*=\s*[^;]*get_texture\?\.\(\)/,
+    "GNOME previews must not confuse MetaShapedTexture content with a ClutterActor");
 assert.match(
     extensionSource,
     /_isApplicationAuxiliary\(window\)[\s\S]*?skip_taskbar[\s\S]*?is_above[\s\S]*?sameApplication[\s\S]*?_windowPayload\(window\)[\s\S]*?_isApplicationAuxiliary\(window\)/,
