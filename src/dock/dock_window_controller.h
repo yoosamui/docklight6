@@ -217,5 +217,7 @@ private:
     ScreenPosition m_initial_x11_target_position;
     int m_initial_x11_placement_attempt_count = 0;
 
+    bool m_backend_dock_pointer_state_known = false;
+    bool m_backend_dock_pointer_inside = false;
     bool m_has_applied_layout = false;
 };

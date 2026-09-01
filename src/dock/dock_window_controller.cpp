@@ -360,6 +360,8 @@ void DockWindowController::initialize()
                 .connect(
                     [this](bool inside)
                     {
+                        m_backend_dock_pointer_state_known = true;
+                        m_backend_dock_pointer_inside = inside;
                         m_autohide_controller
                             ->set_backend_pointer_inside(inside);
                     });
@@ -1482,8 +1484,12 @@ void DockWindowController::start_hide_timer()
     m_tooltip_manager->start_hide_timer(
         [this]()
         {
+            const bool dock_pointer_inside =
+                m_backend_dock_pointer_state_known
+                    ? m_backend_dock_pointer_inside
+                    : m_window.pointer_is_inside();
             return m_tooltip_manager->pointer_inside() ||
-                   m_window.pointer_is_inside() ||
+                   dock_pointer_inside ||
                    m_preview_manager->pointer_inside();
         });
 }

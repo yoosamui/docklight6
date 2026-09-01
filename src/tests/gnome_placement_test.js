@@ -669,6 +669,10 @@ assert.match(
     /DockItem::on_enter_notify_event[\s\S]*?schedule_show_tooltip[\s\S]*?DockItem::on_leave_notify_event[\s\S]*?schedule_hide_tooltip/,
     "each item must start and cancel tooltip timing from its own crossing events");
 assert.match(
+    dockWindowControllerSource,
+    /signal_dock_pointer_inside_changed\(\)[\s\S]*?m_backend_dock_pointer_state_known = true;[\s\S]*?m_backend_dock_pointer_inside = inside;[\s\S]*?DockWindowController::start_hide_timer\(\)[\s\S]*?m_backend_dock_pointer_state_known[\s\S]*?m_backend_dock_pointer_inside[\s\S]*?m_window\.pointer_is_inside\(\)/,
+    "GNOME pointer tracking must override the oversized XWayland dock surface when closing overlays");
+assert.match(
     tooltipManagerSource,
     /TooltipManager::schedule_show[\s\S]*?hide\(\);[\s\S]*?start_show_timer\(item, text/,
     "adjacent dock items must fade the previous tooltip before the delayed reveal");
