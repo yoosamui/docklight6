@@ -199,7 +199,9 @@ void DockAboutDialog::show(
             VERSION));
     Gtk::Label comments(
         _("A lightweight application dock.\n"
-          "Author and Maintainer: yoosamui"));
+          "Author and Maintainer: yoosamui\n\n"
+          "Copyright © 2018-2026 Juan González"));
+
     Gtk::LinkButton website(
         "https://github.com/yoosamui/DockLight",
         "yoosamui/DockLight");
