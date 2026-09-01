@@ -737,12 +737,18 @@ export default class DocklightWindowIntegration extends Extension {
         actor.translation_y = resolvedTarget.y - rect.y;
 
         // KDE's layer-shell backend places private surfaces on OVERLAY and
-        // the dock on TOP.  GNOME has no layer-shell, so both keep-above
-        // windows enter Mutter's TOP stack layer.  Raise the later private
-        // surface through Meta.Window so Mutter preserves the same ordering;
-        // changing WindowActor sibling order is only temporary and is undone
-        // by the compositor's next restack.
+        // the dock on TOP. GNOME has no layer-shell, so explicitly preserve
+        // the GTK auxiliary as sticky and above before raising it within
+        // Mutter's TOP stack layer. GTK submits equivalent XWayland hints,
+        // but a cross-workspace activation can race those hints and move the
+        // card/header actor away while the Shell-owned live-preview overlay
+        // remains on screen. That split state loses the visible Preview
+        // border and leaves its next click with confusing toggle feedback.
+        // Changing WindowActor sibling order is only temporary and is undone
+        // by the compositor's next restack, so keep this on Meta.Window.
         try {
+            window.make_above();
+            window.stick();
             window.raise();
         } catch (_error) {
             // The Meta.Window can disappear while a preview is closing.

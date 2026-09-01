@@ -305,6 +305,10 @@ assert.match(
     extensionSource,
     /_finishAuxiliaryTransition\(window\)[\s\S]*?if \(this\._previewSessionOpen\)[\s\S]*?scale_x = 1;[\s\S]*?set_opacity\(transition\.opacity\)[\s\S]*?else \{[\s\S]*?PREVIEW_VISIBILITY_INITIAL_OPACITY/,
     "a remapped GTK preview must use logical session state rather than transient overlay lifetime");
+assert.match(
+    extensionSource,
+    /_placeAuxiliaryWindow\(window,[\s\S]*?window\.make_above\(\);[\s\S]*?window\.stick\(\);[\s\S]*?window\.raise\(\);[\s\S]*?_finishAuxiliaryTransition\(window\)/,
+    "GNOME auxiliary surfaces must remain above and sticky when preview activation changes workspaces");
 assert.doesNotMatch(
     extensionSource,
     /Main\.layoutManager\.trackChrome\(preview, \{/,
