@@ -279,6 +279,9 @@ export default class DocklightWindowIntegration extends Extension {
         if (this._waylandIntegration) {
             this._connect(global.display, 'window-demands-attention',
                 (_display, window) => this._publishWindow(window));
+            this._connect(global.display, 'in-fullscreen-changed', () => {
+                this._enforceDockWindowLayer();
+            });
             this._connect(global.display, 'notify::focus-window', () => {
                 this._publishActiveWindow();
             });
@@ -890,7 +893,23 @@ export default class DocklightWindowIntegration extends Extension {
             return;
 
         try {
-            this._dockWindow.make_above();
+            const monitorIndex = this._dockMonitorIndex();
+            const monitorInFullscreen =
+                global.display.get_monitor_in_fullscreen(monitorIndex);
+
+            // Mutter expects desktop controls to yield when a fullscreen
+            // window obscures their monitor. The dock normally needs ABOVE
+            // because its native Wayland surface is an ordinary toplevel,
+            // but retaining that state also puts it over fullscreen clients.
+            // Drop only ABOVE while fullscreen is active; keeping the dock
+            // mapped preserves GTK's autohide state and makes restoration
+            // immediate when Mutter reports that fullscreen has ended.
+            if (monitorInFullscreen) {
+                if (this._dockWindow.is_above())
+                    this._dockWindow.unmake_above();
+            } else if (!this._dockWindow.is_above()) {
+                this._dockWindow.make_above();
+            }
             this._dockWindow.stick();
         } catch (_error) {
             // The dock can be unmanaged while a restack is being delivered.
@@ -1550,6 +1569,7 @@ export default class DocklightWindowIntegration extends Extension {
             Main.layoutManager.primaryIndex);
         this._dockPlacementAttempts = 0;
         this._dockPlacement = placement;
+        this._enforceDockWindowLayer();
         this._updateDockRevealActor();
         // Routine DockItem, home-item, or icon-size changes resize the mapped
         // dock without creating a provisional surface. Keep its actor visible

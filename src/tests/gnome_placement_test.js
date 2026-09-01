@@ -1397,8 +1397,12 @@ assert.match(
     "GNOME must ignore Shell window IDs when no persistent identity exists");
 assert.match(
     extensionSource,
-    /_enforceDockWindowLayer\(\)[\s\S]*?make_above\(\)[\s\S]*?stick\(\)/,
-    "GNOME must keep the dock above ordinary windows on every workspace");
+    /in-fullscreen-changed[\s\S]*?_enforceDockWindowLayer\(\)/,
+    "GNOME must re-evaluate dock layering when fullscreen state changes");
+assert.match(
+    extensionSource,
+    /_enforceDockWindowLayer\(\)[\s\S]*?get_monitor_in_fullscreen\(monitorIndex\)[\s\S]*?unmake_above\(\)[\s\S]*?make_above\(\)[\s\S]*?stick\(\)/,
+    "GNOME must yield the dock to fullscreen windows and restore it above ordinary windows");
 
 assert.deepStrictEqual(
     {...calculateDockRevealRect(pointerFixtures[0].placement)},
