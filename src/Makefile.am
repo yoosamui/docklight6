@@ -21,6 +21,7 @@ check_PROGRAMS = \
 
 TESTS = \
     $(check_PROGRAMS) \
+    tests/dock_visual_style_test.js \
     tests/gnome_placement_test.js \
     tests/kwin_minimize_effect_test.js \
     tests/kwin_script_test.js \
@@ -462,6 +463,7 @@ presentation_selector_test_LDADD = \
     $(GTKMM_LIBS)
 
 EXTRA_DIST = \
+    tests/dock_visual_style_test.js \
     tests/gnome_placement_test.js \
     tests/kwin_minimize_effect_test.js \
     tests/kwin_script_test.js \

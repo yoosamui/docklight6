@@ -134,7 +134,7 @@ manage_all_workspaces = true
 )";
 
 // Configuration block added when the dock-gradient setting is missing.
-const char *GRADIENT_BACKGROUND_SETTING_TEMPLATE = R"(# Display the default black-to-gray dock background gradient.
+const char *GRADIENT_BACKGROUND_SETTING_TEMPLATE = R"(# Display a dock background gradient derived from the current GTK theme.
 # When false, use the current GTK theme background.
 # Valid values: true, false
 gradient_background = true
@@ -243,7 +243,7 @@ preview_show_delay = 500
 # Valid values: bottom, left, top, right
 location =
 
-# Display the default black-to-gray dock background gradient.
+# Display a dock background gradient derived from the current GTK theme.
 # When false, use the current GTK theme background.
 # Valid values: true, false
 gradient_background = true

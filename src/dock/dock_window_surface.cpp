@@ -536,10 +536,11 @@ void DockWindow::apply_visual_style()
     const std::string background_css =
         m_controller->settings()
                 .gradient_background()
-            ? " background-color: black;"
+            ? " background-color: @theme_bg_color;"
               " background-image: linear-gradient("
-              "to top, #000000 0, #000000 2px, "
-              "#413f3f 90%);"
+              "to top, shade(@theme_bg_color, 0.70) 0, "
+              "shade(@theme_bg_color, 0.70) 2px, "
+              "shade(@theme_bg_color, 1.20) 90%);"
             : " background-color: @theme_bg_color;"
               " background-image: none;";
 

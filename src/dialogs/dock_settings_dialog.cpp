@@ -638,8 +638,6 @@ void DockSettingsDialog::show(
     gradient_background.set_active(
         current.settings
             .gradient_background());
-    gradient_background.set_tooltip_text(
-        _("Use the black-to-gray dock background gradient"));
 
     Gtk::CheckButton rounded_corners;
     rounded_corners.set_active(
