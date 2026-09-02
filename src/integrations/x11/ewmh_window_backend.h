@@ -56,6 +56,9 @@ public:
     bool close_window(const WindowId &window_id) override;
     bool set_window_minimized(const WindowId &window_id, bool minimized) override;
     bool set_window_maximized(const WindowId &window_id, bool maximized) override;
+    bool place_window(
+        const WindowId &window_id,
+        const WindowPlacement &placement) override;
     bool set_window_icon_geometry(const WindowId &window_id,
                                   const WindowIconGeometry &geometry) override;
 

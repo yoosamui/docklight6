@@ -550,6 +550,7 @@ WindowBackendCapabilities HyprlandWindowBackend::capabilities() const
     result.can_raise = true;
     result.can_close = true;
     result.can_maximize = true;
+    result.can_place = true;
     result.provides_stacking_order = true;
     result.provides_virtual_desktops = true;
     result.provides_frame_geometry = true;
@@ -646,6 +647,129 @@ bool HyprlandWindowBackend::set_window_maximized(
         selector(window_id) +
         "\", mode = \"maximized\", action = \"" +
         (maximized ? "enable" : "disable") + "\" })");
+}
+
+bool HyprlandWindowBackend::place_window(
+    const WindowId &window_id,
+    const WindowPlacement &placement)
+{
+    if ((!placement.workspace_number &&
+         !placement.frame_geometry))
+    {
+        return false;
+    }
+
+    if (std::none_of(
+            m_snapshot.windows.begin(),
+            m_snapshot.windows.end(),
+            [&window_id](
+                const ManagedWindow &window)
+            {
+                return window.id == window_id;
+            }))
+    {
+        return false;
+    }
+
+    if (placement.workspace_number &&
+        *placement.workspace_number == 0)
+    {
+        return false;
+    }
+
+    if (placement.frame_geometry &&
+        (placement.frame_geometry->width <= 0 ||
+         placement.frame_geometry->height <= 0))
+    {
+        return false;
+    }
+
+    if (m_lua_dispatch)
+    {
+        const auto target = selector(window_id);
+        bool accepted = true;
+
+        if (placement.workspace_number)
+        {
+            accepted = dispatch_lua(
+                "hl.dsp.window.move({ window = \"" +
+                target +
+                "\", workspace = \"" +
+                std::to_string(
+                    *placement.workspace_number) +
+                "\", follow = false })") &&
+                accepted;
+        }
+
+        if (placement.frame_geometry)
+        {
+            const auto &geometry =
+                *placement.frame_geometry;
+            accepted = dispatch_lua(
+                "hl.dsp.window.resize({ window = \"" +
+                target +
+                "\", x = " +
+                std::to_string(geometry.width) +
+                ", y = " +
+                std::to_string(geometry.height) +
+                ", relative = false })") &&
+                accepted;
+            accepted = dispatch_lua(
+                "hl.dsp.window.move({ window = \"" +
+                target +
+                "\", x = " +
+                std::to_string(geometry.x) +
+                ", y = " +
+                std::to_string(geometry.y) +
+                ", relative = false })") &&
+                accepted;
+        }
+
+        return accepted;
+    }
+
+    const auto address =
+        m_snapshot.addresses.find(window_id);
+    if (address == m_snapshot.addresses.end())
+        return false;
+
+    const auto target =
+        ",address:" + address->second;
+    bool accepted = true;
+
+    if (placement.workspace_number)
+    {
+        accepted = dispatch_legacy(
+            "movetoworkspacesilent",
+            std::to_string(
+                *placement.workspace_number) +
+                target) &&
+            accepted;
+    }
+
+    if (placement.frame_geometry)
+    {
+        const auto &geometry =
+            *placement.frame_geometry;
+        accepted = dispatch_legacy(
+            "resizewindowpixel",
+            "exact " +
+                std::to_string(geometry.width) +
+                " " +
+                std::to_string(geometry.height) +
+                target) &&
+            accepted;
+        accepted = dispatch_legacy(
+            "movewindowpixel",
+            "exact " +
+                std::to_string(geometry.x) +
+                " " +
+                std::to_string(geometry.y) +
+                target) &&
+            accepted;
+    }
+
+    return accepted;
 }
 
 bool HyprlandWindowBackend::set_window_icon_geometry(

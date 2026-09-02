@@ -1407,6 +1407,44 @@
         command,
         identifier,
         state) {
+        if (command === "place") {
+            const values =
+                decodedList(identifier);
+            const window =
+                trackedWindows[values[0]];
+
+            if (!window ||
+                !isTrackable(window))
+                return;
+
+            const desktopNumber =
+                Number(values[1]);
+            if (Number.isInteger(desktopNumber) &&
+                desktopNumber > 0 &&
+                desktopNumber <=
+                    workspace.desktops.length) {
+                window.desktops = [
+                    workspace.desktops[
+                        desktopNumber - 1]];
+            }
+
+            const geometry =
+                values.slice(2, 6).map(Number);
+            if (geometry.length === 4 &&
+                geometry.every(Number.isInteger) &&
+                geometry[2] > 0 &&
+                geometry[3] > 0) {
+                window.setMaximize(false, false);
+                window.frameGeometry = {
+                    x: geometry[0],
+                    y: geometry[1],
+                    width: geometry[2],
+                    height: geometry[3]
+                };
+            }
+            return;
+        }
+
         if (command === "hide") {
             const identifiers =
                 decodedList(identifier);

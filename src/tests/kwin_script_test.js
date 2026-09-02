@@ -187,6 +187,11 @@ const workspace = {
         plasmaPanel,
         dockWindow
     ],
+    desktops: [
+        {id: "desktop-one", x11DesktopNumber: 1},
+        {id: "desktop-two", x11DesktopNumber: 2},
+        {id: "desktop-three", x11DesktopNumber: 3}
+    ],
     currentDesktop: {
         id: "desktop,two",
         x11DesktopNumber: 1
@@ -965,6 +970,44 @@ deliverCommand(
 assert.strictEqual(
     managedWindow.maximized,
     true);
+
+deliverCommand(
+    "place",
+    false,
+    "window-1,3,120,200,400,500");
+assert.strictEqual(
+    managedWindow.desktops.length,
+    1);
+assert.strictEqual(
+    managedWindow.desktops[0],
+    workspace.desktops[2]);
+assert.strictEqual(
+    managedWindow.frameGeometry.x,
+    120);
+assert.strictEqual(
+    managedWindow.frameGeometry.y,
+    200);
+assert.strictEqual(
+    managedWindow.frameGeometry.width,
+    400);
+assert.strictEqual(
+    managedWindow.frameGeometry.height,
+    500);
+assert.strictEqual(
+    managedWindow.maximized,
+    false);
+managedWindow.desktops = [
+    {
+        id: "desktop,one",
+        x11DesktopNumber: 2
+    }
+];
+managedWindow.frameGeometry = {
+    x: 10,
+    y: 20,
+    width: 800,
+    height: 600
+};
 
 deliverCommand(
     "close",

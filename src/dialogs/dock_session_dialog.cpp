@@ -312,12 +312,14 @@ void DockSessionDialog::show(
 
     add_item.signal_clicked().connect(
         [&item_list,
-         &capture_window]()
+         &capture_window,
+         window_registry]()
         {
             auto *item =
                 Gtk::manage(
                     new DockSessionItem(
-                        capture_window));
+                        capture_window,
+                        window_registry));
 
             item->signal_remove_requested().connect(
                 [item]()

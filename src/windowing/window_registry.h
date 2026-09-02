@@ -95,6 +95,9 @@ public:
     bool set_window_maximized(
         const WindowId &window_id,
         bool maximized);
+    bool place_window(
+        const WindowId &window_id,
+        const WindowPlacement &placement);
     bool minimize_all();
     bool unminimize_all();
     bool maximize_all();

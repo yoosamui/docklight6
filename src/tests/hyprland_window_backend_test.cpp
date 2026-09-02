@@ -104,6 +104,7 @@ int main()
     assert(capabilities.can_raise);
     assert(capabilities.can_close);
     assert(capabilities.can_maximize);
+    assert(capabilities.can_place);
     assert(!capabilities.can_minimize);
     assert(capabilities.provides_virtual_desktops);
     assert(capabilities.provides_frame_geometry);
@@ -120,6 +121,27 @@ int main()
     assert(backend.set_window_maximized("18000001", true));
     assert(commands.back()[1] == "fullscreen");
     assert(commands.back()[2] == "1 set");
+    assert(backend.place_window(
+        "18000001",
+        WindowPlacement{
+            4,
+            WindowGeometry{
+                120,
+                200,
+                400,
+                500}}));
+    assert(commands[commands.size() - 3][1] ==
+           "movetoworkspacesilent");
+    assert(commands[commands.size() - 3][2] ==
+           "4,address:0xabc");
+    assert(commands[commands.size() - 2][1] ==
+           "resizewindowpixel");
+    assert(commands[commands.size() - 2][2] ==
+           "exact 400 500,address:0xabc");
+    assert(commands.back()[1] ==
+           "movewindowpixel");
+    assert(commands.back()[2] ==
+           "exact 120 200,address:0xabc");
     assert(!backend.set_window_minimized("18000001", true));
     assert(!backend.hide_windows({"18000001"}));
 

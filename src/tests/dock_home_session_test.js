@@ -90,10 +90,18 @@ assert.match(
     sessionItemSource,
     /m_remove_button\.signal_clicked\(\)[\s\S]*?m_remove_requested\.emit\(\)/,
     "Remove must emit only the card's presentation-level removal request");
+assert.match(
+    sessionItemSource,
+    /m_launch_button\.signal_clicked\(\)[\s\S]*?DockSessionItem::launcher/,
+    "Launch must call the Session item's launcher function");
+assert.match(
+    sessionItemSource,
+    /application_with_parameters[\s\S]*?signal_changed\(\)[\s\S]*?launch_application->launch[\s\S]*?place_window/,
+    "launcher must pass parameters and place the matching launched window");
 assert.doesNotMatch(
     sessionDialogSource + sessionItemSource,
-    /docklight\.data|DockConfiguration|LauncherManager|move_to_workspace/,
-    "Session capture must not introduce persistence or window actions");
+    /docklight\.data|DockConfiguration|LauncherManager/,
+    "Session launching must not introduce persistence");
 
 assert.match(
     makefileSource,

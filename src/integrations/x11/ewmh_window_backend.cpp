@@ -210,6 +210,7 @@ WindowBackendCapabilities EwmhWindowBackend::capabilities() const
     result.can_close = true;
     result.can_minimize = true;
     result.can_maximize = true;
+    result.can_place = true;
     result.provides_stacking_order = true;
     result.provides_virtual_desktops = true;
     result.provides_frame_geometry = true;
@@ -509,6 +510,65 @@ bool EwmhWindowBackend::set_window_maximized(const WindowId &id,
         wnck_window_maximize(window);
     else
         wnck_window_unmaximize(window);
+    return true;
+}
+
+bool EwmhWindowBackend::place_window(
+    const WindowId &id,
+    const WindowPlacement &placement)
+{
+    auto *window = find_window(id);
+    if (!window ||
+        (!placement.workspace_number &&
+         !placement.frame_geometry))
+    {
+        return false;
+    }
+
+    if (placement.workspace_number)
+    {
+        const auto number =
+            *placement.workspace_number;
+        if (number == 0 || !m_screen)
+            return false;
+
+        auto *workspace =
+            wnck_screen_get_workspace(
+                m_screen,
+                static_cast<int>(number - 1));
+        if (!workspace)
+            return false;
+
+        wnck_window_move_to_workspace(
+            window,
+            workspace);
+    }
+
+    if (placement.frame_geometry)
+    {
+        const auto &geometry =
+            *placement.frame_geometry;
+        if (geometry.width <= 0 ||
+            geometry.height <= 0)
+        {
+            return false;
+        }
+
+        wnck_window_unmaximize(window);
+        wnck_window_set_geometry(
+            window,
+            WNCK_WINDOW_GRAVITY_CURRENT,
+            static_cast<WnckWindowMoveResizeMask>(
+                WNCK_WINDOW_CHANGE_X |
+                WNCK_WINDOW_CHANGE_Y |
+                WNCK_WINDOW_CHANGE_WIDTH |
+                WNCK_WINDOW_CHANGE_HEIGHT),
+            geometry.x,
+            geometry.y,
+            geometry.width,
+            geometry.height);
+    }
+
     return true;
 }
 

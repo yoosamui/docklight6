@@ -55,6 +55,9 @@ KWinWindowBackend::capabilities() const
     capabilities.can_close = true;
     capabilities.can_minimize = true;
     capabilities.can_maximize = true;
+    capabilities.can_place =
+        m_registered_protocol_version >=
+        KWinIntegrationProtocol::VERSION;
     capabilities.provides_stacking_order =
         true;
     capabilities.provides_activities = true;
@@ -282,6 +285,63 @@ bool KWinWindowBackend::
             SET_MAXIMIZED,
         window_id,
         maximized);
+}
+
+bool KWinWindowBackend::place_window(
+    const WindowId &window_id,
+    const WindowPlacement &placement)
+{
+    if (!m_connected ||
+        !m_command_handler ||
+        !find_window(window_id) ||
+        m_registered_protocol_version <
+            KWinIntegrationProtocol::VERSION ||
+        (!placement.workspace_number &&
+         !placement.frame_geometry))
+    {
+        return false;
+    }
+
+    if (placement.workspace_number &&
+        *placement.workspace_number == 0)
+    {
+        return false;
+    }
+
+    if (placement.frame_geometry &&
+        (placement.frame_geometry->width <= 0 ||
+         placement.frame_geometry->height <= 0))
+    {
+        return false;
+    }
+
+    std::vector<WindowId> values{
+        window_id,
+        placement.workspace_number
+            ? std::to_string(
+                  *placement.workspace_number)
+            : std::string{},
+        {},
+        {},
+        {},
+        {}};
+
+    if (placement.frame_geometry)
+    {
+        const auto &geometry =
+            *placement.frame_geometry;
+        values[2] = std::to_string(geometry.x);
+        values[3] = std::to_string(geometry.y);
+        values[4] = std::to_string(geometry.width);
+        values[5] = std::to_string(geometry.height);
+    }
+
+    return m_command_handler(
+        KWinWindowCommand{
+            window_id,
+            KWinWindowCommandType::PLACE,
+            false,
+            std::move(values)});
 }
 
 bool KWinWindowBackend::

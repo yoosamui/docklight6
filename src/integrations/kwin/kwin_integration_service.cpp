@@ -1266,6 +1266,12 @@ void KWinIntegrationService::
         SET_MAXIMIZED:
         command_name = "set-maximized";
         break;
+    case KWinWindowCommandType::PLACE:
+        command_name = "place";
+        identifier =
+            KWinProtocolCodec::encode_string_array(
+                command.window_ids);
+        break;
     case KWinWindowCommandType::PRESENT:
         command_name = "present";
         identifier =

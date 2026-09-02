@@ -7,11 +7,14 @@
 // dock_session_item.cpp
 //
 // Implementation overview:
-// Builds one editable Session Item card and captures normalized window data.
+// Builds one editable Session Item card, captures normalized window data, and
+// launches one application instance with deferred window placement.
 //
 // Important implementation decisions:
 // - Paste copies available normalized metadata from the selected window.
-// - Launch remains intentionally inert in this implementation step.
+// - Launch uses a desktop entry when available and safely parses Parameters.
+// - Placement waits for the matching new/activated window and then crosses the
+//   WindowRegistry boundary exactly once.
 // - Remove emits a presentation signal; the containing editor decides which
 //   card to remove.
 // - Every value lives only in GTK widgets and is discarded with the dialog.
@@ -19,11 +22,19 @@
 // ------------------------------------------------------------
 
 #include "dock_session_item.h"
+#include "presentation/presentation_selector.h"
+#include "windowing/window_registry.h"
 
 #include <gdkmm/pixbufloader.h>
 #include <giomm/desktopappinfo.h>
 #include <glibmm/i18n.h>
+#include <glibmm/miscutils.h>
+#include <glibmm/shell.h>
 
+#include <algorithm>
+#include <charconv>
+#include <cctype>
+#include <string_view>
 #include <utility>
 
 namespace
@@ -36,6 +47,14 @@ Glib::RefPtr<Gio::DesktopAppInfo> find_desktop_application(
 
     try
     {
+        if (Glib::path_is_absolute(
+                desktop_file_name))
+        {
+            return Gio::DesktopAppInfo::
+                create_from_filename(
+                    desktop_file_name);
+        }
+
         return Gio::DesktopAppInfo::create(
             desktop_file_name);
     }
@@ -43,6 +62,150 @@ Glib::RefPtr<Gio::DesktopAppInfo> find_desktop_application(
     {
         return {};
     }
+}
+
+std::string normalized_application_id(
+    std::string value)
+{
+    if (value.empty())
+        return {};
+
+    if (Glib::path_is_absolute(value))
+        value = Glib::path_get_basename(value);
+
+    std::transform(
+        value.begin(),
+        value.end(),
+        value.begin(),
+        [](unsigned char character)
+        {
+            return static_cast<char>(
+                std::tolower(character));
+        });
+
+    constexpr std::string_view suffix =
+        ".desktop";
+    if (value.size() >= suffix.size() &&
+        value.compare(
+            value.size() - suffix.size(),
+            suffix.size(),
+            suffix) == 0)
+    {
+        value.erase(
+            value.size() - suffix.size());
+    }
+
+    return value;
+}
+
+std::optional<int> parse_integer(
+    const std::string &text)
+{
+    const auto first = std::find_if_not(
+        text.begin(),
+        text.end(),
+        [](unsigned char character)
+        {
+            return std::isspace(character);
+        });
+    const auto last = std::find_if_not(
+        text.rbegin(),
+        text.rend(),
+        [](unsigned char character)
+        {
+            return std::isspace(character);
+        }).base();
+
+    if (first >= last)
+        return std::nullopt;
+
+    const auto begin =
+        text.data() +
+        std::distance(text.begin(), first);
+    const auto end =
+        text.data() +
+        std::distance(text.begin(), last);
+    int value = 0;
+    const auto result = std::from_chars(
+        begin,
+        end,
+        value);
+    return result.ec == std::errc{} &&
+                   result.ptr == end
+               ? std::optional<int>{value}
+               : std::nullopt;
+}
+
+std::optional<std::pair<int, int>> parse_pair(
+    const std::string &text)
+{
+    const auto separator =
+        text.find_first_of("xX");
+    if (separator == std::string::npos)
+        return std::nullopt;
+
+    const auto first =
+        parse_integer(text.substr(0, separator));
+    const auto second =
+        parse_integer(text.substr(separator + 1));
+    if (!first || !second)
+        return std::nullopt;
+
+    return std::make_pair(*first, *second);
+}
+
+Glib::RefPtr<Gdk::AppLaunchContext>
+application_launch_context(
+    const Glib::RefPtr<Gio::AppInfo> &application)
+{
+    const auto display =
+        Gdk::Display::get_default();
+    if (!display)
+        return {};
+
+    auto context =
+        display->get_app_launch_context();
+    if (!context)
+        return {};
+
+    context->set_timestamp(
+        gtk_get_current_event_time());
+    if (application)
+        context->set_icon(
+            application->get_icon());
+
+    prepare_application_launch_context(
+        G_APP_LAUNCH_CONTEXT(
+            context->gobj()));
+    return context;
+}
+
+Glib::RefPtr<Gio::AppInfo>
+application_with_parameters(
+    const Glib::RefPtr<Gio::DesktopAppInfo> &application,
+    const std::string &parameters)
+{
+    if (parameters.empty())
+        return application;
+
+    const auto executable =
+        application->get_executable();
+    if (executable.empty())
+        return {};
+
+    std::string command =
+        Glib::shell_quote(executable);
+    for (const auto &argument :
+         Glib::shell_parse_argv(parameters))
+    {
+        command += " " +
+                   Glib::shell_quote(argument);
+    }
+
+    return Gio::AppInfo::create_from_commandline(
+        command,
+        application->get_display_name(),
+        Gio::APP_INFO_CREATE_NONE);
 }
 
 Glib::RefPtr<Gdk::Pixbuf> load_window_icon(
@@ -106,7 +269,8 @@ std::string workspace_text(
 }
 
 DockSessionItem::DockSessionItem(
-    CaptureWindowProvider capture_window)
+    CaptureWindowProvider capture_window,
+    WindowRegistry *window_registry)
     : m_app_title_label(_("App Title")),
       m_app_title(true),
       m_actions(Gtk::ORIENTATION_HORIZONTAL, 6),
@@ -119,7 +283,8 @@ DockSessionItem::DockSessionItem(
       m_workspace_label(_("Workspace")),
       m_dimensions_label(_("Dimensions")),
       m_position_label(_("Position")),
-      m_capture_window(std::move(capture_window))
+      m_capture_window(std::move(capture_window)),
+      m_window_registry(window_registry)
 {
     set_shadow_type(Gtk::SHADOW_ETCHED_IN);
     set_hexpand(true);
@@ -199,11 +364,21 @@ DockSessionItem::DockSessionItem(
             *this,
             &DockSessionItem::capture));
 
+    m_launch_button.signal_clicked().connect(
+        sigc::mem_fun(
+            *this,
+            &DockSessionItem::launcher));
+
     m_remove_button.signal_clicked().connect(
         [this]()
         {
             m_remove_requested.emit();
         });
+}
+
+DockSessionItem::~DockSessionItem()
+{
+    stop_launch_tracking();
 }
 
 void DockSessionItem::capture()
@@ -278,6 +453,214 @@ void DockSessionItem::capture()
             Gtk::ICON_SIZE_DIALOG);
         m_app_icon.set_pixel_size(40);
     }
+}
+
+WindowPlacement DockSessionItem::placement() const
+{
+    WindowPlacement result;
+
+    auto workspace = m_workspace.get_text();
+    const auto separator = workspace.find(',');
+    if (separator != Glib::ustring::npos)
+        workspace.erase(separator);
+
+    const auto workspace_number =
+        parse_integer(workspace.raw());
+    if (workspace_number &&
+        *workspace_number > 0)
+    {
+        result.workspace_number =
+            static_cast<unsigned int>(
+                *workspace_number);
+    }
+
+    const auto dimensions =
+        parse_pair(m_dimensions.get_text());
+    const auto position =
+        parse_pair(m_position.get_text());
+    if (dimensions &&
+        position &&
+        dimensions->first > 0 &&
+        dimensions->second > 0)
+    {
+        result.frame_geometry =
+            WindowGeometry{
+                position->first,
+                position->second,
+                dimensions->first,
+                dimensions->second};
+    }
+
+    return result;
+}
+
+void DockSessionItem::launcher()
+{
+    const std::string desktop_file =
+        m_desktop_file.get_text();
+    const auto application =
+        find_desktop_application(desktop_file);
+    if (!application)
+    {
+        g_warning(
+            "Cannot launch Session item: desktop file '%s' is unavailable",
+            desktop_file.c_str());
+        return;
+    }
+
+    Glib::RefPtr<Gio::AppInfo> launch_application;
+    try
+    {
+        launch_application =
+            application_with_parameters(
+                application,
+                m_parameters.get_text());
+    }
+    catch (const Glib::Error &error)
+    {
+        g_warning(
+            "Cannot parse Session parameters for %s: %s",
+            application->get_display_name().c_str(),
+            error.what().c_str());
+        return;
+    }
+
+    if (!launch_application)
+        return;
+
+    stop_launch_tracking();
+    m_launch_placement = placement();
+    m_launched_application_id =
+        normalized_application_id(
+            application->get_id().empty()
+                ? desktop_file
+                : application->get_id());
+    m_launched_title =
+        m_app_title.get_entry()->get_text();
+
+    if (m_window_registry &&
+        m_window_registry->capabilities().can_place)
+    {
+        for (const auto &window :
+             m_window_registry->windows())
+        {
+            m_windows_before_launch.insert(
+                window.id);
+        }
+
+        m_launch_window_changed =
+            m_window_registry->signal_changed().connect(
+                sigc::mem_fun(
+                    *this,
+                    &DockSessionItem::
+                        on_window_registry_changed));
+        m_launch_timeout =
+            Glib::signal_timeout().connect_seconds(
+                sigc::mem_fun(
+                    *this,
+                    &DockSessionItem::
+                        on_launch_timeout),
+                15);
+    }
+
+    try
+    {
+        std::vector<Glib::RefPtr<Gio::File>> files;
+        launch_application->launch(
+            files,
+            application_launch_context(
+                application));
+    }
+    catch (const Glib::Error &error)
+    {
+        stop_launch_tracking();
+        g_warning(
+            "Cannot launch Session item %s: %s",
+            application->get_display_name().c_str(),
+            error.what().c_str());
+    }
+}
+
+const ManagedWindow *DockSessionItem::launched_window() const
+{
+    if (!m_window_registry)
+        return nullptr;
+
+    const ManagedWindow *candidate = nullptr;
+    for (const auto &window :
+         m_window_registry->windows())
+    {
+        if (normalized_application_id(
+                window.desktop_file_name) !=
+            m_launched_application_id)
+        {
+            continue;
+        }
+
+        if (m_windows_before_launch.count(
+                window.id) == 0)
+        {
+            if (!m_launched_title.empty() &&
+                window.caption ==
+                    m_launched_title)
+            {
+                return &window;
+            }
+            if (!candidate || window.active)
+                candidate = &window;
+        }
+    }
+
+    if (candidate)
+        return candidate;
+
+    if (m_window_registry->active_window())
+    {
+        const auto *active =
+            m_window_registry->find_window(
+                *m_window_registry->active_window());
+        if (active &&
+            normalized_application_id(
+                active->desktop_file_name) ==
+                m_launched_application_id)
+        {
+            return active;
+        }
+    }
+
+    return nullptr;
+}
+
+void DockSessionItem::on_window_registry_changed()
+{
+    const auto *window = launched_window();
+    if (!window)
+        return;
+
+    if (!m_window_registry->place_window(
+            window->id,
+            m_launch_placement))
+    {
+        g_warning(
+            "Cannot place launched Session window '%s'",
+            window->id.c_str());
+    }
+
+    stop_launch_tracking();
+}
+
+bool DockSessionItem::on_launch_timeout()
+{
+    m_launch_window_changed.disconnect();
+    m_windows_before_launch.clear();
+    return false;
+}
+
+void DockSessionItem::stop_launch_tracking()
+{
+    m_launch_window_changed.disconnect();
+    m_launch_timeout.disconnect();
+    m_windows_before_launch.clear();
 }
 
 sigc::signal<void> &DockSessionItem::signal_remove_requested()

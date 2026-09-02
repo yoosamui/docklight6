@@ -519,6 +519,17 @@ bool WindowRegistry::set_window_maximized(
                    maximized);
 }
 
+bool WindowRegistry::place_window(
+    const WindowId &window_id,
+    const WindowPlacement &placement)
+{
+    return m_connected &&
+           m_backend.capabilities().can_place &&
+           m_backend.place_window(
+               window_id,
+               placement);
+}
+
 bool WindowRegistry::minimize_all()
 {
     if (!m_connected ||

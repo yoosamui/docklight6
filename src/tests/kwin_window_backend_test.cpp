@@ -158,6 +158,7 @@ void verifies_registration_and_snapshot()
     assert(capabilities.can_close);
     assert(capabilities.can_minimize);
     assert(capabilities.can_maximize);
+    assert(capabilities.can_place);
     assert(capabilities
                .provides_stacking_order);
     assert(capabilities
@@ -213,12 +214,21 @@ void verifies_window_commands()
     assert(backend.set_window_maximized(
         "window-1",
         false));
+    assert(backend.place_window(
+        "window-1",
+        WindowPlacement{
+            3,
+            WindowGeometry{
+                120,
+                200,
+                400,
+                500}}));
     assert(backend.present_windows(
         {"window-1"}));
     assert(backend.hide_windows(
         {"window-1"}));
 
-    assert(commands.size() == 7);
+    assert(commands.size() == 8);
     assert(commands[0].type ==
            KWinWindowCommandType::ACTIVATE);
     assert(commands[1].type ==
@@ -234,13 +244,23 @@ void verifies_window_commands()
                SET_MAXIMIZED);
     assert(!commands[4].state);
     assert(commands[5].type ==
-           KWinWindowCommandType::PRESENT);
+           KWinWindowCommandType::PLACE);
     assert(commands[5].window_ids ==
            std::vector<WindowId>({
-               "window-1"}));
+               "window-1",
+               "3",
+               "120",
+               "200",
+               "400",
+               "500"}));
     assert(commands[6].type ==
-           KWinWindowCommandType::HIDE);
+           KWinWindowCommandType::PRESENT);
     assert(commands[6].window_ids ==
+           std::vector<WindowId>({
+               "window-1"}));
+    assert(commands[7].type ==
+           KWinWindowCommandType::HIDE);
+    assert(commands[7].window_ids ==
            std::vector<WindowId>({
                "window-1"}));
 
@@ -288,6 +308,13 @@ void verifies_legacy_script_uses_present_fallback()
         }));
     assert(!backend.capabilities()
                 .provides_dock_screen_edge_reveal);
+    assert(!backend.capabilities()
+                .can_place);
+    assert(!backend.place_window(
+        "window-1",
+        WindowPlacement{
+            2,
+            std::nullopt}));
 
     std::vector<KWinWindowCommand>
         commands;

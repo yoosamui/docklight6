@@ -122,6 +122,10 @@ assert.match(
     /--extra-source=placement\.js/);
 
 const extensionSource = fs.readFileSync(extensionPath, "utf8");
+assert.match(
+    extensionSource,
+    /PROTOCOL_VERSION = '10'[\s\S]*?command === 'place'[\s\S]*?change_workspace_by_index\(workspace - 1, false\)[\s\S]*?unmaximize\(Meta\.MaximizeFlags\.BOTH\)[\s\S]*?move_resize_frame/,
+    "GNOME protocol 10 must place launched Session windows through Mutter");
 const autohideControllerSource = fs.readFileSync(
     autohideControllerPath, "utf8");
 const dockWindowControllerSource = fs.readFileSync(

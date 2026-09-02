@@ -38,6 +38,7 @@ enum class KWinWindowCommandType
     CLOSE,
     SET_MINIMIZED,
     SET_MAXIMIZED,
+    PLACE,
     PRESENT,
     HIDE
 };

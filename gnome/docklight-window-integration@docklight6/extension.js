@@ -58,7 +58,7 @@ const THUMBNAIL_IFACE = `
     <method name="HideLivePreviews"/>
   </interface>
 </node>`;
-const PROTOCOL_VERSION = '9';
+const PROTOCOL_VERSION = '10';
 const DOCK_PLACEMENT_DELAY_MS = 30;
 // Docklight debounces configuration reloads for 200 ms. Keep the ordinary
 // Wayland toplevel hidden past that boundary so an edge change cannot expose
@@ -2964,6 +2964,33 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _executeCommand(command, encodedId, state) {
+        if (command === 'place') {
+            const values = decodeList(encodedId);
+            const window = this._windows.get(values[0]);
+            if (!window)
+                return;
+
+            const workspace = Number(values[1]);
+            if (Number.isInteger(workspace) && workspace > 0 &&
+                workspace <= global.workspace_manager.n_workspaces) {
+                window.change_workspace_by_index(workspace - 1, false);
+            }
+
+            const geometry = values.slice(2, 6).map(Number);
+            if (geometry.length === 4 &&
+                geometry.every(Number.isInteger) &&
+                geometry[2] > 0 && geometry[3] > 0) {
+                window.unmaximize(Meta.MaximizeFlags.BOTH);
+                window.move_resize_frame(
+                    false,
+                    geometry[0],
+                    geometry[1],
+                    geometry[2],
+                    geometry[3]);
+            }
+            return;
+        }
+
         const ids = command === 'present' || command === 'hide'
             ? decodeList(encodedId) : [encodedId];
         const windows = ids.map(id => this._windows.get(id)).filter(Boolean);

@@ -49,6 +49,7 @@ FakeWindowBackend::capabilities() const
     capabilities.can_minimize =
         m_minimize_supported;
     capabilities.can_maximize = true;
+    capabilities.can_place = true;
     capabilities.provides_stacking_order =
         true;
     capabilities.provides_activities = true;
@@ -225,6 +226,44 @@ bool FakeWindowBackend::
     window->maximized = maximized;
     notify_window_updated(*window);
 
+    return true;
+}
+
+bool FakeWindowBackend::place_window(
+    const WindowId &window_id,
+    const WindowPlacement &placement)
+{
+    auto *window = find_window(window_id);
+    if (!window ||
+        (!placement.workspace_number &&
+         !placement.frame_geometry))
+    {
+        return false;
+    }
+
+    if ((placement.workspace_number &&
+         *placement.workspace_number == 0) ||
+        (placement.frame_geometry &&
+         (placement.frame_geometry->width <= 0 ||
+          placement.frame_geometry->height <= 0)))
+    {
+        return false;
+    }
+
+    if (placement.workspace_number)
+    {
+        window->desktop_numbers = {
+            *placement.workspace_number};
+    }
+
+    if (placement.frame_geometry)
+    {
+        window->frame_geometry =
+            *placement.frame_geometry;
+        window->maximized = false;
+    }
+
+    notify_window_updated(*window);
     return true;
 }
 

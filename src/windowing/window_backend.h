@@ -50,6 +50,7 @@ struct WindowBackendCapabilities
     bool can_close = false;
     bool can_minimize = false;
     bool can_maximize = false;
+    bool can_place = false;
     bool provides_stacking_order = false;
     bool provides_activities = false;
     bool provides_virtual_desktops = false;
@@ -68,6 +69,12 @@ struct WindowBackendCapabilities
     WindowThumbnailPolicy thumbnail_policy =
         WindowThumbnailPolicy::capture_on_demand;
     bool thumbnails_require_compositor = false;
+};
+
+struct WindowPlacement
+{
+    std::optional<unsigned int> workspace_number;
+    std::optional<WindowGeometry> frame_geometry;
 };
 
 class WindowBackend
@@ -124,6 +131,9 @@ public:
     virtual bool set_window_maximized(
         const WindowId &window_id,
         bool maximized) = 0;
+    virtual bool place_window(
+        const WindowId &window_id,
+        const WindowPlacement &placement) = 0;
     virtual bool set_window_icon_geometry(
         const WindowId &window_id,
         const WindowIconGeometry &geometry) = 0;

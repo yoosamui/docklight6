@@ -35,6 +35,9 @@ GnomeWaylandWindowBackend::capabilities() const
     capabilities.can_close = true;
     capabilities.can_minimize = true;
     capabilities.can_maximize = true;
+    capabilities.can_place =
+        KWinWindowBackend::capabilities()
+            .can_place;
     capabilities.provides_stacking_order = true;
     capabilities.provides_virtual_desktops = true;
     capabilities.provides_frame_geometry = true;
