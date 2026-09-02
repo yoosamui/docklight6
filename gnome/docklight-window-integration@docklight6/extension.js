@@ -18,6 +18,7 @@ import {
     dockMonitorIndexForRect,
     dockPlacementChangesMonitor,
     isDockPlacementCommitted,
+    isPointInsideRect,
     isPointerInsideDockInterior,
     isSyntheticApplicationId,
     parseAuxiliaryPosition,
@@ -1455,20 +1456,53 @@ export default class DocklightWindowIntegration extends Extension {
         if (!this._livePreviewOverlay || !this._pointerPosition)
             return false;
 
+        const pointer = this._pointerPosition;
+
+        // The live-preview rectangles cover only the thumbnail bodies. Use
+        // the complete placed GTK Preview surface once Shell has classified
+        // it so its header, card borders, gaps, and outer padding remain part
+        // of the hover region as the pointer travels from the dock.
+        for (const window of this._auxiliaryWindowSignals.keys()) {
+            try {
+                const position = this._auxiliaryPosition(window);
+                if (position?.type !== 'preview')
+                    continue;
+
+                const frame = window.get_frame_rect();
+                if (frame.width <= 0 || frame.height <= 0)
+                    continue;
+
+                const placed = clampAuxiliaryToWorkArea(
+                    position,
+                    frame,
+                    this._workAreaForMonitor(this._dockMonitorIndex()));
+                const previewRect = {
+                    x: placed.x,
+                    y: placed.y,
+                    width: frame.width,
+                    height: frame.height,
+                };
+                if (isPointInsideRect(previewRect, pointer.x, pointer.y))
+                    return true;
+            } catch (_error) {
+                // The short-lived GTK surface can disappear between pointer
+                // samples; the live thumbnail bounds below remain safe.
+            }
+        }
+
+        // Classification can trail ShowLivePreviews by one compositor frame.
+        // Preserve the thumbnail-body fallback during that short interval.
         return this._livePreviewRects.some(rect =>
-            this._pointerPosition.x >= rect.x &&
-            this._pointerPosition.x < rect.x + rect.width &&
-            this._pointerPosition.y >= rect.y &&
-            this._pointerPosition.y < rect.y + rect.height);
+            isPointInsideRect(rect, pointer.x, pointer.y));
     }
 
     _updateLivePreviewSelectors(force = false) {
         for (const rect of this._livePreviewRects) {
             const selected = Boolean(this._pointerPosition &&
-                this._pointerPosition.x >= rect.x &&
-                this._pointerPosition.x < rect.x + rect.width &&
-                this._pointerPosition.y >= rect.y &&
-                this._pointerPosition.y < rect.y + rect.height);
+                isPointInsideRect(
+                    rect,
+                    this._pointerPosition.x,
+                    this._pointerPosition.y));
             if (!force && selected === rect.selected)
                 continue;
 

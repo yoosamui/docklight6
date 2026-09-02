@@ -220,14 +220,16 @@ export function dockPlacementChangesMonitor(
         dockMonitorIndexForRect(next, monitors, primaryIndex);
 }
 
+export function isPointInsideRect(rect, pointX, pointY) {
+    return pointX >= rect.x &&
+        pointX < rect.x + rect.width &&
+        pointY >= rect.y &&
+        pointY < rect.y + rect.height;
+}
+
 export function isPointerInsideDockInterior(
     placement, pointerX, pointerY, edgeMargin = 0) {
-    const insideRect =
-        pointerX >= placement.x &&
-        pointerX < placement.x + placement.width &&
-        pointerY >= placement.y &&
-        pointerY < placement.y + placement.height;
-    if (!insideRect)
+    if (!isPointInsideRect(placement, pointerX, pointerY))
         return false;
 
     if (placement.edge === 'top')

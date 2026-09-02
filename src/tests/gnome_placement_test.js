@@ -267,6 +267,10 @@ assert.match(
     "live preview hover must be reconciled from the compositor pointer instead of relying only on crossing events");
 assert.match(
     extensionSource,
+    /_previewPointerIsInside\(\)[\s\S]*?_auxiliaryWindowSignals\.keys\(\)[\s\S]*?_auxiliaryPosition\(window\)[\s\S]*?position\?\.type !== 'preview'[\s\S]*?window\.get_frame_rect\(\)[\s\S]*?clampAuxiliaryToWorkArea\([\s\S]*?width: frame\.width[\s\S]*?height: frame\.height[\s\S]*?isPointInsideRect\(previewRect,[\s\S]*?_livePreviewRects\.some\(rect =>[\s\S]*?isPointInsideRect\(rect/,
+    "GNOME preview hover must include the complete placed GTK surface before falling back to thumbnail bodies");
+assert.match(
+    extensionSource,
     /const selector = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?const selectionOutline = new St\.Widget\(\{[\s\S]*?reactive: false[\s\S]*?selector\.add_child\(preview\)[\s\S]*?selector\.add_child\(selectionOutline\)[\s\S]*?set_child_above_sibling\(selectionOutline, preview\)[\s\S]*?overlay\.add_child\(selector\)[\s\S]*?selector,[\s\S]*?selectionOutline,/,
     "live compositor previews must use a transparent paint-only selector and outline");
 assert.doesNotMatch(
@@ -1161,7 +1165,7 @@ const source = fs.readFileSync(helperPath, "utf8")
     "\nthis.testApi = {calculateDockHideOffset, calculateDockRevealRect, calculateDockStrut, " +
     "clampAuxiliaryToWorkArea, inferDockEdge, " +
     "dockMonitorIndexForRect, dockPlacementChangesMonitor, " +
-    "isDockPlacementCommitted, isPointerInsideDockInterior, " +
+    "isDockPlacementCommitted, isPointInsideRect, isPointerInsideDockInterior, " +
     "isSyntheticApplicationId, " +
     "parseAuxiliaryPosition, placeDockInWorkArea, rightHideCorridorIntersectsMonitor};";
 const context = {};
@@ -1177,6 +1181,7 @@ const {
     dockPlacementChangesMonitor,
     inferDockEdge,
     isDockPlacementCommitted,
+    isPointInsideRect,
     isPointerInsideDockInterior,
     isSyntheticApplicationId,
     parseAuxiliaryPosition,
@@ -1397,6 +1402,14 @@ assert.deepStrictEqual(
     {x: 64, y: 0});
 assert.strictEqual(isPointerInsideDockInterior(
     pointerFixtures[1].placement, 299, 1070), false);
+assert.strictEqual(isPointInsideRect(
+    {x: 100, y: 200, width: 300, height: 150}, 100, 200), true);
+assert.strictEqual(isPointInsideRect(
+    {x: 100, y: 200, width: 300, height: 150}, 399, 349), true);
+assert.strictEqual(isPointInsideRect(
+    {x: 100, y: 200, width: 300, height: 150}, 400, 349), false);
+assert.strictEqual(isPointInsideRect(
+    {x: 100, y: 200, width: 300, height: 150}, 399, 350), false);
 
 assert.strictEqual(isSyntheticApplicationId("window:218"), true);
 assert.strictEqual(isSyntheticApplicationId(" WINDOW:42 "), true);
