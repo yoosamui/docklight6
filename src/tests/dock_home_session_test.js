@@ -60,6 +60,8 @@ assert.match(
 
 for (const label of [
     "App Title",
+    "Desktop File",
+    "App Name",
     "Parameters",
     "Workspace",
     "Dimensions",
@@ -72,6 +74,14 @@ for (const label of [
         sessionItemSource.includes(`_("${label}")`),
         `Session Item must contain ${label}`);
 }
+assert.match(
+    sessionItemSource,
+    /m_app_title\(true\)[\s\S]*?m_app_title\.get_entry\(\)->set_placeholder_text/,
+    "App Title must be an editable list combo box");
+assert.match(
+    sessionItemSource,
+    /m_desktop_file\.set_editable\(false\)[\s\S]*?m_app_name\.set_editable\(false\)/,
+    "Desktop File and App Name must be read-only fields");
 assert.match(
     sessionItemSource,
     /m_dimensions\.set_text\("400x500"\)[\s\S]*?m_position\.set_text\("120x200"\)/,

@@ -32,12 +32,16 @@ class DockSessionItem : public Gtk::Frame
     Gtk::Image m_app_icon;
 
     Gtk::Label m_app_title_label;
-    Gtk::Entry m_app_title;
+    Gtk::ComboBoxText m_app_title;
     Gtk::Box m_actions;
     Gtk::Button m_copy_button;
     Gtk::Button m_launch_button;
     Gtk::Button m_remove_button;
 
+    Gtk::Label m_desktop_file_label;
+    Gtk::Entry m_desktop_file;
+    Gtk::Label m_app_name_label;
+    Gtk::Entry m_app_name;
     Gtk::Label m_parameters_label;
     Gtk::Entry m_parameters;
     Gtk::Label m_workspace_label;

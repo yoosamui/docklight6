@@ -23,10 +23,13 @@
 
 DockSessionItem::DockSessionItem()
     : m_app_title_label(_("App Title")),
+      m_app_title(true),
       m_actions(Gtk::ORIENTATION_HORIZONTAL, 6),
       m_copy_button(_("_Copy"), true),
       m_launch_button(_("_Launch"), true),
       m_remove_button(_("_Remove"), true),
+      m_desktop_file_label(_("Desktop File")),
+      m_app_name_label(_("App Name")),
       m_parameters_label(_("Parameters")),
       m_workspace_label(_("Workspace")),
       m_dimensions_label(_("Dimensions")),
@@ -47,14 +50,24 @@ DockSessionItem::DockSessionItem()
     m_app_icon.set_valign(Gtk::ALIGN_START);
 
     m_app_title_label.set_halign(Gtk::ALIGN_START);
+    m_desktop_file_label.set_halign(Gtk::ALIGN_START);
+    m_app_name_label.set_halign(Gtk::ALIGN_START);
     m_parameters_label.set_halign(Gtk::ALIGN_START);
     m_workspace_label.set_halign(Gtk::ALIGN_START);
     m_dimensions_label.set_halign(Gtk::ALIGN_START);
     m_position_label.set_halign(Gtk::ALIGN_START);
 
     m_app_title.set_hexpand(true);
-    m_app_title.set_placeholder_text(
+    m_app_title.get_entry()->set_placeholder_text(
         _("Application title"));
+    m_desktop_file.set_editable(false);
+    m_desktop_file.set_hexpand(true);
+    m_desktop_file.set_placeholder_text(
+        _("Desktop file"));
+    m_app_name.set_editable(false);
+    m_app_name.set_hexpand(true);
+    m_app_name.set_placeholder_text(
+        _("Application name"));
     m_parameters.set_hexpand(true);
     m_parameters.set_placeholder_text(
         _("Command-line parameters"));
@@ -76,18 +89,22 @@ DockSessionItem::DockSessionItem()
         false,
         false);
 
-    m_layout.attach(m_app_icon, 0, 0, 1, 2);
+    m_layout.attach(m_app_icon, 0, 0, 1, 3);
     m_layout.attach(m_app_title_label, 1, 0, 1, 1);
     m_layout.attach(m_app_title, 2, 0, 1, 1);
     m_layout.attach(m_actions, 3, 0, 1, 1);
-    m_layout.attach(m_parameters_label, 1, 1, 1, 1);
-    m_layout.attach(m_parameters, 2, 1, 2, 1);
-    m_layout.attach(m_workspace_label, 1, 2, 1, 1);
-    m_layout.attach(m_workspace, 2, 2, 2, 1);
-    m_layout.attach(m_dimensions_label, 1, 3, 1, 1);
-    m_layout.attach(m_dimensions, 2, 3, 2, 1);
-    m_layout.attach(m_position_label, 1, 4, 1, 1);
-    m_layout.attach(m_position, 2, 4, 2, 1);
+    m_layout.attach(m_desktop_file_label, 1, 1, 1, 1);
+    m_layout.attach(m_desktop_file, 2, 1, 2, 1);
+    m_layout.attach(m_app_name_label, 1, 2, 1, 1);
+    m_layout.attach(m_app_name, 2, 2, 2, 1);
+    m_layout.attach(m_parameters_label, 1, 3, 1, 1);
+    m_layout.attach(m_parameters, 2, 3, 2, 1);
+    m_layout.attach(m_workspace_label, 1, 4, 1, 1);
+    m_layout.attach(m_workspace, 2, 4, 2, 1);
+    m_layout.attach(m_dimensions_label, 1, 5, 1, 1);
+    m_layout.attach(m_dimensions, 2, 5, 2, 1);
+    m_layout.attach(m_position_label, 1, 6, 1, 1);
+    m_layout.attach(m_position, 2, 6, 2, 1);
 
     add(m_layout);
 
