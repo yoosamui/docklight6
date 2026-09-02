@@ -106,6 +106,9 @@ const dockSettingsDialogPath = path.resolve(
 const dockAboutDialogPath = path.resolve(
     __dirname,
     "../dialogs/dock_about_dialog.cpp");
+const dockSessionDialogPath = path.resolve(
+    __dirname,
+    "../dialogs/dock_session_dialog.cpp");
 
 // gnome-extensions pack only bundles its conventional entry points unless
 // imported modules are explicitly listed as extra sources. Keep the package
@@ -174,6 +177,8 @@ const dockSettingsDialogSource = fs.readFileSync(
     dockSettingsDialogPath, "utf8");
 const dockAboutDialogSource = fs.readFileSync(
     dockAboutDialogPath, "utf8");
+const dockSessionDialogSource = fs.readFileSync(
+    dockSessionDialogPath, "utf8");
 
 assert.match(
     extensionSource,
@@ -1111,7 +1116,11 @@ assert.doesNotMatch(
     dialogTrackingSource,
     /get_compositor_private|translation_[xy]|move_frame|\.connect\(/,
     "GNOME dialog placement and movement must remain owned by Mutter");
-for (const dialogSource of [dockSettingsDialogSource, dockAboutDialogSource]) {
+for (const dialogSource of [
+    dockSettingsDialogSource,
+    dockAboutDialogSource,
+    dockSessionDialogSource,
+]) {
     assert.match(
         dialogSource,
         /DesktopSessionIdentity::\s*is_gnome_wayland_session\(\)[\s\S]*?unset_transient_for\(\)/,

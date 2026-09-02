@@ -2,5 +2,7 @@ src/main.cpp
 src/dock/dock_item.cpp
 src/dock/dock_home_item.cpp
 src/dialogs/dock_settings_dialog.cpp
+src/dialogs/dock_session_dialog.cpp
+src/dialogs/dock_session_item.cpp
 src/dialogs/dock_about_dialog.cpp
 src/monitors/dock_monitor_manager.cpp

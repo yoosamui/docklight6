@@ -19,9 +19,10 @@
 
 #include "dock_home_item.h"
 #include "dialogs/dock_about_dialog.h"
+#include "dialogs/dock_session_dialog.h"
+#include "dialogs/dock_settings_dialog.h"
 #include "dock_constants.h"
 #include "layout/dock_layout_metrics.h"
-#include "dialogs/dock_settings_dialog.h"
 #include "dock_window.h"
 #include "windowing/window_registry.h"
 #include "config.h"
@@ -56,6 +57,9 @@ DockHomeItem::DockHomeItem(
     set_menu_label(
         m_settings_item,
         _("_Settings"));
+    set_menu_label(
+        m_session_item,
+        _("Sessi_on"));
     set_menu_label(
         m_minimize_all_item,
         _("_Minimize All"));
@@ -375,6 +379,8 @@ void DockHomeItem::
     initialize_mnemonic(
         m_settings_item);
     initialize_mnemonic(
+        m_session_item);
+    initialize_mnemonic(
         m_minimize_all_item);
     initialize_mnemonic(
         m_unminimize_all_item);
@@ -389,6 +395,10 @@ void DockHomeItem::
 
     m_context_menu.append(
         m_settings_item);
+    m_context_menu.append(
+        m_session_separator);
+    m_context_menu.append(
+        m_session_item);
     m_context_menu.append(
         m_window_separator);
     m_context_menu.append(
@@ -417,6 +427,13 @@ void DockHomeItem::
             {
                 schedule_open_settings();
             });
+
+    m_session_item
+        .signal_activate()
+        .connect(
+            sigc::mem_fun(
+                *this,
+                &DockHomeItem::open_session));
 
     m_minimize_all_item
         .signal_activate()
@@ -665,6 +682,13 @@ bool DockHomeItem::close_all()
     return m_window_registry &&
            m_window_registry
                ->close_all();
+}
+
+void DockHomeItem::open_session()
+{
+    m_dock.inhibit_autohide();
+    DockSessionDialog::show(m_dock);
+    m_dock.uninhibit_autohide();
 }
 
 void DockHomeItem::open_settings()

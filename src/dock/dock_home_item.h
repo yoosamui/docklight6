@@ -12,7 +12,7 @@
 // Responsibilities:
 // - Render and size the home icon.
 // - Build and dispatch the dock context menu.
-// - Coordinate settings, about, quit, and window actions.
+// - Coordinate session, settings, about, quit, and window actions.
 //
 // Dependencies and ownership:
 // The widget borrows DockWindow and WindowRegistry and owns its GTK
@@ -75,6 +75,7 @@ private:
     bool maximize_all();
     bool close_all();
 
+    void open_session();
     void open_settings();
     void show_about();
     void exit_docklight();
@@ -92,6 +93,8 @@ private:
     Gtk::Menu m_context_menu;
 
     Gtk::MenuItem m_settings_item;
+    Gtk::SeparatorMenuItem m_session_separator;
+    Gtk::MenuItem m_session_item;
     Gtk::SeparatorMenuItem m_window_separator;
     Gtk::MenuItem m_minimize_all_item;
     Gtk::MenuItem m_unminimize_all_item;

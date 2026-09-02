@@ -22,6 +22,7 @@ check_PROGRAMS = \
 TESTS = \
     $(check_PROGRAMS) \
     tests/dock_visual_style_test.js \
+    tests/dock_home_session_test.js \
     tests/gnome_placement_test.js \
     tests/kwin_minimize_effect_test.js \
     tests/kwin_script_test.js \
@@ -203,6 +204,10 @@ docklight6_SOURCES = \
     dock/dock_tooltip_window.cpp \
     dialogs/dock_settings_dialog.h \
     dialogs/dock_settings_dialog.cpp \
+    dialogs/dock_session_dialog.h \
+    dialogs/dock_session_dialog.cpp \
+    dialogs/dock_session_item.h \
+    dialogs/dock_session_item.cpp \
     dialogs/dock_about_dialog.h \
     dialogs/dock_about_dialog.cpp \
     rendering/dock_icon_renderer.h \
@@ -464,6 +469,7 @@ presentation_selector_test_LDADD = \
 
 EXTRA_DIST = \
     tests/dock_visual_style_test.js \
+    tests/dock_home_session_test.js \
     tests/gnome_placement_test.js \
     tests/kwin_minimize_effect_test.js \
     tests/kwin_script_test.js \
