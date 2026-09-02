@@ -86,7 +86,8 @@ DockWindowController::DockWindowController(
         m_settings,
         m_layout_request,
         monitor,
-        [this]() { return dock_screen_position(true); });
+        [this]() { return dock_screen_position(true); },
+        [this]() { return dock_pointer_inside(); });
 
     apply_thumbnail_policy();
 
@@ -364,6 +365,10 @@ void DockWindowController::initialize()
                         m_backend_dock_pointer_inside = inside;
                         m_autohide_controller
                             ->set_backend_pointer_inside(inside);
+                        if (inside)
+                            cancel_hide_timer();
+                        else
+                            start_hide_timer();
                     });
 
         m_preview_pointer_inside_changed =
@@ -1479,17 +1484,20 @@ void DockWindowController::activate_preview_window(
     m_preview_manager->activate_window(window_id);
 }
 
+bool DockWindowController::dock_pointer_inside() const
+{
+    return m_backend_dock_pointer_state_known
+        ? m_backend_dock_pointer_inside
+        : m_window.pointer_is_inside();
+}
+
 void DockWindowController::start_hide_timer()
 {
     m_tooltip_manager->start_hide_timer(
         [this]()
         {
-            const bool dock_pointer_inside =
-                m_backend_dock_pointer_state_known
-                    ? m_backend_dock_pointer_inside
-                    : m_window.pointer_is_inside();
             return m_tooltip_manager->pointer_inside() ||
-                   dock_pointer_inside ||
+                   dock_pointer_inside() ||
                    m_preview_manager->pointer_inside();
         });
 }

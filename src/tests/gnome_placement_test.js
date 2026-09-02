@@ -670,8 +670,20 @@ assert.match(
     "each item must start and cancel tooltip timing from its own crossing events");
 assert.match(
     dockWindowControllerSource,
-    /signal_dock_pointer_inside_changed\(\)[\s\S]*?m_backend_dock_pointer_state_known = true;[\s\S]*?m_backend_dock_pointer_inside = inside;[\s\S]*?DockWindowController::start_hide_timer\(\)[\s\S]*?m_backend_dock_pointer_state_known[\s\S]*?m_backend_dock_pointer_inside[\s\S]*?m_window\.pointer_is_inside\(\)/,
+    /signal_dock_pointer_inside_changed\(\)[\s\S]*?m_backend_dock_pointer_state_known = true;[\s\S]*?m_backend_dock_pointer_inside = inside;[\s\S]*?DockWindowController::dock_pointer_inside\(\) const[\s\S]*?m_backend_dock_pointer_state_known[\s\S]*?m_backend_dock_pointer_inside[\s\S]*?m_window\.pointer_is_inside\(\)[\s\S]*?DockWindowController::start_hide_timer\(\)[\s\S]*?dock_pointer_inside\(\)/,
     "GNOME pointer tracking must override the oversized XWayland dock surface when closing overlays");
+assert.match(
+    dockWindowControllerSource,
+    /signal_dock_pointer_inside_changed\(\)[\s\S]*?set_backend_pointer_inside\(inside\);[\s\S]*?if \(inside\)[\s\S]*?cancel_hide_timer\(\);[\s\S]*?else[\s\S]*?start_hide_timer\(\);/,
+    "leaving the Shell-tracked dock must restart overlay closure even after an item-level timer expired inside dock padding");
+assert.match(
+    previewManagerSource + dockWindowControllerSource,
+    /PreviewManager::PreviewManager[\s\S]*?std::function<bool\(\)> is_dock_pointer_inside[\s\S]*?m_is_dock_pointer_inside\(std::move\(is_dock_pointer_inside\)\)[\s\S]*?PreviewManager::hide[\s\S]*?m_autohide\.uninhibit\([\s\S]*?m_tooltips\.pointer_inside\(\) \|\| m_is_dock_pointer_inside\(\)[\s\S]*?make_unique<PreviewManager>[\s\S]*?\[this\]\(\) \{ return dock_pointer_inside\(\); \}/,
+    "closing a GNOME preview must release autohide with Shell's authoritative dock-pointer state");
+assert.match(
+    previewManagerSource,
+    /PreviewManager::set_shell_pointer_inside[\s\S]*?m_preview_desktop_id\.empty\(\)[\s\S]*?m_shell_pointer_state_known = true;[\s\S]*?PreviewManager::pointer_inside\(\) const[\s\S]*?m_shell_pointer_state_known[\s\S]*?\? m_shell_pointer_inside[\s\S]*?: m_pointer_inside/,
+    "Shell preview-pointer state must override stale GTK crossings while a GNOME preview is open");
 assert.match(
     tooltipManagerSource,
     /TooltipManager::schedule_show[\s\S]*?hide\(\);[\s\S]*?start_show_timer\(item, text/,

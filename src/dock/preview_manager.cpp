@@ -40,13 +40,15 @@ PreviewManager::PreviewManager(
     const DockSettings &settings,
     const DockLayoutRequest &layout_request,
     const Glib::RefPtr<Gdk::Monitor> &monitor,
-    std::function<ScreenPosition()> dock_position)
+    std::function<ScreenPosition()> dock_position,
+    std::function<bool()> is_dock_pointer_inside)
     : m_window(window),
       m_autohide(autohide),
       m_tooltips(tooltips),
       m_preview_window(std::make_unique<DockPreviewWindow>()),
       m_media_monitor(std::make_unique<DockMediaPlaybackMonitor>()),
       m_dock_position(std::move(dock_position)),
+      m_is_dock_pointer_inside(std::move(is_dock_pointer_inside)),
       m_settings(settings),
       m_layout_request(layout_request),
       m_monitor(monitor)
@@ -343,6 +345,7 @@ void PreviewManager::show_now(
     }
 
     m_preview_desktop_id = item.desktop_id();
+    m_shell_pointer_state_known = false;
     if (!m_inhibits_autohide)
     {
         m_autohide.inhibit();
@@ -369,6 +372,7 @@ void PreviewManager::hide(bool cancel_pending_show)
 
     m_preview_desktop_id.clear();
     m_pointer_inside = false;
+    m_shell_pointer_state_known = false;
     m_shell_pointer_inside = false;
     m_last_card_close_pending = false;
     m_preview_window->hide_preview();
@@ -377,7 +381,7 @@ void PreviewManager::hide(bool cancel_pending_show)
     {
         m_inhibits_autohide = false;
         m_autohide.uninhibit(
-            m_tooltips.pointer_inside() || m_window.pointer_is_inside());
+            m_tooltips.pointer_inside() || m_is_dock_pointer_inside());
     }
 }
 
@@ -397,6 +401,10 @@ void PreviewManager::cancel_show_timer()
 
 void PreviewManager::set_shell_pointer_inside(bool inside)
 {
+    if (m_preview_desktop_id.empty())
+        return;
+
+    m_shell_pointer_state_known = true;
     m_shell_pointer_inside = inside;
     if (inside)
     {
@@ -409,7 +417,13 @@ void PreviewManager::set_shell_pointer_inside(bool inside)
 
 bool PreviewManager::pointer_inside() const
 {
-    return m_pointer_inside || m_shell_pointer_inside;
+    // GNOME Shell samples the compositor pointer against the visible live
+    // preview rectangles. Once available, that state must override GTK's
+    // crossing state, which can remain stale after leaving a preview at the
+    // end of the dock.
+    return m_shell_pointer_state_known
+        ? m_shell_pointer_inside
+        : m_pointer_inside;
 }
 
 void PreviewManager::set_input_forwarding(bool forwarding)

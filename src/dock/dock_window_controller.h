@@ -132,6 +132,7 @@ private:
     void activate_preview_window(
         const WindowId &window_id);
     void apply_thumbnail_policy();
+    bool dock_pointer_inside() const;
     void start_hide_timer();
     void cancel_show_timer();
     void cancel_preview_show_timer();

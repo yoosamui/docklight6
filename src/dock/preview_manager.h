@@ -59,7 +59,8 @@ public:
         const DockSettings &settings,
         const DockLayoutRequest &layout_request,
         const Glib::RefPtr<Gdk::Monitor> &monitor,
-        std::function<ScreenPosition()> dock_position);
+        std::function<ScreenPosition()> dock_position,
+        std::function<bool()> is_dock_pointer_inside);
     ~PreviewManager();
 
     void schedule_show(DockItem &item, int show_delay_ms);
@@ -109,6 +110,7 @@ private:
     DockLayoutEngine m_layout_engine;
     DockLayoutGeometry m_layout_geometry;
     std::function<ScreenPosition()> m_dock_position;
+    std::function<bool()> m_is_dock_pointer_inside;
 
     DockSettings m_settings;
     DockLayoutRequest m_layout_request;
@@ -124,6 +126,7 @@ private:
     sigc::connection m_input_forwarding_reset;
     bool m_inhibits_autohide = false;
     bool m_pointer_inside = false;
+    bool m_shell_pointer_state_known = false;
     bool m_shell_pointer_inside = false;
     bool m_input_forwarding = false;
     bool m_show_delay_elapsed = false;
