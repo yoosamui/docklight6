@@ -101,15 +101,15 @@ msgstr "_Tutup"
 
 #: src/dialogs/dock_settings_dialog.cpp:299
 msgid "Appearance"
-msgstr ""
+msgstr "Penampilan"
 
 #: src/dialogs/dock_settings_dialog.cpp:301
 msgid "Behavior"
-msgstr ""
+msgstr "Tingkah laku"
 
 #: src/dialogs/dock_settings_dialog.cpp:303
 msgid "Position & Autohide"
-msgstr ""
+msgstr "Posisi & Sembunyi Auto"
 
 #: src/dialogs/dock_settings_dialog.cpp:330
 msgid "Monitor"
@@ -356,92 +356,91 @@ msgstr "GNOME"
 
 #: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the dock icon size from 32 to 128 pixels."
-msgstr ""
+msgstr "Tetapkan saiz ikon dok dari 32 hingga 128 piksel."
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr ""
+msgstr "Pilih bagaimana ikon bertindak balas apabila penuding melintas ke atasnya."
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
-msgstr ""
+msgstr "Pilih bagaimana aplikasi yang sedang berjalan ditandakan pada dok."
 
 #: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the color of running-application indicators."
-msgstr ""
+msgstr "Tetapkan warna penunjuk aplikasi yang sedang berjalan."
 
 #: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Use a GTK theme-derived gradient instead of a solid background."
-msgstr ""
+msgstr "Gunakan gradasi berasaskan tema GTK sebagai pengganti latar belakang pepejal."
 
 #: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Round the corners of the dock background."
-msgstr ""
+msgstr "Bulatkan sudut latar belakang dok."
 
 #: src/dialogs/dock_settings_dialog.cpp:1092
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr ""
+msgstr "Tetapkan jejari sudut dalam piksel; -1 memilih saiz automatik."
 
 #: src/dialogs/dock_settings_dialog.cpp:1099
 msgid "Show the DockLight home and launcher-management icon."
-msgstr ""
+msgstr "Tunjukkan ikon Pengurusan Laman Utama dan Pelancar DockLight."
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
+msgstr "Pilih imej khusus untuk ikon rumah, atau gunakan ikon terbina dalam."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
+msgstr "Tunjukkan nama aplikasi apabila penunjuk berada di atas ikon dok."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
+msgstr "Sertakan tetingkap dari setiap ruang kerja dalam tindakan dok dan kitaran."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
+msgstr "Tunjukkan pratonton tetingkap apabila penunjuk berada di atas aplikasi yang sedang berjalan."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
-#, fuzzy
 msgid "Close the preview popup after activating one of its windows."
-msgstr "Tutup Pratonton Selepas Pengaktifan"
+msgstr "Tutup popup pratonton selepas mengaktifkan salah satu tetingkapnya."
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
-msgstr ""
+msgstr "Tetapkan warna aksen yang digunakan oleh pratonton tetingkap."
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
+msgstr "Tetapkan ketinggian pratonton dalam piksel; 0 memilih saiz automatik."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
-msgstr ""
+msgstr "Tetapkan berapa lama untuk menunggu sebelum menunjukkan pratonton."
 
 #: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose the display where DockLight appears."
-msgstr ""
+msgstr "Pilih paparan di mana DockLight muncul."
 
 #: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose the screen edge where the dock is placed."
-msgstr ""
+msgstr "Pilih tepi skrin di mana dok diletakkan."
 
 #: src/dialogs/dock_settings_dialog.cpp:1179
 msgid "Align dock content along the selected screen edge."
-msgstr ""
+msgstr "Selaraskan kandungan dok sepanjang tepi skrin yang dipilih."
 
 #: src/dialogs/dock_settings_dialog.cpp:1186
 msgid "Choose when the dock moves out of view."
-msgstr ""
+msgstr "Pilih bila dok bergerak keluar dari pandangan."
 
 #: src/dialogs/dock_settings_dialog.cpp:1193
 msgid "Set how long to wait before hiding the dock."
-msgstr ""
+msgstr "Tetapkan berapa lama untuk menunggu sebelum menyembunyikan dok."
 
 #: src/dialogs/dock_settings_dialog.cpp:1203
 msgid "Choose an autohide animation supported by this desktop."
-msgstr ""
+msgstr "Pilih animasi autohide yang disokong oleh desktop ini."
 
 #: src/dialogs/dock_settings_dialog.cpp:1451
 #: src/dialogs/dock_settings_dialog.cpp:1488

@@ -101,15 +101,15 @@ msgstr "_Stäng"
 
 #: src/dialogs/dock_settings_dialog.cpp:299
 msgid "Appearance"
-msgstr ""
+msgstr "Utseende"
 
 #: src/dialogs/dock_settings_dialog.cpp:301
 msgid "Behavior"
-msgstr ""
+msgstr "Beteende"
 
 #: src/dialogs/dock_settings_dialog.cpp:303
 msgid "Position & Autohide"
-msgstr ""
+msgstr "Position & Autogöm"
 
 #: src/dialogs/dock_settings_dialog.cpp:330
 msgid "Monitor"
@@ -355,92 +355,91 @@ msgstr "GNOME"
 
 #: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the dock icon size from 32 to 128 pixels."
-msgstr ""
+msgstr "Ställ in storleken på dockikonen från 32 till 128 pixlar."
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr ""
+msgstr "Välj hur ikoner reagerar när pekaren förs över dem."
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
-msgstr ""
+msgstr "Välj hur körande applikationer markeras på dockan."
 
 #: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the color of running-application indicators."
-msgstr ""
+msgstr "Ställ in färgen på indikatorer för körande applikationer."
 
 #: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Use a GTK theme-derived gradient instead of a solid background."
-msgstr ""
+msgstr "Använd en gradient från GTK-tema istället för en enfärgad bakgrund."
 
 #: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Round the corners of the dock background."
-msgstr ""
+msgstr "Rund av hörnen på dockans bakgrund."
 
 #: src/dialogs/dock_settings_dialog.cpp:1092
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr ""
+msgstr "Ställ in hörnradien i pixlar; -1 väljer automatisk storlek."
 
 #: src/dialogs/dock_settings_dialog.cpp:1099
 msgid "Show the DockLight home and launcher-management icon."
-msgstr ""
+msgstr "Visa DockLight-ikonen för hem och startarhantering."
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
+msgstr "Välj en egen bild för hemikonen, eller använd den inbyggda ikonen."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
+msgstr "Visa applikationsnamn när pekaren vilar på dockikoner."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
+msgstr "Inkludera fönster från alla arbetsytor i dockåtgärder och cykling."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
+msgstr "Visa fönsterförhandsvisningar när pekaren vilar på körande appar."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
-#, fuzzy
 msgid "Close the preview popup after activating one of its windows."
-msgstr "Stäng förhandsgranskning efter aktivering"
+msgstr "Stäng förhandsvisningspopupen efter att ha aktiverat ett av dess fönster."
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
-msgstr ""
+msgstr "Ställ in accentfärgen som används av fönsterförhandsvisningar."
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
+msgstr "Ställ in förhandsvisningshöjd i pixlar; 0 väljer automatisk storlek."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
-msgstr ""
+msgstr "Ställ in hur länge man ska vänta innan en förhandsvisning visas."
 
 #: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose the display where DockLight appears."
-msgstr ""
+msgstr "Välj skärmen där DockLight visas."
 
 #: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose the screen edge where the dock is placed."
-msgstr ""
+msgstr "Välj skärmkanten där dockan placeras."
 
 #: src/dialogs/dock_settings_dialog.cpp:1179
 msgid "Align dock content along the selected screen edge."
-msgstr ""
+msgstr "Justera dockans innehåll längs den valda skärmkanten."
 
 #: src/dialogs/dock_settings_dialog.cpp:1186
 msgid "Choose when the dock moves out of view."
-msgstr ""
+msgstr "Välj när dockan ska försvinna ur synfältet."
 
 #: src/dialogs/dock_settings_dialog.cpp:1193
 msgid "Set how long to wait before hiding the dock."
-msgstr ""
+msgstr "Ställ in hur länge man ska vänta innan dockan döljs."
 
 #: src/dialogs/dock_settings_dialog.cpp:1203
 msgid "Choose an autohide animation supported by this desktop."
-msgstr ""
+msgstr "Välj en autogömningsanimation som stöds av detta skrivbord."
 
 #: src/dialogs/dock_settings_dialog.cpp:1451
 #: src/dialogs/dock_settings_dialog.cpp:1488

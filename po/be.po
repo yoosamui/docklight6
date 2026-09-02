@@ -102,15 +102,15 @@ msgstr "_Зачыніць"
 
 #: src/dialogs/dock_settings_dialog.cpp:299
 msgid "Appearance"
-msgstr ""
+msgstr "Знешні выгляд"
 
 #: src/dialogs/dock_settings_dialog.cpp:301
 msgid "Behavior"
-msgstr ""
+msgstr "Паводзіны"
 
 #: src/dialogs/dock_settings_dialog.cpp:303
 msgid "Position & Autohide"
-msgstr ""
+msgstr "Пазіцыя і аўтасхаванне"
 
 #: src/dialogs/dock_settings_dialog.cpp:330
 msgid "Monitor"
@@ -361,92 +361,91 @@ msgstr "GNOME"
 
 #: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the dock icon size from 32 to 128 pixels."
-msgstr ""
+msgstr "Усталюйце памер іконкі дак-бару ад 32 да 128 пікселяў."
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr ""
+msgstr "Выберыце, як іконкі рэагуюць, калі курсор рухаецца над імі."
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
-msgstr ""
+msgstr "Выберыце, як адзначаюцца запушчаныя праграмы ў дак-бару."
 
 #: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the color of running-application indicators."
-msgstr ""
+msgstr "Усталюйце колер індыкатараў запушчаных праграм."
 
 #: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Use a GTK theme-derived gradient instead of a solid background."
-msgstr ""
+msgstr "Выкарыстоўвайце градыент на аснове тэмы GTK замест аднатоннага фону."
 
 #: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Round the corners of the dock background."
-msgstr ""
+msgstr "Закругліце куты фону дак-бару."
 
 #: src/dialogs/dock_settings_dialog.cpp:1092
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr ""
+msgstr "Усталюйце радыус закруглення ў пікселях; -1 выбірае аўтаматычны памер."
 
 #: src/dialogs/dock_settings_dialog.cpp:1099
 msgid "Show the DockLight home and launcher-management icon."
-msgstr ""
+msgstr "Пакажыце значок DockLight для кіравання хатняй і пускавай праграмай."
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
+msgstr "Выберыце ўласнае малюнак для значка хатняй праграмы або выкарыстоўвайце ўбудаваны значок."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
+msgstr "Паказваць назвы прыкладанняў, калі паказальнік стаіць на значках у доку."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
+msgstr "Уключаць вокны з кожнага працоўнага прастора ў дзеянні дока і цыкліраванне."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
+msgstr "Паказваць папярэдні прагляд вокнаў, калі паказальнік стаіць на запушчаных прыкладаннях."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
-#, fuzzy
 msgid "Close the preview popup after activating one of its windows."
-msgstr "Зачыніць папярэдні прагляд пасля актывацыі"
+msgstr "Закрыць усплывальнае акно папярэдняга прагляду пасля актывацыі аднаго з яго вокнаў."
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
-msgstr ""
+msgstr "Усталяваць каляровы акцэнт, які выкарыстоўваецца ў папярэднім праглядзе вокнаў."
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
+msgstr "Усталяваць вышыню папярэдняга прагляду ў пікселях; 0 выбірае аўтаматычную падборку памеру."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
-msgstr ""
+msgstr "Усталяваць час чакання перад паказам папярэдняга прагляду."
 
 #: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose the display where DockLight appears."
-msgstr ""
+msgstr "Выбраць дысплей, на якім з'яўляецца DockLight."
 
 #: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose the screen edge where the dock is placed."
-msgstr ""
+msgstr "Выбраць край экрана, дзе размешчаны док."
 
 #: src/dialogs/dock_settings_dialog.cpp:1179
 msgid "Align dock content along the selected screen edge."
-msgstr ""
+msgstr "Выраўноўваць змесціва дока ўздоўж выбранага краю экрана."
 
 #: src/dialogs/dock_settings_dialog.cpp:1186
 msgid "Choose when the dock moves out of view."
-msgstr ""
+msgstr "Выбраць, калі док хаваецца з выгляду."
 
 #: src/dialogs/dock_settings_dialog.cpp:1193
 msgid "Set how long to wait before hiding the dock."
-msgstr ""
+msgstr "Усталяваць час чакання перад тым, як схавать док."
 
 #: src/dialogs/dock_settings_dialog.cpp:1203
 msgid "Choose an autohide animation supported by this desktop."
-msgstr ""
+msgstr "Выбраць анімацыю аўтахавання, падтрымліваемую гэтым рабочым сталом."
 
 #: src/dialogs/dock_settings_dialog.cpp:1451
 #: src/dialogs/dock_settings_dialog.cpp:1488

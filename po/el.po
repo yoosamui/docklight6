@@ -102,15 +102,15 @@ msgstr "_Κλείσε"
 
 #: src/dialogs/dock_settings_dialog.cpp:299
 msgid "Appearance"
-msgstr ""
+msgstr "Εμφάνιση"
 
 #: src/dialogs/dock_settings_dialog.cpp:301
 msgid "Behavior"
-msgstr ""
+msgstr "Συμπεριφορά"
 
 #: src/dialogs/dock_settings_dialog.cpp:303
 msgid "Position & Autohide"
-msgstr ""
+msgstr "Θέση & Αυτόματη Απόκρυψη"
 
 #: src/dialogs/dock_settings_dialog.cpp:330
 msgid "Monitor"
@@ -362,92 +362,91 @@ msgstr "GNOME"
 
 #: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the dock icon size from 32 to 128 pixels."
-msgstr ""
+msgstr "Ορίστε το μέγεθος του εικονιδίου του dock από 32 έως 128 pixels."
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr ""
+msgstr "Επιλέξτε πώς ανταποκρίνονται τα εικονίδια όταν ο δείκτης κινείται πάνω τους."
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
-msgstr ""
+msgstr "Επιλέξτε πώς επισημαίνονται οι εφαρμογές που λειτουργούν στο dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the color of running-application indicators."
-msgstr ""
+msgstr "Ορίστε το χρώμα των δεικτών των εφαρμογών που λειτουργούν."
 
 #: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Use a GTK theme-derived gradient instead of a solid background."
-msgstr ""
+msgstr "Χρησιμοποιήστε ένα gradient που προέρχεται από θέμα GTK αντί για συμπαγές φόντο."
 
 #: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Round the corners of the dock background."
-msgstr ""
+msgstr "Στρογγυλέψτε τις γωνίες του φόντου του dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1092
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr ""
+msgstr "Ορίστε την ακτίνα της γωνίας σε pixels· -1 επιλέγει αυτόματο μέγεθος."
 
 #: src/dialogs/dock_settings_dialog.cpp:1099
 msgid "Show the DockLight home and launcher-management icon."
-msgstr ""
+msgstr "Εμφανίστε το εικονίδιο διαχείρισης αρχικής και launcher του DockLight."
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
+msgstr "Επιλέξτε μια προσαρμοσμένη εικόνα για το εικονίδιο αρχικής σελίδας, ή χρησιμοποιήστε το ενσωματωμένο εικονίδιο."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
+msgstr "Εμφάνιση ονομάτων εφαρμογών όταν ο δείκτης βρίσκεται πάνω σε εικονίδια του dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
+msgstr "Συμπερίληψη παραθύρων από κάθε χώρο εργασίας στις ενέργειες και την εναλλαγή του dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
+msgstr "Εμφάνιση προεπισκοπήσεων παραθύρων όταν ο δείκτης βρίσκεται πάνω σε τρέχουσες εφαρμογές."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
-#, fuzzy
 msgid "Close the preview popup after activating one of its windows."
-msgstr "Κλείστε την προεπισκόπηση μετά την ενεργοποίηση"
+msgstr "Κλείσιμο του αναδυόμενου παραθύρου προεπισκόπησης μετά την ενεργοποίηση ενός από τα παράθυρά του."
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
-msgstr ""
+msgstr "Ρύθμιση του χρώματος έμφασης που χρησιμοποιείται στις προεπισκοπήσεις παραθύρων."
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
+msgstr "Ρύθμιση ύψους προεπισκόπησης σε pixels· 0 επιλέγει αυτόματη προσαρμογή μεγέθους."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
-msgstr ""
+msgstr "Ρύθμιση χρόνου αναμονής πριν εμφανιστεί η προεπισκόπηση."
 
 #: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose the display where DockLight appears."
-msgstr ""
+msgstr "Επιλογή της οθόνης όπου εμφανίζεται το DockLight."
 
 #: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose the screen edge where the dock is placed."
-msgstr ""
+msgstr "Επιλογή της άκρης της οθόνης όπου τοποθετείται το dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1179
 msgid "Align dock content along the selected screen edge."
-msgstr ""
+msgstr "Στοίχιση περιεχομένου dock κατά μήκος της επιλεγμένης άκρης της οθόνης."
 
 #: src/dialogs/dock_settings_dialog.cpp:1186
 msgid "Choose when the dock moves out of view."
-msgstr ""
+msgstr "Επιλογή πότε το dock βγαίνει εκτός ορατού χώρου."
 
 #: src/dialogs/dock_settings_dialog.cpp:1193
 msgid "Set how long to wait before hiding the dock."
-msgstr ""
+msgstr "Ρύθμιση χρόνου αναμονής πριν κρυφτεί το dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1203
 msgid "Choose an autohide animation supported by this desktop."
-msgstr ""
+msgstr "Επιλογή μιας υποστηριζόμενης κινούμενης εικόνας αυτόματης απόκρυψης από αυτήν την επιφάνεια εργασίας."
 
 #: src/dialogs/dock_settings_dialog.cpp:1451
 #: src/dialogs/dock_settings_dialog.cpp:1488

@@ -101,15 +101,15 @@ msgstr "_Loka"
 
 #: src/dialogs/dock_settings_dialog.cpp:299
 msgid "Appearance"
-msgstr ""
+msgstr "Útlit"
 
 #: src/dialogs/dock_settings_dialog.cpp:301
 msgid "Behavior"
-msgstr ""
+msgstr "Hegðun"
 
 #: src/dialogs/dock_settings_dialog.cpp:303
 msgid "Position & Autohide"
-msgstr ""
+msgstr "Staðsetning & Sjálfvirkur felming"
 
 #: src/dialogs/dock_settings_dialog.cpp:330
 msgid "Monitor"
@@ -354,92 +354,91 @@ msgstr "GNOME"
 
 #: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the dock icon size from 32 to 128 pixels."
-msgstr ""
+msgstr "Stilltu stærð bryggjufánans frá 32 til 128 pixla."
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr ""
+msgstr "Veldu hvernig tákn bregðast við þegar bendillinn fer yfir þau."
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
-msgstr ""
+msgstr "Veldu hvernig keyrandi forrit eru merkt á bryggjunni."
 
 #: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the color of running-application indicators."
-msgstr ""
+msgstr "Stilltu lit á vísbendingum keyrandi forrita."
 
 #: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Use a GTK theme-derived gradient instead of a solid background."
-msgstr ""
+msgstr "Notaðu láréttan litabreytingarfall úr GTK þema í stað einlitar bakgrunns."
 
 #: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Round the corners of the dock background."
-msgstr ""
+msgstr "Gerðu horn bryggjunnar kringlótt."
 
 #: src/dialogs/dock_settings_dialog.cpp:1092
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr ""
+msgstr "Stilltu hornaradíus í pixlum; -1 velur sjálfvirka stærð."
 
 #: src/dialogs/dock_settings_dialog.cpp:1099
 msgid "Show the DockLight home and launcher-management icon."
-msgstr ""
+msgstr "Sýndu DockLight heimilis- og upphafstjórnartáknið."
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
+msgstr "Veldu sérsniðið mynd fyrir heimilistáknið, eða notaðu innbyggða táknið."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
+msgstr "Sýna nöfn forrita þegar bendillinn hvílir á táknum í dokknum."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
+msgstr "Taka með glugga frá öllum vinnusvæðum í dokkvirkni og hringrás."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
+msgstr "Sýna glugga forskoðanir þegar bendillinn hvílir á keyrandi forritum."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
-#, fuzzy
 msgid "Close the preview popup after activating one of its windows."
-msgstr "Lokaðu forskoðun eftir virkjun"
+msgstr "Loka forskoðunar sprettiglugganum eftir að einn af gluggum hans hefur verið virkjaður."
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
-msgstr ""
+msgstr "Stilla áherslulit sem notaður er af glugga forskoðunum."
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
+msgstr "Stilla hæð forskoðunar í pixlum; 0 velur sjálfvirka stærð."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
-msgstr ""
+msgstr "Stilla hversu lengi á að bíða áður en forskoðun er sýnd."
 
 #: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose the display where DockLight appears."
-msgstr ""
+msgstr "Velja skjáinn þar sem DockLight birtist."
 
 #: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose the screen edge where the dock is placed."
-msgstr ""
+msgstr "Velja skjábrúnina þar sem dokkinn er staðsettur."
 
 #: src/dialogs/dock_settings_dialog.cpp:1179
 msgid "Align dock content along the selected screen edge."
-msgstr ""
+msgstr "Still gluggainnihald dokksins eftir valinni skjábrún."
 
 #: src/dialogs/dock_settings_dialog.cpp:1186
 msgid "Choose when the dock moves out of view."
-msgstr ""
+msgstr "Velja hvenær dokkinn fer úr sjón."
 
 #: src/dialogs/dock_settings_dialog.cpp:1193
 msgid "Set how long to wait before hiding the dock."
-msgstr ""
+msgstr "Stilla hversu lengi á að bíða áður en dokkinn fjarri."
 
 #: src/dialogs/dock_settings_dialog.cpp:1203
 msgid "Choose an autohide animation supported by this desktop."
-msgstr ""
+msgstr "Velja sjálfvirka fela-hreyfimynd sem þessi skjáborðsstuðningur styður."
 
 #: src/dialogs/dock_settings_dialog.cpp:1451
 #: src/dialogs/dock_settings_dialog.cpp:1488

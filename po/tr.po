@@ -101,15 +101,15 @@ msgstr "_Kapat"
 
 #: src/dialogs/dock_settings_dialog.cpp:299
 msgid "Appearance"
-msgstr ""
+msgstr "Görünüm"
 
 #: src/dialogs/dock_settings_dialog.cpp:301
 msgid "Behavior"
-msgstr ""
+msgstr "Davranış"
 
 #: src/dialogs/dock_settings_dialog.cpp:303
 msgid "Position & Autohide"
-msgstr ""
+msgstr "Konum ve Otomatik Gizleme"
 
 #: src/dialogs/dock_settings_dialog.cpp:330
 msgid "Monitor"
@@ -360,92 +360,91 @@ msgstr "GNOME"
 
 #: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the dock icon size from 32 to 128 pixels."
-msgstr ""
+msgstr "Görev çubuğu simge boyutunu 32 ila 128 piksel arasında ayarlayın."
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr ""
+msgstr "İşaretçi üzerinde hareket ettiğinde simgelerin nasıl tepki vereceğini seçin."
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
-msgstr ""
+msgstr "Çalışan uygulamaların görev çubuğunda nasıl işaretleneceğini seçin."
 
 #: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the color of running-application indicators."
-msgstr ""
+msgstr "Çalışan uygulama göstergelerinin rengini ayarlayın."
 
 #: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Use a GTK theme-derived gradient instead of a solid background."
-msgstr ""
+msgstr "Düz bir arka plan yerine GTK temasından türetilmiş bir gradyan kullanın."
 
 #: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Round the corners of the dock background."
-msgstr ""
+msgstr "Görev çubuğu arka planının köşelerini yuvarlayın."
 
 #: src/dialogs/dock_settings_dialog.cpp:1092
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr ""
+msgstr "Köşe yarıçapını piksel cinsinden ayarlayın; -1 otomatik boyutlandırmayı seçer."
 
 #: src/dialogs/dock_settings_dialog.cpp:1099
 msgid "Show the DockLight home and launcher-management icon."
-msgstr ""
+msgstr "DockLight ana ve başlatıcı yönetim simgesini gösterin."
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
+msgstr "Ana simge için özel bir resim seçin veya yerleşik simgeyi kullanın."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
+msgstr "İşaretçi dock simgelerinin üzerine geldiğinde uygulama adlarını gösterin."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
+msgstr "Dock eylemlerinde ve döngülemede her çalışma alanındaki pencereleri dahil edin."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
+msgstr "İşaretçi çalışan uygulamaların üzerine geldiğinde pencere önizlemelerini gösterin."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
-#, fuzzy
 msgid "Close the preview popup after activating one of its windows."
-msgstr "Etkinleştirmeden Sonra Önizlemeyi Kapat"
+msgstr "Önizleme açılır penceresini, pencerelerinden birini etkinleştirdikten sonra kapatın."
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
-msgstr ""
+msgstr "Pencere önizlemelerinde kullanılan vurgu rengini ayarlayın."
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
+msgstr "Önizleme yüksekliğini piksel cinsinden ayarlayın; 0 otomatik boyutu seçer."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
-msgstr ""
+msgstr "Önizlemeyi göstermeden önce ne kadar bekleyeceğinizi ayarlayın."
 
 #: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose the display where DockLight appears."
-msgstr ""
+msgstr "DockLight'ın görüneceği ekranı seçin."
 
 #: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose the screen edge where the dock is placed."
-msgstr ""
+msgstr "Dock'ın yerleştirileceği ekran kenarını seçin."
 
 #: src/dialogs/dock_settings_dialog.cpp:1179
 msgid "Align dock content along the selected screen edge."
-msgstr ""
+msgstr "Dock içeriğini seçilen ekran kenarında hizalayın."
 
 #: src/dialogs/dock_settings_dialog.cpp:1186
 msgid "Choose when the dock moves out of view."
-msgstr ""
+msgstr "Dock ne zaman görünümden çıkacak seçin."
 
 #: src/dialogs/dock_settings_dialog.cpp:1193
 msgid "Set how long to wait before hiding the dock."
-msgstr ""
+msgstr "Dock'ı gizlemeden önce ne kadar bekleyeceğinizi ayarlayın."
 
 #: src/dialogs/dock_settings_dialog.cpp:1203
 msgid "Choose an autohide animation supported by this desktop."
-msgstr ""
+msgstr "Bu masaüstü tarafından desteklenen bir otomatik gizleme animasyonu seçin."
 
 #: src/dialogs/dock_settings_dialog.cpp:1451
 #: src/dialogs/dock_settings_dialog.cpp:1488

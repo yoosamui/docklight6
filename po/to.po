@@ -102,15 +102,15 @@ msgstr "_Tāpuni"
 
 #: src/dialogs/dock_settings_dialog.cpp:299
 msgid "Appearance"
-msgstr ""
+msgstr "Fotunga"
 
 #: src/dialogs/dock_settings_dialog.cpp:301
 msgid "Behavior"
-msgstr ""
+msgstr "ʻUlungaanga"
 
 #: src/dialogs/dock_settings_dialog.cpp:303
 msgid "Position & Autohide"
-msgstr ""
+msgstr "Tuʻunga & Autohide"
 
 #: src/dialogs/dock_settings_dialog.cpp:330
 msgid "Monitor"
@@ -363,92 +363,91 @@ msgstr "GNOME"
 
 #: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the dock icon size from 32 to 128 pixels."
-msgstr ""
+msgstr "Fokotuʻu ʻa e lahi ʻo e dock icon mei he 32 ki he 128 pixels."
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr ""
+msgstr "Fili ʻa e founga ʻoku tali ʻaki ʻe he ngaahi fakaʻilonga ʻi he taimi ʻoku ngaʻunu ai ʻa e poinita ʻiate kinautolu."
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
-msgstr ""
+msgstr "Fili ʻa e founga ʻoku fakaʻilongaʻi ai ʻa e ngaahi polokalama ʻoku lele ʻi he dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the color of running-application indicators."
-msgstr ""
+msgstr "Fokotuʻu ʻa e lanu ʻo e ngaahi fakaʻilonga ʻo e fakaʻaongaʻi."
 
 #: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Use a GTK theme-derived gradient instead of a solid background."
-msgstr ""
+msgstr "Fakaʻaongaʻi ha gradient ʻoku maʻu mei he kaveinga ʻo e GTK kae ʻikai ko ha puipuituʻa fefeka."
 
 #: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Round the corners of the dock background."
-msgstr ""
+msgstr "Takai ʻi he ngaahi tuliki ʻo e puipuituʻa ʻo e uafu."
 
 #: src/dialogs/dock_settings_dialog.cpp:1092
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr ""
+msgstr "Fokotuʻu ʻa e radius ʻo e tuliki ʻi he pixels; -1 fili ʻa e size ʻotometi."
 
 #: src/dialogs/dock_settings_dialog.cpp:1099
 msgid "Show the DockLight home and launcher-management icon."
-msgstr ""
+msgstr "Fakaʻaliʻali ʻa e ʻapi ʻo e DockLight mo e fakaʻilonga ʻo e puleʻi ʻo e launcher."
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
+msgstr "Fili ha ʻimisi angamaheni ki he fakaʻilonga ʻo e ʻapi, pe fakaʻaongaʻi ʻa e fakaʻilonga ʻoku langa ʻi loto."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
+msgstr "Fakaʻaliʻali ʻa e ngaahi hingoa ʻo e tohi kole ʻi he taimi ʻoku hovers ai ʻa e pointer ʻi he ngaahi fakaʻilonga ʻo e uafu."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
+msgstr "Fakakau ʻa e ngaahi matapa sioʻata mei he ngaahi feituʻu ngaue kotoa pe ʻi he ngaahi ngaue ʻi he uafu mo e pasikala."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
+msgstr "Fakaʻaliʻali ʻa e tomuʻa vakaiʻi ʻo e window ʻi he taimi ʻoku lele ai ʻa e pointer ʻi he ngaahi polokalama ʻoku fakalele ʻaki."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
-#, fuzzy
 msgid "Close the preview popup after activating one of its windows."
-msgstr "Tāpuni ʻa e Tomuʻa Vakaiʻí Hili hono Fakaʻaongaʻí"
+msgstr "Tapuni ʻa e preview popup hili hono fakamoʻui ha taha ʻo hono ngaahi windows."
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
-msgstr ""
+msgstr "Fokotuʻu ʻa e lanu ʻoku fakaʻaongaʻi ʻi he tomuʻa vakaiʻi ʻo e matapa sioʻata."
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
+msgstr "Fokotuʻu ʻa e maʻolunga ʻo e tomuʻa vakaiʻi ʻi he pixels; 0 ki he size ʻotometi."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
-msgstr ""
+msgstr "Fokotuʻu ʻa e toloi kimuʻa pea toki fakaʻaliʻali ha tomuʻa vakaiʻi."
 
 #: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose the display where DockLight appears."
-msgstr ""
+msgstr "Fili ʻa e fakaʻaliʻali ʻoku ʻasi ai ʻa e DockLight."
 
 #: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose the screen edge where the dock is placed."
-msgstr ""
+msgstr "Fili ʻa e tapa ʻo e screen ʻoku tuʻu ai ʻa e uafu."
 
 #: src/dialogs/dock_settings_dialog.cpp:1179
 msgid "Align dock content along the selected screen edge."
-msgstr ""
+msgstr "Fokotuʻutuʻu ʻa e kakano ʻo e dock ʻi he tapa ʻo e screen kuo fili."
 
 #: src/dialogs/dock_settings_dialog.cpp:1186
 msgid "Choose when the dock moves out of view."
-msgstr ""
+msgstr "Fili ʻa e taimi ʻoku toitoi ai ʻa e uafu."
 
 #: src/dialogs/dock_settings_dialog.cpp:1193
 msgid "Set how long to wait before hiding the dock."
-msgstr ""
+msgstr "Fokotuʻu ʻa e toloi kimuʻa pea fufuuʻi ʻa e uafu."
 
 #: src/dialogs/dock_settings_dialog.cpp:1203
 msgid "Choose an autohide animation supported by this desktop."
-msgstr ""
+msgstr "Fili ha animation autohide ʻoku poupouʻi ʻe he desktop ko ʻeni."
 
 #: src/dialogs/dock_settings_dialog.cpp:1451
 #: src/dialogs/dock_settings_dialog.cpp:1488

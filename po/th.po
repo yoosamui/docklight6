@@ -100,15 +100,15 @@ msgstr "_ปิด"
 
 #: src/dialogs/dock_settings_dialog.cpp:299
 msgid "Appearance"
-msgstr ""
+msgstr "ลักษณะรูปลักษณ์"
 
 #: src/dialogs/dock_settings_dialog.cpp:301
 msgid "Behavior"
-msgstr ""
+msgstr "พฤติกรรม"
 
 #: src/dialogs/dock_settings_dialog.cpp:303
 msgid "Position & Autohide"
-msgstr ""
+msgstr "ตำแหน่ง & การซ่อนอัตโนมัติ"
 
 #: src/dialogs/dock_settings_dialog.cpp:330
 msgid "Monitor"
@@ -352,92 +352,91 @@ msgstr "GNOME"
 
 #: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the dock icon size from 32 to 128 pixels."
-msgstr ""
+msgstr "ตั้งค่าขนาดไอคอน Dock จาก 32 ถึง 128 พิกเซล"
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr ""
+msgstr "เลือกวิธีที่ไอคอนตอบสนองเมื่อชี้เมาส์ไปที่ไอคอน"
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
-msgstr ""
+msgstr "เลือกวิธีที่แอปพลิเคชันที่กำลังทำงานถูกทำเครื่องหมายบน Dock"
 
 #: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the color of running-application indicators."
-msgstr ""
+msgstr "ตั้งค่าสีของตัวบ่งชี้แอปพลิเคชันที่กำลังทำงาน"
 
 #: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Use a GTK theme-derived gradient instead of a solid background."
-msgstr ""
+msgstr "ใช้ gradient ที่มาจากธีม GTK แทนพื้นหลังทึบ"
 
 #: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Round the corners of the dock background."
-msgstr ""
+msgstr "ทำให้มุมของพื้นหลัง Dock โค้งมน"
 
 #: src/dialogs/dock_settings_dialog.cpp:1092
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr ""
+msgstr "ตั้งค่ารัศมีมุมเป็นพิกเซล; -1 เลือกการปรับขนาดอัตโนมัติ"
 
 #: src/dialogs/dock_settings_dialog.cpp:1099
 msgid "Show the DockLight home and launcher-management icon."
-msgstr ""
+msgstr "แสดงไอคอนบ้านและการจัดการตัวเปิด DockLight"
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
+msgstr "เลือกรูปภาพที่กำหนดเองสำหรับไอคอนบ้าน หรือใช้ไอคอนที่มีอยู่ภายใน"
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
+msgstr "แสดงชื่อแอปพลิเคชันเมื่อเคอร์เซอร์อยู่บนไอคอน Dock"
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
+msgstr "รวมหน้าต่างจากทุกเวิร์กสเปซในการดำเนินการและการหมุนไอคอน Dock"
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
+msgstr "แสดงตัวอย่างหน้าต่างเมื่อเคอร์เซอร์อยู่บนแอปที่กำลังทำงาน"
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
-#, fuzzy
 msgid "Close the preview popup after activating one of its windows."
-msgstr "ปิดการแสดงตัวอย่างหลังการเปิดใช้งาน"
+msgstr "ปิดหน้าต่างตัวอย่างหลังจากเปิดใช้งานหนึ่งในหน้าต่างของมัน"
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
-msgstr ""
+msgstr "ตั้งค่าสีเน้นที่ใช้โดยตัวอย่างหน้าต่าง"
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
+msgstr "ตั้งค่าความสูงของตัวอย่างเป็นพิกเซล; 0 หมายถึงการเลือกขนาดอัตโนมัติ"
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
-msgstr ""
+msgstr "ตั้งเวลารอที่จะแสดงตัวอย่าง"
 
 #: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose the display where DockLight appears."
-msgstr ""
+msgstr "เลือกจอที่ DockLight ปรากฏ"
 
 #: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose the screen edge where the dock is placed."
-msgstr ""
+msgstr "เลือกขอบหน้าจอที่วาง Dock"
 
 #: src/dialogs/dock_settings_dialog.cpp:1179
 msgid "Align dock content along the selected screen edge."
-msgstr ""
+msgstr "จัดแนวเนื้อหา Dock ตามขอบหน้าจอที่เลือก"
 
 #: src/dialogs/dock_settings_dialog.cpp:1186
 msgid "Choose when the dock moves out of view."
-msgstr ""
+msgstr "เลือกเวลาที่ Dock เคลื่อนออกจากการมองเห็น"
 
 #: src/dialogs/dock_settings_dialog.cpp:1193
 msgid "Set how long to wait before hiding the dock."
-msgstr ""
+msgstr "ตั้งเวลารอก่อนซ่อน Dock"
 
 #: src/dialogs/dock_settings_dialog.cpp:1203
 msgid "Choose an autohide animation supported by this desktop."
-msgstr ""
+msgstr "เลือกแอนิเมชันซ่อนอัตโนมัติที่รองรับโดยเดสก์ท็อปนี้"
 
 #: src/dialogs/dock_settings_dialog.cpp:1451
 #: src/dialogs/dock_settings_dialog.cpp:1488

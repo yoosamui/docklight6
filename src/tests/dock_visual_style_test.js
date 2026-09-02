@@ -92,4 +92,40 @@ assert.deepStrictEqual(
     new Set(expectedSettingLabels),
     "every visible setting must be attached with a short description");
 
+const settingDescriptions = Array.from(
+    settingsSource.matchAll(
+        /attach_setting\(\s*\w+,\s*\w+,\s*\w+,\s*_\("([^"]+)"\)/g),
+    match => match[1]);
+const settingsMessages = [
+    "Appearance",
+    "Behavior",
+    "Position & Autohide",
+    ...settingDescriptions
+];
+const poDirectory = path.resolve(__dirname, "../../po");
+const catalogs = fs.readdirSync(poDirectory)
+    .filter(fileName => fileName.endsWith(".po"));
+
+for (const catalogName of catalogs) {
+    const catalog = fs.readFileSync(
+        path.join(poDirectory, catalogName),
+        "utf8");
+    const entries = catalog.split(/\n\n/);
+
+    for (const message of settingsMessages) {
+        const entry = entries.find(block =>
+            block.split("\n").includes(`msgid ${JSON.stringify(message)}`));
+
+        assert.ok(entry, `${catalogName} must contain the settings message: ${message}`);
+        assert.doesNotMatch(
+            entry,
+            /^msgstr ""$/m,
+            `${catalogName} must translate the settings message: ${message}`);
+        assert.doesNotMatch(
+            entry,
+            /^#,.*\bfuzzy\b/m,
+            `${catalogName} must not leave the settings message fuzzy: ${message}`);
+    }
+}
+
 console.log("Dock visual style tests passed");
