@@ -33,6 +33,17 @@
 
 namespace
 {
+constexpr int SETTINGS_DIALOG_DEFAULT_WIDTH = 900;
+constexpr int SETTINGS_DIALOG_DEFAULT_HEIGHT = 560;
+constexpr int SETTINGS_DIALOG_MINIMUM_WIDTH = 680;
+constexpr int SETTINGS_DIALOG_MINIMUM_HEIGHT = 320;
+constexpr int SETTINGS_DIALOG_HORIZONTAL_MARGIN = 64;
+constexpr int SETTINGS_DIALOG_VERTICAL_MARGIN = 112;
+constexpr int SETTINGS_DIALOG_VERTICAL_OFFSET = 60;
+constexpr int SETTINGS_PAGE_MINIMUM_HEIGHT = 180;
+constexpr int SETTINGS_PAGE_NATURAL_HEIGHT = 340;
+constexpr int SETTINGS_DESCRIPTION_WIDTH_CHARS = 48;
+
 void keep_dialog_above(
     Gtk::Window &dialog)
 {
@@ -58,22 +69,134 @@ void center_dialog_on_parent_monitor(
     Gdk::Rectangle geometry;
     monitor->get_geometry(geometry);
 
+    int default_width = -1;
+    int default_height = -1;
+    dialog.get_default_size(
+        default_width,
+        default_height);
+
     Gtk::Requisition minimum;
     Gtk::Requisition natural;
     dialog.get_preferred_size(minimum, natural);
-    const int width = std::max(
+
+    // Leave room for client-side decorations and a small usable margin.
+    // Gtk::Window's default size does not include those decorations.
+    const int available_width = std::max(
         1,
-        natural.width);
-    const int height = std::max(
+        geometry.get_width() -
+            SETTINGS_DIALOG_HORIZONTAL_MARGIN);
+    const int available_height = std::max(
         1,
-        natural.height);
+        geometry.get_height() -
+            SETTINGS_DIALOG_VERTICAL_MARGIN);
+    const int width = std::min(
+        available_width,
+        std::max(
+            1,
+            default_width > 0
+                ? default_width
+                : natural.width));
+    const int height = std::min(
+        available_height,
+        std::max(
+            1,
+            default_height > 0
+                ? default_height
+                : natural.height));
+
+    dialog.resize(width, height);
 
     dialog.set_position(Gtk::WIN_POS_NONE);
     dialog.move(
         geometry.get_x() +
             (geometry.get_width() - width) / 2,
         geometry.get_y() +
-            (geometry.get_height() - height) / 2);
+            std::max(
+                0,
+                (geometry.get_height() - height) /
+                        2 -
+                    SETTINGS_DIALOG_VERTICAL_OFFSET));
+}
+
+void configure_settings_page(
+    Gtk::ScrolledWindow &scroller,
+    Gtk::Grid &grid)
+{
+    scroller.set_policy(
+        Gtk::POLICY_NEVER,
+        Gtk::POLICY_AUTOMATIC);
+    scroller.set_shadow_type(
+        Gtk::SHADOW_NONE);
+    scroller.set_hexpand(true);
+    scroller.set_vexpand(true);
+    scroller.set_min_content_height(
+        SETTINGS_PAGE_MINIMUM_HEIGHT);
+    scroller.set_max_content_height(
+        SETTINGS_PAGE_NATURAL_HEIGHT);
+    scroller.set_propagate_natural_height(true);
+
+    grid.set_hexpand(true);
+    grid.set_vexpand(false);
+    grid.set_border_width(14);
+    grid.set_row_spacing(12);
+    grid.set_column_spacing(28);
+    grid.set_column_homogeneous(true);
+
+    scroller.add(grid);
+}
+
+void attach_setting(
+    Gtk::Grid &grid,
+    Gtk::Label &title,
+    Gtk::Widget &control,
+    const Glib::ustring &description,
+    int column,
+    int row,
+    int width = 1)
+{
+    auto *setting = Gtk::manage(
+        new Gtk::Box(
+            Gtk::ORIENTATION_VERTICAL,
+            3));
+    auto *details = Gtk::manage(
+        new Gtk::Label());
+
+    title.set_halign(Gtk::ALIGN_START);
+    title.set_valign(Gtk::ALIGN_CENTER);
+
+    details->set_markup(
+        Glib::ustring("<small>") +
+        Glib::Markup::escape_text(description) +
+        "</small>");
+    details->set_halign(Gtk::ALIGN_START);
+    details->set_valign(Gtk::ALIGN_START);
+    details->set_xalign(0.0f);
+    details->set_line_wrap(true);
+    details->set_max_width_chars(
+        SETTINGS_DESCRIPTION_WIDTH_CHARS);
+    details->get_style_context()->add_class(
+        "dim-label");
+
+    setting->set_hexpand(true);
+    setting->pack_start(
+        title,
+        false,
+        false);
+    setting->pack_start(
+        *details,
+        false,
+        false);
+    setting->pack_start(
+        control,
+        false,
+        false);
+
+    grid.attach(
+        *setting,
+        column,
+        row,
+        width,
+        1);
 }
 }
 
@@ -117,14 +240,18 @@ void DockSettingsDialog::show(
 
     keep_dialog_above(dialog);
     dialog.set_decorated(true);
-    dialog.set_resizable(false);
+    dialog.set_resizable(true);
     dialog.property_destroy_with_parent() =
         true;
     dialog.set_skip_taskbar_hint(true);
     dialog.set_skip_pager_hint(true);
     dialog.set_position(Gtk::WIN_POS_NONE);
-    dialog.set_default_size(460, -1);
-    dialog.set_size_request(460, -1);
+    dialog.set_default_size(
+        SETTINGS_DIALOG_DEFAULT_WIDTH,
+        SETTINGS_DIALOG_DEFAULT_HEIGHT);
+    dialog.set_size_request(
+        SETTINGS_DIALOG_MINIMUM_WIDTH,
+        SETTINGS_DIALOG_MINIMUM_HEIGHT);
 
     Gtk::HeaderBar header;
     Gtk::Image header_icon;
@@ -161,13 +288,43 @@ void DockSettingsDialog::show(
         _("_Close"),
         Gtk::RESPONSE_CLOSE);
 
-    Gtk::Grid grid;
-    grid.set_hexpand(true);
-    grid.set_vexpand(false);
-    grid.set_border_width(14);
-    grid.set_row_spacing(10);
-    grid.set_column_spacing(24);
-    grid.set_column_homogeneous(true);
+    Gtk::Notebook settings_notebook;
+    Gtk::ScrolledWindow appearance_page;
+    Gtk::ScrolledWindow behavior_page;
+    Gtk::ScrolledWindow position_page;
+    Gtk::Grid appearance_grid;
+    Gtk::Grid behavior_grid;
+    Gtk::Grid position_grid;
+    Gtk::Label appearance_tab(
+        _("Appearance"));
+    Gtk::Label behavior_tab(
+        _("Behavior"));
+    Gtk::Label position_tab(
+        _("Position & Autohide"));
+
+    settings_notebook.set_scrollable(true);
+    settings_notebook.set_hexpand(true);
+    settings_notebook.set_vexpand(true);
+
+    configure_settings_page(
+        appearance_page,
+        appearance_grid);
+    configure_settings_page(
+        behavior_page,
+        behavior_grid);
+    configure_settings_page(
+        position_page,
+        position_grid);
+
+    settings_notebook.append_page(
+        appearance_page,
+        appearance_tab);
+    settings_notebook.append_page(
+        behavior_page,
+        behavior_tab);
+    settings_notebook.append_page(
+        position_page,
+        position_tab);
 
     Gtk::Label monitor_label(
         _("Monitor"));
@@ -213,44 +370,6 @@ void DockSettingsDialog::show(
         _("Autohide Effect"));
     Gtk::Label autohide_hide_delay_label(
         _("Autohide Delay (ms)"));
-
-    std::vector<Gtk::Label *>
-        labels = {
-            &monitor_label,
-            &hover_label,
-            &indicator_label,
-            &indicator_color_label,
-            &preview_color_label,
-            &home_icon_enabled_label,
-            &home_icon_path_label,
-            &display_tooltips_label,
-            &display_preview_label,
-            &close_preview_after_activation_label,
-            &manage_all_workspaces_label,
-            &icon_size_label,
-            &preview_card_height_label,
-            &preview_show_delay_label,
-            &location_label,
-            &gradient_background_label,
-            &rounded_corners_label,
-            &corner_radius_label,
-            &alignment_label,
-            &autohide_label,
-            &autohide_hide_delay_label};
-
-    if (!configurable_autohide_effects.empty())
-    {
-        labels.push_back(
-            &autohide_effect_label);
-    }
-
-    for (auto *field_label : labels)
-    {
-        field_label->set_halign(
-            Gtk::ALIGN_START);
-        field_label->set_valign(
-            Gtk::ALIGN_CENTER);
-    }
 
     std::vector<std::string>
         monitor_identifiers{"primary"};
@@ -924,34 +1043,166 @@ void DockSettingsDialog::show(
     manage_all_workspaces.set_halign(
         Gtk::ALIGN_START);
 
-    for (std::size_t index = 0;
-         index < fields.size();
-         ++index)
-    {
-        const int column =
-            static_cast<int>(index % 2);
-        const int row =
-            static_cast<int>(index / 2);
-        auto *setting = Gtk::manage(
-            new Gtk::Box(
-                Gtk::ORIENTATION_VERTICAL,
-                4));
+    attach_setting(
+        appearance_grid,
+        icon_size_label,
+        icon_size_spin,
+        _("Set the dock icon size from 32 to 128 pixels."),
+        0,
+        0);
+    attach_setting(
+        appearance_grid,
+        hover_label,
+        hover_choices,
+        _("Choose how icons respond when the pointer moves over them."),
+        1,
+        0);
+    attach_setting(
+        appearance_grid,
+        indicator_label,
+        indicator_choices,
+        _("Select how running applications are marked on the dock."),
+        0,
+        1);
+    attach_setting(
+        appearance_grid,
+        indicator_color_label,
+        indicator_color,
+        _("Set the color of running-application indicators."),
+        1,
+        1);
+    attach_setting(
+        appearance_grid,
+        gradient_background_label,
+        gradient_background,
+        _("Use a GTK theme-derived gradient instead of a solid background."),
+        0,
+        2);
+    attach_setting(
+        appearance_grid,
+        rounded_corners_label,
+        rounded_corners,
+        _("Round the corners of the dock background."),
+        1,
+        2);
+    attach_setting(
+        appearance_grid,
+        corner_radius_label,
+        corner_radius_spin,
+        _("Set the corner radius in pixels; -1 selects automatic sizing."),
+        0,
+        3);
+    attach_setting(
+        appearance_grid,
+        home_icon_enabled_label,
+        home_icon_enabled,
+        _("Show the DockLight home and launcher-management icon."),
+        1,
+        3);
+    attach_setting(
+        appearance_grid,
+        home_icon_path_label,
+        home_icon_controls,
+        _("Choose a custom image for the home icon, or use the built-in icon."),
+        0,
+        4,
+        2);
 
-        setting->set_hexpand(true);
-        setting->pack_start(
-            *labels[index],
-            false,
-            false);
-        setting->pack_start(
-            *fields[index],
-            false,
-            false);
-        grid.attach(
-            *setting,
-            column,
-            row,
+    attach_setting(
+        behavior_grid,
+        display_tooltips_label,
+        display_tooltips,
+        _("Show application names when the pointer rests on dock icons."),
+        0,
+        0);
+    attach_setting(
+        behavior_grid,
+        manage_all_workspaces_label,
+        manage_all_workspaces,
+        _("Include windows from every workspace in dock actions and cycling."),
+        1,
+        0);
+    attach_setting(
+        behavior_grid,
+        display_preview_label,
+        display_preview,
+        _("Show window previews when the pointer rests on running apps."),
+        0,
+        1);
+    attach_setting(
+        behavior_grid,
+        close_preview_after_activation_label,
+        close_preview_after_activation,
+        _("Close the preview popup after activating one of its windows."),
+        1,
+        1);
+    attach_setting(
+        behavior_grid,
+        preview_color_label,
+        preview_color,
+        _("Set the accent color used by window previews."),
+        0,
+        2);
+    attach_setting(
+        behavior_grid,
+        preview_card_height_label,
+        preview_card_height_spin,
+        _("Set preview height in pixels; 0 selects automatic sizing."),
+        1,
+        2);
+    attach_setting(
+        behavior_grid,
+        preview_show_delay_label,
+        preview_show_delay_spin,
+        _("Set how long to wait before showing a preview."),
+        0,
+        3);
+
+    attach_setting(
+        position_grid,
+        monitor_label,
+        monitor_scroller,
+        _("Choose the display where DockLight appears."),
+        0,
+        0);
+    attach_setting(
+        position_grid,
+        location_label,
+        location_choices,
+        _("Choose the screen edge where the dock is placed."),
+        1,
+        0);
+    attach_setting(
+        position_grid,
+        alignment_label,
+        alignment_choices,
+        _("Align dock content along the selected screen edge."),
+        0,
+        1);
+    attach_setting(
+        position_grid,
+        autohide_label,
+        autohide_choices,
+        _("Choose when the dock moves out of view."),
+        1,
+        1);
+    attach_setting(
+        position_grid,
+        autohide_hide_delay_label,
+        autohide_hide_delay_spin,
+        _("Set how long to wait before hiding the dock."),
+        0,
+        2);
+
+    if (!autohide_effect_choices.empty())
+    {
+        attach_setting(
+            position_grid,
+            autohide_effect_label,
+            autohide_effect_scroller,
+            _("Choose an autohide animation supported by this desktop."),
             1,
-            1);
+            2);
     }
 
     std::vector<sigc::connection>
@@ -1503,9 +1754,9 @@ void DockSettingsDialog::show(
         dialog.get_content_area();
 
     content->pack_start(
-        grid,
-        false,
-        false);
+        settings_notebook,
+        true,
+        true);
 
     dialog.show_all_children();
     center_dialog_on_parent_monitor(
