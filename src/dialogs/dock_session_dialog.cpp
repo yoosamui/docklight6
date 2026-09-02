@@ -20,10 +20,13 @@
 #include "dock_session_dialog.h"
 #include "dock_session_item.h"
 #include "integrations/desktop_session_identity.h"
+#include "windowing/window_registry.h"
 
 #include <gdk/gdkwayland.h>
 #include <glibmm/i18n.h>
 #include <gtkmm.h>
+
+#include <optional>
 
 namespace
 {
@@ -42,7 +45,8 @@ void set_theme_icon(
 }
 
 void DockSessionDialog::show(
-    Gtk::Window &parent)
+    Gtk::Window &parent,
+    WindowRegistry *window_registry)
 {
     Gtk::Dialog dialog(
         _("Session"),
@@ -177,6 +181,47 @@ void DockSessionDialog::show(
         true);
 
     Glib::RefPtr<Gdk::Pixbuf> custom_icon;
+    std::optional<WindowId> capture_window_id;
+    sigc::connection capture_window_changed;
+
+    const auto remember_active_window =
+        [&capture_window_id,
+         window_registry]()
+    {
+        if (window_registry &&
+            window_registry->active_window())
+        {
+            capture_window_id =
+                *window_registry->active_window();
+        }
+    };
+
+    remember_active_window();
+    if (window_registry)
+    {
+        capture_window_changed =
+            window_registry->signal_changed().connect(
+                remember_active_window);
+    }
+
+    const auto capture_window =
+        [&capture_window_id,
+         window_registry]()
+        -> std::optional<ManagedWindow>
+    {
+        if (!window_registry ||
+            !capture_window_id)
+        {
+            return std::nullopt;
+        }
+
+        const auto *window =
+            window_registry->find_window(
+                *capture_window_id);
+        return window
+                   ? std::optional<ManagedWindow>{*window}
+                   : std::nullopt;
+    };
 
     icon_selector.signal_changed().connect(
         [&icon_selector,
@@ -266,10 +311,13 @@ void DockSessionDialog::show(
         });
 
     add_item.signal_clicked().connect(
-        [&item_list]()
+        [&item_list,
+         &capture_window]()
         {
             auto *item =
-                Gtk::manage(new DockSessionItem());
+                Gtk::manage(
+                    new DockSessionItem(
+                        capture_window));
 
             item->signal_remove_requested().connect(
                 [item]()
@@ -295,4 +343,5 @@ void DockSessionDialog::show(
     dialog.present();
     dialog.run();
     dialog.hide();
+    capture_window_changed.disconnect();
 }

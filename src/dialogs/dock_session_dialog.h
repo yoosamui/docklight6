@@ -29,8 +29,11 @@ namespace Gtk
 class Window;
 }
 
+class WindowRegistry;
+
 namespace DockSessionDialog
 {
 void show(
-    Gtk::Window &parent);
+    Gtk::Window &parent,
+    WindowRegistry *window_registry);
 }

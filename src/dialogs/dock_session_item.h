@@ -18,23 +18,34 @@
 
 #pragma once
 
+#include "windowing/managed_window.h"
+
 #include <gtkmm.h>
+
+#include <functional>
+#include <optional>
 
 class DockSessionItem : public Gtk::Frame
 {
   public:
-    DockSessionItem();
+    using CaptureWindowProvider =
+        std::function<std::optional<ManagedWindow>()>;
+
+    explicit DockSessionItem(
+        CaptureWindowProvider capture_window = {});
 
     sigc::signal<void> &signal_remove_requested();
 
   private:
+    void capture();
+
     Gtk::Grid m_layout;
     Gtk::Image m_app_icon;
 
     Gtk::Label m_app_title_label;
     Gtk::ComboBoxText m_app_title;
     Gtk::Box m_actions;
-    Gtk::Button m_copy_button;
+    Gtk::Button m_paste_button;
     Gtk::Button m_launch_button;
     Gtk::Button m_remove_button;
 
@@ -51,5 +62,6 @@ class DockSessionItem : public Gtk::Frame
     Gtk::Label m_position_label;
     Gtk::Entry m_position;
 
+    CaptureWindowProvider m_capture_window;
     sigc::signal<void> m_remove_requested;
 };

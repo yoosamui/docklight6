@@ -687,7 +687,9 @@ bool DockHomeItem::close_all()
 void DockHomeItem::open_session()
 {
     m_dock.inhibit_autohide();
-    DockSessionDialog::show(m_dock);
+    DockSessionDialog::show(
+        m_dock,
+        m_window_registry);
     m_dock.uninhibit_autohide();
 }
 

@@ -34,7 +34,7 @@ assert.match(
     "the home context menu must contain a separated Session entry");
 assert.match(
     homeItemSource,
-    /m_session_item[\s\S]*?signal_activate\(\)[\s\S]*?DockHomeItem::open_session[\s\S]*?void DockHomeItem::open_session\(\)[\s\S]*?m_dock\.inhibit_autohide\(\)[\s\S]*?DockSessionDialog::show\(m_dock\)[\s\S]*?m_dock\.uninhibit_autohide\(\)/,
+    /m_session_item[\s\S]*?signal_activate\(\)[\s\S]*?DockHomeItem::open_session[\s\S]*?void DockHomeItem::open_session\(\)[\s\S]*?m_dock\.inhibit_autohide\(\)[\s\S]*?DockSessionDialog::show\(\s*m_dock,\s*m_window_registry\)[\s\S]*?m_dock\.uninhibit_autohide\(\)/,
     "activating Session must open the dedicated dialog while autohide is inhibited");
 
 assert.strictEqual(
@@ -55,7 +55,7 @@ assert.match(
     "Session Items must live in a vertically scrollable area");
 assert.match(
     sessionDialogSource,
-    /add_item\.signal_clicked\(\)[\s\S]*?new DockSessionItem\(\)[\s\S]*?signal_remove_requested\(\)[\s\S]*?item->hide\(\)[\s\S]*?item_list\.pack_start\(/,
+    /add_item\.signal_clicked\(\)[\s\S]*?new DockSessionItem\([\s\S]*?capture_window[\s\S]*?signal_remove_requested\(\)[\s\S]*?item->hide\(\)[\s\S]*?item_list\.pack_start\(/,
     "Add must append one independent item whose Remove signal hides that item");
 
 for (const label of [
@@ -66,7 +66,7 @@ for (const label of [
     "Workspace",
     "Dimensions",
     "Position",
-    "_Copy",
+    "_Paste",
     "_Launch",
     "_Remove",
 ]) {
@@ -92,8 +92,8 @@ assert.match(
     "Remove must emit only the card's presentation-level removal request");
 assert.doesNotMatch(
     sessionDialogSource + sessionItemSource,
-    /docklight\.data|DockConfiguration|LauncherManager|WindowRegistry|ManagedWindow|move_to_workspace|Gio::AppInfo/,
-    "Session UI must not introduce persistence, window handling, or launching");
+    /docklight\.data|DockConfiguration|LauncherManager|move_to_workspace/,
+    "Session capture must not introduce persistence or window actions");
 
 assert.match(
     makefileSource,

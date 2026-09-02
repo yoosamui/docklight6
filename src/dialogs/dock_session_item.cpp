@@ -7,10 +7,11 @@
 // dock_session_item.cpp
 //
 // Implementation overview:
-// Builds one editable, UI-only Session Item card.
+// Builds one editable Session Item card and captures normalized window data.
 //
 // Important implementation decisions:
-// - Copy and Launch are intentionally inert in this implementation step.
+// - Paste copies available normalized metadata from the selected window.
+// - Launch remains intentionally inert in this implementation step.
 // - Remove emits a presentation signal; the containing editor decides which
 //   card to remove.
 // - Every value lives only in GTK widgets and is discarded with the dialog.
@@ -19,13 +20,97 @@
 
 #include "dock_session_item.h"
 
+#include <gdkmm/pixbufloader.h>
+#include <giomm/desktopappinfo.h>
 #include <glibmm/i18n.h>
 
-DockSessionItem::DockSessionItem()
+#include <utility>
+
+namespace
+{
+Glib::RefPtr<Gio::DesktopAppInfo> find_desktop_application(
+    const std::string &desktop_file_name)
+{
+    if (desktop_file_name.empty())
+        return {};
+
+    try
+    {
+        return Gio::DesktopAppInfo::create(
+            desktop_file_name);
+    }
+    catch (const Glib::Error &)
+    {
+        return {};
+    }
+}
+
+Glib::RefPtr<Gdk::Pixbuf> load_window_icon(
+    const std::vector<unsigned char> &icon_png)
+{
+    if (icon_png.empty())
+        return {};
+
+    try
+    {
+        auto loader = Gdk::PixbufLoader::create();
+        loader->write(
+            icon_png.data(),
+            icon_png.size());
+        loader->close();
+
+        const auto pixbuf = loader->get_pixbuf();
+        return pixbuf
+                   ? pixbuf->scale_simple(
+                         40,
+                         40,
+                         Gdk::INTERP_BILINEAR)
+                   : Glib::RefPtr<Gdk::Pixbuf>{};
+    }
+    catch (const Glib::Error &)
+    {
+        return {};
+    }
+}
+
+std::string workspace_text(
+    const ManagedWindow &window)
+{
+    std::string result;
+
+    const auto append =
+        [&result](const std::string &value)
+    {
+        if (!result.empty())
+            result += ", ";
+        result += value;
+    };
+
+    for (const auto number :
+         window.desktop_numbers)
+    {
+        append(std::to_string(number));
+    }
+
+    if (!result.empty())
+        return result;
+
+    for (const auto &id :
+         window.desktop_ids)
+    {
+        append(id);
+    }
+
+    return result;
+}
+}
+
+DockSessionItem::DockSessionItem(
+    CaptureWindowProvider capture_window)
     : m_app_title_label(_("App Title")),
       m_app_title(true),
       m_actions(Gtk::ORIENTATION_HORIZONTAL, 6),
-      m_copy_button(_("_Copy"), true),
+      m_paste_button(_("_Paste"), true),
       m_launch_button(_("_Launch"), true),
       m_remove_button(_("_Remove"), true),
       m_desktop_file_label(_("Desktop File")),
@@ -33,7 +118,8 @@ DockSessionItem::DockSessionItem()
       m_parameters_label(_("Parameters")),
       m_workspace_label(_("Workspace")),
       m_dimensions_label(_("Dimensions")),
-      m_position_label(_("Position"))
+      m_position_label(_("Position")),
+      m_capture_window(std::move(capture_window))
 {
     set_shadow_type(Gtk::SHADOW_ETCHED_IN);
     set_hexpand(true);
@@ -77,7 +163,7 @@ DockSessionItem::DockSessionItem()
     m_position.set_text("120x200");
 
     m_actions.pack_start(
-        m_copy_button,
+        m_paste_button,
         false,
         false);
     m_actions.pack_start(
@@ -108,11 +194,90 @@ DockSessionItem::DockSessionItem()
 
     add(m_layout);
 
+    m_paste_button.signal_clicked().connect(
+        sigc::mem_fun(
+            *this,
+            &DockSessionItem::capture));
+
     m_remove_button.signal_clicked().connect(
         [this]()
         {
             m_remove_requested.emit();
         });
+}
+
+void DockSessionItem::capture()
+{
+    if (!m_capture_window)
+        return;
+
+    const auto captured = m_capture_window();
+    if (!captured)
+        return;
+
+    const auto &window = *captured;
+    const auto application =
+        find_desktop_application(
+            window.desktop_file_name);
+
+    m_app_title.remove_all();
+    if (!window.caption.empty())
+    {
+        m_app_title.append(window.caption);
+        m_app_title.set_active(0);
+    }
+    else
+    {
+        m_app_title.get_entry()->set_text("");
+    }
+
+    m_desktop_file.set_text(
+        application &&
+                !application->get_filename().empty()
+            ? application->get_filename()
+            : window.desktop_file_name);
+    m_app_name.set_text(
+        application
+            ? application->get_display_name()
+            : std::string{});
+    m_workspace.set_text(
+        workspace_text(window));
+    m_dimensions.set_text(
+        std::to_string(
+            window.frame_geometry.width) +
+        "x" +
+        std::to_string(
+            window.frame_geometry.height));
+    m_position.set_text(
+        std::to_string(
+            window.frame_geometry.x) +
+        "x" +
+        std::to_string(
+            window.frame_geometry.y));
+
+    const auto window_icon =
+        load_window_icon(window.icon_png);
+    if (window_icon)
+    {
+        m_app_icon.set(window_icon);
+    }
+    else if (application && application->get_icon())
+    {
+        const Glib::RefPtr<const Gio::Icon>
+            application_icon =
+                application->get_icon();
+        m_app_icon.set(
+            application_icon,
+            Gtk::ICON_SIZE_DIALOG);
+        m_app_icon.set_pixel_size(40);
+    }
+    else if (!window.icon_name.empty())
+    {
+        m_app_icon.set_from_icon_name(
+            window.icon_name,
+            Gtk::ICON_SIZE_DIALOG);
+        m_app_icon.set_pixel_size(40);
+    }
 }
 
 sigc::signal<void> &DockSessionItem::signal_remove_requested()
