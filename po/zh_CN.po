@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-02 20:19+0700\n"
+"POT-Creation-Date: 2026-09-04 00:00+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -35,55 +35,67 @@ msgstr ""
 "Openbox 需要 X11 合成器才能实现完整的窗口预览。显示预览已禁用。启动 compton "
 "或 picom，然后在 DockLight 设置中启用显示预览。"
 
-#: src/dock/dock_item.cpp:175
+#: src/dock/dock_item.cpp:159
+msgid "_Edit"
+msgstr ""
+
+#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+msgid "_Remove"
+msgstr ""
+
+#: src/dock/dock_item.cpp:165
 msgid "_Attach"
 msgstr "_固定到底座"
 
-#: src/dock/dock_item.cpp:178
+#: src/dock/dock_item.cpp:168
 msgid "_Open New Window"
 msgstr "_打开新窗口"
 
-#: src/dock/dock_item.cpp:181 src/dock/dock_home_item.cpp:70
+#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
 msgid "_Close All"
 msgstr "_关闭全部"
 
-#: src/dock/dock_item.cpp:184
+#: src/dock/dock_item.cpp:174
 msgid "_Minimize"
 msgstr "_最小化"
 
-#: src/dock/dock_item.cpp:187
+#: src/dock/dock_item.cpp:177
 msgid "_Unminimize"
 msgstr "_恢复"
 
-#: src/dock/dock_item.cpp:190
+#: src/dock/dock_item.cpp:180
 msgid "_Maximize"
 msgstr "_最大化"
 
-#: src/dock/dock_home_item.cpp:58
+#: src/dock/dock_home_item.cpp:59
 msgid "_Settings"
 msgstr "_设置"
 
-#: src/dock/dock_home_item.cpp:61
+#: src/dock/dock_home_item.cpp:62
+msgid "Sessi_on"
+msgstr ""
+
+#: src/dock/dock_home_item.cpp:65
 msgid "_Minimize All"
 msgstr "_最小化全部"
 
-#: src/dock/dock_home_item.cpp:64
+#: src/dock/dock_home_item.cpp:68
 msgid "_Unminimize All"
 msgstr "_恢复全部"
 
-#: src/dock/dock_home_item.cpp:67
+#: src/dock/dock_home_item.cpp:71
 msgid "_Maximize All"
 msgstr "_最大化所有"
 
-#: src/dock/dock_home_item.cpp:73
+#: src/dock/dock_home_item.cpp:77
 msgid "_About"
 msgstr "_关于"
 
-#: src/dock/dock_home_item.cpp:76
+#: src/dock/dock_home_item.cpp:80
 msgid "_Exit"
 msgstr "_退出"
 
-#: src/dock/dock_home_item.cpp:185
+#: src/dock/dock_home_item.cpp:194
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "首页"
@@ -444,6 +456,8 @@ msgid "Select Home Icon"
 msgstr "选择主页图标"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
+#: src/dialogs/dock_session_dialog.cpp:501
+#: src/dialogs/dock_session_dialog.cpp:973
 msgid "_Cancel"
 msgstr "_取消"
 
@@ -452,8 +466,154 @@ msgid "_Open"
 msgstr "_打开"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
+#: src/dialogs/dock_session_dialog.cpp:512
 msgid "Image Files"
 msgstr "图像文件"
+
+#: src/dialogs/dock_session_dialog.cpp:233
+#: src/dialogs/dock_session_dialog.cpp:267
+msgid "Session"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:302
+msgid "_Session Name"
+msgstr "_会话名称"
+
+#: src/dialogs/dock_session_dialog.cpp:307
+msgid "Session name"
+msgstr "会话名称"
+
+#: src/dialogs/dock_session_dialog.cpp:312
+msgid "_Icon"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:355
+#, fuzzy
+msgid "Select _Icon"
+msgstr "选择主页图标"
+
+#: src/dialogs/dock_session_dialog.cpp:358
+msgid "_Add"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:495
+#, fuzzy
+msgid "Select Session Icon"
+msgstr "选择主页图标"
+
+#: src/dialogs/dock_session_dialog.cpp:504
+#, fuzzy
+msgid "_Select"
+msgstr "选择…"
+
+#: src/dialogs/dock_session_dialog.cpp:570
+#: src/dialogs/dock_session_dialog.cpp:895
+msgid "Custom"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:726
+msgid "A Session with this name already exists."
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:733
+msgid "Choose a different name for “%1”."
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:967
+msgid "_Save"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:104
+msgid "App Title"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:106
+msgid "_Paste"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:107
+msgid "_Launch"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:112
+#, fuzzy
+msgid "Workspace"
+msgstr "管理所有工作区"
+
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:114
+#, fuzzy
+msgid "Position"
+msgstr "地点"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
+msgid "Application title"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:147
+msgid "Desktop file"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:151
+msgid "Application name"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:154
+msgid "Command-line parameters"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:156
+msgid "Workspace number"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:246
+msgid "No application window is available to copy."
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:410
+msgid "Paste a window into this item before launching it."
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:438
+msgid ""
+"The application was launched. This desktop session cannot place windows, so "
+"Workspace, Dimensions, and Position were ignored."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:622
+msgid "This Session item has no application."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:631
+msgid "No installed application matches \"%1\"."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:646
+msgid "The parameters cannot be parsed: %1"
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:653
+msgid "%1 does not declare a command that accepts parameters."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:697
+msgid "%1 cannot be launched: %2"
+msgstr ""
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -518,3 +678,4 @@ msgstr "默认监视器"
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "淡出"
+

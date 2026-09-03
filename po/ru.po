@@ -17,7 +17,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-02 20:19+0700\n"
+"POT-Creation-Date: 2026-09-04 00:00+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Juan Gonzalez <j-gonzalez@email.de>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -47,55 +47,69 @@ msgstr ""
 "Предварительный просмотр дисплея отключен. Запустите compton или picom, "
 "затем включите предварительный просмотр дисплея в настройках DockLight."
 
-#: src/dock/dock_item.cpp:175
+#: src/dock/dock_item.cpp:159
+msgid "_Edit"
+msgstr ""
+
+#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+#, fuzzy
+msgid "_Remove"
+msgstr "Удалить"
+
+#: src/dock/dock_item.cpp:165
 msgid "_Attach"
 msgstr "_Закрепить в доке"
 
-#: src/dock/dock_item.cpp:178
+#: src/dock/dock_item.cpp:168
 msgid "_Open New Window"
 msgstr "_Открыть новое окно"
 
-#: src/dock/dock_item.cpp:181 src/dock/dock_home_item.cpp:70
+#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
 msgid "_Close All"
 msgstr "_Закрыть все"
 
-#: src/dock/dock_item.cpp:184
+#: src/dock/dock_item.cpp:174
 msgid "_Minimize"
 msgstr "_Свернуть"
 
-#: src/dock/dock_item.cpp:187
+#: src/dock/dock_item.cpp:177
 msgid "_Unminimize"
 msgstr "_Восстановить"
 
-#: src/dock/dock_item.cpp:190
+#: src/dock/dock_item.cpp:180
 msgid "_Maximize"
 msgstr "_Максимизировать"
 
-#: src/dock/dock_home_item.cpp:58
+#: src/dock/dock_home_item.cpp:59
 msgid "_Settings"
 msgstr "_Настройки"
 
-#: src/dock/dock_home_item.cpp:61
+#: src/dock/dock_home_item.cpp:62
+#, fuzzy
+msgid "Sessi_on"
+msgstr "заглавие "
+
+#: src/dock/dock_home_item.cpp:65
 msgid "_Minimize All"
 msgstr "_Свернуть все"
 
-#: src/dock/dock_home_item.cpp:64
+#: src/dock/dock_home_item.cpp:68
 msgid "_Unminimize All"
 msgstr "_Восстановить все"
 
-#: src/dock/dock_home_item.cpp:67
+#: src/dock/dock_home_item.cpp:71
 msgid "_Maximize All"
 msgstr "_Развернуть все"
 
-#: src/dock/dock_home_item.cpp:73
+#: src/dock/dock_home_item.cpp:77
 msgid "_About"
 msgstr "_О нас"
 
-#: src/dock/dock_home_item.cpp:76
+#: src/dock/dock_home_item.cpp:80
 msgid "_Exit"
 msgstr "_Выход"
 
-#: src/dock/dock_home_item.cpp:185
+#: src/dock/dock_home_item.cpp:194
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Главная"
@@ -376,7 +390,8 @@ msgstr "Установите размер значка панели от 32 до
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr "Выберите, как значки реагируют, когда указатель мыши перемещается над ними."
+msgstr ""
+"Выберите, как значки реагируют, когда указатель мыши перемещается над ними."
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
@@ -404,31 +419,42 @@ msgstr "Показать значок DockLight для домашней стра
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr "Выберите пользовательское изображение для домашнего значка или используйте встроенный значок."
+msgstr ""
+"Выберите пользовательское изображение для домашнего значка или используйте "
+"встроенный значок."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr "Показывать названия приложений, когда указатель находится на значках дока."
+msgstr ""
+"Показывать названия приложений, когда указатель находится на значках дока."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr "Включать окна из всех рабочих пространств в действия и циклирование дока."
+msgstr ""
+"Включать окна из всех рабочих пространств в действия и циклирование дока."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr "Показывать предварительный просмотр окон, когда указатель находится на запущенных приложениях."
+msgstr ""
+"Показывать предварительный просмотр окон, когда указатель находится на "
+"запущенных приложениях."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Close the preview popup after activating one of its windows."
-msgstr "Закрывать всплывающее окно предварительного просмотра после активации одного из его окон."
+msgstr ""
+"Закрывать всплывающее окно предварительного просмотра после активации одного "
+"из его окон."
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
-msgstr "Установить акцентный цвет, используемый в предварительном просмотре окон."
+msgstr ""
+"Установить акцентный цвет, используемый в предварительном просмотре окон."
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr "Установить высоту предварительного просмотра в пикселях; 0 выбирает автоматический размер."
+msgstr ""
+"Установить высоту предварительного просмотра в пикселях; 0 выбирает "
+"автоматический размер."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
@@ -464,6 +490,8 @@ msgid "Select Home Icon"
 msgstr "Выберите значок «Домой»"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
+#: src/dialogs/dock_session_dialog.cpp:501
+#: src/dialogs/dock_session_dialog.cpp:973
 msgid "_Cancel"
 msgstr "_Отмена"
 
@@ -472,8 +500,161 @@ msgid "_Open"
 msgstr "_Открыть"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
+#: src/dialogs/dock_session_dialog.cpp:512
 msgid "Image Files"
 msgstr "Файлы изображений"
+
+#: src/dialogs/dock_session_dialog.cpp:233
+#: src/dialogs/dock_session_dialog.cpp:267
+#, fuzzy
+msgid "Session"
+msgstr "заглавие "
+
+#: src/dialogs/dock_session_dialog.cpp:302
+msgid "_Session Name"
+msgstr "_Имя сеанса"
+
+#: src/dialogs/dock_session_dialog.cpp:307
+msgid "Session name"
+msgstr "Имя сеанса"
+
+#: src/dialogs/dock_session_dialog.cpp:312
+msgid "_Icon"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:355
+#, fuzzy
+msgid "Select _Icon"
+msgstr "Выберите значок «Домой»"
+
+#: src/dialogs/dock_session_dialog.cpp:358
+msgid "_Add"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:495
+#, fuzzy
+msgid "Select Session Icon"
+msgstr "Выберите значок «Домой»"
+
+#: src/dialogs/dock_session_dialog.cpp:504
+#, fuzzy
+msgid "_Select"
+msgstr "Выберите…"
+
+#: src/dialogs/dock_session_dialog.cpp:570
+#: src/dialogs/dock_session_dialog.cpp:895
+msgid "Custom"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:726
+msgid "A Session with this name already exists."
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:733
+msgid "Choose a different name for “%1”."
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:967
+#, fuzzy
+msgid "_Save"
+msgstr "Сохранить"
+
+#: src/dialogs/dock_session_editor_item.cpp:104
+msgid "App Title"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:106
+msgid "_Paste"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:107
+#, fuzzy
+msgid "_Launch"
+msgstr "Запустить"
+
+#: src/dialogs/dock_session_editor_item.cpp:109
+#, fuzzy
+msgid "Desktop File"
+msgstr "Рабочий стол"
+
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:112
+#, fuzzy
+msgid "Workspace"
+msgstr "Рабочая область"
+
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:114
+#, fuzzy
+msgid "Position"
+msgstr "Расположение"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
+#, fuzzy
+msgid "Application title"
+msgstr "Приложение активировано."
+
+#: src/dialogs/dock_session_editor_item.cpp:147
+#, fuzzy
+msgid "Desktop file"
+msgstr "Рабочий стол"
+
+#: src/dialogs/dock_session_editor_item.cpp:151
+#, fuzzy
+msgid "Application name"
+msgstr "Запуск приложения."
+
+#: src/dialogs/dock_session_editor_item.cpp:154
+msgid "Command-line parameters"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:156
+msgid "Workspace number"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:246
+msgid "No application window is available to copy."
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:410
+msgid "Paste a window into this item before launching it."
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:438
+msgid ""
+"The application was launched. This desktop session cannot place windows, so "
+"Workspace, Dimensions, and Position were ignored."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:622
+msgid "This Session item has no application."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:631
+msgid "No installed application matches \"%1\"."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:646
+msgid "The parameters cannot be parsed: %1"
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:653
+msgid "%1 does not declare a command that accepts parameters."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:697
+msgid "%1 cannot be launched: %2"
+msgstr ""
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -539,12 +720,6 @@ msgstr "Монитор по умолчанию"
 #~ msgid "Fade"
 #~ msgstr "Затухание"
 
-#~ msgid "Application start."
-#~ msgstr "Запуск приложения."
-
-#~ msgid "Application activated."
-#~ msgstr "Приложение активировано."
-
 #~ msgid "Initialize panel."
 #~ msgstr "Инициализация панели."
 
@@ -587,9 +762,6 @@ msgstr "Монитор по умолчанию"
 
 #~ msgid "Geometry"
 #~ msgstr "Геометрия"
-
-#~ msgid "Workarea"
-#~ msgstr "Рабочая область"
 
 #~ msgid "Width"
 #~ msgstr "Ширина"
@@ -731,9 +903,6 @@ msgstr "Монитор по умолчанию"
 #~ msgid "Fields Name and Command can't be empty!\n"
 #~ msgstr "Поля и Команда не могут быть пустыми!\n"
 
-#~ msgid "Desktop"
-#~ msgstr "Рабочий стол"
-
 #~ msgid "Show all"
 #~ msgstr "Показать все"
 
@@ -782,20 +951,8 @@ msgstr "Монитор по умолчанию"
 #~ msgid "Autohide on start"
 #~ msgstr "Авто-скрытие при запуске"
 
-#~ msgid "Launch"
-#~ msgstr "Запустить"
-
-#~ msgid "Remove"
-#~ msgstr "Удалить"
-
 #~ msgid "Add to list"
 #~ msgstr "Добавить в список"
-
-#~ msgid "Save"
-#~ msgstr "Сохранить"
-
-#~ msgid "Session Name"
-#~ msgstr "заглавие "
 
 #~ msgid "Session group %d"
 #~ msgstr "Сессия %d"
@@ -816,3 +973,4 @@ msgstr "Монитор по умолчанию"
 
 #~ msgid "Add active"
 #~ msgstr "Добавить активный"
+

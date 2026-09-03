@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-02 20:19+0700\n"
+"POT-Creation-Date: 2026-09-04 00:00+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: \n"
 "Language-Team: French <fr@li.org>\n"
@@ -36,55 +36,68 @@ msgstr ""
 "L'aperçu de l'affichage est désactivé. Démarrez Compton ou Picom, puis "
 "activez l'aperçu de l'affichage dans les paramètres DockLight."
 
-#: src/dock/dock_item.cpp:175
+#: src/dock/dock_item.cpp:159
+msgid "_Edit"
+msgstr ""
+
+#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+msgid "_Remove"
+msgstr "_Supprimer"
+
+#: src/dock/dock_item.cpp:165
 msgid "_Attach"
 msgstr "_Épingler au Dock"
 
-#: src/dock/dock_item.cpp:178
+#: src/dock/dock_item.cpp:168
 msgid "_Open New Window"
 msgstr "_Ouvrir une nouvelle fenêtre"
 
-#: src/dock/dock_item.cpp:181 src/dock/dock_home_item.cpp:70
+#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
 msgid "_Close All"
 msgstr "_Fermer tout"
 
-#: src/dock/dock_item.cpp:184
+#: src/dock/dock_item.cpp:174
 msgid "_Minimize"
 msgstr "_Réduire"
 
-#: src/dock/dock_item.cpp:187
+#: src/dock/dock_item.cpp:177
 msgid "_Unminimize"
 msgstr "_Restaurer"
 
-#: src/dock/dock_item.cpp:190
+#: src/dock/dock_item.cpp:180
 msgid "_Maximize"
 msgstr "_Maximiser"
 
-#: src/dock/dock_home_item.cpp:58
+#: src/dock/dock_home_item.cpp:59
 msgid "_Settings"
 msgstr "_Paramètres"
 
-#: src/dock/dock_home_item.cpp:61
+#: src/dock/dock_home_item.cpp:62
+#, fuzzy
+msgid "Sessi_on"
+msgstr "Titre"
+
+#: src/dock/dock_home_item.cpp:65
 msgid "_Minimize All"
 msgstr "_Réduire tout"
 
-#: src/dock/dock_home_item.cpp:64
+#: src/dock/dock_home_item.cpp:68
 msgid "_Unminimize All"
 msgstr "_Restaurer tout"
 
-#: src/dock/dock_home_item.cpp:67
+#: src/dock/dock_home_item.cpp:71
 msgid "_Maximize All"
 msgstr "_Maximiser tout"
 
-#: src/dock/dock_home_item.cpp:73
+#: src/dock/dock_home_item.cpp:77
 msgid "_About"
 msgstr "_À propos"
 
-#: src/dock/dock_home_item.cpp:76
+#: src/dock/dock_home_item.cpp:80
 msgid "_Exit"
 msgstr "_Quitter"
 
-#: src/dock/dock_home_item.cpp:185
+#: src/dock/dock_home_item.cpp:194
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Accueil"
@@ -363,15 +376,19 @@ msgstr "Définir la taille de l'icône du dock de 32 à 128 pixels."
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr "Choisir la façon dont les icônes réagissent lorsque le pointeur les survole."
+msgstr ""
+"Choisir la façon dont les icônes réagissent lorsque le pointeur les survole."
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
-msgstr "Sélectionner comment les applications en cours d'exécution sont indiquées sur le dock."
+msgstr ""
+"Sélectionner comment les applications en cours d'exécution sont indiquées "
+"sur le dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the color of running-application indicators."
-msgstr "Définir la couleur des indicateurs d'applications en cours d'exécution."
+msgstr ""
+"Définir la couleur des indicateurs d'applications en cours d'exécution."
 
 #: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Use a GTK theme-derived gradient instead of a solid background."
@@ -383,7 +400,8 @@ msgstr "Arrondir les coins de l'arrière-plan du dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1092
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr "Définir le rayon des coins en pixels ; -1 sélectionne la taille automatique."
+msgstr ""
+"Définir le rayon des coins en pixels ; -1 sélectionne la taille automatique."
 
 #: src/dialogs/dock_settings_dialog.cpp:1099
 msgid "Show the DockLight home and launcher-management icon."
@@ -391,23 +409,33 @@ msgstr "Afficher l'icône d'accueil DockLight et l'icône de gestion du lanceur.
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr "Choisir une image personnalisée pour l'icône d'accueil, ou utiliser l'icône intégrée."
+msgstr ""
+"Choisir une image personnalisée pour l'icône d'accueil, ou utiliser l'icône "
+"intégrée."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr "Afficher les noms des applications lorsque le curseur repose sur les icônes du dock."
+msgstr ""
+"Afficher les noms des applications lorsque le curseur repose sur les icônes "
+"du dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr "Inclure les fenêtres de tous les espaces de travail dans les actions du dock et le cycle."
+msgstr ""
+"Inclure les fenêtres de tous les espaces de travail dans les actions du dock "
+"et le cycle."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr "Afficher les aperçus des fenêtres lorsque le curseur repose sur les applications en cours d'exécution."
+msgstr ""
+"Afficher les aperçus des fenêtres lorsque le curseur repose sur les "
+"applications en cours d'exécution."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Close the preview popup after activating one of its windows."
-msgstr "Fermer la fenêtre contextuelle d'aperçu après avoir activé l'une de ses fenêtres."
+msgstr ""
+"Fermer la fenêtre contextuelle d'aperçu après avoir activé l'une de ses "
+"fenêtres."
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
@@ -415,7 +443,9 @@ msgstr "Définir la couleur d'accent utilisée par les aperçus de fenêtres."
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr "Définir la hauteur de l'aperçu en pixels ; 0 sélectionne la taille automatique."
+msgstr ""
+"Définir la hauteur de l'aperçu en pixels ; 0 sélectionne la taille "
+"automatique."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
@@ -443,7 +473,8 @@ msgstr "Définir combien de temps attendre avant de masquer le dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1203
 msgid "Choose an autohide animation supported by this desktop."
-msgstr "Choisir une animation de masquage automatique prise en charge par ce bureau."
+msgstr ""
+"Choisir une animation de masquage automatique prise en charge par ce bureau."
 
 #: src/dialogs/dock_settings_dialog.cpp:1451
 #: src/dialogs/dock_settings_dialog.cpp:1488
@@ -451,6 +482,8 @@ msgid "Select Home Icon"
 msgstr "Sélectionnez l'icône Accueil"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
+#: src/dialogs/dock_session_dialog.cpp:501
+#: src/dialogs/dock_session_dialog.cpp:973
 msgid "_Cancel"
 msgstr "_Annuler"
 
@@ -459,8 +492,150 @@ msgid "_Open"
 msgstr "_Ouvrir"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
+#: src/dialogs/dock_session_dialog.cpp:512
 msgid "Image Files"
-msgstr "Fichiers images"
+msgstr "Fichiers image"
+
+#: src/dialogs/dock_session_dialog.cpp:233
+#: src/dialogs/dock_session_dialog.cpp:267
+msgid "Session"
+msgstr "Session"
+
+#: src/dialogs/dock_session_dialog.cpp:302
+msgid "_Session Name"
+msgstr "_Nom de la session"
+
+#: src/dialogs/dock_session_dialog.cpp:307
+msgid "Session name"
+msgstr "Nom de la session"
+
+#: src/dialogs/dock_session_dialog.cpp:312
+msgid "_Icon"
+msgstr "_Icône"
+
+#: src/dialogs/dock_session_dialog.cpp:355
+msgid "Select _Icon"
+msgstr "Select _Icon"
+
+#: src/dialogs/dock_session_dialog.cpp:358
+msgid "_Add"
+msgstr "_Ajouter"
+
+#: src/dialogs/dock_session_dialog.cpp:495
+msgid "Select Session Icon"
+msgstr "Sélectionner l'icône de la session"
+
+#: src/dialogs/dock_session_dialog.cpp:504
+#, fuzzy
+msgid "_Select"
+msgstr "Sélectionnez…"
+
+#: src/dialogs/dock_session_dialog.cpp:570
+#: src/dialogs/dock_session_dialog.cpp:895
+msgid "Custom"
+msgstr "Personnalisé"
+
+#: src/dialogs/dock_session_dialog.cpp:726
+msgid "A Session with this name already exists."
+msgstr "Une session portant ce nom existe déjà."
+
+#: src/dialogs/dock_session_dialog.cpp:733
+msgid "Choose a different name for “%1”."
+msgstr "Choisissez un nom différent pour « %1 »."
+
+#: src/dialogs/dock_session_dialog.cpp:967
+msgid "_Save"
+msgstr "_Enregistrer"
+
+#: src/dialogs/dock_session_editor_item.cpp:104
+msgid "App Title"
+msgstr "Titre de l'application"
+
+#: src/dialogs/dock_session_editor_item.cpp:106
+msgid "_Paste"
+msgstr "_Coller"
+
+#: src/dialogs/dock_session_editor_item.cpp:107
+msgid "_Launch"
+msgstr "_Lancer"
+
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr "Fichier de bureau"
+
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr "Nom de l'application"
+
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "Paramètres"
+
+#: src/dialogs/dock_session_editor_item.cpp:112
+msgid "Workspace"
+msgstr "Espace de travail"
+
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr "Dimensions"
+
+#: src/dialogs/dock_session_editor_item.cpp:114
+msgid "Position"
+msgstr "Position"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
+msgid "Application title"
+msgstr "Titre de l'application"
+
+#: src/dialogs/dock_session_editor_item.cpp:147
+msgid "Desktop file"
+msgstr "Fichier de bureau"
+
+#: src/dialogs/dock_session_editor_item.cpp:151
+msgid "Application name"
+msgstr "Nom de l'application"
+
+#: src/dialogs/dock_session_editor_item.cpp:154
+msgid "Command-line parameters"
+msgstr "Paramètres de ligne de commande"
+
+#: src/dialogs/dock_session_editor_item.cpp:156
+msgid "Workspace number"
+msgstr "Numéro d'espace de travail"
+
+#: src/dialogs/dock_session_editor_item.cpp:246
+msgid "No application window is available to copy."
+msgstr "Aucune fenêtre d'application n'est disponible pour la copie."
+
+#: src/dialogs/dock_session_editor_item.cpp:410
+msgid "Paste a window into this item before launching it."
+msgstr "Collez une fenêtre dans cet élément avant de le lancer."
+
+#: src/dialogs/dock_session_editor_item.cpp:438
+msgid ""
+"The application was launched. This desktop session cannot place windows, so "
+"Workspace, Dimensions, and Position were ignored."
+msgstr "L'application a été lancée. Cette session de bureau ne peut pas placer de fenêtres, de sorte que l'espace de travail, les dimensions et la position ont été ignorés."
+
+#: src/launchers/session_launcher.cpp:622
+msgid "This Session item has no application."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:631
+msgid "No installed application matches \"%1\"."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:646
+msgid "The parameters cannot be parsed: %1"
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:653
+msgid "%1 does not declare a command that accepts parameters."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:697
+msgid "%1 cannot be launched: %2"
+msgstr ""
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -526,12 +701,6 @@ msgstr "Moniteur par défaut"
 #~ msgid "Fade"
 #~ msgstr "Fondu"
 
-#~ msgid "Application start."
-#~ msgstr "Démarrage de l'application"
-
-#~ msgid "Application activated."
-#~ msgstr "Application activée"
-
 #~ msgid "Initialize panel."
 #~ msgstr "Initialiser le panneau"
 
@@ -576,9 +745,6 @@ msgstr "Moniteur par défaut"
 
 #~ msgid "Geometry"
 #~ msgstr "Géométrie"
-
-#~ msgid "Workarea"
-#~ msgstr "Zone de travail"
 
 #~ msgid "Width"
 #~ msgstr "Largeur"
@@ -721,9 +887,6 @@ msgstr "Moniteur par défaut"
 #~ msgid "Fields Name and Command can't be empty!\n"
 #~ msgstr "Le nom et les champs de commande ne peuvent être vides!\n"
 
-#~ msgid "Desktop"
-#~ msgstr "Bureau"
-
 #~ msgid "Show all"
 #~ msgstr "Montrer tous"
 
@@ -772,20 +935,8 @@ msgstr "Moniteur par défaut"
 #~ msgid "Autohide on start"
 #~ msgstr "Autohide au démarrage"
 
-#~ msgid "Launch"
-#~ msgstr "lancer"
-
-#~ msgid "Remove"
-#~ msgstr "Supprimer"
-
 #~ msgid "Add to list"
 #~ msgstr "Ajouter à la liste"
-
-#~ msgid "Save"
-#~ msgstr "Sauvegarder"
-
-#~ msgid "Session Name"
-#~ msgstr "Titre"
 
 #~ msgid "Session group %d"
 #~ msgstr "Groupe de session %d"
@@ -806,3 +957,4 @@ msgstr "Moniteur par défaut"
 
 #~ msgid "Add active"
 #~ msgstr "เพิ่มการใช้งาน"
+

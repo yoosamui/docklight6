@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-02 20:19+0700\n"
+"POT-Creation-Date: 2026-09-04 00:00+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -37,55 +37,67 @@ msgstr ""
 "Preview. Kamata compton pe picom, pea faka'ata 'a e Faka'ali'ali 'o e Tomu'a "
 "Vakai'i 'i he DockLight 'o e ngaahi tu'unga."
 
-#: src/dock/dock_item.cpp:175
+#: src/dock/dock_item.cpp:159
+msgid "_Edit"
+msgstr ""
+
+#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+msgid "_Remove"
+msgstr ""
+
+#: src/dock/dock_item.cpp:165
 msgid "_Attach"
 msgstr "_Pin ki he Taulanga"
 
-#: src/dock/dock_item.cpp:178
+#: src/dock/dock_item.cpp:168
 msgid "_Open New Window"
 msgstr "_Fakaava 'a e Matapa Fo'ou"
 
-#: src/dock/dock_item.cpp:181 src/dock/dock_home_item.cpp:70
+#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
 msgid "_Close All"
 msgstr "_Tāpuni Kotoa"
 
-#: src/dock/dock_item.cpp:184
+#: src/dock/dock_item.cpp:174
 msgid "_Minimize"
 msgstr "_Fakasi'isi'i"
 
-#: src/dock/dock_item.cpp:187
+#: src/dock/dock_item.cpp:177
 msgid "_Unminimize"
 msgstr "_Fakafoki"
 
-#: src/dock/dock_item.cpp:190
+#: src/dock/dock_item.cpp:180
 msgid "_Maximize"
 msgstr "_Fakalahi"
 
-#: src/dock/dock_home_item.cpp:58
+#: src/dock/dock_home_item.cpp:59
 msgid "_Settings"
 msgstr "_Ngaahi fokotu'utu'u"
 
-#: src/dock/dock_home_item.cpp:61
+#: src/dock/dock_home_item.cpp:62
+msgid "Sessi_on"
+msgstr ""
+
+#: src/dock/dock_home_item.cpp:65
 msgid "_Minimize All"
 msgstr "_Fakasi'isi'i Kotoa"
 
-#: src/dock/dock_home_item.cpp:64
+#: src/dock/dock_home_item.cpp:68
 msgid "_Unminimize All"
 msgstr "_Fakafoki Kotoa"
 
-#: src/dock/dock_home_item.cpp:67
+#: src/dock/dock_home_item.cpp:71
 msgid "_Maximize All"
 msgstr "_Fakalahi Kotoa"
 
-#: src/dock/dock_home_item.cpp:73
+#: src/dock/dock_home_item.cpp:77
 msgid "_About"
 msgstr "_Fekau'aki mo e"
 
-#: src/dock/dock_home_item.cpp:76
+#: src/dock/dock_home_item.cpp:80
 msgid "_Exit"
 msgstr "_Hu ki tu'a"
 
-#: src/dock/dock_home_item.cpp:185
+#: src/dock/dock_home_item.cpp:194
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "'Api"
@@ -367,11 +379,15 @@ msgstr "Fokotuʻu ʻa e lahi ʻo e dock icon mei he 32 ki he 128 pixels."
 
 #: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr "Fili ʻa e founga ʻoku tali ʻaki ʻe he ngaahi fakaʻilonga ʻi he taimi ʻoku ngaʻunu ai ʻa e poinita ʻiate kinautolu."
+msgstr ""
+"Fili ʻa e founga ʻoku tali ʻaki ʻe he ngaahi fakaʻilonga ʻi he taimi ʻoku "
+"ngaʻunu ai ʻa e poinita ʻiate kinautolu."
 
 #: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Select how running applications are marked on the dock."
-msgstr "Fili ʻa e founga ʻoku fakaʻilongaʻi ai ʻa e ngaahi polokalama ʻoku lele ʻi he dock."
+msgstr ""
+"Fili ʻa e founga ʻoku fakaʻilongaʻi ai ʻa e ngaahi polokalama ʻoku lele ʻi "
+"he dock."
 
 #: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the color of running-application indicators."
@@ -379,7 +395,9 @@ msgstr "Fokotuʻu ʻa e lanu ʻo e ngaahi fakaʻilonga ʻo e fakaʻaongaʻi."
 
 #: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Use a GTK theme-derived gradient instead of a solid background."
-msgstr "Fakaʻaongaʻi ha gradient ʻoku maʻu mei he kaveinga ʻo e GTK kae ʻikai ko ha puipuituʻa fefeka."
+msgstr ""
+"Fakaʻaongaʻi ha gradient ʻoku maʻu mei he kaveinga ʻo e GTK kae ʻikai ko ha "
+"puipuituʻa fefeka."
 
 #: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Round the corners of the dock background."
@@ -387,39 +405,55 @@ msgstr "Takai ʻi he ngaahi tuliki ʻo e puipuituʻa ʻo e uafu."
 
 #: src/dialogs/dock_settings_dialog.cpp:1092
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr "Fokotuʻu ʻa e radius ʻo e tuliki ʻi he pixels; -1 fili ʻa e size ʻotometi."
+msgstr ""
+"Fokotuʻu ʻa e radius ʻo e tuliki ʻi he pixels; -1 fili ʻa e size ʻotometi."
 
 #: src/dialogs/dock_settings_dialog.cpp:1099
 msgid "Show the DockLight home and launcher-management icon."
-msgstr "Fakaʻaliʻali ʻa e ʻapi ʻo e DockLight mo e fakaʻilonga ʻo e puleʻi ʻo e launcher."
+msgstr ""
+"Fakaʻaliʻali ʻa e ʻapi ʻo e DockLight mo e fakaʻilonga ʻo e puleʻi ʻo e "
+"launcher."
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr "Fili ha ʻimisi angamaheni ki he fakaʻilonga ʻo e ʻapi, pe fakaʻaongaʻi ʻa e fakaʻilonga ʻoku langa ʻi loto."
+msgstr ""
+"Fili ha ʻimisi angamaheni ki he fakaʻilonga ʻo e ʻapi, pe fakaʻaongaʻi ʻa e "
+"fakaʻilonga ʻoku langa ʻi loto."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
-msgstr "Fakaʻaliʻali ʻa e ngaahi hingoa ʻo e tohi kole ʻi he taimi ʻoku hovers ai ʻa e pointer ʻi he ngaahi fakaʻilonga ʻo e uafu."
+msgstr ""
+"Fakaʻaliʻali ʻa e ngaahi hingoa ʻo e tohi kole ʻi he taimi ʻoku hovers ai ʻa "
+"e pointer ʻi he ngaahi fakaʻilonga ʻo e uafu."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr "Fakakau ʻa e ngaahi matapa sioʻata mei he ngaahi feituʻu ngaue kotoa pe ʻi he ngaahi ngaue ʻi he uafu mo e pasikala."
+msgstr ""
+"Fakakau ʻa e ngaahi matapa sioʻata mei he ngaahi feituʻu ngaue kotoa pe ʻi "
+"he ngaahi ngaue ʻi he uafu mo e pasikala."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr "Fakaʻaliʻali ʻa e tomuʻa vakaiʻi ʻo e window ʻi he taimi ʻoku lele ai ʻa e pointer ʻi he ngaahi polokalama ʻoku fakalele ʻaki."
+msgstr ""
+"Fakaʻaliʻali ʻa e tomuʻa vakaiʻi ʻo e window ʻi he taimi ʻoku lele ai ʻa e "
+"pointer ʻi he ngaahi polokalama ʻoku fakalele ʻaki."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Close the preview popup after activating one of its windows."
-msgstr "Tapuni ʻa e preview popup hili hono fakamoʻui ha taha ʻo hono ngaahi windows."
+msgstr ""
+"Tapuni ʻa e preview popup hili hono fakamoʻui ha taha ʻo hono ngaahi windows."
 
 #: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
-msgstr "Fokotuʻu ʻa e lanu ʻoku fakaʻaongaʻi ʻi he tomuʻa vakaiʻi ʻo e matapa sioʻata."
+msgstr ""
+"Fokotuʻu ʻa e lanu ʻoku fakaʻaongaʻi ʻi he tomuʻa vakaiʻi ʻo e matapa "
+"sioʻata."
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr "Fokotuʻu ʻa e maʻolunga ʻo e tomuʻa vakaiʻi ʻi he pixels; 0 ki he size ʻotometi."
+msgstr ""
+"Fokotuʻu ʻa e maʻolunga ʻo e tomuʻa vakaiʻi ʻi he pixels; 0 ki he size "
+"ʻotometi."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
@@ -455,6 +489,8 @@ msgid "Select Home Icon"
 msgstr "Fili ʻa e ʻAikoni ʻo e ʻApí ."
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
+#: src/dialogs/dock_session_dialog.cpp:501
+#: src/dialogs/dock_session_dialog.cpp:973
 msgid "_Cancel"
 msgstr "_Kaniseli"
 
@@ -463,8 +499,154 @@ msgid "_Open"
 msgstr "_Fakaava"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
+#: src/dialogs/dock_session_dialog.cpp:512
 msgid "Image Files"
 msgstr "Ngaahi Faile 'Imisi"
+
+#: src/dialogs/dock_session_dialog.cpp:233
+#: src/dialogs/dock_session_dialog.cpp:267
+msgid "Session"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:302
+msgid "_Session Name"
+msgstr "_Hingoa ʻo e sesini"
+
+#: src/dialogs/dock_session_dialog.cpp:307
+msgid "Session name"
+msgstr "Hingoa ʻo e sesini"
+
+#: src/dialogs/dock_session_dialog.cpp:312
+msgid "_Icon"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:355
+#, fuzzy
+msgid "Select _Icon"
+msgstr "Fili ʻa e ʻAikoni ʻo e ʻApí ."
+
+#: src/dialogs/dock_session_dialog.cpp:358
+msgid "_Add"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:495
+#, fuzzy
+msgid "Select Session Icon"
+msgstr "Fili ʻa e ʻAikoni ʻo e ʻApí ."
+
+#: src/dialogs/dock_session_dialog.cpp:504
+#, fuzzy
+msgid "_Select"
+msgstr "Fili..."
+
+#: src/dialogs/dock_session_dialog.cpp:570
+#: src/dialogs/dock_session_dialog.cpp:895
+msgid "Custom"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:726
+msgid "A Session with this name already exists."
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:733
+msgid "Choose a different name for “%1”."
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:967
+msgid "_Save"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:104
+msgid "App Title"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:106
+msgid "_Paste"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:107
+msgid "_Launch"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:112
+#, fuzzy
+msgid "Workspace"
+msgstr "Puleʻi ʻa e Ngaahi Feituʻu Ngāue Kotoa"
+
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:114
+#, fuzzy
+msgid "Position"
+msgstr "Feitu'u"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
+msgid "Application title"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:147
+msgid "Desktop file"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:151
+msgid "Application name"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:154
+msgid "Command-line parameters"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:156
+msgid "Workspace number"
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:246
+msgid "No application window is available to copy."
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:410
+msgid "Paste a window into this item before launching it."
+msgstr ""
+
+#: src/dialogs/dock_session_editor_item.cpp:438
+msgid ""
+"The application was launched. This desktop session cannot place windows, so "
+"Workspace, Dimensions, and Position were ignored."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:622
+msgid "This Session item has no application."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:631
+msgid "No installed application matches \"%1\"."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:646
+msgid "The parameters cannot be parsed: %1"
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:653
+msgid "%1 does not declare a command that accepts parameters."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:697
+msgid "%1 cannot be launched: %2"
+msgstr ""
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -531,3 +713,4 @@ msgstr "Monitoa tu'uma'u"
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Mole māmālie"
+

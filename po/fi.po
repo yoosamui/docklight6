@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-02 20:19+0700\n"
+"POT-Creation-Date: 2026-09-04 00:00+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -36,55 +36,67 @@ msgstr ""
 "Näytön esikatselu ei ole käytössä. Käynnistä compton tai picom ja ota sitten "
 "käyttöön näytön esikatselu DockLightin asetuksista."
 
-#: src/dock/dock_item.cpp:175
+#: src/dock/dock_item.cpp:159
+msgid "_Edit"
+msgstr ""
+
+#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+msgid "_Remove"
+msgstr "_Poista"
+
+#: src/dock/dock_item.cpp:165
 msgid "_Attach"
 msgstr "_Kiinnitä Dockiin"
 
-#: src/dock/dock_item.cpp:178
+#: src/dock/dock_item.cpp:168
 msgid "_Open New Window"
 msgstr "_Avaa uusi ikkuna"
 
-#: src/dock/dock_item.cpp:181 src/dock/dock_home_item.cpp:70
+#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
 msgid "_Close All"
 msgstr "_Sulje kaikki"
 
-#: src/dock/dock_item.cpp:184
+#: src/dock/dock_item.cpp:174
 msgid "_Minimize"
 msgstr "_Minimoi"
 
-#: src/dock/dock_item.cpp:187
+#: src/dock/dock_item.cpp:177
 msgid "_Unminimize"
 msgstr "_Palauta"
 
-#: src/dock/dock_item.cpp:190
+#: src/dock/dock_item.cpp:180
 msgid "_Maximize"
 msgstr "_Maksimoi"
 
-#: src/dock/dock_home_item.cpp:58
+#: src/dock/dock_home_item.cpp:59
 msgid "_Settings"
 msgstr "_Asetukset"
 
-#: src/dock/dock_home_item.cpp:61
+#: src/dock/dock_home_item.cpp:62
+msgid "Sessi_on"
+msgstr ""
+
+#: src/dock/dock_home_item.cpp:65
 msgid "_Minimize All"
 msgstr "_Minimoi kaikki"
 
-#: src/dock/dock_home_item.cpp:64
+#: src/dock/dock_home_item.cpp:68
 msgid "_Unminimize All"
 msgstr "_Palauta kaikki"
 
-#: src/dock/dock_home_item.cpp:67
+#: src/dock/dock_home_item.cpp:71
 msgid "_Maximize All"
 msgstr "_Maksimoi kaikki"
 
-#: src/dock/dock_home_item.cpp:73
+#: src/dock/dock_home_item.cpp:77
 msgid "_About"
 msgstr "_ Noin"
 
-#: src/dock/dock_home_item.cpp:76
+#: src/dock/dock_home_item.cpp:80
 msgid "_Exit"
 msgstr "_Poistu"
 
-#: src/dock/dock_home_item.cpp:185
+#: src/dock/dock_home_item.cpp:194
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Kotiin"
@@ -387,7 +399,9 @@ msgstr "Näytä DockLightin koti- ja käynnistyshallinnan kuvake."
 
 #: src/dialogs/dock_settings_dialog.cpp:1106
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr "Valitse mukautettu kuva koti-kuvakkeelle tai käytä sisäänrakennettua kuvaketta."
+msgstr ""
+"Valitse mukautettu kuva koti-kuvakkeelle tai käytä sisäänrakennettua "
+"kuvaketta."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Show application names when the pointer rests on dock icons."
@@ -395,11 +409,14 @@ msgstr "Näytä sovellusten nimet, kun osoitin lepää telakan kuvakkeiden pää
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr "Sisällytä ikkunat kaikista työtiloista telakan toimintoihin ja kierrätykseen."
+msgstr ""
+"Sisällytä ikkunat kaikista työtiloista telakan toimintoihin ja kierrätykseen."
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr "Näytä ikkunan esikatselut, kun osoitin lepää käynnissä olevien sovellusten päällä."
+msgstr ""
+"Näytä ikkunan esikatselut, kun osoitin lepää käynnissä olevien sovellusten "
+"päällä."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Close the preview popup after activating one of its windows."
@@ -447,6 +464,8 @@ msgid "Select Home Icon"
 msgstr "Valitse Koti-kuvake"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
+#: src/dialogs/dock_session_dialog.cpp:501
+#: src/dialogs/dock_session_dialog.cpp:973
 msgid "_Cancel"
 msgstr "_Peruuta"
 
@@ -455,8 +474,149 @@ msgid "_Open"
 msgstr "_Avaa"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
+#: src/dialogs/dock_session_dialog.cpp:512
 msgid "Image Files"
 msgstr "Kuvatiedostot"
+
+#: src/dialogs/dock_session_dialog.cpp:233
+#: src/dialogs/dock_session_dialog.cpp:267
+msgid "Session"
+msgstr "istunto"
+
+#: src/dialogs/dock_session_dialog.cpp:302
+msgid "_Session Name"
+msgstr "_istunnon nimi"
+
+#: src/dialogs/dock_session_dialog.cpp:307
+msgid "Session name"
+msgstr "istunnon nimi"
+
+#: src/dialogs/dock_session_dialog.cpp:312
+msgid "_Icon"
+msgstr "_Kuvake"
+
+#: src/dialogs/dock_session_dialog.cpp:355
+msgid "Select _Icon"
+msgstr "Valitse _kuvake"
+
+#: src/dialogs/dock_session_dialog.cpp:358
+msgid "_Add"
+msgstr "_Lisää"
+
+#: src/dialogs/dock_session_dialog.cpp:495
+msgid "Select Session Icon"
+msgstr "Valitse istunnon kuvake"
+
+#: src/dialogs/dock_session_dialog.cpp:504
+msgid "_Select"
+msgstr "_Valitse"
+
+#: src/dialogs/dock_session_dialog.cpp:570
+#: src/dialogs/dock_session_dialog.cpp:895
+msgid "Custom"
+msgstr "Mukautettu"
+
+#: src/dialogs/dock_session_dialog.cpp:726
+msgid "A Session with this name already exists."
+msgstr "Tämän niminen istunto on jo olemassa."
+
+#: src/dialogs/dock_session_dialog.cpp:733
+msgid "Choose a different name for “%1”."
+msgstr "Valitse toinen nimi kohteelle \"%1\"."
+
+#: src/dialogs/dock_session_dialog.cpp:967
+msgid "_Save"
+msgstr "_Tallenna"
+
+#: src/dialogs/dock_session_editor_item.cpp:104
+msgid "App Title"
+msgstr "Sovelluksen nimi"
+
+#: src/dialogs/dock_session_editor_item.cpp:106
+msgid "_Paste"
+msgstr "_Liitä"
+
+#: src/dialogs/dock_session_editor_item.cpp:107
+msgid "_Launch"
+msgstr "_Käynnistä"
+
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr "Työpöytätiedosto"
+
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr "Sovelluksen nimi"
+
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "Parametrit"
+
+#: src/dialogs/dock_session_editor_item.cpp:112
+msgid "Workspace"
+msgstr "Työtila"
+
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr "Mitat"
+
+#: src/dialogs/dock_session_editor_item.cpp:114
+msgid "Position"
+msgstr "Sijainti"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
+msgid "Application title"
+msgstr "Sovelluksen nimi"
+
+#: src/dialogs/dock_session_editor_item.cpp:147
+msgid "Desktop file"
+msgstr "Työpöytätiedosto"
+
+#: src/dialogs/dock_session_editor_item.cpp:151
+msgid "Application name"
+msgstr "Sovelluksen nimi"
+
+#: src/dialogs/dock_session_editor_item.cpp:154
+msgid "Command-line parameters"
+msgstr "Komentorivin parametrit"
+
+#: src/dialogs/dock_session_editor_item.cpp:156
+msgid "Workspace number"
+msgstr "Työtilan numero"
+
+#: src/dialogs/dock_session_editor_item.cpp:246
+msgid "No application window is available to copy."
+msgstr "Sovellusikkunaa ei ole saatavilla kopioitavaksi."
+
+#: src/dialogs/dock_session_editor_item.cpp:410
+msgid "Paste a window into this item before launching it."
+msgstr "Liitä ikkuna tähän kohteeseen ennen sen käynnistämistä."
+
+#: src/dialogs/dock_session_editor_item.cpp:438
+msgid ""
+"The application was launched. This desktop session cannot place windows, so "
+"Workspace, Dimensions, and Position were ignored."
+msgstr "Sovellus käynnistettiin. Tämä työpöytäistunto ei voi sijoittaa ikkunoita, joten työtila, mitat ja sijainti jätettiin huomiotta."
+
+#: src/launchers/session_launcher.cpp:622
+msgid "This Session item has no application."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:631
+msgid "No installed application matches \"%1\"."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:646
+msgid "The parameters cannot be parsed: %1"
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:653
+msgid "%1 does not declare a command that accepts parameters."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:697
+msgid "%1 cannot be launched: %2"
+msgstr ""
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -521,3 +681,4 @@ msgstr "Oletusnäyttö"
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Häivytys"
+

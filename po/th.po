@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-02 20:19+0700\n"
+"POT-Creation-Date: 2026-09-04 00:00+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: \n"
 "Language-Team: THAI <LL@li.org>\n"
@@ -35,55 +35,69 @@ msgstr ""
 "Openbox ต้องใช้ตัวประกอบ X11 เพื่อดูตัวอย่างหน้าต่างทั้งหมด การแสดงตัวอย่างถูกปิดใช้งาน เริ่ม "
 "compton หรือ picom จากนั้นเปิดใช้งาน Display Preview ในการตั้งค่า DockLight"
 
-#: src/dock/dock_item.cpp:175
+#: src/dock/dock_item.cpp:159
+msgid "_Edit"
+msgstr ""
+
+#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+#, fuzzy
+msgid "_Remove"
+msgstr "เอาออก"
+
+#: src/dock/dock_item.cpp:165
 msgid "_Attach"
 msgstr "_ปักหมุดไปที่ Dock"
 
-#: src/dock/dock_item.cpp:178
+#: src/dock/dock_item.cpp:168
 msgid "_Open New Window"
 msgstr "_เปิดหน้าต่างใหม่"
 
-#: src/dock/dock_item.cpp:181 src/dock/dock_home_item.cpp:70
+#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
 msgid "_Close All"
 msgstr "_ปิดทั้งหมด"
 
-#: src/dock/dock_item.cpp:184
+#: src/dock/dock_item.cpp:174
 msgid "_Minimize"
 msgstr "_ย่อเล็กสุด"
 
-#: src/dock/dock_item.cpp:187
+#: src/dock/dock_item.cpp:177
 msgid "_Unminimize"
 msgstr "_คืนค่า"
 
-#: src/dock/dock_item.cpp:190
+#: src/dock/dock_item.cpp:180
 msgid "_Maximize"
 msgstr "_ขยายใหญ่สุด"
 
-#: src/dock/dock_home_item.cpp:58
+#: src/dock/dock_home_item.cpp:59
 msgid "_Settings"
 msgstr "_การตั้งค่า"
 
-#: src/dock/dock_home_item.cpp:61
+#: src/dock/dock_home_item.cpp:62
+#, fuzzy
+msgid "Sessi_on"
+msgstr "หัวข้อ"
+
+#: src/dock/dock_home_item.cpp:65
 msgid "_Minimize All"
 msgstr "_ย่อขนาดทั้งหมด"
 
-#: src/dock/dock_home_item.cpp:64
+#: src/dock/dock_home_item.cpp:68
 msgid "_Unminimize All"
 msgstr "_กู้คืนทั้งหมด"
 
-#: src/dock/dock_home_item.cpp:67
+#: src/dock/dock_home_item.cpp:71
 msgid "_Maximize All"
 msgstr "_เพิ่มทั้งหมดให้สูงสุด"
 
-#: src/dock/dock_home_item.cpp:73
+#: src/dock/dock_home_item.cpp:77
 msgid "_About"
 msgstr "_เกี่ยวกับ"
 
-#: src/dock/dock_home_item.cpp:76
+#: src/dock/dock_home_item.cpp:80
 msgid "_Exit"
 msgstr "_ออก"
 
-#: src/dock/dock_home_item.cpp:185
+#: src/dock/dock_home_item.cpp:194
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "บ้าน"
@@ -444,6 +458,8 @@ msgid "Select Home Icon"
 msgstr "เลือกไอคอนหน้าแรก"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
+#: src/dialogs/dock_session_dialog.cpp:501
+#: src/dialogs/dock_session_dialog.cpp:973
 msgid "_Cancel"
 msgstr "_ยกเลิก"
 
@@ -452,8 +468,151 @@ msgid "_Open"
 msgstr "_เปิด"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
+#: src/dialogs/dock_session_dialog.cpp:512
 msgid "Image Files"
 msgstr "ไฟล์รูปภาพ"
+
+#: src/dialogs/dock_session_dialog.cpp:233
+#: src/dialogs/dock_session_dialog.cpp:267
+msgid "Session"
+msgstr "เซสชัน"
+
+#: src/dialogs/dock_session_dialog.cpp:302
+msgid "_Session Name"
+msgstr "_ชื่อเซสชัน"
+
+#: src/dialogs/dock_session_dialog.cpp:307
+msgid "Session name"
+msgstr "ชื่อเซสชัน"
+
+#: src/dialogs/dock_session_dialog.cpp:312
+msgid "_Icon"
+msgstr "_ไอคอน"
+
+#: src/dialogs/dock_session_dialog.cpp:355
+msgid "Select _Icon"
+msgstr "เลือก_ไอคอน"
+
+#: src/dialogs/dock_session_dialog.cpp:358
+msgid "_Add"
+msgstr "_เพิ่ม"
+
+#: src/dialogs/dock_session_dialog.cpp:495
+msgid "Select Session Icon"
+msgstr "เลือกไอคอนเซสชัน"
+
+#: src/dialogs/dock_session_dialog.cpp:504
+msgid "_Select"
+msgstr "_เลือก"
+
+#: src/dialogs/dock_session_dialog.cpp:570
+#: src/dialogs/dock_session_dialog.cpp:895
+msgid "Custom"
+msgstr "กำหนดเอง"
+
+#: src/dialogs/dock_session_dialog.cpp:726
+msgid "A Session with this name already exists."
+msgstr "มีเซสชันชื่อนี้อยู่แล้ว"
+
+#: src/dialogs/dock_session_dialog.cpp:733
+msgid "Choose a different name for “%1”."
+msgstr "เลือกชื่ออื่นสำหรับ “%1”"
+
+#: src/dialogs/dock_session_dialog.cpp:967
+msgid "_Save"
+msgstr "_บันทึก"
+
+#: src/dialogs/dock_session_editor_item.cpp:104
+msgid "App Title"
+msgstr "ชื่อแอป"
+
+#: src/dialogs/dock_session_editor_item.cpp:106
+msgid "_Paste"
+msgstr "_วาง"
+
+#: src/dialogs/dock_session_editor_item.cpp:107
+msgid "_Launch"
+msgstr "_เปิดใช้"
+
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr "ไฟล์เดสก์ท็อป"
+
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr "ชื่อแอป"
+
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "พารามิเตอร์"
+
+#: src/dialogs/dock_session_editor_item.cpp:112
+msgid "Workspace"
+msgstr "พื้นที่ทำงาน"
+
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr "ขนาด"
+
+#: src/dialogs/dock_session_editor_item.cpp:114
+msgid "Position"
+msgstr "ตำแหน่ง"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
+msgid "Application title"
+msgstr "ชื่อแอปพลิเคชัน"
+
+#: src/dialogs/dock_session_editor_item.cpp:147
+msgid "Desktop file"
+msgstr "ไฟล์เดสก์ท็อป"
+
+#: src/dialogs/dock_session_editor_item.cpp:151
+msgid "Application name"
+msgstr "ชื่อแอปพลิเคชัน"
+
+#: src/dialogs/dock_session_editor_item.cpp:154
+msgid "Command-line parameters"
+msgstr "พารามิเตอร์บรรทัดคำสั่ง"
+
+#: src/dialogs/dock_session_editor_item.cpp:156
+msgid "Workspace number"
+msgstr "หมายเลขพื้นที่ทำงาน"
+
+#: src/dialogs/dock_session_editor_item.cpp:246
+msgid "No application window is available to copy."
+msgstr "ไม่มีหน้าต่างแอปพลิเคชันให้คัดลอก"
+
+#: src/dialogs/dock_session_editor_item.cpp:410
+msgid "Paste a window into this item before launching it."
+msgstr "วางหน้าต่างลงในรายการนี้ก่อนเปิดใช้"
+
+#: src/dialogs/dock_session_editor_item.cpp:438
+msgid ""
+"The application was launched. This desktop session cannot place windows, so "
+"Workspace, Dimensions, and Position were ignored."
+msgstr ""
+"เปิดแอปพลิเคชันแล้ว เซสชันเดสก์ท็อปนี้ไม่สามารถจัดวางหน้าต่างได้ จึงไม่ใช้ "
+"พื้นที่ทำงาน ขนาด และตำแหน่ง"
+
+#: src/launchers/session_launcher.cpp:622
+msgid "This Session item has no application."
+msgstr "รายการเซสชันนี้ไม่มีแอปพลิเคชัน"
+
+#: src/launchers/session_launcher.cpp:631
+msgid "No installed application matches \"%1\"."
+msgstr "ไม่มีแอปพลิเคชันที่ติดตั้งตรงกับ \"%1\""
+
+#: src/launchers/session_launcher.cpp:646
+msgid "The parameters cannot be parsed: %1"
+msgstr "ไม่สามารถวิเคราะห์พารามิเตอร์ได้: %1"
+
+#: src/launchers/session_launcher.cpp:653
+msgid "%1 does not declare a command that accepts parameters."
+msgstr "%1 ไม่ได้ประกาศคำสั่งที่รองรับพารามิเตอร์"
+
+#: src/launchers/session_launcher.cpp:697
+msgid "%1 cannot be launched: %2"
+msgstr "ไม่สามารถเปิดใช้ %1 ได้: %2"
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -519,12 +678,6 @@ msgstr "จอภาพเริ่มต้น"
 #~ msgid "Fade"
 #~ msgstr "จาง"
 
-#~ msgid "Application start."
-#~ msgstr "เริ่มต้นแอปพลิเคชัน"
-
-#~ msgid "Application activated."
-#~ msgstr "แอปพลิเคชันเปิดใช้งาน"
-
 #~ msgid "Initialize panel."
 #~ msgstr "เริ่มต้นแผงควบคุม"
 
@@ -561,9 +714,6 @@ msgstr "จอภาพเริ่มต้น"
 
 #~ msgid "Geometry"
 #~ msgstr "เรขาคณิต"
-
-#~ msgid "Workarea"
-#~ msgstr "พื้นที่ทำงาน"
 
 #~ msgid "Width"
 #~ msgstr "ความกว้าง"
@@ -708,9 +858,6 @@ msgstr "จอภาพเริ่มต้น"
 #~ msgid "Fields Name and Command can't be empty!\n"
 #~ msgstr "เขตข้อมูลชื่อและคำสั่งต้องไม่ว่างเปล่า!\n"
 
-#~ msgid "Desktop"
-#~ msgstr "หน้าเดสทอป"
-
 #~ msgid "Show all"
 #~ msgstr "เปิดทั้งหมด"
 
@@ -756,20 +903,8 @@ msgstr "จอภาพเริ่มต้น"
 #~ msgid "Autohide on start"
 #~ msgstr "ปิดอัตโนมัติเมื่อเปิดใช้งาน"
 
-#~ msgid "Launch"
-#~ msgstr "เปิดทดสอบโปรแกรม"
-
-#~ msgid "Remove"
-#~ msgstr "เอาออก"
-
 #~ msgid "Add to list"
 #~ msgstr "เพิ่มรายการ"
-
-#~ msgid "Save"
-#~ msgstr "บันทึก"
-
-#~ msgid "Session Name"
-#~ msgstr "หัวข้อ"
 
 #~ msgid "Session group %d"
 #~ msgstr "กลุ่มเซสซั่น %d"
@@ -790,3 +925,4 @@ msgstr "จอภาพเริ่มต้น"
 
 #~ msgid "Add active"
 #~ msgstr "เพิ่มการใช้งาน"
+

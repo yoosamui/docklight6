@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-02 20:19+0700\n"
+"POT-Creation-Date: 2026-09-04 00:00+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -36,55 +36,67 @@ msgstr ""
 "نمایش غیرفعال است. Compton یا picom را شروع کنید، سپس نمایش پیش نمایش را در "
 "تنظیمات DockLight فعال کنید."
 
-#: src/dock/dock_item.cpp:175
+#: src/dock/dock_item.cpp:159
+msgid "_Edit"
+msgstr ""
+
+#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+msgid "_Remove"
+msgstr "_حذف"
+
+#: src/dock/dock_item.cpp:165
 msgid "_Attach"
 msgstr "_پین به داک"
 
-#: src/dock/dock_item.cpp:178
+#: src/dock/dock_item.cpp:168
 msgid "_Open New Window"
 msgstr "_پنجره جدید را باز کنید"
 
-#: src/dock/dock_item.cpp:181 src/dock/dock_home_item.cpp:70
+#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
 msgid "_Close All"
 msgstr "_همه را ببند"
 
-#: src/dock/dock_item.cpp:184
+#: src/dock/dock_item.cpp:174
 msgid "_Minimize"
 msgstr "_به حداقل برسانید"
 
-#: src/dock/dock_item.cpp:187
+#: src/dock/dock_item.cpp:177
 msgid "_Unminimize"
 msgstr "_بازیابی"
 
-#: src/dock/dock_item.cpp:190
+#: src/dock/dock_item.cpp:180
 msgid "_Maximize"
 msgstr "_به حداکثر رساندن"
 
-#: src/dock/dock_home_item.cpp:58
+#: src/dock/dock_home_item.cpp:59
 msgid "_Settings"
 msgstr "_تنظیمات"
 
-#: src/dock/dock_home_item.cpp:61
+#: src/dock/dock_home_item.cpp:62
+msgid "Sessi_on"
+msgstr ""
+
+#: src/dock/dock_home_item.cpp:65
 msgid "_Minimize All"
 msgstr "_به حداقل رساندن همه"
 
-#: src/dock/dock_home_item.cpp:64
+#: src/dock/dock_home_item.cpp:68
 msgid "_Unminimize All"
 msgstr "_بازیابی همه"
 
-#: src/dock/dock_home_item.cpp:67
+#: src/dock/dock_home_item.cpp:71
 msgid "_Maximize All"
 msgstr "_به حداکثر رساندن همه"
 
-#: src/dock/dock_home_item.cpp:73
+#: src/dock/dock_home_item.cpp:77
 msgid "_About"
 msgstr "_درباره"
 
-#: src/dock/dock_home_item.cpp:76
+#: src/dock/dock_home_item.cpp:80
 msgid "_Exit"
 msgstr "_خروج"
 
-#: src/dock/dock_home_item.cpp:185
+#: src/dock/dock_home_item.cpp:194
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "صفحه اصلی"
@@ -401,7 +413,9 @@ msgstr "شامل کردن پنجره‌ها از تمام فضای کاری در
 
 #: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Show window previews when the pointer rests on running apps."
-msgstr "نمایش پیش‌نمایش پنجره‌ها هنگامی که نشانگر بر روی برنامه‌های در حال اجرا قرار می‌گیرد."
+msgstr ""
+"نمایش پیش‌نمایش پنجره‌ها هنگامی که نشانگر بر روی برنامه‌های در حال اجرا قرار "
+"می‌گیرد."
 
 #: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Close the preview popup after activating one of its windows."
@@ -413,7 +427,8 @@ msgstr "تنظیم رنگ تأکید استفاده‌شده در پیش‌نم�
 
 #: src/dialogs/dock_settings_dialog.cpp:1150
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr "تنظیم ارتفاع پیش‌نمایش بر حسب پیکسل؛ 0 برای اندازه‌گیری خودکار انتخاب می‌شود."
+msgstr ""
+"تنظیم ارتفاع پیش‌نمایش بر حسب پیکسل؛ 0 برای اندازه‌گیری خودکار انتخاب می‌شود."
 
 #: src/dialogs/dock_settings_dialog.cpp:1157
 msgid "Set how long to wait before showing a preview."
@@ -449,6 +464,8 @@ msgid "Select Home Icon"
 msgstr "نماد صفحه اصلی را انتخاب کنید"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
+#: src/dialogs/dock_session_dialog.cpp:501
+#: src/dialogs/dock_session_dialog.cpp:973
 msgid "_Cancel"
 msgstr "_لغو"
 
@@ -457,8 +474,149 @@ msgid "_Open"
 msgstr "_باز کن"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
+#: src/dialogs/dock_session_dialog.cpp:512
 msgid "Image Files"
-msgstr "فایل های تصویری"
+msgstr "فایل‌های تصویری"
+
+#: src/dialogs/dock_session_dialog.cpp:233
+#: src/dialogs/dock_session_dialog.cpp:267
+msgid "Session"
+msgstr "جلسه"
+
+#: src/dialogs/dock_session_dialog.cpp:302
+msgid "_Session Name"
+msgstr "_نام جلسه"
+
+#: src/dialogs/dock_session_dialog.cpp:307
+msgid "Session name"
+msgstr "نام جلسه"
+
+#: src/dialogs/dock_session_dialog.cpp:312
+msgid "_Icon"
+msgstr "_آیکون"
+
+#: src/dialogs/dock_session_dialog.cpp:355
+msgid "Select _Icon"
+msgstr "انتخاب _آیکون"
+
+#: src/dialogs/dock_session_dialog.cpp:358
+msgid "_Add"
+msgstr "_اضافه کردن"
+
+#: src/dialogs/dock_session_dialog.cpp:495
+msgid "Select Session Icon"
+msgstr "انتخاب آیکون جلسه"
+
+#: src/dialogs/dock_session_dialog.cpp:504
+msgid "_Select"
+msgstr "_نام جلسه"
+
+#: src/dialogs/dock_session_dialog.cpp:570
+#: src/dialogs/dock_session_dialog.cpp:895
+msgid "Custom"
+msgstr "سفارشی"
+
+#: src/dialogs/dock_session_dialog.cpp:726
+msgid "A Session with this name already exists."
+msgstr "یک جلسه با این نام از قبل وجود دارد."
+
+#: src/dialogs/dock_session_dialog.cpp:733
+msgid "Choose a different name for “%1”."
+msgstr "نام دیگری برای “%1” انتخاب کنید."
+
+#: src/dialogs/dock_session_dialog.cpp:967
+msgid "_Save"
+msgstr "_ذخیره"
+
+#: src/dialogs/dock_session_editor_item.cpp:104
+msgid "App Title"
+msgstr "عنوان برنامه"
+
+#: src/dialogs/dock_session_editor_item.cpp:106
+msgid "_Paste"
+msgstr "_چسباندن"
+
+#: src/dialogs/dock_session_editor_item.cpp:107
+msgid "_Launch"
+msgstr "_اجرا"
+
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr "فایل دسکتاپ"
+
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr "نام برنامه"
+
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "پارامترها"
+
+#: src/dialogs/dock_session_editor_item.cpp:112
+msgid "Workspace"
+msgstr "فضای کاری"
+
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr "ابعاد"
+
+#: src/dialogs/dock_session_editor_item.cpp:114
+msgid "Position"
+msgstr "موقعیت"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
+msgid "Application title"
+msgstr "عنوان برنامه"
+
+#: src/dialogs/dock_session_editor_item.cpp:147
+msgid "Desktop file"
+msgstr "فایل دسکتاپ"
+
+#: src/dialogs/dock_session_editor_item.cpp:151
+msgid "Application name"
+msgstr "نام برنامه"
+
+#: src/dialogs/dock_session_editor_item.cpp:154
+msgid "Command-line parameters"
+msgstr "پارامترهای خط فرمان"
+
+#: src/dialogs/dock_session_editor_item.cpp:156
+msgid "Workspace number"
+msgstr "شماره فضای کاری"
+
+#: src/dialogs/dock_session_editor_item.cpp:246
+msgid "No application window is available to copy."
+msgstr "هیچ پنجره‌ای از برنامه برای کپی کردن در دسترس نیست."
+
+#: src/dialogs/dock_session_editor_item.cpp:410
+msgid "Paste a window into this item before launching it."
+msgstr "قبل از اجرای این مورد، یک پنجره را در آن جای‌گذاری کنید."
+
+#: src/dialogs/dock_session_editor_item.cpp:438
+msgid ""
+"The application was launched. This desktop session cannot place windows, so "
+"Workspace, Dimensions, and Position were ignored."
+msgstr "برنامه اجرا شد. این جلسه دسکتاپ نمی‌تواند پنجره‌ها را قرار دهد، بنابراین فضای کاری، ابعاد و موقعیت نادیده گرفته شدند."
+
+#: src/launchers/session_launcher.cpp:622
+msgid "This Session item has no application."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:631
+msgid "No installed application matches \"%1\"."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:646
+msgid "The parameters cannot be parsed: %1"
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:653
+msgid "%1 does not declare a command that accepts parameters."
+msgstr ""
+
+#: src/launchers/session_launcher.cpp:697
+msgid "%1 cannot be launched: %2"
+msgstr ""
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -523,3 +681,4 @@ msgstr "مانیتور پیش فرض"
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "محو شدن"
+
