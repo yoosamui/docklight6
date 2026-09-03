@@ -17,6 +17,7 @@
 
 #include "dock_window.h"
 #include "dock_home_item.h"
+#include "dock_session_item.h"
 
 #include "application/dock_runtime_info.h"
 #include "dock_constants.h"
@@ -25,6 +26,7 @@
 #include "windowing/window_registry.h"
 
 #include <algorithm>
+#include <iterator>
 #include <string>
 #include <utility>
 #include <vector>
@@ -176,6 +178,15 @@ void DockWindow::schedule_dock_item_sync()
             });
 }
 
+// The Session editor calls this after writing a Session. Sessions take part in
+// the ordinary item synchronization, so this only has to force a pass that the
+// unchanged attached/running snapshots would otherwise skip.
+void DockWindow::synchronize_session_items()
+{
+    m_has_synchronized_items = false;
+    synchronize_dock_items();
+}
+
 void DockWindow::synchronize_dock_items()
 {
     struct DesiredItem
@@ -183,13 +194,35 @@ void DockWindow::synchronize_dock_items()
         std::string desktop_id;
         Glib::RefPtr<Gio::AppInfo> app;
         bool attached = false;
+        bool is_session = false;
+        SessionRecord session;
     };
 
     std::vector<DesiredItem> desired_items;
 
+    // Saved Sessions are stored after the launcher lines in docklight.data.
+    // Collect their identities here for change detection, then append the
+    // actual desired items after ordinary dock items below.
+    const auto sessions =
+        m_launcher_manager.sessions();
+
+    std::vector<std::string> session_ids;
+    session_ids.reserve(sessions.size());
+
+    for (const auto &session : sessions)
+    {
+        const auto desktop_id =
+            DockSessionItem::session_desktop_id(
+                session.name);
+
+        session_ids.push_back(desktop_id);
+    }
+
     const auto attached_ids =
         m_launcher_manager
             .attached_ids();
+    const auto stored_dock_order =
+        m_launcher_manager.dock_order();
 
     std::vector<std::string>
         normalized_attached_ids;
@@ -235,7 +268,10 @@ void DockWindow::synchronize_dock_items()
         normalized_attached_ids ==
             m_synchronized_attached_ids &&
         normalized_running_ids ==
-            m_synchronized_running_ids)
+            m_synchronized_running_ids &&
+        session_ids == m_synchronized_session_ids &&
+        stored_dock_order ==
+            m_synchronized_dock_order)
     {
         return;
     }
@@ -244,6 +280,9 @@ void DockWindow::synchronize_dock_items()
         normalized_attached_ids;
     m_synchronized_running_ids =
         normalized_running_ids;
+    m_synchronized_session_ids = session_ids;
+    m_synchronized_dock_order =
+        stored_dock_order;
     m_has_synchronized_items = true;
 
     const int maximum_items =
@@ -264,6 +303,14 @@ void DockWindow::synchronize_dock_items()
             maximum_items)
         {
             break;
+        }
+
+        // Sessions are appended after every ordinary item below, matching
+        // their position after the launcher list in docklight.data.
+        if (DockSessionItem::is_session_desktop_id(
+                item->desktop_id()))
+        {
+            continue;
         }
 
         const auto normalized_id =
@@ -307,7 +354,9 @@ void DockWindow::synchronize_dock_items()
         desired_items.push_back(
             {item->desktop_id(),
              {},
-             attached});
+             attached,
+             false,
+             {}});
     }
 
     for (const auto &desktop_id :
@@ -382,7 +431,9 @@ void DockWindow::synchronize_dock_items()
         desired_items.push_back(
             {canonical_id,
              std::move(app),
-             true});
+             true,
+             false,
+             {}});
     }
 
     if (m_window_registry)
@@ -438,9 +489,79 @@ void DockWindow::synchronize_dock_items()
             desired_items.push_back(
                 {canonical_id,
                  std::move(app),
-                 false});
+                 false,
+                 false,
+                 {}});
         }
     }
+
+    for (const auto &session : sessions)
+    {
+        if (static_cast<int>(
+                desired_items.size()) >=
+            maximum_items)
+        {
+            break;
+        }
+
+        desired_items.push_back(
+            {DockSessionItem::session_desktop_id(
+                 session.name),
+             {},
+             true,
+             true,
+             session});
+    }
+
+    // Apply the explicitly persisted mixed order. Old files synthesize the
+    // compatibility order (launchers, then Sessions) in dock_order(). Any
+    // live, unattached applications are not persistent and remain afterward.
+    std::vector<DesiredItem> ordered_desired_items;
+    ordered_desired_items.reserve(desired_items.size());
+
+    for (const auto &stored_id : stored_dock_order)
+    {
+        const bool stored_is_session =
+            DockSessionItem::is_session_desktop_id(
+                stored_id);
+        const auto normalized_id = stored_is_session
+            ? stored_id
+            : m_launcher_manager.normalize_resolved_id(
+                  stored_id);
+
+        const auto desired = std::find_if(
+            desired_items.begin(),
+            desired_items.end(),
+            [this, stored_is_session, &normalized_id](
+                const DesiredItem &candidate)
+            {
+                if (candidate.is_session !=
+                    stored_is_session)
+                {
+                    return false;
+                }
+
+                return stored_is_session
+                    ? candidate.desktop_id == normalized_id
+                    : m_launcher_manager.normalize_resolved_id(
+                          candidate.desktop_id) ==
+                          normalized_id;
+            });
+
+        if (desired == desired_items.end())
+            continue;
+
+        ordered_desired_items.push_back(
+            std::move(*desired));
+        desired_items.erase(desired);
+    }
+
+    ordered_desired_items.insert(
+        ordered_desired_items.end(),
+        std::make_move_iterator(desired_items.begin()),
+        std::make_move_iterator(desired_items.end()));
+    desired_items =
+        std::move(ordered_desired_items);
 
     // The coarse attached/running snapshots above avoid building this list
     // for title-only registry updates. This structural diff handles the
@@ -474,8 +595,24 @@ void DockWindow::synchronize_dock_items()
 
     if (!dock_structure_changed)
     {
-        for (auto *item : current_items)
-            item->refresh_indicator();
+        for (std::size_t index = 0;
+             index < current_items.size();
+             ++index)
+        {
+            if (desired_items[index].is_session)
+            {
+                static_cast<DockSessionItem *>(
+                    current_items[index])
+                    ->set_session(
+                        desired_items[index]
+                            .session);
+            }
+            else
+            {
+                current_items[index]
+                    ->refresh_indicator();
+            }
+        }
         return;
     }
 
@@ -519,6 +656,41 @@ void DockWindow::synchronize_dock_items()
                 existing);
             item->set_attached(
                 desired.attached);
+
+            if (desired.is_session)
+            {
+                static_cast<DockSessionItem *>(
+                    item)
+                    ->set_session(
+                        desired.session);
+            }
+        }
+        else if (desired.is_session)
+        {
+            item =
+                Gtk::manage(
+                    new DockSessionItem(
+                        *this,
+                        m_window_registry,
+                        desired.session,
+                        m_effective_icon_size > 0
+                            ? m_effective_icon_size
+                            : m_controller
+                                  ->settings()
+                                  .icon_size(),
+                        m_controller->settings()
+                            .hover_effect(),
+                        m_controller->settings()
+                            .indicator(),
+                        m_controller->settings()
+                            .indicator_color()));
+
+            item->set_manage_all_workspaces(
+                m_controller->settings()
+                    .manage_all_workspaces());
+
+            register_dock_item(item);
+            children_changed = true;
         }
         else
         {

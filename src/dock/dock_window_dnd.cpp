@@ -14,6 +14,7 @@
 // ------------------------------------------------------------
 
 #include "dock_window.h"
+#include "dock_session_item.h"
 #include "dock_window_controller.h"
 
 #include <algorithm>
@@ -289,25 +290,37 @@ bool DockWindow::apply_dragged_item_order(
 
     m_dock_items_cache = items;
 
-    std::vector<std::string>
-        attached_ids;
+    // Persist one combined sequence so a Session may be dropped on either
+    // side of an ordinary launcher. Running, unattached applications remain
+    // visual-only and are deliberately absent from the saved sequence.
+    std::vector<std::string> dock_order;
 
     for (const auto *item : items)
     {
-        if (item->attached())
+        if (DockSessionItem::is_session_desktop_id(
+                item->desktop_id()) ||
+            item->attached())
         {
-            attached_ids.push_back(
+            dock_order.push_back(
                 item->desktop_id());
         }
     }
 
-    if (!m_launcher_manager
-             .reorder_attached(
-                 attached_ids))
+    if (!m_launcher_manager.reorder_dock_items(
+            dock_order))
     {
         g_warning(
             "Cannot persist reordered dock items");
+        synchronize_session_items();
+        return false;
     }
+
+    // Keep the synchronization snapshot in step with the file written by this
+    // drop. Leaving the pre-drag order cached makes the next registry update
+    // look like an external configuration change while another drag may
+    // already be in progress.
+    m_synchronized_dock_order =
+        m_launcher_manager.dock_order();
 
     m_controller->dock_items_reordered();
     return true;

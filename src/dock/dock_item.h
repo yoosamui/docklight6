@@ -53,6 +53,23 @@ public:
         DockIndicator indicator,
         const std::string
             &indicator_color);
+
+    // Subclass constructor for items that are not backed by one installed
+    // application, such as a saved Session. The identifiers are the desktop
+    // IDs whose windows the item groups, so indicator, previews, and the
+    // minimize/maximize/close actions keep working unchanged.
+    DockItem(
+        DockWindow &dock,
+        const std::string &desktop_id,
+        std::vector<std::string>
+            application_identifiers,
+        WindowRegistry *window_registry,
+        int icon_size,
+        DockHoverEffect hover_effect,
+        DockIndicator indicator,
+        const std::string
+            &indicator_color);
+
     ~DockItem() override;
 
     void set_icon_size(int icon_size);
@@ -66,14 +83,15 @@ public:
     void refresh_indicator();
     void set_context_menu_corner_radius(
         int corner_radius);
-    void reload_icon();
+    // Overridden by items whose image does not come from a Gio::AppInfo.
+    virtual void reload_icon();
     void set_vertical(bool vertical);
     void set_attached(bool attached);
     void publish_icon_geometry(
         const WindowIconGeometry &geometry);
     ItemGeometry icon_geometry();
 
-    Glib::ustring app_name() const;
+    virtual Glib::ustring app_name() const;
     Glib::ustring tooltip_text() const;
     std::vector<ApplicationWindowEntry>
     window_entries() const;
@@ -102,6 +120,62 @@ public:
     }
 
 protected:
+    // Every identity a window may report for one application. Subclasses that
+    // group several applications build their identifier list from this.
+    // include_icon_names widens matching to the entry's themed icon names.
+    // That helps a single application whose windows report an icon name, but
+    // generic names such as "text-editor" are shared by unrelated programs, so
+    // an item that groups several applications leaves them out.
+    static std::vector<std::string>
+    application_identifiers(
+        const Glib::RefPtr<Gio::AppInfo> &app,
+        const std::string &desktop_id,
+        bool include_icon_names = true);
+
+    // Applies one already-sized image and rebuilds every pixbuf derived from
+    // it, so a subclass supplying its own image keeps the ordinary hover and
+    // animation behaviour.
+    void apply_icon_pixbuf(
+        const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
+    void initialize(
+        int icon_size,
+        const std::string &indicator_color);
+
+    void set_application_identifiers(
+        std::vector<std::string>
+            application_identifiers);
+    void set_window_filter(
+        std::function<bool(const ManagedWindow &)>
+            window_filter);
+    int icon_size() const
+    {
+        return m_icon_size;
+    }
+
+    virtual bool has_edit_action() const;
+    virtual void edit_item();
+    virtual Glib::RefPtr<Gdk::Pixbuf>
+    context_menu_entry_icon(
+        const ApplicationWindowEntry &entry) const;
+
+    // The dynamic rows above the static actions, and what activating one does.
+    // An ordinary item lists the live windows of its application group and
+    // shows or minimizes the chosen window. An item whose content does not
+    // come from the window registry, such as a Session, supplies its own rows
+    // and defines its own activation.
+    virtual std::vector<ApplicationWindowEntry>
+    context_menu_entries() const;
+    virtual void
+    activate_context_menu_entry(
+        const ApplicationWindowEntry &entry);
+
+    // Dispatching a window command has to outlive GtkMenu's popup grab, so a
+    // subclass that routes its own rows to a window must reuse this rather
+    // than calling the controller directly.
+    void schedule_window_action(
+        const WindowId &window_id,
+        bool minimize);
+
     bool on_enter_notify_event(
         GdkEventCrossing *event) override;
 
@@ -150,15 +224,13 @@ private:
 
     void initialize_context_menu();
     void rebuild_window_menu_items();
-    void schedule_window_action(
-        const WindowId &window_id,
-        bool minimize);
     void show_context_menu(
         const GdkEvent *event);
     void refresh_context_menu();
     void start_primary_action_effect();
     void perform_primary_action();
-    void launch_application();
+    // Overridden by items that start something other than one application.
+    virtual void launch_application();
     void launch_new_window();
     void log_context_action(
         const char *action) const;
@@ -170,7 +242,9 @@ private:
 
     Glib::RefPtr<Gdk::Pixbuf>
     context_menu_window_icon(
-        const std::string &icon_name) const;
+        const std::string &icon_name,
+        const std::string &desktop_file_name)
+        const;
     Glib::RefPtr<Gdk::Pixbuf>
     context_menu_minimized_icon() const;
 
@@ -190,6 +264,8 @@ private:
     Gtk::Image image;
     Gtk::Label label;
     Gtk::Menu m_context_menu;
+    Gtk::MenuItem m_edit_item;
+    Gtk::MenuItem m_remove_item;
     Gtk::SeparatorMenuItem
         m_group_separator;
     Gtk::CheckMenuItem m_attach_item;

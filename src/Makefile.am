@@ -195,6 +195,8 @@ docklight6_SOURCES = \
     dock/layout_coordinator.cpp \
     dock/dock_home_item.h \
     dock/dock_home_item.cpp \
+    dock/dock_session_item.h \
+    dock/dock_session_item.cpp \
     dock/dock_item.h \
     dock/dock_item.cpp \
     dock/dock_item_context_menu.cpp \
@@ -206,16 +208,19 @@ docklight6_SOURCES = \
     dialogs/dock_settings_dialog.cpp \
     dialogs/dock_session_dialog.h \
     dialogs/dock_session_dialog.cpp \
-    dialogs/dock_session_item.h \
-    dialogs/dock_session_item.cpp \
+    dialogs/dock_session_editor_item.h \
+    dialogs/dock_session_editor_item.cpp \
     dialogs/dock_about_dialog.h \
     dialogs/dock_about_dialog.cpp \
     rendering/dock_icon_renderer.h \
     rendering/dock_icon_renderer.cpp \
     config/dock_settings.h \
     config/dock_settings.cpp \
+    launchers/session_record.h \
     launchers/launcher_manager.h \
     launchers/launcher_manager.cpp \
+    launchers/session_launcher.h \
+    launchers/session_launcher.cpp \
     layout/dock_layout_types.h \
     layout/dock_window_geometry.h \
     layout/dock_layout_geometry.h \
@@ -336,6 +341,7 @@ dock_process_application_test_LDADD = \
 
 launcher_manager_test_SOURCES = \
     tests/launcher_manager_test.cpp \
+    launchers/session_record.h \
     launchers/launcher_manager.h \
     launchers/launcher_manager.cpp
 

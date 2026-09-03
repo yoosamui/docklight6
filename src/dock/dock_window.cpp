@@ -16,6 +16,8 @@
 // ------------------------------------------------------------
 
 #include "dock_window.h"
+#include "dock_session_item.h"
+#include "dialogs/dock_session_dialog.h"
 #include "presentation/docklight_surface_identity.h"
 
 #include "dock_constants.h"
@@ -245,6 +247,30 @@ bool DockWindow::set_item_attached(
     return true;
 }
 
+void DockWindow::edit_session(
+    const std::string &session_name)
+{
+    inhibit_autohide();
+    DockSessionDialog::show(
+        *this,
+        m_window_registry,
+        m_launcher_manager,
+        [this](const SessionRecord &saved)
+        {
+            for (auto *item : dock_items())
+            {
+                if (item->desktop_id() ==
+                    DockSessionItem::session_desktop_id(saved.name))
+                {
+                    static_cast<DockSessionItem *>(item)->set_session(saved);
+                }
+            }
+            synchronize_session_items();
+        },
+        session_name);
+    uninhibit_autohide();
+}
+
 bool DockWindow::pointer_is_inside()
 {
     auto *window = gtk_widget_get_window(
@@ -318,6 +344,11 @@ bool DockWindow::pointer_is_inside()
 DockLocation DockWindow::location() const
 {
     return m_controller->location();
+}
+
+LauncherManager &DockWindow::launcher_manager()
+{
+    return m_launcher_manager;
 }
 
 bool DockWindow::preview_input_forwarding() const

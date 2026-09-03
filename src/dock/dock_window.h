@@ -51,6 +51,7 @@ class TooltipManager;
 class PreviewManager;
 class LayoutCoordinator;
 class DockHomeItem;
+class DockSessionItem;
 struct DockRuntimeInfo;
 class WindowRegistry;
 
@@ -122,6 +123,14 @@ public:
         int y);
     void end_item_drag(DockItem &item);
     DockLocation location() const;
+    // The launcher store also holds saved Sessions, so the Session dialog
+    // reaches it through the dock rather than opening the file itself.
+    LauncherManager &launcher_manager();
+    // Rebuilds the dock after the Session editor changes a Session, so a new
+    // or edited Session appears without waiting for a window event.
+    void synchronize_session_items();
+    void edit_session(
+        const std::string &session_name);
     bool preview_input_forwarding() const;
     DockAutohideEffect
     effective_autohide_effect() const;
@@ -261,6 +270,10 @@ private:
         m_synchronized_attached_ids;
     std::vector<std::string>
         m_synchronized_running_ids;
+    std::vector<std::string>
+        m_synchronized_session_ids;
+    std::vector<std::string>
+        m_synchronized_dock_order;
 
     std::unique_ptr<IDockSurfaceBackend>
         m_surface_backend;

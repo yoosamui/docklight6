@@ -28,6 +28,8 @@
 #ifndef LAUNCHER_MANAGER_H
 #define LAUNCHER_MANAGER_H
 
+#include "session_record.h"
+
 #include <giomm.h>
 
 #include <string>
@@ -42,6 +44,28 @@ public:
 
     std::vector<std::string>
     attached_ids() const;
+
+    // Sessions share docklight.data with the attached launcher list. Both
+    // sides are read and rewritten together so a launcher reorder cannot drop
+    // the Session block and a Session save cannot drop the launcher order.
+    std::vector<SessionRecord> sessions() const;
+    std::vector<std::string> session_names() const;
+    bool save_session(
+        const SessionRecord &session);
+    bool rename_session(
+        const std::string &old_name,
+        const SessionRecord &session);
+    bool remove_session(
+        const std::string &name);
+    // Reorders the stored Sessions to match the given names. Names that are
+    // not stored are ignored and stored Sessions that are missing from the
+    // list keep their relative order at the end.
+    bool reorder_sessions(
+        const std::vector<std::string> &names);
+    std::vector<std::string> dock_order() const;
+    bool reorder_dock_items(
+        const std::vector<std::string>
+            &desktop_ids);
 
     Glib::RefPtr<Gio::AppInfo>
     find_application(
@@ -72,6 +96,19 @@ private:
     const std::vector<
         Glib::RefPtr<Gio::AppInfo>> &
     applications() const;
+
+    // The complete parsed file. Every read goes through this so no persisted
+    // part can be written back without the others.
+    struct StoredData
+    {
+        std::vector<std::string> desktop_ids;
+        std::vector<SessionRecord> sessions;
+        std::vector<std::string> dock_order;
+    };
+
+    StoredData read_data() const;
+    bool write_data(
+        const StoredData &data) const;
 
     std::vector<std::string>
     read_config() const;

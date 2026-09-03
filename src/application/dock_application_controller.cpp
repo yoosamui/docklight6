@@ -109,6 +109,24 @@ DockApplicationController::
 {
 }
 
+void DockApplicationController::
+    set_application_identifiers(
+        std::vector<std::string>
+            application_identifiers)
+{
+    m_application_identifiers =
+        std::move(application_identifiers);
+    reset_window_cycle();
+}
+
+void DockApplicationController::set_window_filter(
+    std::function<bool(const ManagedWindow &)>
+        window_filter)
+{
+    m_window_filter = std::move(window_filter);
+    reset_window_cycle();
+}
+
 bool DockApplicationController::running() const
 {
     const auto running_application =
@@ -1015,6 +1033,8 @@ DockApplicationController::
             window->caption;
         entry.icon_name =
             window->icon_name;
+        entry.desktop_file_name =
+            window->desktop_file_name;
         entry.desktop_numbers =
             window->desktop_numbers;
         entry.frame_geometry =
@@ -1157,6 +1177,12 @@ bool DockApplicationController::
     return false;
 }
 
+// An item may stand for several applications at once — a saved Session groups
+// every application it launches. Returning only the first match would show one
+// application's windows in the previews and the context menu and act on that
+// one alone, so distinct matches are merged into a single view. The common
+// case, where every identifier resolves to the same application, still returns
+// that application unchanged.
 const RunningApplication *
 DockApplicationController::application() const
 {
@@ -1166,16 +1192,117 @@ DockApplicationController::application() const
         return nullptr;
     }
 
+    const RunningApplication *first = nullptr;
+    std::vector<const RunningApplication *>
+        matches;
+
     for (const auto &identifier :
          m_application_identifiers)
     {
-        const auto running_application =
+        const auto *running_application =
             m_registry->find_application(
                 identifier);
 
-        if (running_application)
-            return running_application;
+        if (!running_application)
+            continue;
+
+        if (std::find(
+                matches.begin(),
+                matches.end(),
+                running_application) !=
+            matches.end())
+        {
+            continue;
+        }
+
+        matches.push_back(running_application);
+
+        if (!first)
+            first = running_application;
     }
 
-    return nullptr;
+    if (!m_window_filter &&
+        matches.size() <= 1)
+    {
+        return first;
+    }
+
+    if (!first)
+        return nullptr;
+
+    m_merged_application = RunningApplication{};
+    m_merged_application.desktop_file_name =
+        first->desktop_file_name;
+
+    const auto active_window =
+        m_registry->active_window();
+
+    for (const auto *match : matches)
+    {
+        for (const auto &window_id :
+             match->window_ids)
+        {
+            const auto window =
+                m_registry->find_window(window_id);
+            if (!window ||
+                (m_window_filter &&
+                 !m_window_filter(*window)))
+            {
+                continue;
+            }
+
+            if (std::find(
+                    m_merged_application.window_ids
+                        .begin(),
+                    m_merged_application.window_ids
+                        .end(),
+                    window_id) !=
+                m_merged_application.window_ids
+                    .end())
+            {
+                continue;
+            }
+
+            m_merged_application.window_ids
+                .push_back(window_id);
+        }
+
+        // Prefer the application the user is actually focused on, so cycling
+        // and toggling start from the visible window.
+        if (match->active_window_id &&
+            std::find(
+                m_merged_application.window_ids
+                    .begin(),
+                m_merged_application.window_ids
+                    .end(),
+                *match->active_window_id) !=
+                m_merged_application.window_ids
+                    .end() &&
+            active_window &&
+            *match->active_window_id ==
+                *active_window)
+        {
+            m_merged_application
+                .active_window_id =
+                match->active_window_id;
+        }
+        else if (match->active_window_id &&
+                 !m_merged_application
+                      .active_window_id &&
+                 std::find(
+                     m_merged_application.window_ids
+                         .begin(),
+                     m_merged_application.window_ids
+                         .end(),
+                     *match->active_window_id) !=
+                     m_merged_application.window_ids
+                         .end())
+        {
+            m_merged_application
+                .active_window_id =
+                match->active_window_id;
+        }
+    }
+
+    return &m_merged_application;
 }

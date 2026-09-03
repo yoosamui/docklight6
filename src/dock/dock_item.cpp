@@ -40,70 +40,6 @@ namespace
     constexpr double INDICATOR_DOT_GAP = 6.0; // Space between paired dots
     constexpr double INDICATOR_PI = 3.14159265358979323846; // Circle angle calculation
 
-    std::vector<std::string>
-    application_identifiers(
-        const Glib::RefPtr<Gio::AppInfo> &app,
-        const std::string &desktop_id)
-    {
-        std::vector<std::string> identifiers;
-
-        if (!app)
-            return identifiers;
-
-        const auto add_identifier =
-            [&identifiers](
-                const std::string &identifier)
-        {
-            if (identifier.empty() ||
-                std::find(
-                    identifiers.begin(),
-                    identifiers.end(),
-                    identifier) !=
-                    identifiers.end())
-            {
-                return;
-            }
-
-            identifiers.push_back(identifier);
-        };
-
-        add_identifier(desktop_id);
-        add_identifier(app->get_id());
-        add_identifier(app->get_executable());
-
-        const auto icon = app->get_icon();
-
-        if (icon &&
-            G_IS_THEMED_ICON(icon->gobj()))
-        {
-            const auto icon_names =
-                g_themed_icon_get_names(
-                    G_THEMED_ICON(
-                        icon->gobj()));
-
-            for (int index = 0;
-                 icon_names &&
-                 icon_names[index];
-                 ++index)
-            {
-                add_identifier(
-                    icon_names[index]);
-            }
-        }
-
-        if (G_IS_DESKTOP_APP_INFO(app->gobj()))
-        {
-            const auto startup_wm_class =
-                g_desktop_app_info_get_startup_wm_class(
-                    G_DESKTOP_APP_INFO(
-                        app->gobj()));
-
-            if (startup_wm_class)
-                add_identifier(startup_wm_class);
-        }
-
-        return identifiers;
-    }
 
     bool has_single_main_window(
         const Glib::RefPtr<Gio::AppInfo> &app)
@@ -137,30 +73,78 @@ namespace
 
 } // namespace
 
-DockItem::DockItem(
-    DockWindow &dock,
-    Glib::RefPtr<Gio::AppInfo> app,
+// Every identity a window may report for this application: the desktop ID, the
+// entry ID, the executable, its themed icon names, and StartupWMClass. Items
+// that group several applications merge one of these lists per application.
+std::vector<std::string>
+DockItem::application_identifiers(
+    const Glib::RefPtr<Gio::AppInfo> &app,
     const std::string &desktop_id,
-    bool attached,
-    WindowRegistry *window_registry,
+    bool include_icon_names)
+{
+    std::vector<std::string> identifiers;
+
+    const auto add_identifier =
+        [&identifiers](
+            const std::string &identifier)
+    {
+        if (identifier.empty() ||
+            std::find(
+                identifiers.begin(),
+                identifiers.end(),
+                identifier) !=
+                identifiers.end())
+        {
+            return;
+        }
+
+        identifiers.push_back(identifier);
+    };
+
+    add_identifier(desktop_id);
+
+    if (!app)
+        return identifiers;
+
+    add_identifier(app->get_id());
+    add_identifier(app->get_executable());
+
+    const auto icon = app->get_icon();
+
+    if (include_icon_names &&
+        icon &&
+        G_IS_THEMED_ICON(icon->gobj()))
+    {
+        const auto icon_names =
+            g_themed_icon_get_names(
+                G_THEMED_ICON(icon->gobj()));
+
+        for (int index = 0;
+             icon_names && icon_names[index];
+             ++index)
+        {
+            add_identifier(icon_names[index]);
+        }
+    }
+
+    if (G_IS_DESKTOP_APP_INFO(app->gobj()))
+    {
+        const auto startup_wm_class =
+            g_desktop_app_info_get_startup_wm_class(
+                G_DESKTOP_APP_INFO(app->gobj()));
+
+        if (startup_wm_class)
+            add_identifier(startup_wm_class);
+    }
+
+    return identifiers;
+}
+
+// Shared construction for both constructors: menu labels, indicator colour,
+// event mask, and the initial icon size.
+void DockItem::initialize(
     int icon_size,
-    DockHoverEffect hover_effect,
-    DockIndicator indicator,
-    const std::string
-        &indicator_color)
-    : m_dock(dock),
-      m_app(app),
-      m_desktop_id(desktop_id),
-      m_application_controller(
-          window_registry,
-          application_identifiers(
-              app,
-              desktop_id)),
-      m_hover_effect(hover_effect),
-      m_indicator(indicator),
-      m_attached(attached),
-      m_single_main_window(
-          has_single_main_window(app))
+    const std::string &indicator_color)
 {
     const auto set_menu_label =
         [](Gtk::MenuItem &item,
@@ -170,6 +154,12 @@ DockItem::DockItem(
         item.set_use_underline(true);
     };
 
+    set_menu_label(
+        m_edit_item,
+        _("_Edit"));
+    set_menu_label(
+        m_remove_item,
+        _("_Remove"));
     set_menu_label(
         m_attach_item,
         _("_Attach"));
@@ -249,7 +239,62 @@ DockItem::DockItem(
     set_icon_size(icon_size);
     refresh_indicator();
 
-    show_all_children();
+    show_all_children();}
+
+// Delegating constructor for items that are not one installed application.
+// The application pointer stays null and the grouped identifiers are supplied
+// directly, so DockApplicationController still drives the indicator, the
+// previews, and the window actions.
+DockItem::DockItem(
+    DockWindow &dock,
+    const std::string &desktop_id,
+    std::vector<std::string>
+        application_identifiers,
+    WindowRegistry *window_registry,
+    int icon_size,
+    DockHoverEffect hover_effect,
+    DockIndicator indicator,
+    const std::string
+        &indicator_color)
+    : m_dock(dock),
+      m_desktop_id(desktop_id),
+      m_application_controller(
+          window_registry,
+          std::move(application_identifiers)),
+      m_hover_effect(hover_effect),
+      m_indicator(indicator),
+      m_attached(true),
+      m_single_main_window(false)
+{
+    initialize(icon_size, indicator_color);
+}
+
+DockItem::DockItem(
+    DockWindow &dock,
+    Glib::RefPtr<Gio::AppInfo> app,
+    const std::string &desktop_id,
+    bool attached,
+    WindowRegistry *window_registry,
+    int icon_size,
+    DockHoverEffect hover_effect,
+    DockIndicator indicator,
+    const std::string
+        &indicator_color)
+    : m_dock(dock),
+      m_app(app),
+      m_desktop_id(desktop_id),
+      m_application_controller(
+          window_registry,
+          application_identifiers(
+              app,
+              desktop_id)),
+      m_hover_effect(hover_effect),
+      m_indicator(indicator),
+      m_attached(attached),
+      m_single_main_window(
+          has_single_main_window(app))
+{
+    initialize(icon_size, indicator_color);
 }
 
 DockItem::~DockItem()
@@ -574,6 +619,13 @@ void DockItem::set_context_menu_corner_radius(
 
 void DockItem::reload_icon()
 {
+    // Items that are not backed by an installed application supply their own
+    // image by overriding this. The base is also reached from initialize()
+    // during construction, before the subclass vtable exists, so it must
+    // tolerate a null application rather than dereference it.
+    if (!m_app)
+        return;
+
     auto icon = m_app->get_icon();
     auto icon_theme =
         Gtk::IconTheme::get_default();
@@ -582,7 +634,7 @@ void DockItem::reload_icon()
     {
         g_warning(
             "Cannot load icon for %s: no GTK icon theme",
-            m_app->get_name().c_str());
+            app_name().c_str());
         return;
     }
 
@@ -630,7 +682,7 @@ void DockItem::reload_icon()
     {
         g_warning(
             "Cannot find an icon for %s in the current theme",
-            m_app->get_name().c_str());
+            app_name().c_str());
         return;
     }
 
@@ -643,7 +695,7 @@ void DockItem::reload_icon()
         {
             g_warning(
                 "Cannot load icon for %s from the current theme",
-                m_app->get_name().c_str());
+                app_name().c_str());
             return;
         }
 
@@ -676,36 +728,7 @@ void DockItem::reload_icon()
                     Gdk::INTERP_BILINEAR);
         }
 
-        m_icon_pixbuf = pixbuf;
-        m_hover_pixbuf =
-            DockIconRenderer::create_standard_hover(
-                m_icon_pixbuf);
-
-        if (m_hover_effect == DockHoverEffect::zoom)
-        {
-            create_zoom_frames();
-        }
-        else
-        {
-            m_zoom_animation.disconnect();
-            m_zoom_frames.clear();
-            m_zoom_frame = 0;
-            m_zoom_target_frame = 0;
-        }
-
-        if (m_hover_effect == DockHoverEffect::blur)
-        {
-            create_blur_frames();
-        }
-        else
-        {
-            m_blur_animation.disconnect();
-            m_blur_frames.clear();
-            m_blur_frame = 0;
-            m_blur_target_frame = 0;
-        }
-
-        apply_hover_effect();
+        apply_icon_pixbuf(pixbuf);
     }
     catch (const Glib::Error &error)
     {
@@ -716,14 +739,76 @@ void DockItem::reload_icon()
 
         g_warning(
             "Cannot reload icon for %s: %s",
-            m_app->get_name().c_str(),
+            app_name().c_str(),
             error_message.c_str());
     }
 }
 
 Glib::ustring DockItem::app_name() const
 {
-    return m_app->get_display_name();
+    return m_app
+               ? Glib::ustring(
+                     m_app->get_display_name())
+               : Glib::ustring(m_desktop_id);
+}
+
+// Applies one already-sized image and rebuilds every pixbuf derived from it:
+// the hover image and the zoom or blur animation frames. Subclasses whose
+// image does not come from a Gio::AppInfo reuse this so hover effects,
+// indicators, and animations behave identically.
+void DockItem::set_application_identifiers(
+    std::vector<std::string>
+        application_identifiers)
+{
+    m_application_controller
+        .set_application_identifiers(
+            std::move(application_identifiers));
+    refresh_indicator();
+}
+
+void DockItem::set_window_filter(
+    std::function<bool(const ManagedWindow &)>
+        window_filter)
+{
+    m_application_controller
+        .set_window_filter(
+            std::move(window_filter));
+    refresh_indicator();
+}
+
+void DockItem::apply_icon_pixbuf(
+    const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
+{
+    m_icon_pixbuf = pixbuf;
+    m_hover_pixbuf =
+        DockIconRenderer::create_standard_hover(
+            m_icon_pixbuf);
+
+    if (m_hover_effect == DockHoverEffect::zoom)
+    {
+        create_zoom_frames();
+    }
+    else
+    {
+        m_zoom_animation.disconnect();
+        m_zoom_frames.clear();
+        m_zoom_frame = 0;
+        m_zoom_target_frame = 0;
+    }
+
+    if (m_hover_effect == DockHoverEffect::blur)
+    {
+        create_blur_frames();
+    }
+    else
+    {
+        m_blur_animation.disconnect();
+        m_blur_frames.clear();
+        m_blur_frame = 0;
+        m_blur_target_frame = 0;
+    }
+
+    apply_hover_effect();
 }
 
 Glib::ustring DockItem::tooltip_text() const

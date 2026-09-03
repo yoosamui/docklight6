@@ -17,6 +17,7 @@
 #include "presentation/presentation_selector.h"
 
 #include <gio/gdesktopappinfo.h>
+#include <glibmm/i18n.h>
 
 #include <algorithm>
 #include <string>
@@ -25,7 +26,7 @@
 namespace
 {
 
-    constexpr int CONTEXT_MENU_ICON_SIZE = 20; // Window icon size in menu rows
+    constexpr int CONTEXT_MENU_ICON_SIZE = 16; // Window icon size in menu rows
     constexpr int CONTEXT_MENU_TITLE_WIDTH = 48; // Maximum menu title width in characters
     constexpr double INDICATOR_PI = 3.14159265358979323846; // Circle angle calculation
 
@@ -187,6 +188,8 @@ void DockItem::initialize_context_menu()
         label->set_attributes(attributes);
     };
 
+    initialize_item(m_edit_item);
+    initialize_item(m_remove_item);
     initialize_item(m_attach_item);
     initialize_item(
         m_open_new_window_item,
@@ -199,11 +202,15 @@ void DockItem::initialize_context_menu()
     m_context_menu.append(
         m_group_separator);
     m_context_menu.append(
+        m_remove_item);
+    m_context_menu.append(
         m_attach_item);
     m_context_menu.append(
         m_attach_separator);
     m_context_menu.append(
         m_open_new_window_item);
+    m_context_menu.append(
+        m_edit_item);
     m_context_menu.append(
         m_window_separator);
     m_context_menu.append(
@@ -239,6 +246,23 @@ void DockItem::initialize_context_menu()
                 }
             });
 
+    m_remove_item.signal_activate().connect(
+        [this]()
+        {
+            if (m_desktop_id.rfind("session:", 0) == 0 &&
+                m_dock.launcher_manager().remove_session(
+                    m_desktop_id.substr(8)))
+            {
+                m_dock.synchronize_session_items();
+            }
+        });
+
+    m_edit_item.signal_activate().connect(
+        [this]()
+        {
+            edit_item();
+        });
+
     m_open_new_window_item
         .signal_activate()
         .connect(
@@ -260,7 +284,7 @@ void DockItem::initialize_context_menu()
                 {
                     g_warning(
                         "Close all windows rejected for %s",
-                        m_app->get_id().c_str());
+                        app_name().c_str());
                 }
             });
 
@@ -277,7 +301,7 @@ void DockItem::initialize_context_menu()
                 {
                     g_warning(
                         "Minimize windows rejected for %s",
-                        m_app->get_id().c_str());
+                        app_name().c_str());
                 }
             });
 
@@ -294,7 +318,7 @@ void DockItem::initialize_context_menu()
                 {
                     g_warning(
                         "Maximize window rejected for %s",
-                        m_app->get_id().c_str());
+                        app_name().c_str());
                 }
             });
 
@@ -311,7 +335,7 @@ void DockItem::initialize_context_menu()
                 {
                     g_warning(
                         "Unminimize windows rejected for %s",
-                        m_app->get_id().c_str());
+                        app_name().c_str());
                 }
             });
 
@@ -443,8 +467,7 @@ void DockItem::rebuild_window_menu_items()
     m_window_menu_items.clear();
 
     auto entries =
-        m_application_controller
-            .window_entries();
+        context_menu_entries();
 
     m_window_menu_order.erase(
         std::remove_if(
@@ -507,6 +530,8 @@ void DockItem::rebuild_window_menu_items()
         }
     }
 
+    // Dynamic window rows occupy the leading positions. The static Edit item
+    // remains below their separator, immediately before Minimize.
     int position = 0;
 
     for (const auto &entry :
@@ -546,11 +571,21 @@ void DockItem::rebuild_window_menu_items()
             CONTEXT_MENU_ICON_SIZE,
             CONTEXT_MENU_ICON_SIZE);
 
-        const auto pixbuf =
-            entry.minimized
-                ? context_menu_minimized_icon()
-                : context_menu_window_icon(
-                      entry.icon_name);
+        auto pixbuf =
+            context_menu_entry_icon(entry);
+
+        // Gtk::Image may honor a pixbuf's natural dimensions even when its
+        // container has a smaller request. Normalize every dynamic icon here
+        // so all context menus render the same exact 16x16 bitmap.
+        if (pixbuf &&
+            (pixbuf->get_width() != CONTEXT_MENU_ICON_SIZE ||
+             pixbuf->get_height() != CONTEXT_MENU_ICON_SIZE))
+        {
+            pixbuf = pixbuf->scale_simple(
+                CONTEXT_MENU_ICON_SIZE,
+                CONTEXT_MENU_ICON_SIZE,
+                Gdk::INTERP_BILINEAR);
+        }
 
         if (pixbuf)
             icon->set(pixbuf);
@@ -563,9 +598,9 @@ void DockItem::rebuild_window_menu_items()
             Gtk::manage(
                 new Gtk::Label(
                     entry.caption.empty()
-                        ? m_app
-                              ->get_display_name()
-                        : entry.caption));
+                        ? app_name()
+                        : Glib::ustring(
+                              entry.caption)));
 
         window_label->set_halign(
             Gtk::ALIGN_FILL);
@@ -608,21 +643,13 @@ void DockItem::rebuild_window_menu_items()
 
         item->add(*row);
 
-        const auto window_id =
-            entry.id;
-        const bool minimize =
-            entry.active &&
-            !entry.minimized;
-
         item->signal_activate()
             .connect(
                 [this,
-                 window_id,
-                 minimize]()
+                 entry]()
                 {
-                    schedule_window_action(
-                        window_id,
-                        minimize);
+                    activate_context_menu_entry(
+                        entry);
                 });
 
         m_context_menu.insert(
@@ -675,7 +702,7 @@ void DockItem::schedule_window_action(
                             ? "Minimize"
                             : "Show",
                         window_id.c_str(),
-                        m_app->get_id().c_str());
+                        app_name().c_str());
                 }
 
                 m_context_menu_window_action_pending = false;
@@ -761,11 +788,28 @@ void DockItem::show_context_menu(
 
 void DockItem::refresh_context_menu()
 {
+    m_edit_item.set_visible(
+        has_edit_action());
     rebuild_window_menu_items();
 
+    // Attaching and opening a second window are properties of one installed
+    // application. An item without one, such as a Session, hides them and
+    // keeps the window actions, which operate on its grouped identifiers.
+    const bool has_application = bool(m_app);
+
+    const bool is_session =
+        m_desktop_id.rfind("session:", 0) == 0;
+    m_remove_item.set_visible(is_session);
+    m_attach_item.set_visible(has_application);
+    m_attach_separator.set_visible(
+        has_application && !is_session);
+    m_open_new_window_item.set_visible(
+        has_application);
+
     m_open_new_window_item.set_sensitive(
-        !m_application_controller.running() ||
-        !m_single_main_window);
+        has_application &&
+        (!m_application_controller.running() ||
+         !m_single_main_window));
 
     m_minimize_item.set_sensitive(
         m_application_controller
@@ -784,12 +828,84 @@ void DockItem::refresh_context_menu()
             .can_close());
 }
 
+std::vector<ApplicationWindowEntry>
+DockItem::context_menu_entries() const
+{
+    return m_application_controller
+        .window_entries();
+}
+
+void DockItem::activate_context_menu_entry(
+    const ApplicationWindowEntry &entry)
+{
+    schedule_window_action(
+        entry.id,
+        entry.active && !entry.minimized);
+}
+
+bool DockItem::has_edit_action() const
+{
+    return false;
+}
+
+void DockItem::edit_item()
+{
+}
+
+Glib::RefPtr<Gdk::Pixbuf>
+DockItem::context_menu_entry_icon(
+    const ApplicationWindowEntry &entry) const
+{
+    return entry.minimized
+               ? context_menu_minimized_icon()
+               : context_menu_window_icon(
+                     entry.icon_name,
+                     entry.desktop_file_name);
+}
+
 Glib::RefPtr<Gdk::Pixbuf>
 DockItem::context_menu_window_icon(
-    const std::string &icon_name) const
+    const std::string &icon_name,
+    const std::string &desktop_file_name) const
 {
     const auto icon_theme =
         Gtk::IconTheme::get_default();
+
+    // A backend icon name can be generic or window-specific (for example a
+    // browser page icon). For a Session menu, the stable icon is the desktop
+    // application stored for that window, so resolve it before trusting the
+    // backend hint.
+    if (icon_theme &&
+        !desktop_file_name.empty())
+    {
+        const auto application =
+            Gio::DesktopAppInfo::create(
+                desktop_file_name);
+
+        if (application && application->get_icon())
+        {
+            try
+            {
+                const auto info =
+                    icon_theme->lookup_icon(
+                        application->get_icon(),
+                        CONTEXT_MENU_ICON_SIZE,
+                        Gtk::ICON_LOOKUP_USE_BUILTIN);
+
+                if (info)
+                {
+                    const auto icon =
+                        info.load_icon();
+
+                    if (icon)
+                        return icon;
+                }
+            }
+            catch (const Glib::Error &)
+            {
+            }
+        }
+    }
 
     if (icon_theme &&
         !icon_name.empty())
@@ -917,6 +1033,9 @@ DockItem::context_menu_minimized_icon() const
 
 void DockItem::launch_application()
 {
+    if (!m_app)
+        return;
+
     try
     {
         std::vector<
@@ -932,13 +1051,19 @@ void DockItem::launch_application()
     {
         g_warning(
             "Cannot launch %s: %s",
-            m_app->get_name().c_str(),
+            app_name().c_str(),
             error.what().c_str());
     }
 }
 
 void DockItem::launch_new_window()
 {
+    // Only an installed application can open a second window. A Session item
+    // hides this action, so reaching it without one is a programming error
+    // rather than a user-visible condition.
+    if (!m_app)
+        return;
+
     if (G_IS_DESKTOP_APP_INFO(
             m_app->gobj()))
     {
@@ -983,5 +1108,5 @@ void DockItem::log_context_action(
     g_message(
         "Dock context menu: %s (%s)",
         action,
-        m_app->get_name().c_str());
+        app_name().c_str());
 }

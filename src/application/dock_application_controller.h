@@ -27,9 +27,11 @@
 #pragma once
 
 #include "windowing/managed_window.h"
+#include "windowing/running_application.h"
 #include "windowing/window_icon_geometry.h"
 
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -49,6 +51,9 @@ struct ApplicationWindowEntry
 
     std::string caption;
     std::string icon_name;
+    // The window's own application identity. An item that stands for several
+    // applications needs it to show each window's real icon.
+    std::string desktop_file_name;
     std::vector<unsigned int> desktop_numbers;
     WindowGeometry frame_geometry;
     std::int64_t process_id = 0;
@@ -66,6 +71,13 @@ public:
         WindowRegistry *registry,
         std::vector<std::string>
             application_identifiers);
+
+    void set_application_identifiers(
+        std::vector<std::string>
+            application_identifiers);
+    void set_window_filter(
+        std::function<bool(const ManagedWindow &)>
+            window_filter);
 
     bool running() const;
     bool can_minimize() const;
@@ -136,6 +148,14 @@ private:
         m_application_identifiers;
     std::vector<std::string>
         m_cycle_window_ids;
+
+    std::function<bool(const ManagedWindow &)>
+        m_window_filter;
+
+    // Storage for the merged view returned when an item stands for several
+    // applications. Mutable because application() is a const query.
+    mutable RunningApplication
+        m_merged_application;
 
     WindowRegistry *m_registry = nullptr;
     bool m_manage_all_workspaces = true;

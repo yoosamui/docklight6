@@ -7,13 +7,20 @@
 // launcher_manager.cpp
 //
 // Implementation overview:
-// Implements launcher-file persistence, installed application lookup,
-// desktop-ID normalization, and application-cache invalidation.
+// Implements launcher-file persistence, saved Session persistence, installed
+// application lookup, desktop-ID normalization, and application-cache
+// invalidation.
 //
 // Important implementation decisions:
 // - Stored order is preserved while duplicate identities are removed.
 // - Desktop IDs compare case-insensitively with a canonical suffix.
-// - Writes replace the complete ordered list to keep reorder atomic.
+// - docklight.data holds the mixed visual order first and full Session
+//   definitions at the bottom. Every read and write carries both, so a
+//   launcher reorder cannot drop Sessions and a Session save cannot drop the
+//   order.
+// - Session values are key=value lines because desktop IDs and window titles
+//   are arbitrary text that may contain spaces, pipes, or brackets.
+// - Writes replace the complete file to keep reorder and save atomic.
 // - Gio application enumeration is cached until its monitor reports change.
 //
 // ------------------------------------------------------------
@@ -29,10 +36,20 @@
 #include <cerrno>
 #include <cstring>
 #include <fstream>
+#include <iterator>
+#include <ostream>
+#include <string_view>
 #include <utility>
 
 namespace
 {
+
+// Section markers for the Session block that follows the attached-launcher
+// list in docklight.data.
+constexpr const char *SESSION_SECTION_PREFIX = "session:";
+constexpr const char *SESSION_ITEM_SECTION = "item";
+constexpr const char *DOCK_ORDER_SECTION = "dock-order";
+constexpr const char *DOCK_ORDER_ITEM = "item";
 
 std::string trimmed(
     const std::string &value)
@@ -62,6 +79,40 @@ std::string trimmed(
         return {};
 
     return std::string(first, last);
+}
+
+// The store is line-based, so an embedded newline or carriage return would
+// silently split one value into two records. Nothing else needs escaping
+// because a key is everything before the first '='.
+std::string single_line(
+    std::string value)
+{
+    std::replace(
+        value.begin(),
+        value.end(),
+        '\n',
+        ' ');
+    std::replace(
+        value.begin(),
+        value.end(),
+        '\r',
+        ' ');
+
+    return trimmed(value);
+}
+
+void write_session_value(
+    std::ostream &file,
+    const char *key,
+    const std::string &value)
+{
+    if (value.empty())
+        return;
+
+    file << key
+         << '='
+         << single_line(value)
+         << '\n';
 }
 
 }
@@ -513,14 +564,19 @@ bool LauncherManager::is_transient_window_id(
         });
 }
 
-std::vector<std::string>
-LauncherManager::read_config() const
+// docklight.data starts with the mixed visual order: bare desktop IDs and
+// lightweight [session:name] markers. Complete Session definitions use the
+// same header plus key=value contents and remain together at the bottom.
+// Values may contain spaces, pipes, or brackets without escaping, which
+// matters because desktop IDs such as "mullvad browser.desktop" and window
+// titles are arbitrary text.
+LauncherManager::StoredData
+LauncherManager::read_data() const
 {
-    std::vector<std::string> ids;
+    StoredData data;
     bool removed_transient_id = false;
-
     std::ifstream file(m_data_path);
-
+    std::vector<std::string> lines;
     std::string line;
 
     while (std::getline(file, line))
@@ -529,6 +585,234 @@ LauncherManager::read_config() const
 
         if (line.empty() || line[0] == '#')
             continue;
+
+        lines.push_back(line);
+    }
+
+    const auto session_name =
+        [](const std::string &candidate)
+            -> std::string
+    {
+        if (candidate.size() < 3 ||
+            candidate.front() != '[' ||
+            candidate.back() != ']')
+        {
+            return {};
+        }
+
+        const auto section = trimmed(
+            candidate.substr(
+                1,
+                candidate.size() - 2));
+        constexpr std::string_view prefix =
+            SESSION_SECTION_PREFIX;
+
+        if (section.size() <= prefix.size() ||
+            section.compare(
+                0,
+                prefix.size(),
+                prefix) != 0)
+        {
+            return {};
+        }
+
+        return trimmed(
+            section.substr(prefix.size()));
+    };
+
+    // The same [session:name] syntax is used for a lightweight marker in the
+    // leading dock order and for the full definition at the bottom. A header
+    // owns a definition only when its block contains icon= or [item].
+    std::vector<bool> is_definition(
+        lines.size(),
+        false);
+
+    for (std::size_t index = 0;
+         index < lines.size();
+         ++index)
+    {
+        if (session_name(lines[index]).empty())
+            continue;
+
+        for (std::size_t content = index + 1;
+             content < lines.size();
+             ++content)
+        {
+            if (!session_name(lines[content]).empty() ||
+                lines[content] ==
+                    std::string("[") +
+                        DOCK_ORDER_SECTION + "]")
+            {
+                break;
+            }
+
+            if (lines[content] ==
+                    std::string("[") +
+                        SESSION_ITEM_SECTION + "]" ||
+                lines[content].compare(
+                    0,
+                    std::char_traits<char>::length(
+                        "icon="),
+                    "icon=") == 0)
+            {
+                is_definition[index] = true;
+                break;
+            }
+        }
+    }
+
+    bool in_definition = false;
+    bool in_legacy_dock_order = false;
+    std::size_t current_session = 0;
+    std::vector<std::string> legacy_dock_order;
+
+    for (std::size_t index = 0;
+         index < lines.size();
+         ++index)
+    {
+        line = lines[index];
+
+        if (line.front() == '[' &&
+            line.back() == ']')
+        {
+            const auto section =
+                trimmed(line.substr(
+                    1,
+                    line.size() - 2));
+
+            if (section == DOCK_ORDER_SECTION)
+            {
+                in_definition = false;
+                in_legacy_dock_order = true;
+                continue;
+            }
+
+            if (in_legacy_dock_order)
+                continue;
+
+            if (section == SESSION_ITEM_SECTION)
+            {
+                if (in_definition &&
+                    current_session <
+                        data.sessions.size())
+                {
+                    data.sessions[current_session]
+                        .items.emplace_back();
+                }
+                continue;
+            }
+
+            const auto name = session_name(line);
+            if (!name.empty())
+            {
+                if (is_definition[index])
+                {
+                    const auto existing = std::find_if(
+                        data.sessions.begin(),
+                        data.sessions.end(),
+                        [&name](
+                            const SessionRecord &session)
+                        {
+                            return session.name == name;
+                        });
+
+                    if (existing == data.sessions.end())
+                    {
+                        SessionRecord record;
+                        record.name = name;
+                        data.sessions.push_back(
+                            std::move(record));
+                        current_session =
+                            data.sessions.size() - 1;
+                    }
+                    else
+                    {
+                        current_session =
+                            static_cast<std::size_t>(
+                                std::distance(
+                                    data.sessions.begin(),
+                                    existing));
+                        data.sessions[current_session] =
+                            SessionRecord{};
+                        data.sessions[current_session].name =
+                            name;
+                    }
+
+                    in_definition = true;
+                }
+                else
+                {
+                    data.dock_order.push_back(
+                        std::string(
+                            SESSION_SECTION_PREFIX) +
+                        name);
+                    in_definition = false;
+                }
+            }
+
+            continue;
+        }
+
+        if (in_legacy_dock_order)
+        {
+            const auto separator =
+                line.find('=');
+            if (separator == std::string::npos)
+                continue;
+
+            const auto key = trimmed(
+                line.substr(0, separator));
+            const auto value = trimmed(
+                line.substr(separator + 1));
+            if (key == DOCK_ORDER_ITEM &&
+                !value.empty())
+            {
+                legacy_dock_order.push_back(value);
+            }
+            continue;
+        }
+
+        if (in_definition &&
+            current_session < data.sessions.size())
+        {
+            const auto separator =
+                line.find('=');
+            if (separator == std::string::npos)
+                continue;
+
+            const auto key = trimmed(
+                line.substr(0, separator));
+            const auto value = trimmed(
+                line.substr(separator + 1));
+            auto &session =
+                data.sessions[current_session];
+
+            if (session.items.empty())
+            {
+                if (key == "icon")
+                    session.icon = value;
+                continue;
+            }
+
+            auto &item = session.items.back();
+
+            if (key == "desktop-file")
+                item.desktop_file = value;
+            else if (key == "title")
+                item.title = value;
+            else if (key == "parameters")
+                item.parameters = value;
+            else if (key == "workspace")
+                item.workspace = value;
+            else if (key == "dimensions")
+                item.dimensions = value;
+            else if (key == "position")
+                item.position = value;
+
+            continue;
+        }
+
+        auto &ids = data.desktop_ids;
 
         if (is_transient_window_id(line))
         {
@@ -556,21 +840,533 @@ LauncherManager::read_config() const
                 });
 
         if (!duplicate)
+        {
             ids.push_back(line);
+            data.dock_order.push_back(line);
+        }
     }
 
-    if (removed_transient_id)
-        write_config(ids);
+    // Read the short-lived [dock-order] format so files written by an earlier
+    // development build migrate on their next save.
+    const bool needs_order_migration =
+        !legacy_dock_order.empty();
+    if (needs_order_migration)
+        data.dock_order =
+            std::move(legacy_dock_order);
 
-    return ids;
+    // An item without a desktop file names no application. It cannot be
+    // launched, matched, or shown, so it is not a Session item at all.
+    // Dropping it on read means a malformed or superseded entry cannot keep
+    // reappearing as a card that does not correspond to anything.
+    for (auto &session : data.sessions)
+    {
+        const auto empty_item = std::remove_if(
+            session.items.begin(),
+            session.items.end(),
+            [](const SessionItemRecord &item)
+            {
+                return trimmed(item.desktop_file)
+                    .empty();
+            });
+
+        if (empty_item != session.items.end())
+        {
+            g_warning(
+                "Dropping %zu Session item(s) without a desktop file from '%s'",
+                static_cast<std::size_t>(
+                    std::distance(
+                        empty_item,
+                        session.items.end())),
+                session.name.c_str());
+
+            session.items.erase(
+                empty_item,
+                session.items.end());
+        }
+    }
+
+    if (removed_transient_id ||
+        needs_order_migration)
+        write_data(data);
+
+    return data;
 }
 
-// Persists the complete launcher order after validation by the caller.
-// Rewriting one canonical list avoids partial reorder state and keeps the
-// file representation independent from GTK widget order.
+std::vector<std::string>
+LauncherManager::read_config() const
+{
+    return read_data().desktop_ids;
+}
+
+// Rewrites the launcher order while carrying the stored Sessions across, so a
+// pin, unpin, or drag reorder cannot discard them.
 bool LauncherManager::write_config(
     const std::vector<std::string>
         &desktop_ids) const
+{
+    StoredData data = read_data();
+    data.desktop_ids = desktop_ids;
+
+    // A launcher-only reorder replaces the ordinary slots while leaving any
+    // Session markers at their current positions in the mixed sequence.
+    std::vector<std::string> order;
+    order.reserve(
+        desktop_ids.size() +
+        data.sessions.size());
+    auto next_desktop_id =
+        desktop_ids.begin();
+
+    for (const auto &stored_id : data.dock_order)
+    {
+        if (stored_id.compare(
+                0,
+                std::char_traits<char>::length(
+                    SESSION_SECTION_PREFIX),
+                SESSION_SECTION_PREFIX) == 0)
+        {
+            order.push_back(stored_id);
+        }
+        else if (next_desktop_id !=
+                 desktop_ids.end())
+        {
+            order.push_back(*next_desktop_id++);
+        }
+    }
+
+    order.insert(
+        order.end(),
+        next_desktop_id,
+        desktop_ids.end());
+    data.dock_order = std::move(order);
+    return write_data(data);
+}
+
+std::vector<SessionRecord>
+LauncherManager::sessions() const
+{
+    auto data = read_data();
+    std::vector<SessionRecord> remaining =
+        std::move(data.sessions);
+    std::vector<SessionRecord> ordered;
+    ordered.reserve(remaining.size());
+
+    for (const auto &desktop_id :
+         data.dock_order)
+    {
+        if (desktop_id.compare(
+                0,
+                std::char_traits<char>::length(
+                    SESSION_SECTION_PREFIX),
+                SESSION_SECTION_PREFIX) != 0)
+        {
+            continue;
+        }
+
+        const auto name = desktop_id.substr(
+            std::char_traits<char>::length(
+                SESSION_SECTION_PREFIX));
+        const auto session = std::find_if(
+            remaining.begin(),
+            remaining.end(),
+            [&name](const SessionRecord &candidate)
+            {
+                return candidate.name == name;
+            });
+
+        if (session == remaining.end())
+            continue;
+
+        ordered.push_back(std::move(*session));
+        remaining.erase(session);
+    }
+
+    ordered.insert(
+        ordered.end(),
+        std::make_move_iterator(remaining.begin()),
+        std::make_move_iterator(remaining.end()));
+    return ordered;
+}
+
+std::vector<std::string>
+LauncherManager::session_names() const
+{
+    std::vector<std::string> names;
+
+    for (const auto &session : sessions())
+    {
+        names.push_back(session.name);
+    }
+
+    return names;
+}
+
+std::vector<std::string>
+LauncherManager::dock_order() const
+{
+    const auto data = read_data();
+
+    // Older files have no lightweight markers. Their compatibility order is
+    // launcher lines first, then all Session definitions.
+    std::vector<std::string> remaining =
+        data.desktop_ids;
+    for (const auto &session : data.sessions)
+    {
+        remaining.push_back(
+            std::string(SESSION_SECTION_PREFIX) +
+            session.name);
+    }
+
+    const auto identity =
+        [this](const std::string &value)
+    {
+        if (value.compare(
+                0,
+                std::char_traits<char>::length(
+                    SESSION_SECTION_PREFIX),
+                SESSION_SECTION_PREFIX) == 0)
+        {
+            return value;
+        }
+
+        return normalize_resolved_id(value);
+    };
+
+    std::vector<std::string> order;
+    order.reserve(remaining.size());
+
+    // Ignore stale and duplicate entries, while preserving the canonical
+    // spelling stored in the launcher and Session records.
+    for (const auto &stored_id : data.dock_order)
+    {
+        const auto stored_identity =
+            identity(stored_id);
+        const auto match = std::find_if(
+            remaining.begin(),
+            remaining.end(),
+            [&identity, &stored_identity](
+                const std::string &candidate)
+            {
+                return identity(candidate) ==
+                       stored_identity;
+            });
+
+        if (match == remaining.end())
+            continue;
+
+        order.push_back(*match);
+        remaining.erase(match);
+    }
+
+    order.insert(
+        order.end(),
+        remaining.begin(),
+        remaining.end());
+    return order;
+}
+
+bool LauncherManager::reorder_dock_items(
+    const std::vector<std::string> &desktop_ids)
+{
+    StoredData data = read_data();
+
+    std::vector<std::string> expected =
+        data.desktop_ids;
+    for (const auto &session : data.sessions)
+    {
+        expected.push_back(
+            std::string(SESSION_SECTION_PREFIX) +
+            session.name);
+    }
+
+    const auto identity =
+        [this](const std::string &value)
+    {
+        if (value.compare(
+                0,
+                std::char_traits<char>::length(
+                    SESSION_SECTION_PREFIX),
+                SESSION_SECTION_PREFIX) == 0)
+        {
+            return value;
+        }
+
+        return normalize_resolved_id(value);
+    };
+
+    std::vector<std::string> requested;
+    requested.reserve(desktop_ids.size());
+    for (const auto &desktop_id : desktop_ids)
+    {
+        const auto requested_id = identity(desktop_id);
+        const auto match = std::find_if(
+            expected.begin(),
+            expected.end(),
+            [&identity, &requested_id](
+                const std::string &candidate)
+            {
+                return identity(candidate) ==
+                       requested_id;
+            });
+
+        if (match == expected.end())
+            return false;
+
+        requested.push_back(*match);
+        expected.erase(match);
+    }
+
+    // Persisted items can be absent from the dock because their application
+    // is unavailable or the item limit was reached. Keep those records at the
+    // end instead of making every visible drag fail.
+    requested.insert(
+        requested.end(),
+        expected.begin(),
+        expected.end());
+
+    data.dock_order = std::move(requested);
+    return write_data(data);
+}
+
+// Saving replaces the Session with the same name and appends an unknown one,
+// keeping the attached launcher order untouched.
+bool LauncherManager::save_session(
+    const SessionRecord &session)
+{
+    const auto name = trimmed(session.name);
+
+    if (name.empty())
+    {
+        g_warning(
+            "Cannot save a Session without a name");
+        return false;
+    }
+
+    StoredData data = read_data();
+
+    SessionRecord stored = session;
+    stored.name = name;
+
+    const auto existing = std::find_if(
+        data.sessions.begin(),
+        data.sessions.end(),
+        [&name](const SessionRecord &candidate)
+        {
+            return candidate.name == name;
+        });
+
+    if (existing != data.sessions.end())
+        *existing = std::move(stored);
+    else
+        data.sessions.push_back(
+            std::move(stored));
+
+    return write_data(data);
+}
+
+// Renaming is keyed by the name that was originally loaded in the editor.
+// Updating only by the newly typed name would append a second Session and
+// leave the old marker and definition behind.
+bool LauncherManager::rename_session(
+    const std::string &old_name,
+    const SessionRecord &session)
+{
+    const auto source_name = trimmed(old_name);
+    const auto target_name = trimmed(session.name);
+
+    if (source_name.empty() ||
+        target_name.empty())
+    {
+        return false;
+    }
+
+    StoredData data = read_data();
+
+    const auto source = std::find_if(
+        data.sessions.begin(),
+        data.sessions.end(),
+        [&source_name](
+            const SessionRecord &candidate)
+        {
+            return candidate.name == source_name;
+        });
+
+    if (source == data.sessions.end())
+        return false;
+
+    const auto conflict = std::find_if(
+        data.sessions.begin(),
+        data.sessions.end(),
+        [&source_name,
+         &target_name](
+            const SessionRecord &candidate)
+        {
+            return candidate.name == target_name &&
+                   candidate.name != source_name;
+        });
+
+    if (conflict != data.sessions.end())
+        return false;
+
+    SessionRecord stored = session;
+    stored.name = target_name;
+    *source = std::move(stored);
+
+    const auto old_marker =
+        std::string(SESSION_SECTION_PREFIX) +
+        source_name;
+    const auto new_marker =
+        std::string(SESSION_SECTION_PREFIX) +
+        target_name;
+
+    for (auto &item : data.dock_order)
+    {
+        if (item == old_marker)
+            item = new_marker;
+    }
+
+    return write_data(data);
+}
+
+bool LauncherManager::reorder_sessions(
+    const std::vector<std::string> &names)
+{
+    StoredData data = read_data();
+
+    std::vector<SessionRecord> ordered;
+    ordered.reserve(data.sessions.size());
+
+    for (const auto &name : names)
+    {
+        const auto trimmed_name = trimmed(name);
+
+        const auto stored = std::find_if(
+            data.sessions.begin(),
+            data.sessions.end(),
+            [&trimmed_name](
+                const SessionRecord &candidate)
+            {
+                return candidate.name ==
+                       trimmed_name;
+            });
+
+        if (stored == data.sessions.end())
+            continue;
+
+        const bool already_ordered =
+            std::any_of(
+                ordered.begin(),
+                ordered.end(),
+                [&trimmed_name](
+                    const SessionRecord &candidate)
+                {
+                    return candidate.name ==
+                           trimmed_name;
+                });
+
+        if (already_ordered)
+            continue;
+
+        ordered.push_back(*stored);
+    }
+
+    // A Session the caller did not mention keeps its place at the end rather
+    // than being dropped from the store.
+    for (const auto &session : data.sessions)
+    {
+        const bool already_ordered =
+            std::any_of(
+                ordered.begin(),
+                ordered.end(),
+                [&session](
+                    const SessionRecord &candidate)
+                {
+                    return candidate.name ==
+                           session.name;
+                });
+
+        if (!already_ordered)
+            ordered.push_back(session);
+    }
+
+    if (ordered.size() == data.sessions.size() &&
+        std::equal(
+            ordered.begin(),
+            ordered.end(),
+            data.sessions.begin(),
+            [](const SessionRecord &left,
+               const SessionRecord &right)
+            {
+                return left.name == right.name;
+            }))
+    {
+        return true;
+    }
+
+    data.sessions = std::move(ordered);
+
+    // Reorder the Session marker slots as well. Definition blocks remain at
+    // the bottom, but every public Session order follows the visual markers.
+    std::vector<std::string> session_ids;
+    session_ids.reserve(data.sessions.size());
+    for (const auto &session : data.sessions)
+    {
+        session_ids.push_back(
+            std::string(SESSION_SECTION_PREFIX) +
+            session.name);
+    }
+
+    auto next_session_id = session_ids.begin();
+    for (auto &desktop_id : data.dock_order)
+    {
+        if (desktop_id.compare(
+                0,
+                std::char_traits<char>::length(
+                    SESSION_SECTION_PREFIX),
+                SESSION_SECTION_PREFIX) == 0 &&
+            next_session_id != session_ids.end())
+        {
+            desktop_id = *next_session_id++;
+        }
+    }
+
+    data.dock_order.insert(
+        data.dock_order.end(),
+        next_session_id,
+        session_ids.end());
+    return write_data(data);
+}
+
+bool LauncherManager::remove_session(
+    const std::string &name)
+{
+    StoredData data = read_data();
+    const auto trimmed_name = trimmed(name);
+
+    const auto removed = std::remove_if(
+        data.sessions.begin(),
+        data.sessions.end(),
+        [&trimmed_name](
+            const SessionRecord &candidate)
+        {
+            return candidate.name ==
+                   trimmed_name;
+        });
+
+    if (removed == data.sessions.end())
+        return false;
+
+    data.sessions.erase(
+        removed,
+        data.sessions.end());
+
+    return write_data(data);
+}
+
+// Persists the complete launcher order and every Session after validation by
+// the caller. Rewriting one canonical file avoids partial state and keeps the
+// file representation independent from GTK widget order.
+bool LauncherManager::write_data(
+    const StoredData &data) const
 {
     const auto directory =
         Glib::path_get_dirname(
@@ -603,10 +1399,138 @@ bool LauncherManager::write_config(
             return false;
         }
 
-        for (const auto &desktop_id :
-             desktop_ids)
+        std::vector<std::string> remaining =
+            data.desktop_ids;
+        for (const auto &session : data.sessions)
         {
-            file << desktop_id << '\n';
+            remaining.push_back(
+                std::string(SESSION_SECTION_PREFIX) +
+                session.name);
+        }
+
+        const auto identity =
+            [this](const std::string &value)
+        {
+            if (value.compare(
+                    0,
+                    std::char_traits<char>::length(
+                        SESSION_SECTION_PREFIX),
+                    SESSION_SECTION_PREFIX) == 0)
+            {
+                return value;
+            }
+
+            return normalize_resolved_id(value);
+        };
+
+        std::vector<std::string> order;
+        order.reserve(remaining.size());
+
+        for (const auto &stored_id : data.dock_order)
+        {
+            const auto stored_identity =
+                identity(stored_id);
+            const auto match = std::find_if(
+                remaining.begin(),
+                remaining.end(),
+                [&identity, &stored_identity](
+                    const std::string &candidate)
+                {
+                    return identity(candidate) ==
+                           stored_identity;
+                });
+
+            if (match == remaining.end())
+                continue;
+
+            order.push_back(*match);
+            remaining.erase(match);
+        }
+
+        order.insert(
+            order.end(),
+            remaining.begin(),
+            remaining.end());
+
+        // The leading block is the exact visual sequence. Session entries are
+        // references only; their complete definitions are emitted below.
+        for (const auto &desktop_id : order)
+        {
+            if (desktop_id.compare(
+                    0,
+                    std::char_traits<char>::length(
+                        SESSION_SECTION_PREFIX),
+                    SESSION_SECTION_PREFIX) == 0)
+            {
+                file << '['
+                     << single_line(desktop_id)
+                     << "]\n";
+            }
+            else
+            {
+                file << desktop_id << '\n';
+            }
+        }
+
+        // Definitions always remain together at the bottom, independently of
+        // where their lightweight markers appear in the visual sequence.
+        for (const auto &session :
+             data.sessions)
+        {
+            if (trimmed(session.name).empty())
+                continue;
+
+            file << '\n'
+                 << '['
+                 << SESSION_SECTION_PREFIX
+                 << single_line(session.name)
+                 << "]\n";
+
+            // Always emit the key, even when empty. It makes this bottom
+            // block unambiguously a definition rather than a leading marker.
+            file << "icon="
+                 << single_line(session.icon)
+                 << '\n';
+
+            for (const auto &item :
+                 session.items)
+            {
+                // Never write an item that names no application; it would be
+                // read back as a card corresponding to nothing.
+                if (trimmed(item.desktop_file)
+                        .empty())
+                {
+                    continue;
+                }
+
+                file << '['
+                     << SESSION_ITEM_SECTION
+                     << "]\n";
+                write_session_value(
+                    file,
+                    "desktop-file",
+                    item.desktop_file);
+                write_session_value(
+                    file,
+                    "title",
+                    item.title);
+                write_session_value(
+                    file,
+                    "parameters",
+                    item.parameters);
+                write_session_value(
+                    file,
+                    "workspace",
+                    item.workspace);
+                write_session_value(
+                    file,
+                    "dimensions",
+                    item.dimensions);
+                write_session_value(
+                    file,
+                    "position",
+                    item.position);
+            }
         }
 
         if (!file)

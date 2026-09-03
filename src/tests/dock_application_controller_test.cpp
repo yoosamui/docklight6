@@ -1382,6 +1382,70 @@ void verifies_tiling_backend_focuses_and_cycles()
     assert(!registry.find_window("window-2")->minimized);
 }
 
+void verifies_application_identifiers_can_be_refreshed()
+{
+    FakeWindowBackend backend;
+    backend.set_snapshot(
+        {window(
+            "window-1",
+            false,
+            "org.example.Editor")},
+        {"window-1"},
+        "window-1");
+
+    WindowRegistry registry(backend);
+    registry.start();
+    DockApplicationController controller(
+        &registry,
+        {"org.example.OldEditor"});
+
+    assert(!controller.running());
+
+    controller.set_application_identifiers(
+        {"org.example.Editor.desktop"});
+
+    assert(controller.running());
+    assert(controller.window_count() == 1);
+}
+
+void verifies_window_filter_keeps_only_saved_window()
+{
+    FakeWindowBackend backend;
+    auto saved = window(
+        "saved-window",
+        false,
+        "org.example.Editor");
+    saved.caption = "Saved document";
+    auto same_category = window(
+        "other-window",
+        false,
+        "org.example.Editor");
+    same_category.caption = "Other document";
+
+    backend.set_snapshot(
+        {saved, same_category},
+        {"saved-window", "other-window"},
+        "other-window");
+
+    WindowRegistry registry(backend);
+    registry.start();
+    DockApplicationController controller(
+        &registry,
+        {"org.example.Editor.desktop"});
+    controller.set_window_filter(
+        [](const ManagedWindow &candidate)
+        {
+            return candidate.caption ==
+                   "Saved document";
+        });
+
+    const auto entries =
+        controller.window_entries();
+    assert(entries.size() == 1);
+    assert(entries[0].id == "saved-window");
+    assert(controller.window_count() == 1);
+}
+
 }
 
 int main()
@@ -1409,6 +1473,8 @@ int main()
     verifies_normal_group_reveals_while_pip_stays_visible();
     verifies_pip_group_reveals_before_hide_state_arrives();
     verifies_tiling_backend_focuses_and_cycles();
+    verifies_application_identifiers_can_be_refreshed();
+    verifies_window_filter_keeps_only_saved_window();
 
     return 0;
 }

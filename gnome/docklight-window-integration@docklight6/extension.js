@@ -68,6 +68,12 @@ const DOCK_PLACEMENT_MAX_ATTEMPTS = 40;
 const DOCK_DISCOVERY_MAX_ATTEMPTS = 30;
 const REGISTRATION_RETRY_MS = 250;
 const CONFIGURATION_SETTLE_MS = 50;
+// Native Wayland clients can acknowledge their startup size after the first
+// Shell placement request and thereby displace the requested frame origin.
+// Keep Session restoration authoritative only across that short configure
+// handshake; the bounded guard then releases the window to the user.
+const APPLICATION_PLACEMENT_RETRY_MS = 75;
+const APPLICATION_PLACEMENT_MAX_ATTEMPTS = 12;
 // Keep GNOME's compositor-owned effects aligned with Docklight's 200 ms
 // Plasma-style and slide/fade transitions.
 const DOCK_HIDE_ANIMATION_MS = 200;
@@ -130,6 +136,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._tracker = Shell.WindowTracker.get_default();
         this._windows = new Map();
         this._windowSignals = new Map();
+        this._applicationPlacementSources = new Map();
         this._iconGeometries = new Map();
         this._dockHidden = false;
         this._signals = [];
@@ -394,6 +401,8 @@ export default class DocklightWindowIntegration extends Extension {
         for (const window of [...this._windowSignals.keys()])
             this._untrackWindow(window);
 
+        this._cancelApplicationPlacements();
+
         if (this._proxy) {
             this._call('Unregister', null, null, () => { });
             this._proxy = null;
@@ -401,6 +410,7 @@ export default class DocklightWindowIntegration extends Extension {
 
         this._windows = null;
         this._windowSignals = null;
+        this._applicationPlacementSources = null;
         this._iconGeometries = null;
         this._tracker = null;
         this._cursorTracker = null;
@@ -1984,6 +1994,7 @@ export default class DocklightWindowIntegration extends Extension {
             this._restoreX11DockActor();
 
         this._connected = false;
+        this._cancelApplicationPlacements();
         this._registering = false;
         this._pendingWaits = 0;
         this._clearIconGeometries();
@@ -2872,6 +2883,7 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _untrackWindow(window) {
+        this._cancelApplicationPlacement(window);
         for (const id of this._windowSignals.get(window) || []) {
             try {
                 window.disconnect(id);
@@ -2970,24 +2982,24 @@ export default class DocklightWindowIntegration extends Extension {
             if (!window)
                 return;
 
-            const workspace = Number(values[1]);
-            if (Number.isInteger(workspace) && workspace > 0 &&
-                workspace <= global.workspace_manager.n_workspaces) {
-                window.change_workspace_by_index(workspace - 1, false);
-            }
+            const workspaceValue = Number(values[1]);
+            const workspace = Number.isInteger(workspaceValue) &&
+                workspaceValue > 0 &&
+                workspaceValue <= global.workspace_manager.n_workspaces
+                ? workspaceValue : null;
 
-            const geometry = values.slice(2, 6).map(Number);
-            if (geometry.length === 4 &&
-                geometry.every(Number.isInteger) &&
-                geometry[2] > 0 && geometry[3] > 0) {
-                window.unmaximize(Meta.MaximizeFlags.BOTH);
-                window.move_resize_frame(
-                    false,
-                    geometry[0],
-                    geometry[1],
-                    geometry[2],
-                    geometry[3]);
-            }
+            const geometryValues = values.slice(2, 6).map(Number);
+            const geometry = geometryValues.length === 4 &&
+                geometryValues.every(Number.isInteger) &&
+                geometryValues[2] > 0 && geometryValues[3] > 0
+                ? {
+                    x: geometryValues[0],
+                    y: geometryValues[1],
+                    width: geometryValues[2],
+                    height: geometryValues[3],
+                } : null;
+
+            this._restoreApplicationPlacement(window, workspace, geometry);
             return;
         }
 
@@ -3026,5 +3038,87 @@ export default class DocklightWindowIntegration extends Extension {
             state ? window.maximize(Meta.MaximizeFlags.BOTH) :
                 window.unmaximize(Meta.MaximizeFlags.BOTH);
         }
+    }
+
+    _restoreApplicationPlacement(window, workspace, geometry) {
+        this._cancelApplicationPlacement(window);
+        if (!workspace && !geometry)
+            return;
+
+        const apply = () => {
+            if (!this._enabled || !this._windows ||
+                this._windows.get(this._windowId(window)) !== window) {
+                return false;
+            }
+
+            try {
+                const currentWorkspace =
+                    window.get_workspace()?.index() + 1 || null;
+                if (workspace && currentWorkspace !== workspace)
+                    window.change_workspace_by_index(workspace - 1, false);
+
+                if (geometry) {
+                    window.unmaximize(Meta.MaximizeFlags.BOTH);
+                    const frame = window.get_frame_rect();
+                    if (frame.width !== geometry.width ||
+                        frame.height !== geometry.height) {
+                        window.move_resize_frame(
+                            false,
+                            geometry.x,
+                            geometry.y,
+                            geometry.width,
+                            geometry.height);
+                    }
+
+                    // A Wayland resize is a client configure round trip.
+                    // Moving separately is essential: the eventual size
+                    // acknowledgement may otherwise retain Mutter's startup
+                    // origin instead of the Session's saved position.
+                    if (frame.x !== geometry.x || frame.y !== geometry.y)
+                        window.move_frame(false, geometry.x, geometry.y);
+                }
+            } catch (_error) {
+                return false;
+            }
+
+            return true;
+        };
+
+        if (!apply())
+            return;
+
+        let attempts = 0;
+        const source = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            APPLICATION_PLACEMENT_RETRY_MS,
+            () => {
+                attempts++;
+                if (!apply() ||
+                    attempts >= APPLICATION_PLACEMENT_MAX_ATTEMPTS) {
+                    if (this._applicationPlacementSources?.get(window) === source)
+                        this._applicationPlacementSources.delete(window);
+                    return GLib.SOURCE_REMOVE;
+                }
+                return GLib.SOURCE_CONTINUE;
+            });
+        this._applicationPlacementSources.set(window, source);
+    }
+
+    _cancelApplicationPlacement(window) {
+        const source = this._applicationPlacementSources?.get(window);
+        if (!source)
+            return;
+
+        GLib.source_remove(source);
+        this._applicationPlacementSources.delete(window);
+    }
+
+    _cancelApplicationPlacements() {
+        if (!this._applicationPlacementSources)
+            return;
+
+        for (const source of this._applicationPlacementSources.values())
+            GLib.source_remove(source);
+        this._applicationPlacementSources.clear();
     }
 }

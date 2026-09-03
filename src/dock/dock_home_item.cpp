@@ -689,7 +689,12 @@ void DockHomeItem::open_session()
     m_dock.inhibit_autohide();
     DockSessionDialog::show(
         m_dock,
-        m_window_registry);
+        m_window_registry,
+        m_dock.launcher_manager(),
+        [this](const SessionRecord &)
+        {
+            m_dock.synchronize_session_items();
+        });
     m_dock.uninhibit_autohide();
 }
 

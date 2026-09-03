@@ -38,7 +38,9 @@ EXTRA_DIST = \
     protocols/ext-foreign-toplevel-list-v1.xml \
     protocols/ext-image-capture-source-v1.xml \
     protocols/ext-image-copy-capture-v1.xml \
-    protocols/zkde-screencast-unstable-v1.xml
+    protocols/zkde-screencast-unstable-v1.xml \
+    data/images/README.md \
+    $(docklight_session_images)
 
 TESTS = \
     tests/build_script_test.sh \
@@ -58,6 +60,51 @@ dist_applications_DATA = \
 
 dist_docklighticons_DATA = \
     data/icons/128x128/docklight.home.png
+
+# The Session dialog's icon selector reads whatever is present in data/images,
+# so the directory is enumerated at build time instead of being listed file by
+# file. Installing through a hook keeps adding an image a pure data change.
+docklightimagesdir = $(pkgdatadir)/images
+
+docklight_session_images = \
+    $(wildcard $(srcdir)/data/images/*.png) \
+    $(wildcard $(srcdir)/data/images/*.svg) \
+    $(wildcard $(srcdir)/data/images/*.jpg) \
+    $(wildcard $(srcdir)/data/images/*.jpeg) \
+    $(wildcard $(srcdir)/data/images/*.bmp) \
+    $(wildcard $(srcdir)/data/images/*.xpm)
+
+# The selector shows every file in the installed directory, so installing has
+# to mirror data/images exactly. Copying without pruning would leave an image
+# that was renamed or deleted in the source tree visible forever. This
+# directory belongs entirely to Docklight, so removing what is no longer part
+# of the set is safe.
+install-data-local:
+	$(MKDIR_P) "$(DESTDIR)$(docklightimagesdir)"
+	@current=''; \
+	for image in $(docklight_session_images); do \
+	    current="$$current `echo "$$image" | sed 's|.*/||'` "; \
+	done; \
+	for installed in "$(DESTDIR)$(docklightimagesdir)"/*; do \
+	    test -f "$$installed" || continue; \
+	    name=`echo "$$installed" | sed 's|.*/||'`; \
+	    case "$$current" in \
+	    *" $$name "*) ;; \
+	    *) echo " rm -f $$installed"; rm -f "$$installed" || exit 1;; \
+	    esac; \
+	done; \
+	for image in $(docklight_session_images); do \
+	    test -f "$$image" || continue; \
+	    echo " $(INSTALL_DATA) $$image $(DESTDIR)$(docklightimagesdir)"; \
+	    $(INSTALL_DATA) "$$image" "$(DESTDIR)$(docklightimagesdir)" || exit 1; \
+	done
+
+uninstall-local:
+	@for image in $(docklight_session_images); do \
+	    name=`echo "$$image" | sed 's|.*/||'`; \
+	    rm -f "$(DESTDIR)$(docklightimagesdir)/$$name"; \
+	done
+	-rmdir "$(DESTDIR)$(docklightimagesdir)" 2>/dev/null || true
 
 .PHONY: \
     install-gnome-integration \

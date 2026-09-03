@@ -124,8 +124,20 @@ assert.match(
 const extensionSource = fs.readFileSync(extensionPath, "utf8");
 assert.match(
     extensionSource,
-    /PROTOCOL_VERSION = '10'[\s\S]*?command === 'place'[\s\S]*?change_workspace_by_index\(workspace - 1, false\)[\s\S]*?unmaximize\(Meta\.MaximizeFlags\.BOTH\)[\s\S]*?move_resize_frame/,
+    /PROTOCOL_VERSION = '10'[\s\S]*?command === 'place'[\s\S]*?_restoreApplicationPlacement\(window, workspace, geometry\)[\s\S]*?_restoreApplicationPlacement\(window, workspace, geometry\)[\s\S]*?change_workspace_by_index\(workspace - 1, false\)[\s\S]*?unmaximize\(Meta\.MaximizeFlags\.BOTH\)[\s\S]*?move_resize_frame[\s\S]*?move_frame[\s\S]*?APPLICATION_PLACEMENT_MAX_ATTEMPTS/,
     "GNOME protocol 10 must place launched Session windows through Mutter");
+assert.match(
+    extensionSource,
+    /_untrackWindow\(window\) \{[\s\S]*?_cancelApplicationPlacement\(window\)/,
+    "GNOME Session placement retries must stop with their window");
+assert.match(
+    extensionSource,
+    /disable\(\) \{[\s\S]*?_cancelApplicationPlacements\(\)/,
+    "GNOME Session placement retries must stop with the extension");
+assert.match(
+    extensionSource,
+    /_disconnectBackend\(\) \{[\s\S]*?_cancelApplicationPlacements\(\)/,
+    "GNOME Session placement retries must stop when Docklight disconnects");
 const autohideControllerSource = fs.readFileSync(
     autohideControllerPath, "utf8");
 const dockWindowControllerSource = fs.readFileSync(
