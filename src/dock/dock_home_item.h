@@ -48,6 +48,7 @@ public:
     ~DockHomeItem() override;
 
     void set_icon_size(int icon_size);
+    const Glib::RefPtr<Gdk::Pixbuf> &source_icon() const;
     void set_icon_path(
         const std::string &icon_path);
     void set_context_menu_corner_radius(

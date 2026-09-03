@@ -58,7 +58,7 @@ assert.match(
     "the home context menu must contain a separated Session entry");
 assert.match(
     homeItemSource,
-    /m_session_item[\s\S]*?signal_activate\(\)[\s\S]*?DockHomeItem::open_session[\s\S]*?void DockHomeItem::open_session\(\)[\s\S]*?m_dock\.inhibit_autohide\(\)[\s\S]*?DockSessionDialog::show\(\s*m_dock,\s*m_window_registry,\s*m_dock\.launcher_manager\(\),[\s\S]*?m_dock\.synchronize_session_items\(\);[\s\S]*?m_dock\.uninhibit_autohide\(\)/,
+    /m_session_item[\s\S]*?signal_activate\(\)[\s\S]*?DockHomeItem::open_session[\s\S]*?void DockHomeItem::open_session\(\)[\s\S]*?m_dock\.inhibit_autohide\(\)[\s\S]*?DockSessionDialog::show\(\s*m_dock,\s*m_source_icon,\s*m_window_registry,\s*m_dock\.launcher_manager\(\),[\s\S]*?m_dock\.synchronize_session_items\(\);[\s\S]*?m_dock\.uninhibit_autohide\(\)/,
     "activating Session must open the dialog with the launcher store and refresh the dock's Session items");
 
 assert.strictEqual(
@@ -67,8 +67,8 @@ assert.strictEqual(
     "the Session action must create exactly one dialog");
 assert.match(
     sessionDialogSource,
-    /Gtk::Dialog dialog\(\s*_\("Session"\)[\s\S]*?titlebar\.set_title\(\s*_\("Session"\)\)[\s\S]*?dialog\.add_button\(\s*_\("_Close"\),\s*Gtk::RESPONSE_CLOSE\)[\s\S]*?dialog\.run\(\)[\s\S]*?dialog\.hide\(\)/,
-    "the Session dialog must be titled Session and retain its Close action");
+    /Gtk::Dialog dialog\(\s*_\("Session"\)[\s\S]*?Gtk::Image header_icon[\s\S]*?titlebar\.set_title\(\s*_\("Session"\)\)[\s\S]*?if \(icon\)[\s\S]*?dialog\.set_icon\(icon\)[\s\S]*?header_icon\.set\(small_icon\)[\s\S]*?titlebar\.pack_start\(header_icon\)[\s\S]*?dialog\.add_button\(\s*_\("_Save"\),\s*Gtk::RESPONSE_APPLY\)[\s\S]*?dialog\.add_button\(\s*_\("_Cancel"\),\s*Gtk::RESPONSE_CANCEL\)[\s\S]*?dialog\.run\(\)[\s\S]*?dialog\.hide\(\)/,
+    "the Session dialog must use the Docklight icon and present Save before Cancel");
 assert.match(
     sessionDialogSource,
     /_\("_Session Name"\)[\s\S]*?Gtk::ComboBoxText session_name\(true\)[\s\S]*?session_name\.get_entry\(\)->set_placeholder_text[\s\S]*?_\("_Icon"\)[\s\S]*?Gtk::ComboBox icon_selector[\s\S]*?_\("Select _Icon"\)[\s\S]*?_\("_Add"\)/,
@@ -81,6 +81,10 @@ assert.match(
     sessionDialogSource,
     /icon_selector\.set_model\(icon_model\);[\s\S]*?icon_selector\.pack_start\(\s*icon_columns\.image,\s*\n\s*false\);[\s\S]*?icon_selector\.pack_start\(\s*icon_columns\.label,\s*\n\s*true\);[\s\S]*?icon_selector\.set_id_column\(/,
     "each row must render its image beside its label, keyed by the id column");
+assert.doesNotMatch(
+    sessionDialogSource,
+    /Gtk::Image icon_preview|icon_preview|set_selected_icon|set_named_preview_icon|FALLBACK_ICON_NAME/,
+    "the icon combobox must be the only icon display and selection control");
 assert.match(
     sessionDialogSource,
     /session_image_directories\(\)[\s\S]*?DOCKLIGHT_DATA_DIR,\s*\n\s*"images"\)[\s\S]*?SOURCE_DIR,\s*\n\s*"\.\.",\s*\n\s*"data",\s*\n\s*"images"\)/,
@@ -105,12 +109,8 @@ assert.match(
     "choosing a custom icon must add and select a Custom row");
 assert.match(
     sessionDialogSource,
-    /icon_selector\.set_active\(0\);\s*\n\s*set_selected_icon\(\s*icon_preview,\s*\n\s*icon_selector\.get_active_id\(\)\)/,
-    "the first image must be the default selection and drive the icon area");
-assert.match(
-    sessionDialogSource,
-    /icon_selector\.signal_changed\(\)[\s\S]*?set_selected_icon\(\s*icon_preview,\s*\n\s*icon_selector\.get_active_id\(\)\)/,
-    "changing the icon combo box must update the icon preview area");
+    /if \(!session_icons\.empty\(\)\)\s*icon_selector\.set_active\(0\);/,
+    "the first image must be the default combobox selection");
 assert.match(
     sessionDialogSource,
     /const auto update_add_sensitivity =[\s\S]*?session_name\.get_entry\(\)->get_text\(\)[\s\S]*?const bool has_icon =\s*\n\s*!icon_selector\.get_active_id\(\)\s*\n?\s*\.empty\(\);[\s\S]*?add_item\.set_sensitive\(\s*\n\s*has_name && has_icon\)/,

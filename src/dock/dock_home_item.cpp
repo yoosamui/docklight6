@@ -129,6 +129,11 @@ void DockHomeItem::set_icon_size(
             icon_size));
 }
 
+const Glib::RefPtr<Gdk::Pixbuf> &DockHomeItem::source_icon() const
+{
+    return m_source_icon;
+}
+
 void DockHomeItem::set_icon_path(
     const std::string &icon_path)
 {
@@ -689,6 +694,7 @@ void DockHomeItem::open_session()
     m_dock.inhibit_autohide();
     DockSessionDialog::show(
         m_dock,
+        m_source_icon,
         m_window_registry,
         m_dock.launcher_manager(),
         [this](const SessionRecord &)

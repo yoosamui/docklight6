@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <gdkmm/pixbuf.h>
 #include <functional>
 #include <string>
 
@@ -42,6 +43,7 @@ namespace DockSessionDialog
 // rebuild its Session items while the editor is still open.
 void show(
     Gtk::Window &parent,
+    const Glib::RefPtr<Gdk::Pixbuf> &icon,
     WindowRegistry *window_registry,
     LauncherManager &launcher_manager,
     const std::function<void(const SessionRecord &)>

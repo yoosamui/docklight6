@@ -19,7 +19,7 @@
 //   when saving because Remove hides rather than destroys them.
 // - The icon selector is built from the installed images directory rather than
 //   a hard-coded list, so adding an icon is a pure data change.
-// - Icon selection reuses GTK's icon theme and image-file chooser facilities.
+// - Icon selection is owned by the image-backed combobox and file chooser.
 //
 // ------------------------------------------------------------
 
@@ -43,10 +43,7 @@
 
 namespace
 {
-constexpr int ICON_PREVIEW_SIZE = 28;
 constexpr int ICON_ROW_SIZE = 24;
-constexpr const char *FALLBACK_ICON_NAME =
-    "application-x-executable";
 
 std::string trimmed_session_name(
     const Glib::ustring &value)
@@ -221,47 +218,11 @@ Glib::RefPtr<Gdk::Pixbuf> load_image_icon(
     }
 }
 
-void set_named_preview_icon(
-    Gtk::Image &preview,
-    const Glib::ustring &icon_name)
-{
-    preview.set_from_icon_name(
-        icon_name,
-        Gtk::ICON_SIZE_LARGE_TOOLBAR);
-    preview.set_pixel_size(
-        ICON_PREVIEW_SIZE);
-}
-
-// Every selectable row carries an image path as its identifier. An empty
-// identifier means nothing is selected, which happens only while Select Icon
-// holds a file the list does not contain; the preview keeps that file.
-void set_selected_icon(
-    Gtk::Image &preview,
-    const Glib::ustring &selected)
-{
-    if (selected.empty())
-        return;
-
-    try
-    {
-        preview.set(
-            Gdk::Pixbuf::create_from_file(
-                selected.raw(),
-                ICON_PREVIEW_SIZE,
-                ICON_PREVIEW_SIZE,
-                true));
-    }
-    catch (const Glib::Error &)
-    {
-        set_named_preview_icon(
-            preview,
-            "image-missing");
-    }
-}
 }
 
 void DockSessionDialog::show(
     Gtk::Window &parent,
+    const Glib::RefPtr<Gdk::Pixbuf> &icon,
     WindowRegistry *window_registry,
     LauncherManager &launcher_manager,
     const std::function<void(const SessionRecord &)>
@@ -301,12 +262,29 @@ void DockSessionDialog::show(
         560);
 
     Gtk::HeaderBar titlebar;
+    Gtk::Image header_icon;
     titlebar.set_title(
         _("Session"));
     titlebar.set_show_close_button(true);
     titlebar.set_decoration_layout(
         ":close");
     dialog.set_titlebar(titlebar);
+
+    if (icon)
+    {
+        dialog.set_icon(icon);
+
+        const auto small_icon =
+            icon->scale_simple(
+                20,
+                20,
+                Gdk::INTERP_BILINEAR);
+        if (small_icon)
+        {
+            header_icon.set(small_icon);
+            titlebar.pack_start(header_icon);
+        }
+    }
 
     Gtk::Box editor(
         Gtk::ORIENTATION_VERTICAL,
@@ -333,7 +311,6 @@ void DockSessionDialog::show(
     Gtk::Label icon_label(
         _("_Icon"),
         true);
-    Gtk::Image icon_preview;
 
     SessionIconColumns icon_columns;
     auto icon_model =
@@ -371,21 +348,8 @@ void DockSessionDialog::show(
     icon_label.set_mnemonic_widget(
         icon_selector);
 
-    if (session_icons.empty())
-    {
-        // Nothing is installed to choose from. Leave the empty list alone and
-        // keep the icon area meaningful.
-        set_named_preview_icon(
-            icon_preview,
-            FALLBACK_ICON_NAME);
-    }
-    else
-    {
+    if (!session_icons.empty())
         icon_selector.set_active(0);
-        set_selected_icon(
-            icon_preview,
-            icon_selector.get_active_id());
-    }
 
     Gtk::Button select_icon(
         _("Select _Icon"),
@@ -425,10 +389,9 @@ void DockSessionDialog::show(
     header.attach(session_name_label, 0, 0, 1, 1);
     header.attach(session_name, 1, 0, 1, 1);
     header.attach(icon_label, 2, 0, 1, 1);
-    header.attach(icon_preview, 3, 0, 1, 1);
-    header.attach(icon_selector, 4, 0, 1, 1);
-    header.attach(select_icon, 5, 0, 1, 1);
-    header.attach(add_item, 6, 0, 1, 1);
+    header.attach(icon_selector, 3, 0, 1, 1);
+    header.attach(select_icon, 4, 0, 1, 1);
+    header.attach(add_item, 5, 0, 1, 1);
 
     Gtk::ScrolledWindow item_scroller;
     item_scroller.set_policy(
@@ -454,8 +417,6 @@ void DockSessionDialog::show(
         editor,
         true,
         true);
-
-    Glib::RefPtr<Gdk::Pixbuf> custom_icon;
 
     // The Custom row exists only once Select Icon has produced an image the
     // installed set does not contain. Its identifier is that file's path, so
@@ -522,24 +483,13 @@ void DockSessionDialog::show(
                    : std::nullopt;
     };
 
-    icon_selector.signal_changed().connect(
-        [&icon_selector,
-         &icon_preview]()
-        {
-            set_selected_icon(
-                icon_preview,
-                icon_selector.get_active_id());
-        });
-
     select_icon.signal_clicked().connect(
         [&dialog,
          &icon_selector,
-         &icon_preview,
          &icon_model,
          &icon_columns,
          &custom_row,
-         &row_with_id,
-         &custom_icon]()
+         &row_with_id]()
         {
             Gtk::Dialog icon_dialog(
                 _("Select Session Icon"),
@@ -580,12 +530,15 @@ void DockSessionDialog::show(
                 {
                     try
                     {
-                        custom_icon =
-                            Gdk::Pixbuf::create_from_file(
+                        const auto custom_icon =
+                            load_image_icon(
                                 filename,
-                                ICON_PREVIEW_SIZE,
-                                ICON_PREVIEW_SIZE,
-                                true);
+                                ICON_ROW_SIZE);
+                        if (!custom_icon)
+                        {
+                            icon_dialog.hide();
+                            return;
+                        }
 
                         const auto listed =
                             row_with_id(filename);
@@ -617,24 +570,17 @@ void DockSessionDialog::show(
                                     _("Custom");
                             (*custom_row)
                                 [icon_columns.image] =
-                                    load_image_icon(
-                                        filename,
-                                        ICON_ROW_SIZE);
+                                    custom_icon;
 
                             icon_selector.set_active(
                                 custom_row);
                         }
-
-                        // Replacing the Custom row's file leaves it already
-                        // active, so the preview is refreshed here rather
-                        // than relying on a selection change.
-                        icon_preview.set(custom_icon);
                     }
                     catch (const Glib::Error &)
                     {
                         // The chooser filter limits selections to supported
-                        // images. Leave the current preview intact if loading
-                        // nevertheless fails.
+                        // images. Leave the current selection unchanged if
+                        // loading nevertheless fails.
                     }
                 }
             }
@@ -880,14 +826,13 @@ void DockSessionDialog::show(
                 400);
     };
 
-    // Restoring replaces the card list with the stored one and re-selects the
-    // stored icon, adding a Custom row when that image is not installed.
+    // Restoring replaces the card list and re-selects the stored icon in the
+    // combobox, adding a Custom row when that image is not installed.
     const auto load_session =
         [&item_list,
          &icon_selector,
          &icon_model,
          &icon_columns,
-         &icon_preview,
          &custom_row,
          &row_with_id,
          &create_item,
@@ -957,9 +902,6 @@ void DockSessionDialog::show(
                     custom_row);
             }
 
-            set_selected_icon(
-                icon_preview,
-                icon_selector.get_active_id());
         }
 
         for (const auto &item :
@@ -1020,16 +962,16 @@ void DockSessionDialog::show(
         }
     }
 
-    dialog.add_button(
-        _("_Close"),
-        Gtk::RESPONSE_CLOSE);
-
     auto *save_button =
         dialog.add_button(
             _("_Save"),
             Gtk::RESPONSE_APPLY);
     save_button->signal_clicked().connect(
         save_session);
+
+    dialog.add_button(
+        _("_Cancel"),
+        Gtk::RESPONSE_CANCEL);
 
     dialog.show_all_children();
     dialog.present();

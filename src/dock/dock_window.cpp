@@ -16,6 +16,7 @@
 // ------------------------------------------------------------
 
 #include "dock_window.h"
+#include "dock_home_item.h"
 #include "dock_session_item.h"
 #include "dialogs/dock_session_dialog.h"
 #include "presentation/docklight_surface_identity.h"
@@ -253,6 +254,7 @@ void DockWindow::edit_session(
     inhibit_autohide();
     DockSessionDialog::show(
         *this,
+        m_home_item->source_icon(),
         m_window_registry,
         m_launcher_manager,
         [this](const SessionRecord &saved)
