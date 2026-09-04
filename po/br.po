@@ -2,12 +2,11 @@
 # Copyright (C) 2026 THE docklight6'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the docklight6 package.
 # Automatically generated, 2026.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 00:00+0700\n"
+"POT-Creation-Date: 2026-09-04 13:58+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -111,6 +110,7 @@ msgid "DockLight Settings"
 msgstr "Arventennoù DockLight"
 
 #: src/dialogs/dock_settings_dialog.cpp:288
+#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_Serriñ"
@@ -472,8 +472,7 @@ msgid "Select Home Icon"
 msgstr "Dibabit an arouezenn degemer"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
-#: src/dialogs/dock_session_dialog.cpp:501
-#: src/dialogs/dock_session_dialog.cpp:973
+#: src/dialogs/dock_session_dialog.cpp:509
 msgid "_Cancel"
 msgstr "_Nullañ"
 
@@ -482,63 +481,107 @@ msgid "_Open"
 msgstr "_Digeriñ"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
-#: src/dialogs/dock_session_dialog.cpp:512
+#: src/dialogs/dock_session_dialog.cpp:520
 msgid "Image Files"
 msgstr "Restroù skeudennoù"
 
-#: src/dialogs/dock_session_dialog.cpp:233
-#: src/dialogs/dock_session_dialog.cpp:267
+#: src/dialogs/dock_session_dialog.cpp:241
+#: src/dialogs/dock_session_dialog.cpp:275
 msgid "Session"
 msgstr "Emvod"
 
-#: src/dialogs/dock_session_dialog.cpp:302
+#: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_Anv an dalc&#39;h"
 
-#: src/dialogs/dock_session_dialog.cpp:307
+#: src/dialogs/dock_session_dialog.cpp:315
+#: src/dialogs/dock_session_dialog.cpp:717
 msgid "Session name"
 msgstr "Anv an dalc&#39;h"
 
-#: src/dialogs/dock_session_dialog.cpp:312
+#: src/dialogs/dock_session_dialog.cpp:320
 msgid "_Icon"
 msgstr "_Arlun"
 
-#: src/dialogs/dock_session_dialog.cpp:355
+#: src/dialogs/dock_session_dialog.cpp:363
 msgid "Select _Icon"
 msgstr "Dibabit _Ikon"
 
-#: src/dialogs/dock_session_dialog.cpp:358
+#: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
 msgstr "_Ouzhpennañ"
 
-#: src/dialogs/dock_session_dialog.cpp:495
+#: src/dialogs/dock_session_dialog.cpp:503
 msgid "Select Session Icon"
 msgstr "Dibabit arouezenn an dalc&#39;h"
 
-#: src/dialogs/dock_session_dialog.cpp:504
+#: src/dialogs/dock_session_dialog.cpp:512
 msgid "_Select"
 msgstr "_Dibabit"
 
-#: src/dialogs/dock_session_dialog.cpp:570
-#: src/dialogs/dock_session_dialog.cpp:895
+#: src/dialogs/dock_session_dialog.cpp:578
+#: src/dialogs/dock_session_dialog.cpp:987
 msgid "Custom"
 msgstr "Personelaet"
 
-#: src/dialogs/dock_session_dialog.cpp:726
-msgid "A Session with this name already exists."
-msgstr "Ur c&#39;hendalc&#39;h gant an anv-mañ zo anezhañ dija."
+#: src/dialogs/dock_session_dialog.cpp:702
+msgid "Cannot save Session."
+msgstr "N'haller ket enrollañ an estez."
 
-#: src/dialogs/dock_session_dialog.cpp:733
-msgid "Choose a different name for “%1”."
-msgstr "Dibabit un anv disheñvel evit “%1”."
+#: src/dialogs/dock_session_dialog.cpp:709
+msgid "%1 cannot be empty or contain only whitespace."
+msgstr "%1 ne c'hall ket bezañ goullo pe kaout esaouennoù hepken."
 
-#: src/dialogs/dock_session_dialog.cpp:967
-msgid "_Save"
-msgstr "_Saveteiñ"
+#: src/dialogs/dock_session_dialog.cpp:724
+msgid "Session icon"
+msgstr "Arlun an estez"
 
+#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr "Restr burev"
+
+#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr "Anv an arload"
+
+#: src/dialogs/dock_session_dialog.cpp:761
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
 msgstr "Titl an arload"
+
+#: src/dialogs/dock_session_dialog.cpp:769
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "Arventennoù"
+
+#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_editor_item.cpp:112
+msgid "Workspace"
+msgstr "Egor labour"
+
+#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr "Mentoù"
+
+#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_editor_item.cpp:114
+msgid "Position"
+msgstr "Lec&#39;hiadur"
+
+#: src/dialogs/dock_session_dialog.cpp:818
+msgid "A Session with this name already exists."
+msgstr "Ur c&#39;hendalc&#39;h gant an anv-mañ zo anezhañ dija."
+
+#: src/dialogs/dock_session_dialog.cpp:825
+msgid "Choose a different name for “%1”."
+msgstr "Dibabit un anv disheñvel evit “%1”."
+
+#: src/dialogs/dock_session_dialog.cpp:1059
+msgid "_Save"
+msgstr "_Saveteiñ"
 
 #: src/dialogs/dock_session_editor_item.cpp:106
 msgid "_Paste"
@@ -548,63 +591,42 @@ msgstr "_Pegañ"
 msgid "_Launch"
 msgstr "_Lañsañ"
 
-#: src/dialogs/dock_session_editor_item.cpp:109
-msgid "Desktop File"
-msgstr "Restr burev"
-
-#: src/dialogs/dock_session_editor_item.cpp:110
-msgid "App Name"
-msgstr "Anv an arload"
-
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr "Arventennoù"
-
-#: src/dialogs/dock_session_editor_item.cpp:112
-msgid "Workspace"
-msgstr "Egor labour"
-
-#: src/dialogs/dock_session_editor_item.cpp:113
-msgid "Dimensions"
-msgstr "Mentoù"
-
-#: src/dialogs/dock_session_editor_item.cpp:114
-msgid "Position"
-msgstr "Lec&#39;hiadur"
-
-#: src/dialogs/dock_session_editor_item.cpp:143
+#: src/dialogs/dock_session_editor_item.cpp:144
 msgid "Application title"
 msgstr "Titl ar goulenn"
 
-#: src/dialogs/dock_session_editor_item.cpp:147
+#: src/dialogs/dock_session_editor_item.cpp:148
 msgid "Desktop file"
 msgstr "Restr burev"
 
-#: src/dialogs/dock_session_editor_item.cpp:151
+#: src/dialogs/dock_session_editor_item.cpp:152
 msgid "Application name"
 msgstr "Anv an arload"
 
-#: src/dialogs/dock_session_editor_item.cpp:154
+#: src/dialogs/dock_session_editor_item.cpp:156
 msgid "Command-line parameters"
 msgstr "Arventennoù al linenn urzhiañ"
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:161
 msgid "Workspace number"
 msgstr "Niverenn an egor labour"
 
-#: src/dialogs/dock_session_editor_item.cpp:246
+#: src/dialogs/dock_session_editor_item.cpp:253
 msgid "No application window is available to copy."
 msgstr "N&#39;eus prenestr arload ebet da eilañ."
 
-#: src/dialogs/dock_session_editor_item.cpp:410
+#: src/dialogs/dock_session_editor_item.cpp:422
 msgid "Paste a window into this item before launching it."
 msgstr "Pegañ ur prenestr en elfenn-mañ a-raok he loc&#39;hañ."
 
-#: src/dialogs/dock_session_editor_item.cpp:438
+#: src/dialogs/dock_session_editor_item.cpp:450
 msgid ""
 "The application was launched. This desktop session cannot place windows, so "
 "Workspace, Dimensions, and Position were ignored."
-msgstr "Lañset eo bet an arload. N&#39;hall ket ar c&#39;hennask burev-mañ lakaat prenestroù, setu m&#39;eo bet lezet a-gostez an egor labour, ar ventoù hag al lec&#39;hiadur."
+msgstr ""
+"Lañset eo bet an arload. N&#39;hall ket ar c&#39;hennask burev-mañ lakaat "
+"prenestroù, setu m&#39;eo bet lezet a-gostez an egor labour, ar ventoù hag "
+"al lec&#39;hiadur."
 
 #: src/launchers/session_launcher.cpp:622
 msgid "This Session item has no application."
@@ -682,11 +704,8 @@ msgstr "Merour pennañ"
 msgctxt "monitor status"
 msgid "default"
 msgstr "Ar skramm dre ziouer"
-
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "Implijit ar c'hementad foñs dock du-da-gris"
-
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Steuziañ"
-

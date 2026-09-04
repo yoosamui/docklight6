@@ -152,14 +152,14 @@ preview_card_height = 512
 // Configuration block added when preview timing is missing.
 const char *PREVIEW_SHOW_DELAY_SETTING_TEMPLATE = R"(# Delay before showing a window preview, in milliseconds.
 # Valid range: 0 to 5000
-preview_show_delay = 500
+preview_show_delay = 400
 
 )";
 
 // Configuration block added when autohide timing is missing.
 const char *AUTOHIDE_HIDE_DELAY_SETTING_TEMPLATE = R"(# Delay before hiding the dock, in milliseconds.
 # Valid range: 0 to 5000
-autohide_hide_delay = 1200
+autohide_hide_delay = 400
 
 )";
 
@@ -236,7 +236,7 @@ preview_card_height = 512
 
 # Delay before showing a window preview, in milliseconds.
 # Valid range: 0 to 5000
-preview_show_delay = 500
+preview_show_delay = 400
 
 # Dock screen edge.
 # Empty uses default: bottom
@@ -254,10 +254,10 @@ gradient_background = true
 rounded_corners =
 
 # Dock corner radius in pixels.
-# Empty uses default: 6
+# Empty uses default: -1
 # -1 selects an automatic radius
 # Otherwise valid range: 2 to icon_size / 2
-corner_radius =
+corner_radius = -1
 
 # Dock alignment along its screen edge.
 # Empty uses default: center
@@ -273,7 +273,7 @@ autohide =
 
 # Delay before hiding the dock, in milliseconds.
 # Valid range: 0 to 5000
-autohide_hide_delay = 1200
+autohide_hide_delay = 400
 
 # Autohide visual effect.
 # Empty keeps the current platform-specific effect.

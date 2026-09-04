@@ -1,5 +1,4 @@
 # *****************************************************************
-#
 # Copyright (C) 2015 Juan R. Gonzalez
 # Created on Januar, 2017
 # This program is free software: you can redistribute it and/or modify
@@ -18,7 +17,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 00:00+0700\n"
+"POT-Creation-Date: 2026-09-04 13:58+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: yoo <j-gonzalez@email.de>\n"
 "Language-Team: German <de@li.org>\n"
@@ -119,6 +118,7 @@ msgid "DockLight Settings"
 msgstr "DockLight-Einstellungen"
 
 #: src/dialogs/dock_settings_dialog.cpp:288
+#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_Schließen"
@@ -486,8 +486,7 @@ msgid "Select Home Icon"
 msgstr "Wählen Sie das Home-Symbol"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
-#: src/dialogs/dock_session_dialog.cpp:501
-#: src/dialogs/dock_session_dialog.cpp:973
+#: src/dialogs/dock_session_dialog.cpp:509
 msgid "_Cancel"
 msgstr "_Abbrechen"
 
@@ -496,64 +495,108 @@ msgid "_Open"
 msgstr "_Offen"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
-#: src/dialogs/dock_session_dialog.cpp:512
+#: src/dialogs/dock_session_dialog.cpp:520
 msgid "Image Files"
 msgstr "Bilddateien"
 
-#: src/dialogs/dock_session_dialog.cpp:233
-#: src/dialogs/dock_session_dialog.cpp:267
+#: src/dialogs/dock_session_dialog.cpp:241
+#: src/dialogs/dock_session_dialog.cpp:275
 msgid "Session"
 msgstr "Sitzung"
 
-#: src/dialogs/dock_session_dialog.cpp:302
+#: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_Sitzungsname"
 
-#: src/dialogs/dock_session_dialog.cpp:307
+#: src/dialogs/dock_session_dialog.cpp:315
+#: src/dialogs/dock_session_dialog.cpp:717
 msgid "Session name"
 msgstr "Sitzungsname"
 
-#: src/dialogs/dock_session_dialog.cpp:312
+#: src/dialogs/dock_session_dialog.cpp:320
 msgid "_Icon"
 msgstr "_Symbol"
 
-#: src/dialogs/dock_session_dialog.cpp:355
+#: src/dialogs/dock_session_dialog.cpp:363
 msgid "Select _Icon"
 msgstr "Select _Icon"
 
-#: src/dialogs/dock_session_dialog.cpp:358
+#: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
 msgstr "_Hinzufügen"
 
-#: src/dialogs/dock_session_dialog.cpp:495
+#: src/dialogs/dock_session_dialog.cpp:503
 msgid "Select Session Icon"
 msgstr "Sitzungssymbol auswählen"
 
-#: src/dialogs/dock_session_dialog.cpp:504
+#: src/dialogs/dock_session_dialog.cpp:512
 #, fuzzy
 msgid "_Select"
 msgstr "Wählen Sie…"
 
-#: src/dialogs/dock_session_dialog.cpp:570
-#: src/dialogs/dock_session_dialog.cpp:895
+#: src/dialogs/dock_session_dialog.cpp:578
+#: src/dialogs/dock_session_dialog.cpp:987
 msgid "Custom"
 msgstr "Benutzerdefiniert"
 
-#: src/dialogs/dock_session_dialog.cpp:726
-msgid "A Session with this name already exists."
-msgstr "Eine Sitzung mit diesem Namen ist bereits vorhanden."
+#: src/dialogs/dock_session_dialog.cpp:702
+msgid "Cannot save Session."
+msgstr "Sitzung kann nicht gespeichert werden."
 
-#: src/dialogs/dock_session_dialog.cpp:733
-msgid "Choose a different name for “%1”."
-msgstr "Wähle einen anderen Namen für „%1“."
+#: src/dialogs/dock_session_dialog.cpp:709
+msgid "%1 cannot be empty or contain only whitespace."
+msgstr "%1 darf nicht leer sein oder nur Leerzeichen enthalten."
 
-#: src/dialogs/dock_session_dialog.cpp:967
-msgid "_Save"
-msgstr "_Speichern"
+#: src/dialogs/dock_session_dialog.cpp:724
+msgid "Session icon"
+msgstr "Sitzungssymbol"
 
+#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr "Desktopdatei"
+
+#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr "App-Name"
+
+#: src/dialogs/dock_session_dialog.cpp:761
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
 msgstr "App-Titel"
+
+#: src/dialogs/dock_session_dialog.cpp:769
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "Parameter"
+
+#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_editor_item.cpp:112
+msgid "Workspace"
+msgstr "Arbeitsbereich"
+
+#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr "Abmessungen"
+
+#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_editor_item.cpp:114
+msgid "Position"
+msgstr "Position"
+
+#: src/dialogs/dock_session_dialog.cpp:818
+msgid "A Session with this name already exists."
+msgstr "Eine Sitzung mit diesem Namen ist bereits vorhanden."
+
+#: src/dialogs/dock_session_dialog.cpp:825
+msgid "Choose a different name for “%1”."
+msgstr "Wähle einen anderen Namen für „%1“."
+
+#: src/dialogs/dock_session_dialog.cpp:1059
+msgid "_Save"
+msgstr "_Speichern"
 
 #: src/dialogs/dock_session_editor_item.cpp:106
 msgid "_Paste"
@@ -563,63 +606,41 @@ msgstr "_Einfügen"
 msgid "_Launch"
 msgstr "_Starten"
 
-#: src/dialogs/dock_session_editor_item.cpp:109
-msgid "Desktop File"
-msgstr "Desktopdatei"
-
-#: src/dialogs/dock_session_editor_item.cpp:110
-msgid "App Name"
-msgstr "App-Name"
-
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr "Parameter"
-
-#: src/dialogs/dock_session_editor_item.cpp:112
-msgid "Workspace"
-msgstr "Arbeitsbereich"
-
-#: src/dialogs/dock_session_editor_item.cpp:113
-msgid "Dimensions"
-msgstr "Abmessungen"
-
-#: src/dialogs/dock_session_editor_item.cpp:114
-msgid "Position"
-msgstr "Position"
-
-#: src/dialogs/dock_session_editor_item.cpp:143
+#: src/dialogs/dock_session_editor_item.cpp:144
 msgid "Application title"
 msgstr "Anwendungstitel"
 
-#: src/dialogs/dock_session_editor_item.cpp:147
+#: src/dialogs/dock_session_editor_item.cpp:148
 msgid "Desktop file"
 msgstr "Desktopdatei"
 
-#: src/dialogs/dock_session_editor_item.cpp:151
+#: src/dialogs/dock_session_editor_item.cpp:152
 msgid "Application name"
 msgstr "Anwendungsname"
 
-#: src/dialogs/dock_session_editor_item.cpp:154
+#: src/dialogs/dock_session_editor_item.cpp:156
 msgid "Command-line parameters"
 msgstr "Befehlszeilenparameter"
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:161
 msgid "Workspace number"
 msgstr "Arbeitsbereichsnummer"
 
-#: src/dialogs/dock_session_editor_item.cpp:246
+#: src/dialogs/dock_session_editor_item.cpp:253
 msgid "No application window is available to copy."
 msgstr "Kein Anwendungsfenster zum Kopieren verfügbar."
 
-#: src/dialogs/dock_session_editor_item.cpp:410
+#: src/dialogs/dock_session_editor_item.cpp:422
 msgid "Paste a window into this item before launching it."
 msgstr "Fügen Sie ein Fenster in dieses Element ein, bevor Sie es starten."
 
-#: src/dialogs/dock_session_editor_item.cpp:438
+#: src/dialogs/dock_session_editor_item.cpp:450
 msgid ""
 "The application was launched. This desktop session cannot place windows, so "
 "Workspace, Dimensions, and Position were ignored."
-msgstr "Die Anwendung wurde gestartet. Diese Desktop-Sitzung kann keine Fenster platzieren, daher wurden Arbeitsbereich, Abmessungen und Position ignoriert."
+msgstr ""
+"Die Anwendung wurde gestartet. Diese Desktop-Sitzung kann keine Fenster "
+"platzieren, daher wurden Arbeitsbereich, Abmessungen und Position ignoriert."
 
 #: src/launchers/session_launcher.cpp:622
 msgid "This Session item has no application."
@@ -697,97 +718,71 @@ msgstr "Primärer Monitor"
 msgctxt "monitor status"
 msgid "default"
 msgstr "Standardmonitor"
-
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "Verwenden Sie den Dock-Hintergrundverlauf von Schwarz zu Grau"
-
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Ausblenden"
-
 #~ msgid "Initialize panel."
 #~ msgstr "Panel initialisieren."
-
 #~ msgid "Sets the primary Monitor."
 #~ msgstr "Legt den primären Monitor fest."
-
 #~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
 #~ msgstr ""
 #~ "Legt die Position des Panels fest: oben, rechts, unten oder links. "
 #~ "Standardmäßig unten"
-
 #~ msgid ""
 #~ "The dock alignment settings are start, end, center or fill. Default "
 #~ "center."
 #~ msgstr ""
 #~ "Die Dockausrichtungseinstellungen sind Start, Ende, Mitte oder Füllen. "
 #~ "Standardmäßig Mitte."
-
 #~ msgid "parsed values"
 #~ msgstr "Analysierte Werte"
-
 #~ msgid "Free the %s object."
 #~ msgstr "Das %s-Objekt ist  frei."
-
 #~ msgid "Display detected monitors"
 #~ msgstr "Erkannte Monitore anzeigen"
-
 #~ msgid "Default monitor"
 #~ msgstr "Standardmonitor"
-
 #~ msgid "Geometry"
 #~ msgstr "Geometrie"
-
 #~ msgid "Width"
 #~ msgstr "Breite"
-
 #~ msgid "Model"
 #~ msgstr "Modell"
-
 #~ msgid ""
 #~ "This program is a lightweight Dock Launcher for opening common "
 #~ "applications for the GNOME Desktop"
 #~ msgstr ""
 #~ "Docklight ist ein leichtes Dock Panel zum Öffnen gemeinsamer Anwendungen "
 #~ "für den GNOME Desktop"
-
 #~ msgid "Create Launcher"
 #~ msgstr "Launcher erstellen"
-
 #~ msgid "Test Launcher"
 #~ msgstr "Launcher testen"
-
 #~ msgid "Cancel"
 #~ msgstr "Abbrechen"
-
 #~ msgid "Command: "
 #~ msgstr "Befehl: "
-
 #~ msgid "Choose command"
 #~ msgstr "Wählen Sie den Befehl"
-
 #~ msgid "Name: "
 #~ msgstr "Name:"
-
 #~ msgid "Comment: "
 #~ msgstr "Kommentar: "
-
 #~ msgid "Categories: "
 #~ msgstr "Kategorien: "
-
 #~ msgid "Docklight Launcher"
 #~ msgstr "Docklight Starter"
-
 #~ msgid ""
 #~ "Launcher for %s could not be found.\n"
 #~ "You need to create a Launcher for this Application."
 #~ msgstr ""
 #~ "Launcher für %s konnte nicht gefunden werden.\n"
 #~ "Sie müssen einen Launcher für diese Anwendung erstellen."
-
 #~ msgid "Launcher test Failed!"
 #~ msgstr "Launcher-Test fehlgeschlagen!"
-
 #~ msgid ""
 #~ "The command you enter is invalid.\n"
 #~ "\n"
@@ -823,7 +818,6 @@ msgstr "Standardmonitor"
 #~ "Öffnen Sie ein Terminal und navigieren Sie zu dem Verzeichnis, in dem "
 #~ "sich die Anwendung befindet\n"
 #~ "und versucht den Befehl von dort aus..."
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -834,7 +828,6 @@ msgstr "Standardmonitor"
 #~ "\n"
 #~ "Fehler beim kopieren der Vorlage!\n"
 #~ "\n"
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -845,7 +838,6 @@ msgstr "Standardmonitor"
 #~ "\n"
 #~ "Berechtigungen erforderlich. Bitte versuche Sie es erneut!\n"
 #~ "\n"
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -856,52 +848,36 @@ msgstr "Standardmonitor"
 #~ "\n"
 #~ "Launcher erfolgreich erstellt!\n"
 #~ "\n"
-
 #~ msgid "Please choose a file"
 #~ msgstr "Bitte wählen Sie eine Datei aus"
-
 #~ msgid "Browser could not be found!\n"
 #~ msgstr "Browser konnte nicht gefunden werden!\n"
-
 #~ msgid "Fields Name and Command can't be empty!\n"
 #~ msgstr "Felder Name und Befehl dürfen nicht leer sein!\n"
-
 #~ msgid "Show all"
 #~ msgstr "Zeige alle"
-
 #~ msgid "Minimize all except active"
 #~ msgstr "Alle minimieren, außer die aktive"
-
 #~ msgid "Close all except active"
 #~ msgstr "Alles schließen, außer die aktive"
-
 #~ msgid "Preferences"
 #~ msgstr "Einstellungen"
-
 #~ msgid "Session-group"
 #~ msgstr "Sitzungsgruppe"
-
 #~ msgid "Help"
 #~ msgstr "Hilfe"
-
 #~ msgid "Quit"
 #~ msgstr "Beenden"
-
 #~ msgid "Open new"
 #~ msgstr "Öffne neu"
-
 #~ msgid "Attach to Dock"
 #~ msgstr "An Dock befestigen"
-
 #~ msgid "Detach from Dock"
 #~ msgstr "Vom Dock entfernen"
-
 #~ msgid "Configure"
 #~ msgstr "Konfigurieren"
-
 #~ msgid "Session-group %d"
 #~ msgstr "Sitzungsgruppe %d"
-
 #~ msgid ""
 #~ "(%s) %d windows.\n"
 #~ "there are to many windows open for a Preview.\n"
@@ -910,22 +886,16 @@ msgstr "Standardmonitor"
 #~ "(%s) %d Fenster.\n"
 #~ "Es gibt zu viele Fenster offen für eine Vorschau.\n"
 #~ "Schließen Sie einige Fenster und versuchen Sie es erneut."
-
 #~ msgid "Gpk-update-viewer"
 #~ msgstr "Paketeaktualisierung"
-
 #~ msgid "Gpk-application"
 #~ msgstr "Pakete"
-
 #~ msgid "Autohide on start"
 #~ msgstr "Automatisch ausblenden"
-
 #~ msgid "Add to list"
 #~ msgstr "Zur Liste hinzufügen"
-
 #~ msgid "Session group %d"
 #~ msgstr "Sitzungsgruppe %d"
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -936,10 +906,7 @@ msgstr "Standardmonitor"
 #~ "\n"
 #~ "Session Gruppe erfolgreich gespeichert!\n"
 #~ "\n"
-
 #~ msgid "Click here to get the Application name!"
 #~ msgstr "Klicken Sie hier, um den Anwendungsnamen zu erhalten!"
-
 #~ msgid "Add active"
 #~ msgstr "Aktivieren"
-

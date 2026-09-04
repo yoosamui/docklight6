@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 00:00+0700\n"
+"POT-Creation-Date: 2026-09-04 13:58+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -103,6 +103,7 @@ msgid "DockLight Settings"
 msgstr "إعدادات دوك لايت"
 
 #: src/dialogs/dock_settings_dialog.cpp:288
+#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_إغلاق"
@@ -454,8 +455,7 @@ msgid "Select Home Icon"
 msgstr "حدد أيقونة الصفحة الرئيسية"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
-#: src/dialogs/dock_session_dialog.cpp:501
-#: src/dialogs/dock_session_dialog.cpp:973
+#: src/dialogs/dock_session_dialog.cpp:509
 msgid "_Cancel"
 msgstr "_إلغاء"
 
@@ -464,64 +464,108 @@ msgid "_Open"
 msgstr "_فتح"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
-#: src/dialogs/dock_session_dialog.cpp:512
+#: src/dialogs/dock_session_dialog.cpp:520
 msgid "Image Files"
 msgstr "ملفات الصور"
 
-#: src/dialogs/dock_session_dialog.cpp:233
-#: src/dialogs/dock_session_dialog.cpp:267
+#: src/dialogs/dock_session_dialog.cpp:241
+#: src/dialogs/dock_session_dialog.cpp:275
 msgid "Session"
 msgstr "الجلسة"
 
-#: src/dialogs/dock_session_dialog.cpp:302
+#: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_اسم الجلسة"
 
-#: src/dialogs/dock_session_dialog.cpp:307
+#: src/dialogs/dock_session_dialog.cpp:315
+#: src/dialogs/dock_session_dialog.cpp:717
 msgid "Session name"
 msgstr "اسم الجلسة"
 
-#: src/dialogs/dock_session_dialog.cpp:312
+#: src/dialogs/dock_session_dialog.cpp:320
 msgid "_Icon"
 msgstr "_أيقونة"
 
-#: src/dialogs/dock_session_dialog.cpp:355
+#: src/dialogs/dock_session_dialog.cpp:363
 msgid "Select _Icon"
 msgstr "Select _Icon"
 
-#: src/dialogs/dock_session_dialog.cpp:358
+#: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
 msgstr "_إضافة"
 
-#: src/dialogs/dock_session_dialog.cpp:495
+#: src/dialogs/dock_session_dialog.cpp:503
 msgid "Select Session Icon"
 msgstr "حدد أيقونة الجلسة"
 
-#: src/dialogs/dock_session_dialog.cpp:504
+#: src/dialogs/dock_session_dialog.cpp:512
 #, fuzzy
 msgid "_Select"
 msgstr "اختر…"
 
-#: src/dialogs/dock_session_dialog.cpp:570
-#: src/dialogs/dock_session_dialog.cpp:895
+#: src/dialogs/dock_session_dialog.cpp:578
+#: src/dialogs/dock_session_dialog.cpp:987
 msgid "Custom"
 msgstr "مخصص"
 
-#: src/dialogs/dock_session_dialog.cpp:726
-msgid "A Session with this name already exists."
-msgstr "توجد جلسة بهذا الاسم بالفعل."
+#: src/dialogs/dock_session_dialog.cpp:702
+msgid "Cannot save Session."
+msgstr "تعذر حفظ الجلسة."
 
-#: src/dialogs/dock_session_dialog.cpp:733
-msgid "Choose a different name for “%1”."
-msgstr "اختر اسمًا مختلفًا لـ \"%1\"."
+#: src/dialogs/dock_session_dialog.cpp:709
+msgid "%1 cannot be empty or contain only whitespace."
+msgstr "لا يمكن أن يكون %1 فارغًا أو يحتوي على مسافات بيضاء فقط."
 
-#: src/dialogs/dock_session_dialog.cpp:967
-msgid "_Save"
-msgstr "_حفظ |||"
+#: src/dialogs/dock_session_dialog.cpp:724
+msgid "Session icon"
+msgstr "أيقونة الجلسة"
 
+#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr "ملف سطح المكتب"
+
+#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr "اسم التطبيق"
+
+#: src/dialogs/dock_session_dialog.cpp:761
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
 msgstr "عنوان التطبيق"
+
+#: src/dialogs/dock_session_dialog.cpp:769
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "المعلمات"
+
+#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_editor_item.cpp:112
+msgid "Workspace"
+msgstr "مساحة العمل"
+
+#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr "الأبعاد"
+
+#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_editor_item.cpp:114
+msgid "Position"
+msgstr "المنصب"
+
+#: src/dialogs/dock_session_dialog.cpp:818
+msgid "A Session with this name already exists."
+msgstr "توجد جلسة بهذا الاسم بالفعل."
+
+#: src/dialogs/dock_session_dialog.cpp:825
+msgid "Choose a different name for “%1”."
+msgstr "اختر اسمًا مختلفًا لـ \"%1\"."
+
+#: src/dialogs/dock_session_dialog.cpp:1059
+msgid "_Save"
+msgstr "_حفظ |||"
 
 #: src/dialogs/dock_session_editor_item.cpp:106
 msgid "_Paste"
@@ -531,63 +575,41 @@ msgstr "_لصق"
 msgid "_Launch"
 msgstr "_إطلاق"
 
-#: src/dialogs/dock_session_editor_item.cpp:109
-msgid "Desktop File"
-msgstr "ملف سطح المكتب"
-
-#: src/dialogs/dock_session_editor_item.cpp:110
-msgid "App Name"
-msgstr "اسم التطبيق"
-
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr "المعلمات"
-
-#: src/dialogs/dock_session_editor_item.cpp:112
-msgid "Workspace"
-msgstr "مساحة العمل"
-
-#: src/dialogs/dock_session_editor_item.cpp:113
-msgid "Dimensions"
-msgstr "الأبعاد"
-
-#: src/dialogs/dock_session_editor_item.cpp:114
-msgid "Position"
-msgstr "المنصب"
-
-#: src/dialogs/dock_session_editor_item.cpp:143
+#: src/dialogs/dock_session_editor_item.cpp:144
 msgid "Application title"
 msgstr "عنوان التطبيق"
 
-#: src/dialogs/dock_session_editor_item.cpp:147
+#: src/dialogs/dock_session_editor_item.cpp:148
 msgid "Desktop file"
 msgstr "ملف سطح المكتب"
 
-#: src/dialogs/dock_session_editor_item.cpp:151
+#: src/dialogs/dock_session_editor_item.cpp:152
 msgid "Application name"
 msgstr "اسم التطبيق"
 
-#: src/dialogs/dock_session_editor_item.cpp:154
+#: src/dialogs/dock_session_editor_item.cpp:156
 msgid "Command-line parameters"
 msgstr "معلمات سطر الأوامر"
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:161
 msgid "Workspace number"
 msgstr "رقم مساحة العمل"
 
-#: src/dialogs/dock_session_editor_item.cpp:246
+#: src/dialogs/dock_session_editor_item.cpp:253
 msgid "No application window is available to copy."
 msgstr "لا توجد نافذة تطبيق متاحة للنسخ."
 
-#: src/dialogs/dock_session_editor_item.cpp:410
+#: src/dialogs/dock_session_editor_item.cpp:422
 msgid "Paste a window into this item before launching it."
 msgstr "الصق نافذة في هذا العنصر قبل تشغيله."
 
-#: src/dialogs/dock_session_editor_item.cpp:438
+#: src/dialogs/dock_session_editor_item.cpp:450
 msgid ""
 "The application was launched. This desktop session cannot place windows, so "
 "Workspace, Dimensions, and Position were ignored."
-msgstr "تم إطلاق التطبيق. لا يمكن لجلسة سطح المكتب هذه وضع النوافذ، لذلك تم تجاهل مساحة العمل والأبعاد والموضع."
+msgstr ""
+"تم إطلاق التطبيق. لا يمكن لجلسة سطح المكتب هذه وضع النوافذ، لذلك تم تجاهل "
+"مساحة العمل والأبعاد والموضع."
 
 #: src/launchers/session_launcher.cpp:622
 msgid "This Session item has no application."
@@ -665,68 +687,48 @@ msgstr "جهاز المراقبة الأساسي"
 msgctxt "monitor status"
 msgid "default"
 msgstr "جهاز العرض الافتراضي"
-
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "استخدم تدرج خلفية الرصيف من الأسود إلى الرمادي"
-
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "تلاشي"
-
 #~ msgid "Initialize panel."
 #~ msgstr "تهيئة اللوحة."
-
 #~ msgid ""
 #~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
 #~ "DP-3"
 #~ msgstr "يضبط الشاشة الرئيسية. الإعدادات هي أساسية أو اسم الشاشة مثل DP-3"
-
 #~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
 #~ msgstr "يضبط موقع اللوحة: أعلى أو يمين أو أسفل أو يسار. الافتراضي أسفل"
-
 #~ msgid ""
 #~ "The dock alignment settings are start, end, center or fill. Default "
 #~ "center."
 #~ msgstr ""
 #~ "إعدادات محاذاة الرصيف هي بداية أو نهاية أو مركز أو ملء. الافتراضي مركز."
-
 #~ msgid ""
 #~ "The icon alignment settings are start, end or center. Default center."
 #~ msgstr "إعدادات محاذاة الأيقونة هي بداية أو نهاية أو مركز. الافتراضي مركز."
-
 #~ msgid "parsed values"
 #~ msgstr "قيم تم تحليلها تحرير كائن %s"
-
 #~ msgid "Free the %s object."
 #~ msgstr "تحرير كائن %s."
-
 #~ msgid "Display detected monitors"
 #~ msgstr "عرض الشاشات المكتشفة"
-
 #~ msgid "Default monitor"
 #~ msgstr "الشاشة الافتراضية"
-
 #~ msgid "Geometry"
 #~ msgstr "هندسة"
-
 #~ msgid "Width"
 #~ msgstr "عرض"
-
 #~ msgid "Model"
 #~ msgstr "نموذج"
-
 #~ msgid "Quit"
 #~ msgstr "الخروج"
-
 #~ msgid "Close all windows"
 #~ msgstr "إغلاق جميع النوافذ"
-
 #~ msgid "New"
 #~ msgstr "جديد"
-
 #~ msgid "Minimize all windows"
 #~ msgstr "تكبيرتصغير"
-
 #~ msgid "Maximinize all windows"
 #~ msgstr "تكبير"
-

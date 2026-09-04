@@ -2,12 +2,11 @@
 # Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 00:00+0700\n"
+"POT-Creation-Date: 2026-09-04 13:58+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: \n"
 "Language-Team: THAI <LL@li.org>\n"
@@ -108,6 +107,7 @@ msgid "DockLight Settings"
 msgstr "การตั้งค่า DockLight"
 
 #: src/dialogs/dock_settings_dialog.cpp:288
+#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_ปิด"
@@ -458,8 +458,7 @@ msgid "Select Home Icon"
 msgstr "เลือกไอคอนหน้าแรก"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
-#: src/dialogs/dock_session_dialog.cpp:501
-#: src/dialogs/dock_session_dialog.cpp:973
+#: src/dialogs/dock_session_dialog.cpp:509
 msgid "_Cancel"
 msgstr "_ยกเลิก"
 
@@ -468,63 +467,107 @@ msgid "_Open"
 msgstr "_เปิด"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
-#: src/dialogs/dock_session_dialog.cpp:512
+#: src/dialogs/dock_session_dialog.cpp:520
 msgid "Image Files"
 msgstr "ไฟล์รูปภาพ"
 
-#: src/dialogs/dock_session_dialog.cpp:233
-#: src/dialogs/dock_session_dialog.cpp:267
+#: src/dialogs/dock_session_dialog.cpp:241
+#: src/dialogs/dock_session_dialog.cpp:275
 msgid "Session"
 msgstr "เซสชัน"
 
-#: src/dialogs/dock_session_dialog.cpp:302
+#: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_ชื่อเซสชัน"
 
-#: src/dialogs/dock_session_dialog.cpp:307
+#: src/dialogs/dock_session_dialog.cpp:315
+#: src/dialogs/dock_session_dialog.cpp:717
 msgid "Session name"
 msgstr "ชื่อเซสชัน"
 
-#: src/dialogs/dock_session_dialog.cpp:312
+#: src/dialogs/dock_session_dialog.cpp:320
 msgid "_Icon"
 msgstr "_ไอคอน"
 
-#: src/dialogs/dock_session_dialog.cpp:355
+#: src/dialogs/dock_session_dialog.cpp:363
 msgid "Select _Icon"
 msgstr "เลือก_ไอคอน"
 
-#: src/dialogs/dock_session_dialog.cpp:358
+#: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
 msgstr "_เพิ่ม"
 
-#: src/dialogs/dock_session_dialog.cpp:495
+#: src/dialogs/dock_session_dialog.cpp:503
 msgid "Select Session Icon"
 msgstr "เลือกไอคอนเซสชัน"
 
-#: src/dialogs/dock_session_dialog.cpp:504
+#: src/dialogs/dock_session_dialog.cpp:512
 msgid "_Select"
 msgstr "_เลือก"
 
-#: src/dialogs/dock_session_dialog.cpp:570
-#: src/dialogs/dock_session_dialog.cpp:895
+#: src/dialogs/dock_session_dialog.cpp:578
+#: src/dialogs/dock_session_dialog.cpp:987
 msgid "Custom"
 msgstr "กำหนดเอง"
 
-#: src/dialogs/dock_session_dialog.cpp:726
-msgid "A Session with this name already exists."
-msgstr "มีเซสชันชื่อนี้อยู่แล้ว"
+#: src/dialogs/dock_session_dialog.cpp:702
+msgid "Cannot save Session."
+msgstr "ไม่สามารถบันทึกวาระงานได้"
 
-#: src/dialogs/dock_session_dialog.cpp:733
-msgid "Choose a different name for “%1”."
-msgstr "เลือกชื่ออื่นสำหรับ “%1”"
+#: src/dialogs/dock_session_dialog.cpp:709
+msgid "%1 cannot be empty or contain only whitespace."
+msgstr "%1 ต้องไม่ว่างเปล่าหรือมีแต่ช่องว่างเท่านั้น"
 
-#: src/dialogs/dock_session_dialog.cpp:967
-msgid "_Save"
-msgstr "_บันทึก"
+#: src/dialogs/dock_session_dialog.cpp:724
+msgid "Session icon"
+msgstr "ไอคอนวาระงาน"
 
+#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr "ไฟล์เดสก์ท็อป"
+
+#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr "ชื่อแอป"
+
+#: src/dialogs/dock_session_dialog.cpp:761
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
 msgstr "ชื่อแอป"
+
+#: src/dialogs/dock_session_dialog.cpp:769
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "พารามิเตอร์"
+
+#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_editor_item.cpp:112
+msgid "Workspace"
+msgstr "พื้นที่ทำงาน"
+
+#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr "ขนาด"
+
+#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_editor_item.cpp:114
+msgid "Position"
+msgstr "ตำแหน่ง"
+
+#: src/dialogs/dock_session_dialog.cpp:818
+msgid "A Session with this name already exists."
+msgstr "มีเซสชันชื่อนี้อยู่แล้ว"
+
+#: src/dialogs/dock_session_dialog.cpp:825
+msgid "Choose a different name for “%1”."
+msgstr "เลือกชื่ออื่นสำหรับ “%1”"
+
+#: src/dialogs/dock_session_dialog.cpp:1059
+msgid "_Save"
+msgstr "_บันทึก"
 
 #: src/dialogs/dock_session_editor_item.cpp:106
 msgid "_Paste"
@@ -534,65 +577,41 @@ msgstr "_วาง"
 msgid "_Launch"
 msgstr "_เปิดใช้"
 
-#: src/dialogs/dock_session_editor_item.cpp:109
-msgid "Desktop File"
-msgstr "ไฟล์เดสก์ท็อป"
-
-#: src/dialogs/dock_session_editor_item.cpp:110
-msgid "App Name"
-msgstr "ชื่อแอป"
-
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr "พารามิเตอร์"
-
-#: src/dialogs/dock_session_editor_item.cpp:112
-msgid "Workspace"
-msgstr "พื้นที่ทำงาน"
-
-#: src/dialogs/dock_session_editor_item.cpp:113
-msgid "Dimensions"
-msgstr "ขนาด"
-
-#: src/dialogs/dock_session_editor_item.cpp:114
-msgid "Position"
-msgstr "ตำแหน่ง"
-
-#: src/dialogs/dock_session_editor_item.cpp:143
+#: src/dialogs/dock_session_editor_item.cpp:144
 msgid "Application title"
 msgstr "ชื่อแอปพลิเคชัน"
 
-#: src/dialogs/dock_session_editor_item.cpp:147
+#: src/dialogs/dock_session_editor_item.cpp:148
 msgid "Desktop file"
 msgstr "ไฟล์เดสก์ท็อป"
 
-#: src/dialogs/dock_session_editor_item.cpp:151
+#: src/dialogs/dock_session_editor_item.cpp:152
 msgid "Application name"
 msgstr "ชื่อแอปพลิเคชัน"
 
-#: src/dialogs/dock_session_editor_item.cpp:154
+#: src/dialogs/dock_session_editor_item.cpp:156
 msgid "Command-line parameters"
 msgstr "พารามิเตอร์บรรทัดคำสั่ง"
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:161
 msgid "Workspace number"
 msgstr "หมายเลขพื้นที่ทำงาน"
 
-#: src/dialogs/dock_session_editor_item.cpp:246
+#: src/dialogs/dock_session_editor_item.cpp:253
 msgid "No application window is available to copy."
 msgstr "ไม่มีหน้าต่างแอปพลิเคชันให้คัดลอก"
 
-#: src/dialogs/dock_session_editor_item.cpp:410
+#: src/dialogs/dock_session_editor_item.cpp:422
 msgid "Paste a window into this item before launching it."
 msgstr "วางหน้าต่างลงในรายการนี้ก่อนเปิดใช้"
 
-#: src/dialogs/dock_session_editor_item.cpp:438
+#: src/dialogs/dock_session_editor_item.cpp:450
 msgid ""
 "The application was launched. This desktop session cannot place windows, so "
 "Workspace, Dimensions, and Position were ignored."
 msgstr ""
-"เปิดแอปพลิเคชันแล้ว เซสชันเดสก์ท็อปนี้ไม่สามารถจัดวางหน้าต่างได้ จึงไม่ใช้ "
-"พื้นที่ทำงาน ขนาด และตำแหน่ง"
+"เปิดแอปพลิเคชันแล้ว เซสชันเดสก์ท็อปนี้ไม่สามารถจัดวางหน้าต่างได้ จึงไม่ใช้ พื้นที่ทำงาน ขนาด "
+"และตำแหน่ง"
 
 #: src/launchers/session_launcher.cpp:622
 msgid "This Session item has no application."
@@ -670,119 +689,86 @@ msgstr "จอภาพหลัก"
 msgctxt "monitor status"
 msgid "default"
 msgstr "จอภาพเริ่มต้น"
-
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "ใช้การไล่ระดับสีพื้นหลังท่าเรือสีดำถึงสีเทา"
-
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "จาง"
-
 #~ msgid "Initialize panel."
 #~ msgstr "เริ่มต้นแผงควบคุม"
-
 #~ msgid ""
 #~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
 #~ "DP-3"
 #~ msgstr "ตั้งค่าจอภาพหลัก การตั้งค่าเป็นหลักหรือชื่อจอภาพ เช่น DP-3"
-
 #~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
 #~ msgstr ""
 #~ "ตั้งค่าตำแหน่งของแผงควบคุม: ด้านบน ด้านขวา ด้านล่าง หรือด้านซ้าย ค่าเริ่มต้นคือด้านล่าง"
-
 #~ msgid ""
 #~ "The dock alignment settings are start, end, center or fill. Default "
 #~ "center."
 #~ msgstr ""
 #~ "การตั้งค่าการจัดตำแหน่งท่าเรือคือ เริ่มต้น สิ้นสุด ตรงกลาง หรือเต็มหน้าจอ ค่าเริ่มต้นคือ ตรงกลาง"
-
 #~ msgid ""
 #~ "The icon alignment settings are start, end or center. Default center."
 #~ msgstr "การตั้งค่าการจัดตำแหน่งไอคอนคือ เริ่มต้น สิ้นสุด หรือตรงกลาง ค่าเริ่มต้นคือ ตรงกลาง"
-
 #~ msgid "parsed values"
 #~ msgstr "ค่าที่ถูกวิเคราะห์"
-
 #~ msgid "Free the %s object."
 #~ msgstr "ปล่อยหน่วยความจำของวัตถุ %s"
-
 #~ msgid "Display detected monitors"
 #~ msgstr "แสดงจอภาพที่ตรวจพบ"
-
 #~ msgid "Default monitor"
 #~ msgstr "จอภาพเริ่มต้น"
-
 #~ msgid "Geometry"
 #~ msgstr "เรขาคณิต"
-
 #~ msgid "Width"
 #~ msgstr "ความกว้าง"
-
 #~ msgid "Model"
 #~ msgstr "รุ่น"
-
 #~ msgid "Quit"
 #~ msgstr "ออก"
-
 #~ msgid "Open new"
 #~ msgstr "เปิดหน้าต่างใหม่"
-
 #~ msgid "Minimize all windows"
 #~ msgstr "พับหน้าต่างทั้งหมด"
-
 #~ msgid "Maximinize all windows"
 #~ msgstr "เปิดหน้าต่างทั้งหมด"
-
 #~ msgid "Close all windows"
 #~ msgstr "ปิดหน้าต่างทั้งหมด"
-
 #~ msgid "New"
 #~ msgstr "ใหม่"
-
 #~ msgid ""
 #~ "This program is a lightweight Dock Launcher for opening common "
 #~ "applications for the GNOME Desktop"
 #~ msgstr ""
 #~ "โปรแกรมนี้ใช้งานไม่ยาก Dock Launcher สำหรับการใช้งานเท่าไปเท่านั้น "
 #~ "จัดทำเพื่อแปลภาษาหน้าเดสก์ท็อปของ GNOME "
-
 #~ msgid "Create Launcher"
 #~ msgstr "สร้างตัวเปิดโปรแกรม"
-
 #~ msgid "Test Launcher"
 #~ msgstr "เปิดทดสอบโปรแกรม"
-
 #~ msgid "Cancel"
 #~ msgstr "ยกเลิก"
-
 #~ msgid "Command: "
 #~ msgstr "คำสั่ง"
-
 #~ msgid "Choose command"
 #~ msgstr "เลือกคำสั่ง"
-
 #~ msgid "Name: "
 #~ msgstr "ชื่อ"
-
 #~ msgid "Comment: "
 #~ msgstr "ข้อคิดเห็น"
-
 #~ msgid "Categories: "
 #~ msgstr "หมวดหมู่"
-
 #~ msgid "Docklight Launcher"
 #~ msgstr "ตัวเปิด ด็อกไลท์"
-
 #~ msgid ""
 #~ "Launcher for %s could not be found.\n"
 #~ "You need to create a Launcher for this Application."
 #~ msgstr ""
 #~ "ไม่มีสามารถเปิดใช้งานโปรแกรม %s ได้ \n"
 #~ "ต้องการสร้างตัวเปิดทำงานใหม่ สำหรับ โปรแกรม"
-
 #~ msgid "Launcher test Failed!"
 #~ msgstr "ไม่สามารถเปิดทำงานได้"
-
 #~ msgid ""
 #~ "The command you enter is invalid.\n"
 #~ "\n"
@@ -815,7 +801,6 @@ msgstr "จอภาพเริ่มต้น"
 #~ "กรุณาตรวจสอบให้แน่ใจก่อนว่า โปรแกรมเริ่มต้นที่บรรทัดคำสั่ง\n"
 #~ "เปิดใช้งาน terminal กับการนำทางไปยังไดเรกทอรี่ โปรแกรมที่คุณค้นหา\n"
 #~ "ที่คุณพยายามป้อนคำสั่งจากที่นั่น"
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -826,7 +811,6 @@ msgstr "จอภาพเริ่มต้น"
 #~ "\n"
 #~ "การคัดลอกผิดพลาด\n"
 #~ "\n"
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -837,7 +821,6 @@ msgstr "จอภาพเริ่มต้น"
 #~ "\n"
 #~ "ต้องการสิทธิ์ในการใช้งาน โปรดลองอีกครั้ง\n"
 #~ "\n"
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -848,43 +831,30 @@ msgstr "จอภาพเริ่มต้น"
 #~ "\n"
 #~ "สร้างตัวเปิดสำเร็จ!\n"
 #~ "\n"
-
 #~ msgid "Please choose a file"
 #~ msgstr "เลือกไฟล์"
-
 #~ msgid "Browser could not be found!\n"
 #~ msgstr "ไม่พบเบราเซอร์!\n"
-
 #~ msgid "Fields Name and Command can't be empty!\n"
 #~ msgstr "เขตข้อมูลชื่อและคำสั่งต้องไม่ว่างเปล่า!\n"
-
 #~ msgid "Show all"
 #~ msgstr "เปิดทั้งหมด"
-
 #~ msgid "Minimize all except active"
 #~ msgstr "พับหน้าต่างที่ไม่ใช้งานชั่วคราว"
-
 #~ msgid "Close all except active"
 #~ msgstr "ปิดหน้าต่างที่ไม่ใช้งาน"
-
 #~ msgid "Preferences"
 #~ msgstr "การตั้งค่า"
-
 #~ msgid "Session-group"
 #~ msgstr "กลุ่มเซสซั่น"
-
 #~ msgid "Help"
 #~ msgstr "ช่วยเหลือ"
-
 #~ msgid "Detach from Dock"
 #~ msgstr "แยกออกจาก Dock"
-
 #~ msgid "Configure"
 #~ msgstr "กำหนดค่า"
-
 #~ msgid "Session-group %d"
 #~ msgstr "กลุ่มเซสซั่น %d"
-
 #~ msgid ""
 #~ "(%s) %d windows.\n"
 #~ "there are to many windows open for a Preview.\n"
@@ -893,22 +863,16 @@ msgstr "จอภาพเริ่มต้น"
 #~ "(%s) %d หน้าต่าง.\n"
 #~ "มีหน้าต่างมากมายที่เปิดใช้งานอยู่.\n"
 #~ "ปิดหน้าต่างแล้วลองอีกครั้ง."
-
 #~ msgid "Gpk-update-viewer"
 #~ msgstr "ผู้ชมแพคเกจ"
-
 #~ msgid "Gpk-application"
 #~ msgstr "แพคเกจ"
-
 #~ msgid "Autohide on start"
 #~ msgstr "ปิดอัตโนมัติเมื่อเปิดใช้งาน"
-
 #~ msgid "Add to list"
 #~ msgstr "เพิ่มรายการ"
-
 #~ msgid "Session group %d"
 #~ msgstr "กลุ่มเซสซั่น %d"
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -919,10 +883,7 @@ msgstr "จอภาพเริ่มต้น"
 #~ "\n"
 #~ "กลุ่มเซสชั่นบันทึกเรียบร้อยแล้ว!\n"
 #~ "\n"
-
 #~ msgid "Click here to get the Application name!"
 #~ msgstr "คลิกที่นี่เพื่อรับชื่อโปรแกรม!"
-
 #~ msgid "Add active"
 #~ msgstr "เพิ่มการใช้งาน"
-

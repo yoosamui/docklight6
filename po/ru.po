@@ -1,5 +1,4 @@
 # *****************************************************************
-#
 # Copyright (C) 2015 Juan R. Gonzalez
 # Created on Januar, 2017
 # This program is free software: you can redistribute it and/or modify
@@ -17,7 +16,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 00:00+0700\n"
+"POT-Creation-Date: 2026-09-04 13:58+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Juan Gonzalez <j-gonzalez@email.de>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -120,6 +119,7 @@ msgid "DockLight Settings"
 msgstr "Настройки док-станции"
 
 #: src/dialogs/dock_settings_dialog.cpp:288
+#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_Закрыть"
@@ -490,8 +490,7 @@ msgid "Select Home Icon"
 msgstr "Выберите значок «Домой»"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
-#: src/dialogs/dock_session_dialog.cpp:501
-#: src/dialogs/dock_session_dialog.cpp:973
+#: src/dialogs/dock_session_dialog.cpp:509
 msgid "_Cancel"
 msgstr "_Отмена"
 
@@ -500,68 +499,115 @@ msgid "_Open"
 msgstr "_Открыть"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
-#: src/dialogs/dock_session_dialog.cpp:512
+#: src/dialogs/dock_session_dialog.cpp:520
 msgid "Image Files"
 msgstr "Файлы изображений"
 
-#: src/dialogs/dock_session_dialog.cpp:233
-#: src/dialogs/dock_session_dialog.cpp:267
+#: src/dialogs/dock_session_dialog.cpp:241
+#: src/dialogs/dock_session_dialog.cpp:275
 #, fuzzy
 msgid "Session"
 msgstr "заглавие "
 
-#: src/dialogs/dock_session_dialog.cpp:302
+#: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_Имя сеанса"
 
-#: src/dialogs/dock_session_dialog.cpp:307
+#: src/dialogs/dock_session_dialog.cpp:315
+#: src/dialogs/dock_session_dialog.cpp:717
 msgid "Session name"
 msgstr "Имя сеанса"
 
-#: src/dialogs/dock_session_dialog.cpp:312
+#: src/dialogs/dock_session_dialog.cpp:320
 msgid "_Icon"
 msgstr ""
 
-#: src/dialogs/dock_session_dialog.cpp:355
+#: src/dialogs/dock_session_dialog.cpp:363
 #, fuzzy
 msgid "Select _Icon"
 msgstr "Выберите значок «Домой»"
 
-#: src/dialogs/dock_session_dialog.cpp:358
+#: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
 msgstr ""
 
-#: src/dialogs/dock_session_dialog.cpp:495
+#: src/dialogs/dock_session_dialog.cpp:503
 #, fuzzy
 msgid "Select Session Icon"
 msgstr "Выберите значок «Домой»"
 
-#: src/dialogs/dock_session_dialog.cpp:504
+#: src/dialogs/dock_session_dialog.cpp:512
 #, fuzzy
 msgid "_Select"
 msgstr "Выберите…"
 
-#: src/dialogs/dock_session_dialog.cpp:570
-#: src/dialogs/dock_session_dialog.cpp:895
+#: src/dialogs/dock_session_dialog.cpp:578
+#: src/dialogs/dock_session_dialog.cpp:987
 msgid "Custom"
 msgstr ""
 
-#: src/dialogs/dock_session_dialog.cpp:726
-msgid "A Session with this name already exists."
-msgstr ""
+#: src/dialogs/dock_session_dialog.cpp:702
+msgid "Cannot save Session."
+msgstr "Не удалось сохранить сеанс."
 
-#: src/dialogs/dock_session_dialog.cpp:733
-msgid "Choose a different name for “%1”."
-msgstr ""
+#: src/dialogs/dock_session_dialog.cpp:709
+msgid "%1 cannot be empty or contain only whitespace."
+msgstr "%1 не может быть пустым или содержать только пробелы."
 
-#: src/dialogs/dock_session_dialog.cpp:967
+#: src/dialogs/dock_session_dialog.cpp:724
+msgid "Session icon"
+msgstr "Значок сеанса"
+
+#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_editor_item.cpp:109
 #, fuzzy
-msgid "_Save"
-msgstr "Сохранить"
+msgid "Desktop File"
+msgstr "Рабочий стол"
 
+#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:761
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
 msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:769
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_editor_item.cpp:112
+#, fuzzy
+msgid "Workspace"
+msgstr "Рабочая область"
+
+#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_editor_item.cpp:114
+#, fuzzy
+msgid "Position"
+msgstr "Расположение"
+
+#: src/dialogs/dock_session_dialog.cpp:818
+msgid "A Session with this name already exists."
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:825
+msgid "Choose a different name for “%1”."
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:1059
+#, fuzzy
+msgid "_Save"
+msgstr "Сохранить"
 
 #: src/dialogs/dock_session_editor_item.cpp:106
 msgid "_Paste"
@@ -572,65 +618,38 @@ msgstr ""
 msgid "_Launch"
 msgstr "Запустить"
 
-#: src/dialogs/dock_session_editor_item.cpp:109
-#, fuzzy
-msgid "Desktop File"
-msgstr "Рабочий стол"
-
-#: src/dialogs/dock_session_editor_item.cpp:110
-msgid "App Name"
-msgstr ""
-
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr ""
-
-#: src/dialogs/dock_session_editor_item.cpp:112
-#, fuzzy
-msgid "Workspace"
-msgstr "Рабочая область"
-
-#: src/dialogs/dock_session_editor_item.cpp:113
-msgid "Dimensions"
-msgstr ""
-
-#: src/dialogs/dock_session_editor_item.cpp:114
-#, fuzzy
-msgid "Position"
-msgstr "Расположение"
-
-#: src/dialogs/dock_session_editor_item.cpp:143
+#: src/dialogs/dock_session_editor_item.cpp:144
 #, fuzzy
 msgid "Application title"
 msgstr "Приложение активировано."
 
-#: src/dialogs/dock_session_editor_item.cpp:147
+#: src/dialogs/dock_session_editor_item.cpp:148
 #, fuzzy
 msgid "Desktop file"
 msgstr "Рабочий стол"
 
-#: src/dialogs/dock_session_editor_item.cpp:151
+#: src/dialogs/dock_session_editor_item.cpp:152
 #, fuzzy
 msgid "Application name"
 msgstr "Запуск приложения."
 
-#: src/dialogs/dock_session_editor_item.cpp:154
+#: src/dialogs/dock_session_editor_item.cpp:156
 msgid "Command-line parameters"
 msgstr ""
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:161
 msgid "Workspace number"
 msgstr ""
 
-#: src/dialogs/dock_session_editor_item.cpp:246
+#: src/dialogs/dock_session_editor_item.cpp:253
 msgid "No application window is available to copy."
 msgstr ""
 
-#: src/dialogs/dock_session_editor_item.cpp:410
+#: src/dialogs/dock_session_editor_item.cpp:422
 msgid "Paste a window into this item before launching it."
 msgstr ""
 
-#: src/dialogs/dock_session_editor_item.cpp:438
+#: src/dialogs/dock_session_editor_item.cpp:450
 msgid ""
 "The application was launched. This desktop session cannot place windows, so "
 "Workspace, Dimensions, and Position were ignored."
@@ -712,122 +731,90 @@ msgstr "Основной монитор"
 msgctxt "monitor status"
 msgid "default"
 msgstr "Монитор по умолчанию"
-
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "Используйте градиент фона док-станции от черного к серому."
-
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Затухание"
-
 #~ msgid "Initialize panel."
 #~ msgstr "Инициализация панели."
-
 #~ msgid ""
 #~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
 #~ "DP-3"
 #~ msgstr ""
 #~ "Устанавливает основной монитор. Настройки: основной или имя монитора, "
 #~ "например DP-3"
-
 #~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
 #~ msgstr ""
 #~ "Устанавливает положение панели: верх, право, низ или лево. По умолчанию - "
 #~ "низ"
-
 #~ msgid ""
 #~ "The dock alignment settings are start, end, center or fill. Default "
 #~ "center."
 #~ msgstr ""
 #~ "Настройки выравнивания дока: начало, конец, центр или заполнить. По "
 #~ "умолчанию - центр."
-
 #~ msgid ""
 #~ "The icon alignment settings are start, end or center. Default center."
 #~ msgstr ""
 #~ "Настройки выравнивания значков: начало, конец или центр. По умолчанию - "
 #~ "центр."
-
 #~ msgid "parsed values"
 #~ msgstr "Разобранные значения"
-
 #~ msgid "Free the %s object."
 #~ msgstr "Освободить объект %s."
-
 #~ msgid "Display detected monitors"
 #~ msgstr "Отобразить обнаруженные мониторы"
-
 #~ msgid "Default monitor"
 #~ msgstr "Монитор по умолчанию"
-
 #~ msgid "Geometry"
 #~ msgstr "Геометрия"
-
 #~ msgid "Width"
 #~ msgstr "Ширина"
-
 #~ msgid "Model"
 #~ msgstr "Модель"
-
 #~ msgid "Quit"
 #~ msgstr "Выйти"
-
 #~ msgid "Close all windows"
 #~ msgstr "Закрыть все"
-
 #~ msgid "New"
 #~ msgstr "Новый"
-
 #~ msgid "Minimize all windows"
 #~ msgstr "Скрыть все"
-
 #~ msgid "Maximinize all windows"
 #~ msgstr "Развернуть все"
-
 #~ msgid ""
 #~ "This program is a lightweight Dock Launcher for opening common "
 #~ "applications for the GNOME Desktop"
 #~ msgstr ""
 #~ "Это программа является легким Dock Лаунчеом для запуска обычных "
 #~ "приложений для GNOME Desktop"
-
 #~ msgid "Create Launcher"
 #~ msgstr "Создать Лаунчер"
-
 #~ msgid "Test Launcher"
 #~ msgstr "Протестировать Лаунчер"
-
 #~ msgid "Cancel"
 #~ msgstr "Отменить"
-
 #~ msgid "Command: "
 #~ msgstr "Команда: "
-
 #~ msgid "Choose command"
 #~ msgstr "Выбрать команду"
-
 #~ msgid "Name: "
 #~ msgstr "Имя: "
-
 #~ msgid "Comment: "
 #~ msgstr "Комментарий: "
-
 #~ msgid "Categories: "
 #~ msgstr "Категория: "
-
 #~ msgid "Docklight Launcher"
 #~ msgstr "Docklight Лаунчер"
-
 #~ msgid ""
 #~ "Launcher for %s could not be found.\n"
 #~ "You need to create a Launcher for this Application."
 #~ msgstr ""
 #~ "Лаунчер для %s не найден.\n"
 #~ "Вам нужно создать Лаунчер для этой Программы."
-
 #~ msgid "Launcher test Failed!"
 #~ msgstr "Лаунчер-Тест провален!"
-
 #~ msgid ""
 #~ "The command you enter is invalid.\n"
 #~ "\n"
@@ -860,7 +847,6 @@ msgstr "Монитор по умолчанию"
 #~ "Убедитесь, что Приложение запускается с командной строки.\n"
 #~ "Откройте терминал и пройдите в директорию, где находится приложение\n"
 #~ "и запустите команду оттуда..."
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -871,7 +857,6 @@ msgstr "Монитор по умолчанию"
 #~ "\n"
 #~ "Ошибка при копировании шаблона!\n"
 #~ "\n"
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -882,7 +867,6 @@ msgstr "Монитор по умолчанию"
 #~ "\n"
 #~ "Требуется разрешение. Попробуйте еще раз!\n"
 #~ "\n"
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -893,46 +877,32 @@ msgstr "Монитор по умолчанию"
 #~ "\n"
 #~ "Лаунчер создан успешно!\n"
 #~ "\n"
-
 #~ msgid "Please choose a file"
 #~ msgstr "Пожалуйста выберите файл  "
-
 #~ msgid "Browser could not be found!\n"
 #~ msgstr "Browser не найден!\n"
-
 #~ msgid "Fields Name and Command can't be empty!\n"
 #~ msgstr "Поля и Команда не могут быть пустыми!\n"
-
 #~ msgid "Show all"
 #~ msgstr "Показать все"
-
 #~ msgid "Minimize all except active"
 #~ msgstr "Скрыть все кроме активных"
-
 #~ msgid "Close all except active"
 #~ msgstr "Закрыть все кроме активных"
-
 #~ msgid "Preferences"
 #~ msgstr "Настройки"
-
 #~ msgid "Session-group"
 #~ msgstr "Сессия"
-
 #~ msgid "Help"
 #~ msgstr "Помощь"
-
 #~ msgid "Open new"
 #~ msgstr "Открыть новую"
-
 #~ msgid "Detach from Dock"
 #~ msgstr "Открепить от Dock"
-
 #~ msgid "Configure"
 #~ msgstr "Настроить"
-
 #~ msgid "Session-group %d"
 #~ msgstr "Сессия %d"
-
 #~ msgid ""
 #~ "(%s) %d windows.\n"
 #~ "there are to many windows open for a Preview.\n"
@@ -941,22 +911,16 @@ msgstr "Монитор по умолчанию"
 #~ "(%s) %d окна.\n"
 #~ "открыто слишком много окон для Предпросмотра.\n"
 #~ "Закройте некоторые окна и Попробуйте еще раз."
-
 #~ msgid "Gpk-update-viewer"
 #~ msgstr "Gpk-просмотр-обновлений"
-
 #~ msgid "Gpk-application"
 #~ msgstr "Gpk-приложение"
-
 #~ msgid "Autohide on start"
 #~ msgstr "Авто-скрытие при запуске"
-
 #~ msgid "Add to list"
 #~ msgstr "Добавить в список"
-
 #~ msgid "Session group %d"
 #~ msgstr "Сессия %d"
-
 #~ msgid ""
 #~ "\n"
 #~ "\n"
@@ -967,10 +931,7 @@ msgstr "Монитор по умолчанию"
 #~ "\n"
 #~ "Сессия успешно сохранена!\n"
 #~ "\n"
-
 #~ msgid "Click here to get the Application name!"
 #~ msgstr "Нажмите здесь чтобы получить имя Приложения!"
-
 #~ msgid "Add active"
 #~ msgstr "Добавить активный"
-

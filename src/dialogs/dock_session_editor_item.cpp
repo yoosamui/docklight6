@@ -138,6 +138,7 @@ DockSessionEditorItem::DockSessionEditorItem(
     m_position_label.set_halign(Gtk::ALIGN_START);
 
     m_app_title.set_editable(false);
+    m_app_title.set_max_length(40);
     m_app_title.set_hexpand(true);
     m_app_title.set_placeholder_text(
         _("Application title"));
@@ -150,11 +151,17 @@ DockSessionEditorItem::DockSessionEditorItem(
     m_app_name.set_placeholder_text(
         _("Application name"));
     m_parameters.set_hexpand(true);
+    m_parameters.set_max_length(512);
     m_parameters.set_placeholder_text(
         _("Command-line parameters"));
+    m_workspace.set_max_length(2);
+    m_workspace.set_input_purpose(
+        Gtk::INPUT_PURPOSE_DIGITS);
     m_workspace.set_placeholder_text(
         _("Workspace number"));
+    m_dimensions.set_max_length(32);
     m_dimensions.set_text("400x500");
+    m_position.set_max_length(32);
     m_position.set_text("120x200");
 
     // Launch failures are ordinary user-facing conditions, not diagnostics.
@@ -363,6 +370,11 @@ std::string DockSessionEditorItem::desktop_file() const
 std::string DockSessionEditorItem::app_title() const
 {
     return m_app_title.get_text();
+}
+
+std::string DockSessionEditorItem::app_name() const
+{
+    return m_app_name.get_text();
 }
 
 std::string DockSessionEditorItem::parameters() const

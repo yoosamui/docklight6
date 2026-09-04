@@ -1,11 +1,10 @@
-#
 # <>, 2026-2024.
 # yoo <j-gonzalez@email.de>, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 00:00+0700\n"
+"POT-Creation-Date: 2026-09-04 13:58+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: yoo <j-gonzalez@email.de>\n"
 "Language-Team: Spanish <j-gonzalez@email.de>\n"
@@ -106,6 +105,7 @@ msgid "DockLight Settings"
 msgstr "Configuración de DockLight"
 
 #: src/dialogs/dock_settings_dialog.cpp:288
+#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_Cerrar"
@@ -480,8 +480,7 @@ msgid "Select Home Icon"
 msgstr "Seleccione el icono de inicio"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
-#: src/dialogs/dock_session_dialog.cpp:501
-#: src/dialogs/dock_session_dialog.cpp:973
+#: src/dialogs/dock_session_dialog.cpp:509
 msgid "_Cancel"
 msgstr "_Cancelar"
 
@@ -490,64 +489,108 @@ msgid "_Open"
 msgstr "_Abierto"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
-#: src/dialogs/dock_session_dialog.cpp:512
+#: src/dialogs/dock_session_dialog.cpp:520
 msgid "Image Files"
 msgstr "Archivos de imagen"
 
-#: src/dialogs/dock_session_dialog.cpp:233
-#: src/dialogs/dock_session_dialog.cpp:267
+#: src/dialogs/dock_session_dialog.cpp:241
+#: src/dialogs/dock_session_dialog.cpp:275
 msgid "Session"
 msgstr "Sesión"
 
-#: src/dialogs/dock_session_dialog.cpp:302
+#: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_Nombre de la sesión"
 
-#: src/dialogs/dock_session_dialog.cpp:307
+#: src/dialogs/dock_session_dialog.cpp:315
+#: src/dialogs/dock_session_dialog.cpp:717
 msgid "Session name"
 msgstr "Nombre de la sesión"
 
-#: src/dialogs/dock_session_dialog.cpp:312
+#: src/dialogs/dock_session_dialog.cpp:320
 msgid "_Icon"
 msgstr "_Icono"
 
-#: src/dialogs/dock_session_dialog.cpp:355
+#: src/dialogs/dock_session_dialog.cpp:363
 msgid "Select _Icon"
 msgstr "Seleccionar _icono"
 
-#: src/dialogs/dock_session_dialog.cpp:358
+#: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
 msgstr "_Añadir"
 
-#: src/dialogs/dock_session_dialog.cpp:495
+#: src/dialogs/dock_session_dialog.cpp:503
 msgid "Select Session Icon"
 msgstr "Seleccionar icono de sesión"
 
-#: src/dialogs/dock_session_dialog.cpp:504
+#: src/dialogs/dock_session_dialog.cpp:512
 #, fuzzy
 msgid "_Select"
 msgstr "Seleccione…"
 
-#: src/dialogs/dock_session_dialog.cpp:570
-#: src/dialogs/dock_session_dialog.cpp:895
+#: src/dialogs/dock_session_dialog.cpp:578
+#: src/dialogs/dock_session_dialog.cpp:987
 msgid "Custom"
 msgstr "Personalizado"
 
-#: src/dialogs/dock_session_dialog.cpp:726
-msgid "A Session with this name already exists."
-msgstr "Ya existe una sesión con este nombre."
+#: src/dialogs/dock_session_dialog.cpp:702
+msgid "Cannot save Session."
+msgstr "No se puede guardar la sesión."
 
-#: src/dialogs/dock_session_dialog.cpp:733
-msgid "Choose a different name for “%1”."
-msgstr "Elige un nombre diferente para «%1»."
+#: src/dialogs/dock_session_dialog.cpp:709
+msgid "%1 cannot be empty or contain only whitespace."
+msgstr "%1 no puede estar vacío ni contener solo espacios en blanco."
 
-#: src/dialogs/dock_session_dialog.cpp:967
-msgid "_Save"
-msgstr "_Guardar"
+#: src/dialogs/dock_session_dialog.cpp:724
+msgid "Session icon"
+msgstr "Icono de la sesión"
 
+#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr "Archivo de escritorio"
+
+#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr "Nombre de la aplicación"
+
+#: src/dialogs/dock_session_dialog.cpp:761
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
 msgstr "Título de la aplicación"
+
+#: src/dialogs/dock_session_dialog.cpp:769
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "Parámetros"
+
+#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_editor_item.cpp:112
+msgid "Workspace"
+msgstr "Espacio de trabajo"
+
+#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr "Dimensiones"
+
+#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_editor_item.cpp:114
+msgid "Position"
+msgstr "Posición"
+
+#: src/dialogs/dock_session_dialog.cpp:818
+msgid "A Session with this name already exists."
+msgstr "Ya existe una sesión con este nombre."
+
+#: src/dialogs/dock_session_dialog.cpp:825
+msgid "Choose a different name for “%1”."
+msgstr "Elige un nombre diferente para «%1»."
+
+#: src/dialogs/dock_session_dialog.cpp:1059
+msgid "_Save"
+msgstr "_Guardar"
 
 #: src/dialogs/dock_session_editor_item.cpp:106
 msgid "_Paste"
@@ -557,63 +600,42 @@ msgstr "_Pegar"
 msgid "_Launch"
 msgstr "_Iniciar"
 
-#: src/dialogs/dock_session_editor_item.cpp:109
-msgid "Desktop File"
-msgstr "Archivo de escritorio"
-
-#: src/dialogs/dock_session_editor_item.cpp:110
-msgid "App Name"
-msgstr "Nombre de la aplicación"
-
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr "Parámetros"
-
-#: src/dialogs/dock_session_editor_item.cpp:112
-msgid "Workspace"
-msgstr "Espacio de trabajo"
-
-#: src/dialogs/dock_session_editor_item.cpp:113
-msgid "Dimensions"
-msgstr "Dimensiones"
-
-#: src/dialogs/dock_session_editor_item.cpp:114
-msgid "Position"
-msgstr "Posición"
-
-#: src/dialogs/dock_session_editor_item.cpp:143
+#: src/dialogs/dock_session_editor_item.cpp:144
 msgid "Application title"
 msgstr "Título de la aplicación"
 
-#: src/dialogs/dock_session_editor_item.cpp:147
+#: src/dialogs/dock_session_editor_item.cpp:148
 msgid "Desktop file"
 msgstr "Archivo de escritorio"
 
-#: src/dialogs/dock_session_editor_item.cpp:151
+#: src/dialogs/dock_session_editor_item.cpp:152
 msgid "Application name"
 msgstr "Nombre de la aplicación"
 
-#: src/dialogs/dock_session_editor_item.cpp:154
+#: src/dialogs/dock_session_editor_item.cpp:156
 msgid "Command-line parameters"
 msgstr "Parámetros de línea de comandos"
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:161
 msgid "Workspace number"
 msgstr "Número de espacio de trabajo"
 
-#: src/dialogs/dock_session_editor_item.cpp:246
+#: src/dialogs/dock_session_editor_item.cpp:253
 msgid "No application window is available to copy."
 msgstr "No hay ninguna ventana de aplicación disponible para copiar."
 
-#: src/dialogs/dock_session_editor_item.cpp:410
+#: src/dialogs/dock_session_editor_item.cpp:422
 msgid "Paste a window into this item before launching it."
 msgstr "Pega una ventana en este elemento antes de iniciarlo."
 
-#: src/dialogs/dock_session_editor_item.cpp:438
+#: src/dialogs/dock_session_editor_item.cpp:450
 msgid ""
 "The application was launched. This desktop session cannot place windows, so "
 "Workspace, Dimensions, and Position were ignored."
-msgstr "Se ha lanzado la aplicación. Esta sesión de escritorio no puede colocar ventanas, por lo que se ignoraron el espacio de trabajo, las dimensiones y la posición."
+msgstr ""
+"Se ha lanzado la aplicación. Esta sesión de escritorio no puede colocar "
+"ventanas, por lo que se ignoraron el espacio de trabajo, las dimensiones y "
+"la posición."
 
 #: src/launchers/session_launcher.cpp:622
 msgid "This Session item has no application."
@@ -691,113 +713,81 @@ msgstr "monitor primario"
 msgctxt "monitor status"
 msgid "default"
 msgstr "Monitor predeterminado"
-
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "Utilice el degradado de fondo del muelle de negro a gris"
-
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Desvanecimiento"
-
 #~ msgid "Initialize panel."
 #~ msgstr "Inicializar panel."
-
 #~ msgid ""
 #~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
 #~ "DP-3"
 #~ msgstr ""
 #~ "Establece el monitor principal. Los ajustes son primary o el nombre del "
 #~ "monitor, por ejemplo, DP-3"
-
 #~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
 #~ msgstr ""
 #~ "Establece la ubicación del panel: arriba, derecha, abajo o izquierda. "
 #~ "Parte inferior predeterminada"
-
 #~ msgid ""
 #~ "The dock alignment settings are start, end, center or fill. Default "
 #~ "center."
 #~ msgstr ""
 #~ "Los ajustes de alineación del muelle son inicio, fin, centro o relleno. "
 #~ "Centro predeterminado."
-
 #~ msgid ""
 #~ "The icon alignment settings are start, end or center. Default center."
 #~ msgstr ""
 #~ "Los ajustes de alineación  son:  start, end  or center . Centro es "
 #~ "predeterminado."
-
 #~ msgid "parsed values"
 #~ msgstr "valores analizados"
-
 #~ msgid "Free the %s object."
 #~ msgstr "Libere el objeto %s."
-
 #~ msgid "Display detected monitors"
 #~ msgstr "Mostrar monitores detectados"
-
 #~ msgid "Default monitor"
 #~ msgstr "Monitor predeterminado"
-
 #~ msgid "Geometry"
 #~ msgstr "Geometría"
-
 #~ msgid "Width"
 #~ msgstr "Ancho"
-
 #~ msgid "Model"
 #~ msgstr "Modelo"
-
 #~ msgid "Quit"
 #~ msgstr "Salir"
-
 #~ msgid "Close all windows"
 #~ msgstr "Cearras todas  las ventanas"
-
 #~ msgid "New"
 #~ msgstr "Nuevo"
-
 #~ msgid "Minimize all windows"
 #~ msgstr "Minimizar todas las ventanas"
-
 #~ msgid "Maximinize all windows"
 #~ msgstr "Maximinizar todas las ventanas"
-
 #~ msgid "Sets the primary Monitor."
 #~ msgstr "Establece el monitor principal."
-
 #~ msgid "Supports short and long commandline options for the group."
 #~ msgstr "Admite opciones de línea de comandos cortas y largas para el grupo."
-
 #~ msgid "help - Options can be single letters, prefixed by a single dash."
 #~ msgstr ""
 #~ "ayuda - Las opciones pueden ser letras individuales, precedidas por un "
 #~ "solo guión."
-
 #~ msgid "Report bugs to."
 #~ msgstr "Reportar errores."
-
 #~ msgid "Ready to go"
 #~ msgstr "Listo para ir"
-
 #~ msgid "Report bugs to. %s"
 #~ msgstr "Reportar errores a. %s"
-
 #~ msgid "Bindtext domain"
 #~ msgstr "Dominio Bindtext"
-
 #~ msgid "Bind textdomain codesetbindtext domain"
 #~ msgstr "Enlazar textdomain codesetbindtext domain"
-
 #~ msgid "HELLO YOU AND MORE"
 #~ msgstr "HOLA TU Y MAS"
-
 #~ msgid "The contents is: %d"
 #~ msgstr "El contenido es: %d"
-
 #~ msgid "CAR"
 #~ msgstr "coche"
-
 #~ msgid "HELLO MUNDO: %s\n"
 #~ msgstr "HOLA JUAN: %s\n"
-

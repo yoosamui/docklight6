@@ -62,6 +62,14 @@ std::string trimmed_session_name(
         last - first + 1);
 }
 
+bool has_non_whitespace(
+    const std::string &value)
+{
+    return value.find_first_not_of(
+               " \t\n\r\f\v") !=
+           std::string::npos;
+}
+
 struct SessionIcon
 {
     std::string path;
@@ -686,6 +694,37 @@ void DockSessionDialog::show(
         record.icon =
             icon_selector.get_active_id();
 
+        const auto show_validation_error =
+            [&dialog](const Glib::ustring &field)
+        {
+            Gtk::MessageDialog message(
+                dialog,
+                _("Cannot save Session."),
+                false,
+                Gtk::MESSAGE_ERROR,
+                Gtk::BUTTONS_OK,
+                true);
+            message.set_secondary_text(
+                Glib::ustring::compose(
+                    _("%1 cannot be empty or contain only whitespace."),
+                    field));
+            message.run();
+        };
+
+        if (!has_non_whitespace(record.name))
+        {
+            show_validation_error(
+                _("Session name"));
+            return;
+        }
+
+        if (!has_non_whitespace(record.icon))
+        {
+            show_validation_error(
+                _("Session icon"));
+            return;
+        }
+
         for (auto *item : live_items())
         {
             SessionItemRecord stored;
@@ -699,8 +738,61 @@ void DockSessionDialog::show(
                 item->dimensions();
             stored.position = item->position();
 
-            if (stored.desktop_file.empty())
-                continue;
+            if (!has_non_whitespace(
+                    stored.desktop_file))
+            {
+                show_validation_error(
+                    _("Desktop File"));
+                return;
+            }
+
+            if (!has_non_whitespace(
+                    item->app_name()))
+            {
+                show_validation_error(
+                    _("App Name"));
+                return;
+            }
+
+            if (!has_non_whitespace(
+                    stored.title))
+            {
+                show_validation_error(
+                    _("App Title"));
+                return;
+            }
+
+            if (!has_non_whitespace(
+                    stored.parameters))
+            {
+                show_validation_error(
+                    _("Parameters"));
+                return;
+            }
+
+            if (!has_non_whitespace(
+                    stored.workspace))
+            {
+                show_validation_error(
+                    _("Workspace"));
+                return;
+            }
+
+            if (!has_non_whitespace(
+                    stored.dimensions))
+            {
+                show_validation_error(
+                    _("Dimensions"));
+                return;
+            }
+
+            if (!has_non_whitespace(
+                    stored.position))
+            {
+                show_validation_error(
+                    _("Position"));
+                return;
+            }
 
             record.items.push_back(
                 std::move(stored));
@@ -970,7 +1062,7 @@ void DockSessionDialog::show(
         save_session);
 
     dialog.add_button(
-        _("_Cancel"),
+        _("_Close"),
         Gtk::RESPONSE_CANCEL);
 
     dialog.show_all_children();

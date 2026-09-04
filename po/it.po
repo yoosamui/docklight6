@@ -2,12 +2,11 @@
 # Copyright (C) 2026 THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 00:00+0700\n"
+"POT-Creation-Date: 2026-09-04 13:58+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -107,6 +106,7 @@ msgid "DockLight Settings"
 msgstr "Impostazioni DockLight"
 
 #: src/dialogs/dock_settings_dialog.cpp:288
+#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_Chiudi"
@@ -480,8 +480,7 @@ msgid "Select Home Icon"
 msgstr "Seleziona l'icona Home"
 
 #: src/dialogs/dock_settings_dialog.cpp:1456
-#: src/dialogs/dock_session_dialog.cpp:501
-#: src/dialogs/dock_session_dialog.cpp:973
+#: src/dialogs/dock_session_dialog.cpp:509
 msgid "_Cancel"
 msgstr "_Annulla"
 
@@ -490,65 +489,111 @@ msgid "_Open"
 msgstr "_Apri"
 
 #: src/dialogs/dock_settings_dialog.cpp:1525
-#: src/dialogs/dock_session_dialog.cpp:512
+#: src/dialogs/dock_session_dialog.cpp:520
 msgid "Image Files"
 msgstr "File di immagini"
 
-#: src/dialogs/dock_session_dialog.cpp:233
-#: src/dialogs/dock_session_dialog.cpp:267
+#: src/dialogs/dock_session_dialog.cpp:241
+#: src/dialogs/dock_session_dialog.cpp:275
 msgid "Session"
 msgstr ""
 
-#: src/dialogs/dock_session_dialog.cpp:302
+#: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_Nome della sessione"
 
-#: src/dialogs/dock_session_dialog.cpp:307
+#: src/dialogs/dock_session_dialog.cpp:315
+#: src/dialogs/dock_session_dialog.cpp:717
 msgid "Session name"
 msgstr "Nome della sessione"
 
-#: src/dialogs/dock_session_dialog.cpp:312
+#: src/dialogs/dock_session_dialog.cpp:320
 msgid "_Icon"
 msgstr ""
 
-#: src/dialogs/dock_session_dialog.cpp:355
+#: src/dialogs/dock_session_dialog.cpp:363
 #, fuzzy
 msgid "Select _Icon"
 msgstr "Seleziona l'icona Home"
 
-#: src/dialogs/dock_session_dialog.cpp:358
+#: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
 msgstr ""
 
-#: src/dialogs/dock_session_dialog.cpp:495
+#: src/dialogs/dock_session_dialog.cpp:503
 #, fuzzy
 msgid "Select Session Icon"
 msgstr "Seleziona l'icona Home"
 
-#: src/dialogs/dock_session_dialog.cpp:504
+#: src/dialogs/dock_session_dialog.cpp:512
 #, fuzzy
 msgid "_Select"
 msgstr "Seleziona…"
 
-#: src/dialogs/dock_session_dialog.cpp:570
-#: src/dialogs/dock_session_dialog.cpp:895
+#: src/dialogs/dock_session_dialog.cpp:578
+#: src/dialogs/dock_session_dialog.cpp:987
 msgid "Custom"
 msgstr ""
 
-#: src/dialogs/dock_session_dialog.cpp:726
+#: src/dialogs/dock_session_dialog.cpp:702
+msgid "Cannot save Session."
+msgstr "Impossibile salvare la sessione."
+
+#: src/dialogs/dock_session_dialog.cpp:709
+msgid "%1 cannot be empty or contain only whitespace."
+msgstr "%1 non può essere vuoto o contenere solo spazi vuoti."
+
+#: src/dialogs/dock_session_dialog.cpp:724
+msgid "Session icon"
+msgstr "Icona della sessione"
+
+#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_editor_item.cpp:109
+msgid "Desktop File"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_editor_item.cpp:110
+msgid "App Name"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:761
+#: src/dialogs/dock_session_editor_item.cpp:104
+msgid "App Title"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:769
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_editor_item.cpp:112
+#, fuzzy
+msgid "Workspace"
+msgstr "Area di lavoro"
+
+#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_editor_item.cpp:113
+msgid "Dimensions"
+msgstr ""
+
+#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_editor_item.cpp:114
+#, fuzzy
+msgid "Position"
+msgstr "Posizione"
+
+#: src/dialogs/dock_session_dialog.cpp:818
 msgid "A Session with this name already exists."
 msgstr ""
 
-#: src/dialogs/dock_session_dialog.cpp:733
+#: src/dialogs/dock_session_dialog.cpp:825
 msgid "Choose a different name for “%1”."
 msgstr ""
 
-#: src/dialogs/dock_session_dialog.cpp:967
+#: src/dialogs/dock_session_dialog.cpp:1059
 msgid "_Save"
-msgstr ""
-
-#: src/dialogs/dock_session_editor_item.cpp:104
-msgid "App Title"
 msgstr ""
 
 #: src/dialogs/dock_session_editor_item.cpp:106
@@ -559,63 +604,37 @@ msgstr ""
 msgid "_Launch"
 msgstr ""
 
-#: src/dialogs/dock_session_editor_item.cpp:109
-msgid "Desktop File"
-msgstr ""
-
-#: src/dialogs/dock_session_editor_item.cpp:110
-msgid "App Name"
-msgstr ""
-
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr ""
-
-#: src/dialogs/dock_session_editor_item.cpp:112
-#, fuzzy
-msgid "Workspace"
-msgstr "Area di lavoro"
-
-#: src/dialogs/dock_session_editor_item.cpp:113
-msgid "Dimensions"
-msgstr ""
-
-#: src/dialogs/dock_session_editor_item.cpp:114
-#, fuzzy
-msgid "Position"
-msgstr "Posizione"
-
-#: src/dialogs/dock_session_editor_item.cpp:143
+#: src/dialogs/dock_session_editor_item.cpp:144
 #, fuzzy
 msgid "Application title"
 msgstr "Applicazione attivata."
 
-#: src/dialogs/dock_session_editor_item.cpp:147
+#: src/dialogs/dock_session_editor_item.cpp:148
 msgid "Desktop file"
 msgstr ""
 
-#: src/dialogs/dock_session_editor_item.cpp:151
+#: src/dialogs/dock_session_editor_item.cpp:152
 #, fuzzy
 msgid "Application name"
 msgstr "Avvio applicazione."
 
-#: src/dialogs/dock_session_editor_item.cpp:154
+#: src/dialogs/dock_session_editor_item.cpp:156
 msgid "Command-line parameters"
 msgstr ""
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:161
 msgid "Workspace number"
 msgstr ""
 
-#: src/dialogs/dock_session_editor_item.cpp:246
+#: src/dialogs/dock_session_editor_item.cpp:253
 msgid "No application window is available to copy."
 msgstr ""
 
-#: src/dialogs/dock_session_editor_item.cpp:410
+#: src/dialogs/dock_session_editor_item.cpp:422
 msgid "Paste a window into this item before launching it."
 msgstr ""
 
-#: src/dialogs/dock_session_editor_item.cpp:438
+#: src/dialogs/dock_session_editor_item.cpp:450
 msgid ""
 "The application was launched. This desktop session cannot place windows, so "
 "Workspace, Dimensions, and Position were ignored."
@@ -697,69 +716,51 @@ msgstr "Monitor principale"
 msgctxt "monitor status"
 msgid "default"
 msgstr "Monitor predefinito"
-
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "Utilizza il gradiente di sfondo del dock da nero a grigio"
-
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Dissolvenza"
-
 #~ msgid "Initialize panel."
 #~ msgstr "Inizializza pannello."
-
 #~ msgid ""
 #~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
 #~ "DP-3"
 #~ msgstr ""
 #~ "Sets the primary Monitor.Settings are primary oder the monitor name e.g "
 #~ "DP-3"
-
 #~ msgid "Sets the Panel location: top, right, bottom or left. Default bottom"
 #~ msgstr ""
 #~ "Imposta la posizione del pannello: alto, destro, basso o sinistro. "
 #~ "Predefinito in basso"
-
 #~ msgid ""
 #~ "The dock alignment settings are start, end, center or fill. Default "
 #~ "center."
 #~ msgstr ""
 #~ "Le impostazioni di allineamento del dock sono inizio, fine, centro o "
 #~ "riempi. Predefinito centro."
-
 #~ msgid ""
 #~ "The icon alignment settings are start, end or center. Default center."
 #~ msgstr ""
 #~ "Le impostazioni di allineamento delle icone sono inizio, fine o centro. "
 #~ "Predefinito centro."
-
 #~ msgid "parsed values"
 #~ msgstr "valori analizzati"
-
 #~ msgid "Free the %s object."
 #~ msgstr "Libera l'oggetto %s."
-
 #~ msgid "Display detected monitors"
 #~ msgstr "Visualizza monitor rilevati"
-
 #~ msgid "Default monitor"
 #~ msgstr "Monitor predefinito"
-
 #~ msgid "Geometry"
 #~ msgstr "Geometria"
-
 #~ msgid "Width"
 #~ msgstr "Larghezza"
-
 #~ msgid "Model"
 #~ msgstr "Modello"
-
 #~ msgid "Quit"
 #~ msgstr "Esci"
-
 #~ msgid "Minimize all windows"
 #~ msgstr "Minimizza tutto"
-
 #~ msgid "Maximinize all windows"
 #~ msgstr "Massimizza tutto"
-

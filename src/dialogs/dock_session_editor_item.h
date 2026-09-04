@@ -55,6 +55,7 @@ class DockSessionEditorItem : public Gtk::Frame
     // presentation widget and never touches the launcher store itself.
     std::string desktop_file() const;
     std::string app_title() const;
+    std::string app_name() const;
     std::string parameters() const;
     std::string workspace() const;
     std::string dimensions() const;
