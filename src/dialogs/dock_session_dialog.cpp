@@ -596,16 +596,11 @@ void DockSessionDialog::show(
             icon_dialog.hide();
         });
 
-    // Declared before the card factory because a card is created before
-    // save_session exists, and assigned once it does.
-    std::function<void()> schedule_save;
-
     // Adding and restoring build the same card, so the factory is shared
     // rather than living inside the Add handler.
     const auto create_item =
         [&item_list,
          &capture_window,
-         &schedule_save,
          window_registry]()
     {
         auto *item =
@@ -615,22 +610,12 @@ void DockSessionDialog::show(
                     window_registry));
 
         item->signal_remove_requested().connect(
-            [item, &schedule_save]()
+            [item]()
             {
                 // Hiding removes the card from layout immediately while
                 // leaving GTK's managed lifetime with the dialog.
                 item->set_no_show_all(true);
                 item->hide();
-
-                if (schedule_save)
-                    schedule_save();
-            });
-
-        item->signal_changed().connect(
-            [&schedule_save]()
-            {
-                if (schedule_save)
-                    schedule_save();
             });
 
         item_list.pack_start(
@@ -763,14 +748,6 @@ void DockSessionDialog::show(
             }
 
             if (!has_non_whitespace(
-                    stored.parameters))
-            {
-                show_validation_error(
-                    _("Parameters"));
-                return;
-            }
-
-            if (!has_non_whitespace(
                     stored.workspace))
             {
                 show_validation_error(
@@ -885,38 +862,15 @@ void DockSessionDialog::show(
         }
     };
 
-    // Add commits the Session immediately: the dock item is expected to appear
-    // at once, and a dock item that is not backed by the store would vanish on
-    // the next restart.
+    // Add only starts a new item. Validation and persistence happen from Save
+    // so incomplete cards can be assembled without opening an error dialog.
     add_item.signal_clicked().connect(
         [&create_item,
-         &lock_session_name,
-         &save_session]()
+         &lock_session_name]()
         {
             lock_session_name();
             create_item();
-            save_session();
         });
-
-    // Editing continues after Add, so changes are written back on a short
-    // debounce. Without this the most recently added item would only reach the
-    // store if the user pressed Save again before closing.
-    sigc::connection save_debounce;
-
-    schedule_save =
-        [&save_debounce,
-         &save_session]()
-    {
-        save_debounce.disconnect();
-        save_debounce =
-            Glib::signal_timeout().connect(
-                [&save_session]()
-                {
-                    save_session();
-                    return false;
-                },
-                400);
-    };
 
     // Restoring replaces the card list and re-selects the stored icon in the
     // combobox, adding a Custom row when that image is not installed.
@@ -1076,14 +1030,6 @@ void DockSessionDialog::show(
     }
 
     dialog.hide();
-
-    // A pending debounce would run after these locals are gone. Flush it
-    // instead, so a change made just before closing is not lost.
-    if (save_debounce.connected())
-    {
-        save_debounce.disconnect();
-        save_session();
-    }
 
     capture_window_changed.disconnect();
 }

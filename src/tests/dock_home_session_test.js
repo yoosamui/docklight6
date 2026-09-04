@@ -67,8 +67,8 @@ assert.strictEqual(
     "the Session action must create exactly one dialog");
 assert.match(
     sessionDialogSource,
-    /Gtk::Dialog dialog\(\s*_\("Session"\)[\s\S]*?Gtk::Image header_icon[\s\S]*?titlebar\.set_title\(\s*_\("Session"\)\)[\s\S]*?if \(icon\)[\s\S]*?dialog\.set_icon\(icon\)[\s\S]*?header_icon\.set\(small_icon\)[\s\S]*?titlebar\.pack_start\(header_icon\)[\s\S]*?dialog\.add_button\(\s*_\("_Save"\),\s*Gtk::RESPONSE_APPLY\)[\s\S]*?dialog\.add_button\(\s*_\("_Cancel"\),\s*Gtk::RESPONSE_CANCEL\)[\s\S]*?dialog\.run\(\)[\s\S]*?dialog\.hide\(\)/,
-    "the Session dialog must use the Docklight icon and present Save before Cancel");
+    /Gtk::Dialog dialog\(\s*_\("Session"\)[\s\S]*?Gtk::Image header_icon[\s\S]*?titlebar\.set_title\(\s*_\("Session"\)\)[\s\S]*?if \(icon\)[\s\S]*?dialog\.set_icon\(icon\)[\s\S]*?header_icon\.set\(small_icon\)[\s\S]*?titlebar\.pack_start\(header_icon\)[\s\S]*?dialog\.add_button\(\s*_\("_Save"\),\s*Gtk::RESPONSE_APPLY\)[\s\S]*?dialog\.add_button\(\s*_\("_Close"\),\s*Gtk::RESPONSE_CANCEL\)[\s\S]*?dialog\.run\(\)[\s\S]*?dialog\.hide\(\)/,
+    "the Session dialog must use the Docklight icon and present Save before Close");
 assert.match(
     sessionDialogSource,
     /_\("_Session Name"\)[\s\S]*?Gtk::ComboBoxText session_name\(true\)[\s\S]*?session_name\.get_entry\(\)->set_placeholder_text[\s\S]*?_\("_Icon"\)[\s\S]*?Gtk::ComboBox icon_selector[\s\S]*?_\("Select _Icon"\)[\s\S]*?_\("_Add"\)/,
@@ -227,6 +227,10 @@ assert.match(
     sessionDialogSource,
     /const auto save_session =[\s\S]*?SessionRecord record;[\s\S]*?record\.name =\s*\n\s*trimmed_session_name\([\s\S]*?session_name\.get_entry\(\)[\s\S]*?record\.icon =\s*\n\s*icon_selector\.get_active_id\(\);[\s\S]*?for \(auto \*item : live_items\(\)\)[\s\S]*?launcher_manager\.save_session\(/,
     "Save must record the session name, icon, and every live item");
+assert.doesNotMatch(
+    sessionDialogSource,
+    /show_validation_error\(\s*\n?\s*_\("Parameters"\)\)/,
+    "Parameters must be optional when saving a Session");
 assert.match(
     sessionDialogSource,
     /std::string editing_session_name;[\s\S]*?const bool name_conflict =[\s\S]*?Gtk::MessageDialog message\([\s\S]*?A Session with this name already exists\.[\s\S]*?launcher_manager\.rename_session\(\s*\n\s*editing_session_name,[\s\S]*?editing_session_name = record\.name/,
@@ -428,8 +432,12 @@ assert.match(
     "an existing Session widget must receive saved edits even when its name and order are unchanged");
 assert.match(
     sessionDialogSource,
-    /add_item\.signal_clicked\(\)[\s\S]*?lock_session_name\(\);[\s\S]*?create_item\(\);[\s\S]*?save_session\(\);/,
-    "Add must lock the name, add a card, and commit the session");
+    /add_item\.signal_clicked\(\)[\s\S]*?lock_session_name\(\);[\s\S]*?create_item\(\);/,
+    "Add must lock the name and add a card without saving");
+assert.doesNotMatch(
+    sessionDialogSource,
+    /add_item\.signal_clicked\(\)[\s\S]*?save_session\(\);/,
+    "Add must not validate or save the Session");
 assert.match(
     sessionDialogSource,
     /const auto lock_session_name =[\s\S]*?session_name\.get_entry\(\)\s*\n?\s*->set_editable\(false\);[\s\S]*?set_button_sensitivity\(\s*\n?\s*Gtk::SENSITIVITY_OFF\)/,
@@ -508,8 +516,8 @@ assert.match(
     /pending\.application_ids =\s*\n\s*tracking_application_ids\([\s\S]*?std::find\(\s*\n\s*pending->application_ids\.begin\(\),[\s\S]*?window_application_id/,
     "a launched window must be attributed through any resolved application alias");
 
-// Paste happens after Add, so committing only on Add would always lose the
-// most recently added item.
+// The editor card exposes its values to the containing dialog, which validates
+// and persists them only when Save is clicked.
 assert.match(
     sessionItemSource,
     /sigc::signal<void> &DockSessionEditorItem::signal_changed\(\)/,
@@ -518,18 +526,10 @@ assert.match(
     sessionItemSource,
     /m_restoring = true;[\s\S]*?m_restoring = false;/,
     "restoring stored values must not report a change back");
-assert.match(
+assert.doesNotMatch(
     sessionDialogSource,
-    /schedule_save =\s*\n\s*\[&save_debounce,\s*\n\s*&save_session\]\(\)[\s\S]*?save_debounce\.disconnect\(\);[\s\S]*?save_session\(\);/,
-    "edits must be written back on a debounce");
-assert.match(
-    sessionDialogSource,
-    /item->signal_changed\(\)\.connect\(/,
-    "every card must be connected to the debounced save");
-assert.match(
-    sessionDialogSource,
-    /if \(save_debounce\.connected\(\)\)\s*\n\s*\{\s*\n\s*save_debounce\.disconnect\(\);\s*\n\s*save_session\(\);/,
-    "a pending save must be flushed when the dialog closes");
+    /schedule_save|save_debounce/,
+    "dialog edits must not trigger validation or persistence before Save");
 
 // A grouped item must show each window's own application icon, not its own
 // image, and must not dereference an application it does not have.
