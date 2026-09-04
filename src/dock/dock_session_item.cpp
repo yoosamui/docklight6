@@ -37,6 +37,7 @@
 // ------------------------------------------------------------
 
 #include "dock_session_item.h"
+#include "dock_constants.h"
 #include "dock_window.h"
 #include "launchers/launcher_manager.h"
 #include "windowing/window_registry.h"
@@ -447,7 +448,7 @@ DockSessionItem::context_menu_entry_icon(
             {
                 const auto info = theme->lookup_icon(
                     application->get_icon(),
-                    16,
+                    DockConstants::CONTEXT_MENU_ICON_SIZE,
                     Gtk::ICON_LOOKUP_USE_BUILTIN);
                 if (info)
                 {

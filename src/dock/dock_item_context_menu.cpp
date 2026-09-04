@@ -13,6 +13,7 @@
 // ------------------------------------------------------------
 
 #include "dock_item.h"
+#include "dock_constants.h"
 #include "dock_window.h"
 #include "presentation/presentation_selector.h"
 
@@ -26,8 +27,7 @@
 namespace
 {
 
-    constexpr int CONTEXT_MENU_ICON_SIZE = 16; // Window icon size in menu rows
-    constexpr int CONTEXT_MENU_TITLE_WIDTH = 48; // Maximum menu title width in characters
+    constexpr int CONTEXT_MENU_TITLE_WIDTH = 48;            // Maximum menu title width in characters
     constexpr double INDICATOR_PI = 3.14159265358979323846; // Circle angle calculation
 
     std::string desktop_badge_text(
@@ -65,10 +65,10 @@ namespace
         // Desktop action identifiers are chosen by each application.
         // Prefer the widely used freedesktop-style spelling, while also
         // supporting identifiers used by Firefox and Visual Studio Code.
-        constexpr const char *candidates[] = { // Known desktop new-window action IDs
-            "new-window",
-            "NewWindow",
-            "new-empty-window"};
+        constexpr const char *candidates[] = {// Known desktop new-window action IDs
+                                              "new-window",
+                                              "NewWindow",
+                                              "new-empty-window"};
 
         for (const auto *candidate :
              candidates)
@@ -117,7 +117,6 @@ namespace
 
         return context;
     }
-
 
 } // namespace
 
@@ -568,22 +567,22 @@ void DockItem::rebuild_window_menu_items()
         icon->set_valign(
             Gtk::ALIGN_CENTER);
         icon->set_size_request(
-            CONTEXT_MENU_ICON_SIZE,
-            CONTEXT_MENU_ICON_SIZE);
+            DockConstants::CONTEXT_MENU_ICON_SIZE,
+            DockConstants::CONTEXT_MENU_ICON_SIZE);
 
         auto pixbuf =
             context_menu_entry_icon(entry);
 
         // Gtk::Image may honor a pixbuf's natural dimensions even when its
         // container has a smaller request. Normalize every dynamic icon here
-        // so all context menus render the same exact 16x16 bitmap.
+        // so all context menus render the same exact 32x32 bitmap.
         if (pixbuf &&
-            (pixbuf->get_width() != CONTEXT_MENU_ICON_SIZE ||
-             pixbuf->get_height() != CONTEXT_MENU_ICON_SIZE))
+            (pixbuf->get_width() != DockConstants::CONTEXT_MENU_ICON_SIZE ||
+             pixbuf->get_height() != DockConstants::CONTEXT_MENU_ICON_SIZE))
         {
             pixbuf = pixbuf->scale_simple(
-                CONTEXT_MENU_ICON_SIZE,
-                CONTEXT_MENU_ICON_SIZE,
+                DockConstants::CONTEXT_MENU_ICON_SIZE,
+                DockConstants::CONTEXT_MENU_ICON_SIZE,
                 Gdk::INTERP_BILINEAR);
         }
 
@@ -889,7 +888,7 @@ DockItem::context_menu_window_icon(
                 const auto info =
                     icon_theme->lookup_icon(
                         application->get_icon(),
-                        CONTEXT_MENU_ICON_SIZE,
+                        DockConstants::CONTEXT_MENU_ICON_SIZE,
                         Gtk::ICON_LOOKUP_USE_BUILTIN);
 
                 if (info)
@@ -915,7 +914,7 @@ DockItem::context_menu_window_icon(
             const auto icon =
                 icon_theme->load_icon(
                     icon_name,
-                    CONTEXT_MENU_ICON_SIZE,
+                    DockConstants::CONTEXT_MENU_ICON_SIZE,
                     Gtk::ICON_LOOKUP_USE_BUILTIN);
 
             if (icon)
@@ -932,10 +931,10 @@ DockItem::context_menu_window_icon(
     const double scale =
         std::min(
             static_cast<double>(
-                CONTEXT_MENU_ICON_SIZE) /
+                DockConstants::CONTEXT_MENU_ICON_SIZE) /
                 m_icon_pixbuf->get_width(),
             static_cast<double>(
-                CONTEXT_MENU_ICON_SIZE) /
+                DockConstants::CONTEXT_MENU_ICON_SIZE) /
                 m_icon_pixbuf->get_height());
 
     return m_icon_pixbuf->scale_simple(
@@ -963,8 +962,8 @@ DockItem::context_menu_minimized_icon() const
     auto surface =
         Cairo::ImageSurface::create(
             Cairo::FORMAT_ARGB32,
-            CONTEXT_MENU_ICON_SIZE,
-            CONTEXT_MENU_ICON_SIZE);
+            DockConstants::CONTEXT_MENU_ICON_SIZE,
+            DockConstants::CONTEXT_MENU_ICON_SIZE);
     auto context =
         Cairo::Context::create(surface);
 
@@ -1027,8 +1026,8 @@ DockItem::context_menu_minimized_icon() const
         surface,
         0,
         0,
-        CONTEXT_MENU_ICON_SIZE,
-        CONTEXT_MENU_ICON_SIZE);
+        DockConstants::CONTEXT_MENU_ICON_SIZE,
+        DockConstants::CONTEXT_MENU_ICON_SIZE);
 }
 
 void DockItem::launch_application()

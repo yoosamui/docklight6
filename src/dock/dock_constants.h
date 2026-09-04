@@ -27,6 +27,10 @@
 
 namespace DockConstants
 {
+    // Context-menu presentation
+
+    constexpr int CONTEXT_MENU_ICON_SIZE = 32; // Dynamic menu icon size
+
     // Tooltip behaviour
 
     constexpr int TOOLTIP_SHOW_DELAY_MS = 200; // Delay before showing a tooltip

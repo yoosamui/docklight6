@@ -536,14 +536,21 @@ assert.doesNotMatch(
 const contextMenuSource = fs.readFileSync(
     path.resolve(__dirname, "../dock/dock_item_context_menu.cpp"),
     "utf8");
+const dockConstantsSource = fs.readFileSync(
+    path.resolve(__dirname, "../dock/dock_constants.h"),
+    "utf8");
+assert.match(
+    dockConstantsSource,
+    /CONTEXT_MENU_ICON_SIZE = 32/,
+    "all dynamic context-menu icons must be 32 by 32");
 assert.match(
     contextMenuSource,
-    /CONTEXT_MENU_ICON_SIZE = 16/,
-    "all dynamic context-menu icons must be 16 by 16");
+    /pixbuf->get_width\(\) != DockConstants::CONTEXT_MENU_ICON_SIZE[\s\S]*?pixbuf = pixbuf->scale_simple\([\s\S]*?DockConstants::CONTEXT_MENU_ICON_SIZE,[\s\S]*?Gdk::INTERP_BILINEAR/,
+    "all dynamic context-menu pixbufs must be scaled to 32 by 32");
 assert.match(
-    contextMenuSource,
-    /pixbuf->get_width\(\) != CONTEXT_MENU_ICON_SIZE[\s\S]*?pixbuf = pixbuf->scale_simple\([\s\S]*?CONTEXT_MENU_ICON_SIZE,[\s\S]*?Gdk::INTERP_BILINEAR/,
-    "all dynamic context-menu pixbufs must be scaled to 16 by 16");
+    dockSessionItemSource,
+    /theme->lookup_icon\([\s\S]*?DockConstants::CONTEXT_MENU_ICON_SIZE/,
+    "Session menu icons must use the shared context-menu icon size");
 assert.match(
     contextMenuSource,
     /m_desktop_id\.rfind\("session:", 0\)[\s\S]*?remove_session\([\s\S]*?synchronize_session_items\(\)/,
