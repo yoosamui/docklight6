@@ -68,7 +68,7 @@ DockHomeItem::DockHomeItem(
         _("_Unminimize All"));
     set_menu_label(
         m_maximize_all_item,
-        _("_Maximize All"));
+        _("Ma_ximize All"));
     set_menu_label(
         m_close_all_item,
         _("_Close All"));

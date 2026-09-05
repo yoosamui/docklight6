@@ -150,8 +150,8 @@ assert.doesNotMatch(
     "App Title must not be a combo box");
 assert.match(
     sessionItemSource,
-    /m_app_title\.set_editable\(false\)[\s\S]*?m_app_title\.set_placeholder_text[\s\S]*?m_desktop_file\.set_editable\(false\)[\s\S]*?m_app_name\.set_editable\(false\)/,
-    "App Title, Desktop File, and App Name must be read-only text fields");
+    /m_app_title\.set_max_length\(40\)[\s\S]*?m_app_title\.set_placeholder_text[\s\S]*?m_desktop_file\.set_editable\(false\)[\s\S]*?m_app_name\.set_editable\(false\)/,
+    "App Title must be editable while Desktop File and App Name remain read-only");
 assert.match(
     sessionItemSource,
     /m_dimensions\.set_text\("400x500"\)[\s\S]*?m_position\.set_text\("120x200"\)/,
@@ -392,6 +392,14 @@ assert.match(
         "utf8"),
     /m_context_menu\.append\(\s*\n\s*m_edit_item\);\s*\n\s*m_context_menu\.append\(\s*\n\s*m_window_separator\);\s*\n\s*m_context_menu\.append\(\s*\n\s*m_minimize_item\);[\s\S]*?int position = 0;[\s\S]*?context_menu_entry_icon\(entry\)/,
     "Edit must be immediately before Minimize while dynamic rows use the virtual icon resolver");
+assert.match(
+    dockItemSource,
+    /set_menu_label\(\s*m_minimize_item,[\s\S]*?_\("_Minimize"\)[\s\S]*?set_menu_label\(\s*m_unminimize_item,[\s\S]*?_\("_Unminimize"\)[\s\S]*?set_menu_label\(\s*m_maximize_item,[\s\S]*?_\("Ma_ximize"\)/,
+    "Minimize, Unminimize, and Maximize must have distinct mnemonics");
+assert.match(
+    homeItemSource,
+    /m_minimize_all_item,[\s\S]*?_\("_Minimize All"\)[\s\S]*?m_unminimize_all_item,[\s\S]*?_\("_Unminimize All"\)[\s\S]*?m_maximize_all_item,[\s\S]*?_\("Ma_ximize All"\)/,
+    "Home menu minimize and maximize actions must have distinct mnemonics");
 assert.match(
     dockSessionItemSource,
     /DockSessionItem::has_edit_action\(\) const[\s\S]*?return true;[\s\S]*?DockSessionItem::edit_item\(\)[\s\S]*?dock\(\)\.edit_session\(m_session\.name\)/,

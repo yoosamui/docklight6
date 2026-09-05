@@ -177,7 +177,7 @@ void DockItem::initialize(
         _("_Unminimize"));
     set_menu_label(
         m_maximize_item,
-        _("_Maximize"));
+        _("Ma_ximize"));
 
     if (!m_indicator_color.set(
             indicator_color))

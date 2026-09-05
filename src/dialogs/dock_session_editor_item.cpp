@@ -137,7 +137,6 @@ DockSessionEditorItem::DockSessionEditorItem(
     m_dimensions_label.set_halign(Gtk::ALIGN_START);
     m_position_label.set_halign(Gtk::ALIGN_START);
 
-    m_app_title.set_editable(false);
     m_app_title.set_max_length(40);
     m_app_title.set_hexpand(true);
     m_app_title.set_placeholder_text(
