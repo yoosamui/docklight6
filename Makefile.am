@@ -51,7 +51,7 @@ TESTS = \
 dist_pkgdata_DATA = \
     plasma/geometry-bridge/ensure-geometry-bridge.js
 
-docklighticonsdir = $(pkgdatadir)/icons
+docklighticonsdir = $(datadir)/icons/hicolor/128x128/apps
 
 applicationsdir = $(datadir)/applications
 

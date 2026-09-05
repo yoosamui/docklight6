@@ -279,6 +279,10 @@ assert.match(
     "Session icons must install from data/images into the package data directory");
 assert.match(
     topMakefileSource,
+    /docklighticonsdir = \$\(datadir\)\/icons\/hicolor\/128x128\/apps[\s\S]*?data\/icons\/128x128\/docklight\.home\.png/,
+    "the application icon must install into the standard hicolor application icon directory");
+assert.match(
+    topMakefileSource,
     /install-data-local:[\s\S]*?\$\(MKDIR_P\) "\$\(DESTDIR\)\$\(docklightimagesdir\)"[\s\S]*?\$\(INSTALL_DATA\) "\$\$image" "\$\(DESTDIR\)\$\(docklightimagesdir\)"/,
     "the install hook must copy every enumerated Session image");
 assert.match(
