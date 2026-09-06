@@ -226,7 +226,24 @@ void LayerShellDockSurfaceBackend::reserve_space(
     auto *gtk_window =
         GTK_WINDOW(m_window.gobj());
 
-    if (placement.exclusive_zone < 0)
+    if (placement.exclusive_zone < 0 &&
+        m_window.magnified_surface_enabled())
+    {
+        const int cross_axis_size =
+            m_window.normal_dock_cross_axis_size();
+        const int edge_margin =
+            placement.is_horizontal()
+                ? (placement.anchor_top
+                       ? placement.margin_top
+                       : placement.margin_bottom)
+                : (placement.anchor_left
+                       ? placement.margin_left
+                       : placement.margin_right);
+        gtk_layer_set_exclusive_zone(
+            gtk_window,
+            cross_axis_size + edge_margin);
+    }
+    else if (placement.exclusive_zone < 0)
     {
         gtk_layer_auto_exclusive_zone_enable(
             gtk_window);

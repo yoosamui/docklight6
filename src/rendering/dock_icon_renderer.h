@@ -12,7 +12,7 @@
 // Responsibilities:
 // - Create the standard highlighted icon.
 // - Generate zoom animation frames.
-// - Generate blurred halo animation frames.
+// - Generate blurred halo animation frames and fixed-canvas magnified icons.
 //
 // Dependencies and ownership:
 // Input pixbufs are shared references and returned pixbufs are
@@ -43,4 +43,9 @@ std::vector<Glib::RefPtr<Gdk::Pixbuf>> create_zoom_frames(
 std::vector<Glib::RefPtr<Gdk::Pixbuf>> create_blur_frames(
     const Glib::RefPtr<Gdk::Pixbuf> &source,
     int icon_size);
+
+Glib::RefPtr<Gdk::Pixbuf> create_magnified(
+    const Glib::RefPtr<Gdk::Pixbuf> &source,
+    int icon_size,
+    double scale);
 }

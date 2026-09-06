@@ -79,6 +79,7 @@ public:
     void hide_tooltip_immediately();
     void dock_items_reordered();
     void dock_items_changed();
+    bool is_fully_revealed() const;
     void inhibit_autohide();
     void uninhibit_autohide(bool pointer_inside);
     void finish_autohide_drag(bool pointer_inside);

@@ -27,6 +27,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 
 class DockLayoutMetrics
 {
@@ -51,6 +52,61 @@ public:
         return item_size_for(icon_size) / 2;
     }
 
+    static int magnified_main_axis_extra_for(
+        int icon_size)
+    {
+        icon_size = std::max(1, icon_size);
+        const int maximum_icon_extent =
+            static_cast<int>(std::lround(
+                icon_size * 2.25)) +
+            2 * DOCK_ITEM_PADDING;
+        const int overflow = std::max(
+            0,
+            maximum_icon_extent -
+                item_size_for(icon_size));
+        // The visible group is centered in this capacity. Keep it even so
+        // both ends can own an exact integer half without a one-pixel resize
+        // at maximum scale.
+        return overflow + overflow % 2;
+    }
+
+    static int fitted_icon_size_for(
+        int requested_icon_size,
+        int item_count,
+        int monitor_length,
+        bool magnified)
+    {
+        int icon_size =
+            std::max(1, requested_icon_size);
+        if (item_count <= 0 || monitor_length <= 0)
+            return icon_size;
+
+        const long long available_length =
+            std::max(
+                1,
+                monitor_length - 2 * DOCK_MARGIN);
+
+        const auto required_length =
+            [item_count, magnified](int candidate)
+            {
+                return static_cast<long long>(item_count) *
+                           item_size_for(candidate) +
+                       (magnified
+                            ? magnified_main_axis_extra_for(
+                                  candidate)
+                            : 0);
+            };
+
+        while (icon_size > 1 &&
+               required_length(icon_size) >
+                   available_length)
+        {
+            --icon_size;
+        }
+
+        return icon_size;
+    }
+
     // Tooltip
 
     // All tooltip values use the same 48px baseline as the original dock.
@@ -58,7 +114,11 @@ public:
     static constexpr int BASE_ICON_SIZE = 48; // Baseline used to scale visual metrics
     static constexpr int TOOLTIP_MIN_WIDTH = 80; // Baseline tooltip minimum width
     static constexpr int TOOLTIP_HEIGHT = 38; // Baseline tooltip height
-    static constexpr int TOOLTIP_DISTANCE = 12; // Baseline gap from the dock
+    static constexpr int TOOLTIP_DISTANCE = 12; // Normal gap from the dock
+    // Magnified icons grow into the transparent overflow reserved around the
+    // dock. A small overlap compensates for the auxiliary surface shadow and
+    // keeps its visible content close to that enlarged artwork.
+    static constexpr int MAGNIFIED_TOOLTIP_DISTANCE = -10;
     // Minimum gap between a tooltip and either end of the monitor axis.
     static constexpr int TOOLTIP_EDGE_MARGIN = 8; // Minimum gap from monitor edges
     static constexpr int TOOLTIP_LABEL_PADDING = 12; // Baseline horizontal label padding
@@ -68,15 +128,18 @@ public:
         int value,
         int icon_size)
     {
-        // A zero distance is a meaningful user setting: it requests direct
-        // contact between tooltip and dock, not a minimum one-pixel gap.
+        // Zero and negative distances are meaningful for overlay placement;
+        // preserve their sign instead of clamping every metric to one pixel.
         if (value == 0)
             return 0;
 
-        return std::max(
+        const int magnitude = std::max(
             1,
-            (value * icon_size + BASE_ICON_SIZE / 2) /
+            (std::abs(value) * icon_size + BASE_ICON_SIZE / 2) /
                 BASE_ICON_SIZE);
+        return value < 0
+                   ? -magnitude
+                   : magnitude;
     }
 
     static int tooltip_min_width_for(int icon_size)
@@ -97,6 +160,14 @@ public:
     {
         return scale_from_icon_size(
             TOOLTIP_DISTANCE,
+            icon_size);
+    }
+
+    static int magnified_tooltip_distance_for(
+        int icon_size)
+    {
+        return scale_from_icon_size(
+            MAGNIFIED_TOOLTIP_DISTANCE,
             icon_size);
     }
 

@@ -27,6 +27,7 @@
 #pragma once
 
 #include "application/dock_runtime_info.h"
+#include "layout/dock_layout_types.h"
 
 #include <gtkmm.h>
 #include <sigc++/connection.h>
@@ -48,6 +49,16 @@ public:
     ~DockHomeItem() override;
 
     void set_icon_size(int icon_size);
+    void set_vertical(bool vertical);
+    void set_magnified_enabled(bool enabled);
+    void set_magnified_layer_active(
+        bool active);
+    void set_magnified_scale(double scale);
+    Glib::RefPtr<Gdk::Pixbuf> magnified_icon(
+        double scale) const;
+    double magnified_scale() const;
+
+    ItemGeometry icon_geometry();
     const Glib::RefPtr<Gdk::Pixbuf> &source_icon() const;
     void set_icon_path(
         const std::string &icon_path);
@@ -59,12 +70,15 @@ private:
         GdkEventCrossing *event) override;
     bool on_leave_notify_event(
         GdkEventCrossing *event) override;
+    bool on_motion_notify_event(
+        GdkEventMotion *event) override;
     bool on_button_press_event(
         GdkEventButton *event) override;
     bool on_popup_menu();
 
     void load_icon_once();
     void update_icon();
+    void apply_magnified_size_request();
     void initialize_context_menu();
     void refresh_context_menu();
     void show_context_menu(
@@ -114,5 +128,13 @@ private:
     std::string m_icon_path;
     int m_icon_size = 0;
     bool m_icon_load_attempted = false;
+    bool m_vertical = false;
+    bool m_magnified_enabled = false;
+    bool m_magnified_layer_active = false;
+    double m_magnified_scale = 1.0;
+    mutable Glib::RefPtr<Gdk::Pixbuf> m_magnified_cached_source;
+    mutable Glib::RefPtr<Gdk::Pixbuf> m_magnified_cached_icon;
+    mutable double m_magnified_cached_scale = 0.0;
+    mutable int m_magnified_cached_size = 0;
     bool m_context_menu_mapped = false;
 };

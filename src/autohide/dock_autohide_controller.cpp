@@ -13,6 +13,7 @@
 // Important implementation decisions:
 // - Placement changes are mirrored to the reveal surface.
 // - Timers are cancelled and replaced as visibility intent changes.
+// - X11 transforms run on the GTK frame clock, with magnification suspended.
 // - Intellihide overlap participates in the same visibility policy.
 //
 // ------------------------------------------------------------
@@ -583,7 +584,8 @@ bool DockAutohideController::is_fully_revealed() const
         uses_shell_autohide_animation())
         return m_shell_state == ShellDockState::visible;
 
-    return !m_animation_timer.connected();
+    return !m_animation_timer.connected() &&
+           m_x11_animation_tick == 0;
 }
 
 sigc::signal<void> &
@@ -652,6 +654,11 @@ void DockAutohideController::cancel_hide()
 void DockAutohideController::cancel_animation()
 {
     m_x11_reveal_start_timer.disconnect();
+    if (m_x11_animation_tick != 0)
+    {
+        m_window.remove_tick_callback(m_x11_animation_tick);
+        m_x11_animation_tick = 0;
+    }
     m_animation_timer.disconnect();
     m_pending_surface_slide_reveal = false;
 }
@@ -739,11 +746,8 @@ void DockAutohideController::apply_hidden_x11_placement(
     if (m_effect == DockAutohideEffect::slide)
     {
         const auto hidden_offset =
-            autohide_slide_content_offset(
-                m_placement,
-                width,
-                height,
-                1.0);
+            m_window.x11_autohide_slide_content_offset(
+                m_placement);
         m_window.move(m_shown_x, m_shown_y);
         m_window.set_x11_horizontal_offset(
             hidden_offset.x);
@@ -1142,11 +1146,8 @@ void DockAutohideController::animate_x11(
             m_window.get_allocated_width(),
             m_window.get_allocated_height());
     const auto hidden_content_offset =
-        autohide_slide_content_offset(
-            m_placement,
-            m_window.get_allocated_width(),
-            m_window.get_allocated_height(),
-            1.0);
+        m_window.x11_autohide_slide_content_offset(
+            m_placement);
 
     if (!hiding && start_at_hidden_edge)
     {
@@ -1344,14 +1345,11 @@ void DockAutohideController::animate_x11(
         return;
     }
 
-    m_animation_timer =
-        Glib::signal_timeout().connect(
-            sigc::mem_fun(
-                *this,
-                &DockAutohideController::
-                    advance_x11_animation),
-            DockConstants::
-                AUTOHIDE_ANIMATION_FRAME_MS);
+    m_x11_animation_tick = m_window.add_tick_callback(
+        [this](const Glib::RefPtr<Gdk::FrameClock> &)
+        {
+            return advance_x11_animation();
+        });
 }
 
 bool DockAutohideController::advance_x11_animation()
@@ -1446,7 +1444,8 @@ bool DockAutohideController::advance_x11_animation()
     if (progress < 1.0)
         return true;
 
-    m_animation_timer.disconnect();
+    // Returning false removes the currently executing GTK callback.
+    m_x11_animation_tick = 0;
 
     if (m_animating_to_hidden)
     {
@@ -1474,6 +1473,10 @@ void DockAutohideController::
     m_pending_x11_reveal_animation = false;
     m_shell_animation_active = false;
     m_window.hide_tooltip_immediately();
+    // The magnified layer is painted outside the local box transform. Hand
+    // icons back to the box before starting a hide, including a short-delay
+    // hide which interrupts the soft magnification release.
+    m_window.reset_magnified_hover();
     m_hidden = true;
 
     show_reveal_trigger();
@@ -1517,11 +1520,8 @@ void DockAutohideController::
         else if (m_effect == DockAutohideEffect::slide)
         {
             const auto hidden_offset =
-                autohide_slide_content_offset(
-                    m_placement,
-                    m_window.get_allocated_width(),
-                    m_window.get_allocated_height(),
-                    1.0);
+                m_window.x11_autohide_slide_content_offset(
+                    m_placement);
             m_window.set_x11_horizontal_offset(
                 hidden_offset.x);
             m_window.set_x11_vertical_offset(
@@ -1610,6 +1610,10 @@ void DockAutohideController::hide_now(
     }
 
     m_window.hide_tooltip_immediately();
+    // The magnified layer is painted outside the local box transform. Hand
+    // icons back to the box before starting a hide, including a short-delay
+    // hide which interrupts the soft magnification release.
+    m_window.reset_magnified_hover();
     m_hidden = true;
     publish_backend_hidden_state(true);
 
@@ -1717,11 +1721,8 @@ void DockAutohideController::reveal()
                          DockAutohideEffect::slide)
                 {
                     const auto hidden_offset =
-                        autohide_slide_content_offset(
-                            m_placement,
-                            m_window.get_allocated_width(),
-                            m_window.get_allocated_height(),
-                            1.0);
+                        m_window.x11_autohide_slide_content_offset(
+                            m_placement);
                     m_window.set_x11_horizontal_offset(
                         hidden_offset.x);
                     m_window.set_x11_vertical_offset(

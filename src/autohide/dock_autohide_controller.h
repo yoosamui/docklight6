@@ -117,6 +117,7 @@ private:
     sigc::connection m_reveal_requested;
     sigc::connection m_hide_timer;
     sigc::connection m_animation_timer;
+    guint m_x11_animation_tick = 0;
     sigc::connection m_x11_reveal_start_timer;
 
     enum class ShellDockState

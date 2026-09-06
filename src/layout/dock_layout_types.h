@@ -20,6 +20,7 @@
 //
 // Design notes:
 // These types form the data boundary around DockLayoutEngine.
+// Native overlay conversion distinguishes reserved thickness from painted overflow.
 //
 // ------------------------------------------------------------
 
@@ -76,7 +77,8 @@ enum class DockHoverEffect : unsigned int
 {
     standard = 0,
     zoom = 1,
-    blur = 2
+    blur = 2,
+    magnified = 3
 };
 
 enum class DockIndicator : unsigned int
@@ -368,7 +370,7 @@ inline ScreenPosition overlay_position_in_workarea(
 }
 
 // Resolve the actual layer-shell work area around the mapped dock. A
-// non-autohiding dock contributes its inner edge through its exclusive zone,
+// non-autohiding dock contributes its reserved inner edge through its exclusive zone,
 // while a bottom autohide dock can carry a sizing-only compatibility inset
 // that must not affect overlay margins.
 inline MonitorGeometry overlay_workarea_for_dock(
@@ -378,7 +380,8 @@ inline MonitorGeometry overlay_workarea_for_dock(
     int dock_x,
     int dock_y,
     int dock_width,
-    int dock_height)
+    int dock_height,
+    int reserved_thickness = 0)
 {
     if (dock_width <= 0 ||
         dock_height <= 0)
@@ -405,6 +408,26 @@ inline MonitorGeometry overlay_workarea_for_dock(
         }
 
         return result;
+    }
+
+    // Magnification enlarges the mapped surface toward the desktop, but its
+    // transparent overflow reserves no space. Keep the physical outer edge
+    // fixed and derive the compositor's work area from the reserved body.
+    if (reserved_thickness > 0)
+    {
+        if (location == DockLocation::left ||
+            location == DockLocation::right)
+        {
+            if (location == DockLocation::right)
+                dock_x += dock_width - reserved_thickness;
+            dock_width = reserved_thickness;
+        }
+        else
+        {
+            if (location == DockLocation::bottom)
+                dock_y += dock_height - reserved_thickness;
+            dock_height = reserved_thickness;
+        }
     }
 
     switch (location)

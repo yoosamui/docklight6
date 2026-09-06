@@ -8,7 +8,8 @@
 //
 // Implementation overview:
 // Owns ordinary GTK toplevel placement and the legacy X11 work-area/strut
-// integration while exposing current GDK monitor geometry.
+// integration while exposing current GDK monitor geometry. Preserves a clean
+// monitor work area while an old dock reservation settles during edge changes.
 //
 // ------------------------------------------------------------
 
@@ -435,25 +436,39 @@ void LegacyDockSurfaceBackend::apply_hyprland_reservation(
 
     std::string edge;
     int size = 0;
+    const int normal_cross_axis_size =
+        m_window.normal_dock_cross_axis_size();
     if (placement.is_horizontal() && placement.anchor_top)
     {
         edge = "top";
-        size = height + placement.margin_top;
+        size = (m_window.magnified_surface_enabled()
+                    ? normal_cross_axis_size
+                    : height) +
+               placement.margin_top;
     }
     else if (placement.is_horizontal() && placement.anchor_bottom)
     {
         edge = "bottom";
-        size = height + placement.margin_bottom;
+        size = (m_window.magnified_surface_enabled()
+                    ? normal_cross_axis_size
+                    : height) +
+               placement.margin_bottom;
     }
     else if (placement.is_vertical() && placement.anchor_left)
     {
         edge = "left";
-        size = width + placement.margin_left;
+        size = (m_window.magnified_surface_enabled()
+                    ? normal_cross_axis_size
+                    : width) +
+               placement.margin_left;
     }
     else if (placement.is_vertical() && placement.anchor_right)
     {
         edge = "right";
-        size = width + placement.margin_right;
+        size = (m_window.magnified_surface_enabled()
+                    ? normal_cross_axis_size
+                    : width) +
+               placement.margin_right;
     }
 
     if (edge.empty() || size <= 0)
@@ -680,8 +695,11 @@ void LegacyDockSurfaceBackend::capture_x11_base_workarea(
     const ::Window root =
         DefaultRootWindow(xdisplay);
 
-    const bool reusable_gnome_x11_workarea =
-        is_gnome_x11_session() &&
+    const bool reusable_scoped_workarea =
+        (is_gnome_wayland_session() ||
+         is_gnome_x11_session() ||
+         is_kde_wayland_session() ||
+         is_cinnamon_x11_session()) &&
         m_x11_base_workarea.width > 0 &&
         m_x11_base_workarea.height > 0 &&
         m_x11_base_output.x == output.x &&
@@ -813,11 +831,11 @@ void LegacyDockSurfaceBackend::capture_x11_base_workarea(
         is_kde_wayland_session() ||
         is_cinnamon_x11_session())
     {
-        // Mutter updates GDK's work area asynchronously after a client
-        // deletes its strut. During an edge change, reuse the panel-only
-        // area already captured for this unchanged output instead of
-        // treating DockLight's previous reservation as a native panel.
-        if (!reusable_gnome_x11_workarea)
+        // The shell can update GDK's work area asynchronously after a client
+        // deletes its strut. During an edge change, reuse the panel-only area
+        // already captured for this unchanged output instead of treating
+        // DockLight's previous reservation as a native panel.
+        if (!reusable_scoped_workarea)
         {
             m_x11_base_workarea =
                 x11_scoped_monitor_workarea(
@@ -1214,31 +1232,47 @@ void LegacyDockSurfaceBackend::apply_x11_strut(
     unsigned long values[12] = {};
     if (can_reserve_root_edge)
     {
+        const int normal_cross_axis_size =
+            m_window.normal_dock_cross_axis_size();
+        const int reserved_width =
+            placement.is_vertical() &&
+                    m_window.magnified_surface_enabled()
+                ? normal_cross_axis_size
+                : width;
+        const int reserved_height =
+            placement.is_horizontal() &&
+                    m_window.magnified_surface_enabled()
+                ? normal_cross_axis_size
+                : height;
         if (placement.is_vertical() &&
             placement.anchor_left)
         {
-            values[0] = static_cast<unsigned long>(std::max(0, x + width));
+            values[0] = static_cast<unsigned long>(
+                std::max(0, reserved_width + placement.margin_left));
             values[4] = static_cast<unsigned long>(std::max(0, y));
             values[5] = static_cast<unsigned long>(std::max(0, y + height - 1));
         }
         else if (placement.is_vertical() &&
                  placement.anchor_right)
         {
-            values[1] = static_cast<unsigned long>(std::max(0, screen_width - x));
+            values[1] = static_cast<unsigned long>(
+                std::max(0, reserved_width + placement.margin_right));
             values[6] = static_cast<unsigned long>(std::max(0, y));
             values[7] = static_cast<unsigned long>(std::max(0, y + height - 1));
         }
         else if (placement.is_horizontal() &&
                  placement.anchor_top)
         {
-            values[2] = static_cast<unsigned long>(std::max(0, y + height));
+            values[2] = static_cast<unsigned long>(
+                std::max(0, reserved_height + placement.margin_top));
             values[8] = static_cast<unsigned long>(std::max(0, x));
             values[9] = static_cast<unsigned long>(std::max(0, x + width - 1));
         }
         else if (placement.is_horizontal() &&
                  placement.anchor_bottom)
         {
-            values[3] = static_cast<unsigned long>(std::max(0, screen_height - y));
+            values[3] = static_cast<unsigned long>(
+                std::max(0, reserved_height + placement.margin_bottom));
             values[10] = static_cast<unsigned long>(std::max(0, x));
             values[11] = static_cast<unsigned long>(std::max(0, x + width - 1));
         }

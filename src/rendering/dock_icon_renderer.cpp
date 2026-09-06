@@ -12,6 +12,8 @@
 // Important implementation decisions:
 // - All effects derive frames from the supplied source pixbuf.
 // - Scaling and blur dimensions follow shared layout metrics.
+// - Magnified frames keep one transparent canvas size for the whole zoom.
+// - Fractional magnified centering prevents odd/even pixel-size shimmer.
 // - Rendering functions retain no widget or animation state.
 //
 // ------------------------------------------------------------
@@ -19,7 +21,12 @@
 #include "dock_icon_renderer.h"
 #include "layout/dock_layout_metrics.h"
 
+#include <gdkmm/general.h>
+#include <cairomm/context.h>
+#include <cairomm/surface.h>
+
 #include <algorithm>
+#include <cmath>
 
 namespace
 {
@@ -32,6 +39,7 @@ constexpr int BLUR_INNER_GREEN = 245;
 constexpr int BLUR_INNER_BLUE = 255;
 constexpr int BLUR_OUTER_MAX_ALPHA = 225;
 constexpr int BLUR_INNER_MAX_ALPHA = 190;
+constexpr double MAGNIFIED_MAX_SCALE = 2.25;
 
 Glib::RefPtr<Gdk::Pixbuf> create_transparent_pixbuf(
     int width,
@@ -325,4 +333,47 @@ DockIconRenderer::create_blur_frames(
     }
 
     return frames;
+}
+
+Glib::RefPtr<Gdk::Pixbuf> DockIconRenderer::create_magnified(
+    const Glib::RefPtr<Gdk::Pixbuf> &source,
+    int icon_size,
+    double scale)
+{
+    if (!source)
+        return {};
+
+    const int padding = DockLayoutMetrics::DOCK_ITEM_PADDING;
+    // Keep the pixbuf bounds stable while the icon itself changes size. If
+    // this canvas followed the current scale, the draw pass would present a
+    // grow/shrink geometry change on every animation frame even though the
+    // icon center stayed fixed.
+    const int maximum_width = std::max(
+        1,
+        static_cast<int>(std::lround(
+            source->get_width() * MAGNIFIED_MAX_SCALE)));
+    const int maximum_height = std::max(
+        1,
+        static_cast<int>(std::lround(
+            source->get_height() * MAGNIFIED_MAX_SCALE)));
+    const int item_size = std::max(
+        DockLayoutMetrics::item_size_for(icon_size),
+        std::max(maximum_width, maximum_height) + padding * 2);
+    scale = std::clamp(scale, 1.0, MAGNIFIED_MAX_SCALE);
+    const double x =
+        (item_size - source->get_width() * scale) / 2.0;
+    const double y =
+        (item_size - source->get_height() * scale) / 2.0;
+    auto surface = Cairo::ImageSurface::create(
+        Cairo::FORMAT_ARGB32, item_size, item_size);
+    auto context = Cairo::Context::create(surface);
+    // Keep both scale and centering fractional through rasterization. Rounding
+    // the extent and then integer-dividing the inset alternates the artwork's
+    // center by half a pixel every time its width changes parity.
+    context->translate(x, y);
+    context->scale(scale, scale);
+    Gdk::Cairo::set_source_pixbuf(context, source, 0.0, 0.0);
+    context->paint();
+    return Gdk::Pixbuf::create(
+        surface, 0, 0, item_size, item_size);
 }

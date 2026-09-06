@@ -14,6 +14,7 @@
 // - Convert DockLayoutRequest into concrete screen placement.
 // - Keep monitor-edge and orientation rules centralized.
 // - Clamp tooltip placement to the selected monitor.
+// - Fit preview width to the actual space beside a vertical dock.
 // - Avoid GTK and layer-shell side effects.
 //
 // Dependencies and ownership:
@@ -34,6 +35,12 @@
 class DockLayoutEngine
 {
 public:
+    int preview_available_width(
+        DockLocation location,
+        const MonitorGeometry &monitor,
+        const DockWindowGeometry &dock,
+        int distance) const;
+
     DockPlacement
     calculate_dock_layout(
         const DockLayoutRequest &request,

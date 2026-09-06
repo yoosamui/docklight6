@@ -9,6 +9,8 @@
 // Implementation overview:
 // Implements DockWindow surface transforms, placement delegation,
 // orientation, visual styling, and autohide surface effects.
+// Native X11 magnification grows the painted background without reallocating children.
+// X11 slide distance follows the visible box, excluding magnified overflow.
 //
 // The controller calculates placement; this file performs GTK effects and
 // delegates native placement to the selected surface backend.
@@ -27,6 +29,11 @@
 DockSurfaceBox::DockSurfaceBox()
     : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL)
 {
+}
+
+void DockSurfaceBox::set_external_background(bool external)
+{
+    m_external_background = external;
 }
 
 void DockSurfaceBox::set_horizontal_scale(
@@ -119,6 +126,18 @@ bool DockSurfaceBox::on_draw(
     const Cairo::RefPtr<Cairo::Context>
         &context)
 {
+    if (m_external_background)
+    {
+        // The X11 magnified frame paints the extended background once. Keep
+        // GTK's real children allocated and drawing without a second body.
+        for (auto *child : get_children())
+        {
+            if (child->get_visible())
+                propagate_draw(*child, context);
+        }
+        return true;
+    }
+
     const bool fully_translated =
         std::abs(m_horizontal_offset) >=
             get_allocated_width() ||
@@ -200,6 +219,18 @@ void DockWindow::set_x11_vertical_scale(
 double DockWindow::x11_vertical_scale() const
 {
     return m_dock_box.vertical_scale();
+}
+
+ScreenPosition DockWindow::x11_autohide_slide_content_offset(
+    const DockPlacement &placement) const
+{
+    // The local transform clips against this box, not the larger transparent
+    // toplevel reserved for magnification. Extra travel delays visible reveal.
+    return autohide_slide_content_offset(
+        placement,
+        m_dock_box.get_allocated_width(),
+        m_dock_box.get_allocated_height(),
+        1.0);
 }
 
 void DockWindow::set_x11_horizontal_offset(
@@ -299,44 +330,50 @@ DockWindow::content_geometry() const
 {
     DockWindowGeometry geometry;
 
-    const bool horizontal =
-        m_dock_box.get_orientation() ==
-        Gtk::ORIENTATION_HORIZONTAL;
+    int minimum_width = 0;
+    int natural_width = 0;
+    int minimum_height = 0;
+    int natural_height = 0;
+    m_dock_overlay.get_preferred_width(
+        minimum_width,
+        natural_width);
+    m_dock_overlay.get_preferred_height(
+        minimum_height,
+        natural_height);
+    geometry.width = natural_width;
+    geometry.height = natural_height;
 
-    for (auto *child :
-         m_dock_box.get_children())
+    if (m_magnified_enabled)
     {
-        if (!child->get_visible())
-            continue;
-
-        int minimum_width = 0;
-        int natural_width = 0;
-        int minimum_height = 0;
-        int natural_height = 0;
-
-        child->get_preferred_width(
-            minimum_width,
-            natural_width);
-
-        child->get_preferred_height(
-            minimum_height,
-            natural_height);
-
-        if (horizontal)
+        // The native surface keeps one constant worst-case main-axis extent.
+        // Each frame exchanges unused transparent capacity for equal styled
+        // box margins, so the visible background can grow without a native
+        // resize or compositor reposition.
+        const int overflow_size =
+            magnified_surface_cross_axis_size();
+        const int main_axis_capacity =
+            magnified_main_axis_extra_size();
+        const int unused_main_axis_capacity =
+            std::max(
+                0,
+                main_axis_capacity -
+                    2 * m_magnified_main_axis_margin_extra);
+        if (m_dock_box.get_orientation() ==
+            Gtk::ORIENTATION_HORIZONTAL)
         {
-            geometry.width += natural_width;
-            geometry.height =
-                std::max(
-                    geometry.height,
-                    natural_height);
+            geometry.width +=
+                unused_main_axis_capacity;
+            geometry.height = std::max(
+                geometry.height,
+                overflow_size);
         }
         else
         {
-            geometry.width =
-                std::max(
-                    geometry.width,
-                    natural_width);
-            geometry.height += natural_height;
+            geometry.height +=
+                unused_main_axis_capacity;
+            geometry.width = std::max(
+                geometry.width,
+                overflow_size);
         }
     }
 
@@ -353,6 +390,39 @@ void DockWindow::apply_dock_layout(
     apply_visual_style();
     apply_dock_orientation(
         placement.orientation);
+
+    if (placement.is_horizontal())
+    {
+        m_dock_alignment.set(
+            Gtk::ALIGN_CENTER,
+            placement.anchor_top
+                ? Gtk::ALIGN_START
+                : Gtk::ALIGN_END,
+            0.0F,
+            0.0F);
+        m_dock_box.set_halign(
+            Gtk::ALIGN_CENTER);
+        m_dock_box.set_valign(
+            placement.anchor_top
+                ? Gtk::ALIGN_START
+                : Gtk::ALIGN_END);
+    }
+    else
+    {
+        m_dock_alignment.set(
+            placement.anchor_left
+                ? Gtk::ALIGN_START
+                : Gtk::ALIGN_END,
+            Gtk::ALIGN_CENTER,
+            0.0F,
+            0.0F);
+        m_dock_box.set_halign(
+            placement.anchor_left
+                ? Gtk::ALIGN_START
+                : Gtk::ALIGN_END);
+        m_dock_box.set_valign(
+            Gtk::ALIGN_CENTER);
+    }
 
     m_surface_backend->apply_dock_placement(
         placement,
@@ -487,8 +557,120 @@ void DockWindow::apply_dock_orientation(
             Gtk::ORIENTATION_HORIZONTAL);
     }
 
+    const bool vertical =
+        orientation == DockOrientation::vertical;
+    for (auto *item : m_dock_items_cache)
+        item->set_vertical(vertical);
+    if (m_home_item)
+        m_home_item->set_vertical(vertical);
+
     apply_main_axis_end_margins(
         orientation);
+}
+
+int DockWindow::magnified_surface_cross_axis_size() const
+{
+    const int base_size =
+        DockLayoutMetrics::item_size_for(
+            std::max(1, m_effective_icon_size));
+    return static_cast<int>(
+        std::lround(base_size * 2.25));
+}
+
+int DockWindow::magnified_main_axis_extra_size() const
+{
+    return DockLayoutMetrics::
+        magnified_main_axis_extra_for(
+            m_effective_icon_size);
+}
+
+void DockWindow::set_magnified_main_axis_overflow(
+    double requested_extra)
+{
+    const double maximum_margin_extra =
+        magnified_main_axis_extra_size() / 2;
+    requested_extra = std::clamp(
+        requested_extra, 0.0, maximum_margin_extra);
+
+    if (m_magnified_x11_buffered)
+    {
+        // Hover only changes the painted rectangle on X11. Updating spacer
+        // requests here creates GTK allocation and icon-geometry work on
+        // every frame even though the outer surface size stays constant.
+        m_magnified_painted_margin_extra = requested_extra;
+        return;
+    }
+
+    // Preserve the existing integer spacer sizing on other presentations.
+    const int margin_extra = static_cast<int>(std::ceil(requested_extra));
+    if (m_magnified_main_axis_margin_extra ==
+        margin_extra)
+    {
+        return;
+    }
+
+    m_leading_main_axis_margin =
+        DockLayoutMetrics::DOCK_MARGIN +
+        margin_extra;
+    m_trailing_main_axis_margin =
+        DockLayoutMetrics::DOCK_MARGIN +
+        margin_extra;
+    m_magnified_main_axis_margin_extra =
+        margin_extra;
+    apply_main_axis_end_margins(
+        m_dock_box.get_orientation() ==
+                Gtk::ORIENTATION_HORIZONTAL
+            ? DockOrientation::horizontal
+            : DockOrientation::vertical);
+}
+
+int DockWindow::normal_dock_cross_axis_size() const
+{
+    DockWindowGeometry geometry;
+    const bool horizontal =
+        m_dock_box.get_orientation() ==
+        Gtk::ORIENTATION_HORIZONTAL;
+
+    for (auto *child : m_dock_box.get_children())
+    {
+        if (!child->get_visible())
+            continue;
+
+        int minimum_width = 0;
+        int natural_width = 0;
+        int minimum_height = 0;
+        int natural_height = 0;
+        child->get_preferred_width(
+            minimum_width,
+            natural_width);
+        child->get_preferred_height(
+            minimum_height,
+            natural_height);
+
+        if (horizontal)
+        {
+            geometry.width += natural_width;
+            geometry.height = std::max(
+                geometry.height,
+                natural_height);
+        }
+        else
+        {
+            geometry.width = std::max(
+                geometry.width,
+                natural_width);
+            geometry.height += natural_height;
+        }
+    }
+
+    return std::max(
+        1,
+        horizontal ? geometry.height : geometry.width);
+}
+
+bool DockWindow::magnified_surface_enabled() const
+{
+    return m_magnified_enabled;
 }
 
 void DockWindow::apply_visual_style()
@@ -611,11 +793,23 @@ void DockWindow::apply_main_axis_end_margins(
     // These spacers are children of m_dock_box, so GTK includes them in the
     // natural size used by DockLayoutEngine. This avoids a separate margin
     // calculation that could disagree with item and tooltip coordinates.
-    m_leading_margin.set_size_request(
-        leading_width,
-        leading_height);
+    if (leading_width != m_applied_leading_margin_width ||
+        leading_height != m_applied_leading_margin_height)
+    {
+        m_leading_margin.set_size_request(
+            leading_width,
+            leading_height);
+        m_applied_leading_margin_width = leading_width;
+        m_applied_leading_margin_height = leading_height;
+    }
 
-    m_trailing_margin.set_size_request(
-        trailing_width,
-        trailing_height);
+    if (trailing_width != m_applied_trailing_margin_width ||
+        trailing_height != m_applied_trailing_margin_height)
+    {
+        m_trailing_margin.set_size_request(
+            trailing_width,
+            trailing_height);
+        m_applied_trailing_margin_width = trailing_width;
+        m_applied_trailing_margin_height = trailing_height;
+    }
 }

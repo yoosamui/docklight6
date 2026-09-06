@@ -37,16 +37,24 @@
 #include "layout/dock_window_geometry.h"
 #include "launchers/launcher_manager.h"
 
+#include <cairomm/surface.h>
 #include <gdkmm/monitor.h>
+#include <gdkmm/pixbuf.h>
+#include <gdkmm/frameclock.h>
 #include <gtkmm/box.h>
 #include <gtkmm/cssprovider.h>
+#include <gtkmm/drawingarea.h>
+#include <gtkmm/alignment.h>
+#include <gtkmm/overlay.h>
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 class DockWindowController;
 class DockAutohideController;
 class LayerShellDockSurfaceBackend;
+class LegacyDockSurfaceBackend;
 class TooltipManager;
 class PreviewManager;
 class LayoutCoordinator;
@@ -55,10 +63,44 @@ class DockSessionItem;
 struct DockRuntimeInfo;
 class WindowRegistry;
 
+struct DockMagnifiedIcon
+{
+    Glib::RefPtr<Gdk::Pixbuf> pixbuf;
+    double x = 0.0;
+    double y = 0.0;
+    DockIndicatorVisual indicator;
+    int indicator_x = 0;
+    int indicator_y = 0;
+    int indicator_width = 0;
+    int indicator_height = 0;
+};
+
+class DockMagnifiedLayer final
+    : public Gtk::DrawingArea
+{
+public:
+    DockMagnifiedLayer();
+
+    void set_icons(
+        std::vector<DockMagnifiedIcon> icons);
+    void paint(
+        const Cairo::RefPtr<Cairo::Context>
+            &context) const;
+
+protected:
+    bool on_draw(
+        const Cairo::RefPtr<Cairo::Context>
+            &context) override;
+
+private:
+    std::vector<DockMagnifiedIcon> m_icons;
+};
+
 class DockSurfaceBox : public Gtk::Box
 {
 public:
     DockSurfaceBox();
+    void set_external_background(bool external);
     void set_horizontal_scale(
         double scale,
         double anchor);
@@ -78,6 +120,7 @@ protected:
             &context) override;
 
 private:
+    bool m_external_background = false;
     double m_horizontal_scale = 1.0;
     double m_horizontal_scale_anchor = 1.0;
     double m_vertical_scale = 1.0;
@@ -107,6 +150,9 @@ public:
         Gtk::Widget &item,
         const Glib::ustring &text);
     void schedule_hide_tooltip(Gtk::Widget &item);
+    void update_magnified_hover(int x, int y);
+    void reset_magnified_hover();
+    void set_magnified_enabled(bool enabled);
     void hide_tooltip_immediately();
     void inhibit_autohide();
     void uninhibit_autohide();
@@ -138,6 +184,13 @@ public:
     configurable_autohide_effects() const;
 
 protected:
+    bool on_draw(
+        const Cairo::RefPtr<Cairo::Context>
+            &context) override;
+    bool on_leave_notify_event(
+        GdkEventCrossing *event) override;
+    bool on_motion_notify_event(
+        GdkEventMotion *event) override;
     bool on_drag_motion(
         const Glib::RefPtr<
             Gdk::DragContext> &context,
@@ -157,6 +210,10 @@ private:
         int y);
     bool drop_item_first();
     bool pointer_is_inside();
+    bool point_is_over_dock_body(
+        int x,
+        int y);
+    bool pointer_is_over_dock_body();
     bool apply_dragged_item_order(
         const std::vector<
             DockItem *> &items);
@@ -199,6 +256,20 @@ private:
     void complete_surface_initial_placement();
     void apply_dock_orientation(
         DockOrientation orientation);
+    void set_magnified_layer_active(
+        bool active);
+    void release_magnified_hover();
+    void clear_magnified_hover_frame();
+    void set_magnified_main_axis_overflow(
+        double margin_extra);
+    bool advance_magnified_hover();
+    void apply_magnified_visual_center(
+        Gtk::Widget &item,
+        ItemGeometry &geometry) const;
+    int magnified_surface_cross_axis_size() const;
+    int magnified_main_axis_extra_size() const;
+    int normal_dock_cross_axis_size() const;
+    bool magnified_surface_enabled() const;
     void apply_visual_style();
     void set_x11_horizontal_scale(
         double scale,
@@ -208,6 +279,8 @@ private:
         double scale,
         double anchor);
     double x11_vertical_scale() const;
+    ScreenPosition x11_autohide_slide_content_offset(
+        const DockPlacement &placement) const;
     void set_x11_horizontal_offset(double offset);
     double x11_horizontal_offset() const;
     void set_x11_vertical_offset(double offset);
@@ -231,6 +304,7 @@ private:
     friend class DockWindowController;
     friend class DockAutohideController;
     friend class LayerShellDockSurfaceBackend;
+    friend class LegacyDockSurfaceBackend;
     friend class TooltipManager;
     friend class PreviewManager;
     friend class LayoutCoordinator;
@@ -238,6 +312,9 @@ private:
     Glib::RefPtr<Gtk::CssProvider> m_visual_css;
 
     DockSurfaceBox m_dock_box;
+    Gtk::Alignment m_dock_alignment;
+    Gtk::Overlay m_dock_overlay;
+    DockMagnifiedLayer m_magnified_layer;
     // Authoritative typed view of the DockItem children. It is updated
     // before GTK add/remove signals fire and kept in visual order.
     std::vector<DockItem *>
@@ -253,6 +330,10 @@ private:
         DockLayoutMetrics::DOCK_MARGIN;
     int m_trailing_main_axis_margin =
         DockLayoutMetrics::DOCK_MARGIN;
+    int m_applied_leading_margin_width = -2;
+    int m_applied_leading_margin_height = -2;
+    int m_applied_trailing_margin_width = -2;
+    int m_applied_trailing_margin_height = -2;
 
     // The configured icon size is a request. This effective size is clamped
     // so every item and both end margins fit on the monitor's main axis.
@@ -281,6 +362,28 @@ private:
 
     DockItem *m_dragged_item = nullptr;
     bool m_item_drop_accepted = false;
+    std::vector<std::pair<DockItem *, double>>
+        m_magnified_anchors;
+    std::vector<std::pair<Gtk::Widget *, double>>
+        m_magnified_visual_centers;
+    double m_home_magnified_anchor = 0.0;
+    bool m_magnified_pointer_active = false;
+    bool m_magnified_x11_buffered = false;
+    double m_magnified_painted_margin_extra = 0.0;
+    Cairo::RefPtr<Cairo::ImageSurface> m_magnified_x11_frame;
+    int m_magnified_x11_frame_scale = 0;
+    int m_magnified_pointer_x = 0;
+    int m_magnified_pointer_y = 0;
+    int m_magnified_last_rendered_pointer_x = 0;
+    int m_magnified_last_rendered_pointer_y = 0;
+    bool m_magnified_frame_initialized = false;
+    bool m_magnified_releasing = false;
+    // Per-end styled extension currently exchanged from the fixed transparent
+    // main-axis surface capacity.
+    int m_magnified_main_axis_margin_extra = 0;
+    guint m_magnified_tick_callback = 0;
+    gint64 m_magnified_frame_time_us = 0;
+    bool m_magnified_enabled = false;
 
     bool m_has_synchronized_items = false;
 };

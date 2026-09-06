@@ -15,6 +15,7 @@
 // - Automatic mode prefers XWayland for GNOME and Hyprland Wayland when
 //   available.
 // - XWayland requires both a Wayland session and an X display.
+// - Native-X11 rendering opt-ins exclude Wayland and ambiguous sessions.
 // - Presentation policy remains orthogonal to window-integration selection.
 // - Child application launches have Docklight-only overrides removed.
 //
@@ -393,4 +394,16 @@ const char *actual_presentation_backend_name()
     if (display && GDK_IS_WAYLAND_DISPLAY(display))
         return "Wayland";
     return "unknown";
+}
+
+bool is_native_x11_presentation()
+{
+    auto *display = gdk_display_get_default();
+    const auto *session = g_getenv("XDG_SESSION_TYPE");
+    const auto *wayland = g_getenv("WAYLAND_DISPLAY");
+    const auto *xwayland = g_getenv("DOCKLIGHT_XWAYLAND_PRESENTATION");
+    return display && GDK_IS_X11_DISPLAY(display) &&
+           session && normalized(session) == "x11" &&
+           (!wayland || !*wayland) &&
+           (!xwayland || !*xwayland);
 }

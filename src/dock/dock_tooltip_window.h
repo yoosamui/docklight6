@@ -64,7 +64,8 @@ public:
     // position, otherwise a variable-width tooltip would not stay centered.
     int preferred_width_for(const Glib::ustring &text);
     int tooltip_height() const;
-    int tooltip_distance() const;
+    int tooltip_distance(
+        DockHoverEffect hover_effect) const;
 
 private:
     void cancel_reveal();
@@ -103,6 +104,8 @@ private:
 
     int m_tooltip_height = DockLayoutMetrics::TOOLTIP_HEIGHT;
     int m_tooltip_distance = DockLayoutMetrics::TOOLTIP_DISTANCE;
+    int m_magnified_tooltip_distance =
+        DockLayoutMetrics::MAGNIFIED_TOOLTIP_DISTANCE;
     int m_icon_size = DockLayoutMetrics::BASE_ICON_SIZE;
     int m_request_width = 0;
     gint64 m_visual_animation_start_us = 0;

@@ -126,7 +126,7 @@ int main()
         "test-monitor"));
     assert(configuration.save_setting(
         "hover_effect",
-        "blur"));
+        "magnified"));
     assert(configuration.save_setting(
         "indicator",
         "dots"));
@@ -240,7 +240,7 @@ int main()
     assert(current.settings.monitor() ==
            "test-monitor");
     assert(current.settings.hover_effect() ==
-           DockHoverEffect::blur);
+           DockHoverEffect::magnified);
     assert(current.settings.indicator() ==
            DockIndicator::dots);
     assert(current.settings.indicator_color() ==

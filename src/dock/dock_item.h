@@ -39,6 +39,14 @@
 class DockWindow;
 class WindowRegistry;
 
+struct DockIndicatorVisual
+{
+    DockIndicator style = DockIndicator::lines;
+    Gdk::RGBA color;
+    std::size_t window_count = 0;
+    int icon_size = 0;
+};
+
 class DockItem : public Gtk::EventBox
 {
 public:
@@ -75,6 +83,21 @@ public:
     void set_icon_size(int icon_size);
     void set_hover_effect(
         DockHoverEffect effect);
+    void set_magnified_layer_active(
+        bool active);
+    void set_magnified_scale(double scale);
+    Glib::RefPtr<Gdk::Pixbuf> magnified_icon(
+        double scale) const;
+    double magnified_scale() const;
+
+    DockIndicatorVisual indicator_visual() const;
+    static void paint_indicator_visual(
+        const Cairo::RefPtr<Cairo::Context> &context,
+        const DockIndicatorVisual &visual,
+        double x,
+        double y,
+        double width,
+        double height);
     void set_indicator(
         DockIndicator indicator);
     void set_indicator_color(
@@ -181,6 +204,8 @@ protected:
 
     bool on_leave_notify_event(
         GdkEventCrossing *event) override;
+    bool on_motion_notify_event(
+        GdkEventMotion *event) override;
 
     bool on_button_release_event(
         GdkEventButton *event) override;
@@ -235,6 +260,7 @@ private:
     void log_context_action(
         const char *action) const;
     void apply_hover_effect();
+    void apply_magnified_size_request();
     void create_zoom_frames();
     void start_zoom_animation();
     void create_blur_frames();
@@ -317,6 +343,13 @@ private:
     std::size_t m_indicator_window_count = 0;
 
     bool m_hovered = false;
+    bool m_vertical = false;
+    bool m_magnified_layer_active = false;
+    double m_magnified_scale = 1.0;
+    mutable Glib::RefPtr<Gdk::Pixbuf> m_magnified_cached_source;
+    mutable Glib::RefPtr<Gdk::Pixbuf> m_magnified_cached_icon;
+    mutable double m_magnified_cached_scale = 0.0;
+    mutable int m_magnified_cached_size = 0;
     bool m_attached = false;
     bool m_updating_attach_state = false;
     bool m_single_main_window = false;

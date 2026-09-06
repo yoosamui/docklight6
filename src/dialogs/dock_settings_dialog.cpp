@@ -471,10 +471,14 @@ void DockSettingsDialog::show(
         C_("hover effect", "Zoom"));
     Gtk::RadioButton hover_blur(
         C_("hover effect", "Blur"));
+    Gtk::RadioButton hover_magnified(
+        C_("hover effect", "Magnified"));
 
     hover_zoom.join_group(
         hover_standard);
     hover_blur.join_group(
+        hover_standard);
+    hover_magnified.join_group(
         hover_standard);
 
     hover_choices.pack_start(
@@ -489,6 +493,10 @@ void DockSettingsDialog::show(
         hover_blur,
         false,
         false);
+    hover_choices.pack_start(
+        hover_magnified,
+        false,
+        false);
 
     switch (current.settings.hover_effect())
     {
@@ -500,6 +508,9 @@ void DockSettingsDialog::show(
         break;
     case DockHoverEffect::blur:
         hover_blur.set_active(true);
+        break;
+    case DockHoverEffect::magnified:
+        hover_magnified.set_active(true);
         break;
     }
 
@@ -1309,6 +1320,10 @@ void DockSettingsDialog::show(
         hover_blur,
         "hover_effect",
         "blur");
+    connect_radio(
+        hover_magnified,
+        "hover_effect",
+        "magnified");
     connect_radio(
         indicator_lines,
         "indicator",

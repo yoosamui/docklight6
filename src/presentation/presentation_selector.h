@@ -74,3 +74,6 @@ void prepare_application_launch_context(
 
 std::string presentation_configuration_path();
 const char *actual_presentation_backend_name();
+
+// Conservative opt-in: ambiguous and XWayland sessions retain the fallback.
+bool is_native_x11_presentation();

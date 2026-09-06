@@ -21,6 +21,7 @@ check_PROGRAMS = \
 
 TESTS = \
     $(check_PROGRAMS) \
+    tests/dock_magnified_effect_test.js \
     tests/dock_visual_style_test.js \
     tests/dock_home_session_test.js \
     tests/gnome_placement_test.js \
@@ -474,6 +475,7 @@ presentation_selector_test_LDADD = \
     $(GTKMM_LIBS)
 
 EXTRA_DIST = \
+    tests/dock_magnified_effect_test.js \
     tests/dock_visual_style_test.js \
     tests/dock_home_session_test.js \
     tests/gnome_placement_test.js \

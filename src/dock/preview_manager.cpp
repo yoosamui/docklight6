@@ -15,6 +15,9 @@
 // - Application-auxiliary windows sort ahead of ordinary caption order.
 // - Closing the last card removes the empty preview intentionally.
 // - Tooltip and preview timers cancel one another through focused managers.
+// - Native margins use reserved body thickness, excluding magnified overflow.
+// - Magnified mode anchors previews to each icon's painted visual center.
+// - Preview sizing reserves monitor-edge margins on the dock's main axis.
 // - Owned signal connections are disconnected during destruction.
 //
 // ------------------------------------------------------------
@@ -285,6 +288,9 @@ void PreviewManager::show_now(
 
     m_tooltips.hide();
     auto item_geometry = m_layout_geometry.item_geometry(item, m_window);
+    m_window.apply_magnified_visual_center(
+        item,
+        item_geometry);
     auto dock_geometry = m_layout_geometry.dock_geometry(m_window);
     const auto dock_position = m_dock_position();
     dock_geometry.x = dock_position.x - m_output_geometry.x;
@@ -303,25 +309,24 @@ void PreviewManager::show_now(
         m_layout_request.location == DockLocation::left ||
         m_layout_request.location == DockLocation::right;
     const int preview_distance =
-        m_window.m_overlay_window.tooltip_distance();
-    const bool dock_reserves_space =
-        m_layout_request.autohide == DockAutohide::none;
-    const int dock_side_offset =
-        vertical_dock
-            ? (dock_reserves_space ? 0 : dock_geometry.width) +
-                  preview_distance
-            : 0;
-    const int available_width = std::max(
+        m_window.m_overlay_window.tooltip_distance(
+            m_settings.hover_effect());
+    const int available_width = m_layout_engine.preview_available_width(
+        m_layout_request.location,
+        monitor_geometry,
+        dock_geometry,
+        preview_distance);
+    const int available_height = std::max(
         1,
-        monitor_geometry.width - dock_side_offset -
+        monitor_geometry.height -
             (vertical_dock
-                 ? DockLayoutMetrics::TOOLTIP_EDGE_MARGIN
-                 : 2 * DockLayoutMetrics::TOOLTIP_EDGE_MARGIN));
+                 ? 2 * DockLayoutMetrics::TOOLTIP_EDGE_MARGIN
+                 : 0));
 
     const auto preview_size = m_preview_window->preferred_size(
         entries,
         available_width,
-        monitor_geometry.height);
+        available_height);
     const auto position = m_layout_engine.calculate_tooltip_position(
         m_layout_request,
         monitor_geometry,
@@ -341,7 +346,10 @@ void PreviewManager::show_now(
                 dock_geometry.x,
                 dock_geometry.y,
                 dock_geometry.width,
-                dock_geometry.height));
+                dock_geometry.height,
+                m_window.magnified_surface_enabled()
+                    ? m_window.normal_dock_cross_axis_size()
+                    : 0));
     }
 
     m_preview_desktop_id = item.desktop_id();

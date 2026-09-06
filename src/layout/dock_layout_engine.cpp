@@ -189,6 +189,24 @@ void DockLayoutEngine::apply_workarea_insets(
     }
 }
 
+// Fit side previews between the actual dock edge and the opposite monitor
+// boundary. Reservation mode cannot tell us whether the supplied work area
+// already excludes the dock (nor how much transparent magnified space it has).
+int DockLayoutEngine::preview_available_width(
+    DockLocation location,
+    const MonitorGeometry &monitor,
+    const DockWindowGeometry &dock,
+    int distance) const
+{
+    const int margin = DockLayoutMetrics::TOOLTIP_EDGE_MARGIN;
+    if (location == DockLocation::left)
+        return std::max(1, monitor.x + monitor.width - margin -
+                              (dock.x + dock.width + distance));
+    if (location == DockLocation::right)
+        return std::max(1, dock.x - distance - (monitor.x + margin));
+    return std::max(1, monitor.width - 2 * margin);
+}
+
 // Calculates tooltip screen coordinates relative to the dock item and clamps
 // the result to the selected monitor. The caller applies the returned values
 // to the tooltip window after measurement is complete.

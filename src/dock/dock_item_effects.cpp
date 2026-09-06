@@ -31,6 +31,15 @@ void DockItem::start_primary_action_effect()
     m_primary_action_effect.disconnect();
     m_primary_action_effect_frame = 0;
 
+    // The dock-wide magnified frame is the sole active icon renderer. A click
+    // opacity pulse on the hidden Gtk::Image would reveal the normal icon
+    // underneath the enlarged copy.
+    if (m_magnified_layer_active)
+    {
+        image.set_opacity(0.0);
+        return;
+    }
+
     image.set_opacity(
         PRIMARY_ACTION_EFFECT_MIN_OPACITY);
 
@@ -45,6 +54,12 @@ void DockItem::start_primary_action_effect()
 
 bool DockItem::advance_primary_action_effect()
 {
+    if (m_magnified_layer_active)
+    {
+        image.set_opacity(0.0);
+        return false;
+    }
+
     ++m_primary_action_effect_frame;
 
     const double progress =
@@ -139,6 +154,20 @@ void DockItem::apply_hover_effect()
                 m_blur_frame)]);
 
         start_blur_animation();
+        break;
+
+    case DockHoverEffect::magnified:
+        m_zoom_animation.disconnect();
+        m_blur_animation.disconnect();
+        // The base image is hidden while the dock-wide magnified overlay is
+        // active. Do not replace the hidden Gtk::Image on every child
+        // enter/leave: that can invalidate preferred geometry during the
+        // pointer transition and make the surface appear to resize.
+        if (!m_magnified_layer_active)
+        {
+            image.set(m_icon_pixbuf);
+            image.set_opacity(1.0);
+        }
         break;
     }
 }

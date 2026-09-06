@@ -14,6 +14,7 @@
 // - Layout metrics determine sizing consistently with other dock items.
 // - Registry-dependent actions remain optional when integration is
 //   unavailable.
+// - Unchanged magnified icon frames are cached per item.
 //
 // ------------------------------------------------------------
 
@@ -23,6 +24,7 @@
 #include "dialogs/dock_settings_dialog.h"
 #include "dock_constants.h"
 #include "layout/dock_layout_metrics.h"
+#include "rendering/dock_icon_renderer.h"
 #include "dock_window.h"
 #include "windowing/window_registry.h"
 #include "config.h"
@@ -32,6 +34,7 @@
 #include <glibmm/miscutils.h>
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -84,6 +87,7 @@ DockHomeItem::DockHomeItem(
     add_events(
         Gdk::ENTER_NOTIFY_MASK |
         Gdk::LEAVE_NOTIFY_MASK |
+        Gdk::POINTER_MOTION_MASK |
         Gdk::BUTTON_PRESS_MASK);
 
     m_image.set_halign(
@@ -127,11 +131,123 @@ void DockHomeItem::set_icon_size(
             icon_size),
         DockLayoutMetrics::item_size_for(
             icon_size));
+    if (m_magnified_enabled)
+        apply_magnified_size_request();
 }
 
 const Glib::RefPtr<Gdk::Pixbuf> &DockHomeItem::source_icon() const
 {
     return m_source_icon;
+}
+
+void DockHomeItem::set_magnified_scale(double scale)
+{
+    if (!m_magnified_enabled)
+        return;
+
+    scale = std::clamp(scale, 1.0, 2.25);
+    // Preserve the interpolator's final steps so release can reach 1.0.
+    if (scale == m_magnified_scale)
+        return;
+
+    m_magnified_scale = scale;
+}
+
+void DockHomeItem::set_magnified_layer_active(
+    bool active)
+{
+    if (!m_magnified_enabled)
+        return;
+
+    const bool state_changed =
+        m_magnified_layer_active != active;
+    m_magnified_layer_active = active;
+    if (!active)
+        m_image.set(m_display_icon);
+    m_image.set_opacity(active ? 0.0 : 1.0);
+    if (state_changed)
+        queue_draw();
+}
+
+Glib::RefPtr<Gdk::Pixbuf> DockHomeItem::magnified_icon(
+    double scale) const
+{
+    // Most icons stay at normal scale during pointer motion. Keep one frame
+    // per item instead of allocating and rasterizing every icon on every tick.
+    if (m_magnified_cached_source != m_display_icon ||
+        m_magnified_cached_scale != scale ||
+        m_magnified_cached_size != m_icon_size)
+    {
+        m_magnified_cached_source = m_display_icon;
+        m_magnified_cached_scale = scale;
+        m_magnified_cached_size = m_icon_size;
+        m_magnified_cached_icon = DockIconRenderer::create_magnified(
+            m_display_icon,
+            m_icon_size,
+            scale);
+    }
+    return m_magnified_cached_icon;
+}
+
+double DockHomeItem::magnified_scale() const
+{
+    return m_magnified_scale;
+}
+
+void DockHomeItem::set_vertical(bool vertical)
+{
+    if (m_vertical == vertical)
+        return;
+
+    m_vertical = vertical;
+    if (m_magnified_enabled)
+        apply_magnified_size_request();
+}
+
+void DockHomeItem::set_magnified_enabled(bool enabled)
+{
+    m_magnified_enabled = enabled;
+    m_magnified_scale = 1.0;
+    if (enabled)
+    {
+        apply_magnified_size_request();
+        m_image.set(m_display_icon);
+        m_image.set_opacity(1.0);
+    }
+    else
+    {
+        m_image.set_opacity(1.0);
+        set_size_request(
+            DockLayoutMetrics::item_size_for(m_icon_size),
+            DockLayoutMetrics::item_size_for(m_icon_size));
+        update_icon();
+    }
+}
+
+void DockHomeItem::apply_magnified_size_request()
+{
+    const int base_size =
+        DockLayoutMetrics::item_size_for(m_icon_size);
+    set_size_request(
+        base_size,
+        base_size);
+}
+
+ItemGeometry DockHomeItem::icon_geometry()
+{
+    const auto allocation = m_image.get_allocation();
+    ItemGeometry geometry;
+    m_image.translate_coordinates(
+        m_dock,
+        0,
+        0,
+        geometry.x,
+        geometry.y);
+    geometry.width = allocation.get_width();
+    geometry.height = allocation.get_height();
+    geometry.center_x = geometry.x + geometry.width / 2;
+    geometry.center_y = geometry.y + geometry.height / 2;
+    return geometry;
 }
 
 void DockHomeItem::set_icon_path(
@@ -211,6 +327,25 @@ bool DockHomeItem::on_leave_notify_event(
 
     m_dock.schedule_hide_tooltip(*this);
     return false;
+}
+
+bool DockHomeItem::on_motion_notify_event(
+    GdkEventMotion *event)
+{
+    if (event)
+    {
+        int x = 0;
+        int y = 0;
+        translate_coordinates(
+            m_dock,
+            static_cast<int>(event->x),
+            static_cast<int>(event->y),
+            x,
+            y);
+        m_dock.update_magnified_hover(x, y);
+    }
+
+    return Gtk::EventBox::on_motion_notify_event(event);
 }
 
 bool DockHomeItem::on_button_press_event(
@@ -611,6 +746,9 @@ void DockHomeItem::show_context_menu(
         break;
     }
 
+    // GtkMenu takes a pointer grab, so the dock may not receive a leave event
+    // while an action runs. Clear the frame before presenting the popup.
+    m_dock.reset_magnified_hover();
     m_dock.hide_tooltip_immediately();
 
     m_context_menu.popup_at_widget(
@@ -649,6 +787,10 @@ void DockHomeItem::show_context_menu(
 
 void DockHomeItem::schedule_open_settings()
 {
+    // A modal dialog takes the pointer grab away from the dock, so no leave
+    // event is guaranteed while it opens. Clear the current frame before the
+    // grab instead of leaving a magnified Home icon behind the dialog.
+    m_dock.reset_magnified_hover();
     m_dock.hide_tooltip_immediately();
     m_settings_idle.disconnect();
 
@@ -712,6 +854,9 @@ void DockHomeItem::open_settings()
         m_source_icon,
         m_dock.effective_autohide_effect(),
         m_dock.configurable_autohide_effects());
+    // Settings can close without applying a configuration, so enforce the
+    // normal frame again after the modal grab is released as well.
+    m_dock.reset_magnified_hover();
     m_dock.uninhibit_autohide();
 }
 

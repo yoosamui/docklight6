@@ -15,6 +15,7 @@
 // - Repeated identical requests do not restart visible tooltip state.
 // - Input is transparent so the overlay never interrupts dock hovering.
 // - Mapping is delayed briefly before the centred fade-and-scale reveal.
+// - Overlay distance is selected from the active hover effect.
 //
 // ------------------------------------------------------------
 
@@ -250,6 +251,9 @@ void DockTooltipWindow::set_rounded_corners(
     m_tooltip_distance =
         DockLayoutMetrics::tooltip_distance_for(
             m_icon_size);
+    m_magnified_tooltip_distance =
+        DockLayoutMetrics::magnified_tooltip_distance_for(
+            m_icon_size);
 
     const int label_padding =
         DockLayoutMetrics::tooltip_label_padding_for(
@@ -276,9 +280,12 @@ int DockTooltipWindow::tooltip_height() const
     return m_tooltip_height;
 }
 
-int DockTooltipWindow::tooltip_distance() const
+int DockTooltipWindow::tooltip_distance(
+    DockHoverEffect hover_effect) const
 {
-    return m_tooltip_distance;
+    return hover_effect == DockHoverEffect::magnified
+               ? m_magnified_tooltip_distance
+               : m_tooltip_distance;
 }
 
 int DockTooltipWindow::preferred_width_for(

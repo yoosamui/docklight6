@@ -746,6 +746,9 @@ void DockItem::show_context_menu(
         break;
     }
 
+    // GtkMenu takes a pointer grab, so the dock may not receive a leave event
+    // while an action runs. Clear the frame before presenting the popup.
+    m_dock.reset_magnified_hover();
     m_dock.hide_tooltip_immediately();
 
     m_context_menu.popup_at_widget(

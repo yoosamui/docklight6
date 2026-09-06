@@ -495,6 +495,10 @@ assert.match(
     /DockPreviewWindow::apply_position[\s\S]*?if \(!m_uses_layer_shell\)[\s\S]*?get_window\(\)[\s\S]*?move_resize\([\s\S]*?global_x,[\s\S]*?global_y,[\s\S]*?width,[\s\S]*?height\)/,
     "an X11 or XWayland preview must move and resize atomically");
 assert.match(
+    previewManagerSource,
+    /const int available_height = std::max\([\s\S]*?monitor_geometry\.height -[\s\S]*?vertical_dock[\s\S]*?2 \* DockLayoutMetrics::TOOLTIP_EDGE_MARGIN[\s\S]*?preferred_size\([\s\S]*?available_width,[\s\S]*?available_height\)/,
+    "vertical previews must reserve both monitor-edge margins before sizing");
+assert.match(
     previewWindowSource,
     /DockPreviewWindow::stop_live_streams\(\)[\s\S]*?if \(!m_replacing_gnome_wayland_preview\)[\s\S]*?hide_gnome_live_previews\(\)[\s\S]*?m_gnome_thumbnail_fallback\.disconnect\(\)/,
     "an adjacent GNOME Wayland update must preserve live actors while a real hide still tears them down");
@@ -612,8 +616,8 @@ assert.match(
     "GNOME and Cinnamon X11 must preserve their monitor-scoped GTK panel work areas");
 assert.match(
     legacySurfaceBackendSource,
-    /reusable_gnome_x11_workarea[\s\S]*?m_x11_base_output[\s\S]*?if \(!reusable_gnome_x11_workarea\)[\s\S]*?x11_scoped_monitor_workarea/,
-    "a GNOME X11 edge change must not recapture DockLight's previous strut as native work area");
+    /const bool reusable_scoped_workarea\s*=\s*\(is_gnome_wayland_session\(\) \|\|[\s\S]*?is_gnome_x11_session\(\) \|\|[\s\S]*?is_kde_wayland_session\(\) \|\|[\s\S]*?is_cinnamon_x11_session\(\)\)[\s\S]*?m_x11_base_output[\s\S]*?if \(!reusable_scoped_workarea\)[\s\S]*?x11_scoped_monitor_workarea/,
+    "an XWayland or scoped-X11 edge change must not recapture DockLight's previous strut as native work area");
 assert.match(
     dockWindowControllerSource,
     /monitor_geometry_changed[\s\S]*?output_changed[\s\S]*?prepare_surface_change\(\)[\s\S]*?m_autohide_controller->set_monitor/,

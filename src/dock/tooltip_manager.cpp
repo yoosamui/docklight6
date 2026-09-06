@@ -14,6 +14,8 @@
 // - Request generations invalidate stale timeout callbacks.
 // - Monitor-local geometry is used for placement calculations.
 // - Native placement receives an overlay work area derived from dock bounds.
+// - Native margins use reserved body thickness, excluding magnified overflow.
+// - Magnified mode anchors labels to each icon's painted visual center.
 // - Coordination with previews is emitted through manager signals.
 //
 // ------------------------------------------------------------
@@ -180,6 +182,9 @@ void TooltipManager::show_now(
         m_window.m_overlay_window.preferred_width_for(text);
     auto item_geometry =
         m_layout_geometry.item_geometry(item, m_window);
+    m_window.apply_magnified_visual_center(
+        item,
+        item_geometry);
     auto dock_geometry =
         m_layout_geometry.dock_geometry(m_window);
     const auto dock_position = m_dock_position();
@@ -203,7 +208,8 @@ void TooltipManager::show_now(
         item_geometry,
         tooltip_width,
         m_window.m_overlay_window.tooltip_height(),
-        m_window.m_overlay_window.tooltip_distance());
+        m_window.m_overlay_window.tooltip_distance(
+            m_settings.hover_effect()));
 
     if (m_window.surface_uses_native_placement())
     {
@@ -215,7 +221,10 @@ void TooltipManager::show_now(
                 dock_geometry.x,
                 dock_geometry.y,
                 dock_geometry.width,
-                dock_geometry.height));
+                dock_geometry.height,
+                m_window.magnified_surface_enabled()
+                    ? m_window.normal_dock_cross_axis_size()
+                    : 0));
     }
 
     m_visible_item = &item;

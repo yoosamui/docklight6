@@ -15,6 +15,7 @@
 // - Icon geometry is converted to plain data before publication.
 // - Menu, effect, and drag methods live in neighboring build units while
 //   sharing the same class declaration.
+// - Unchanged magnified icon frames are cached per item.
 //
 // ------------------------------------------------------------
 
@@ -28,6 +29,7 @@
 #include <glibmm/i18n.h>
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -193,6 +195,7 @@ void DockItem::initialize(
         Gdk::LEAVE_NOTIFY_MASK |
         Gdk::BUTTON_PRESS_MASK |
         Gdk::BUTTON_RELEASE_MASK |
+        Gdk::POINTER_MOTION_MASK |
         Gdk::SCROLL_MASK |
         Gdk::SMOOTH_SCROLL_MASK);
 
@@ -323,6 +326,8 @@ void DockItem::set_icon_size(int icon_size)
     set_size_request(
         DockLayoutMetrics::item_size_for(icon_size),
         DockLayoutMetrics::item_size_for(icon_size));
+    if (m_hover_effect == DockHoverEffect::magnified)
+        apply_magnified_size_request();
 
     queue_draw();
 }
@@ -372,6 +377,16 @@ void DockItem::set_hover_effect(
     }
 
     m_hover_effect = effect;
+    m_magnified_scale = 1.0;
+    image.set_opacity(1.0);
+    if (m_hover_effect == DockHoverEffect::magnified)
+        apply_magnified_size_request();
+    else
+    {
+        set_size_request(
+            DockLayoutMetrics::item_size_for(m_icon_size),
+            DockLayoutMetrics::item_size_for(m_icon_size));
+    }
 
     if (m_hover_effect == DockHoverEffect::zoom)
     {
@@ -398,6 +413,63 @@ void DockItem::set_hover_effect(
     }
 
     apply_hover_effect();
+}
+
+void DockItem::set_magnified_layer_active(
+    bool active)
+{
+    if (m_hover_effect != DockHoverEffect::magnified)
+        return;
+
+    const bool state_changed =
+        m_magnified_layer_active != active;
+    m_magnified_layer_active = active;
+    if (active)
+        m_primary_action_effect.disconnect();
+    if (!active)
+        image.set(m_icon_pixbuf);
+    image.set_opacity(active ? 0.0 : 1.0);
+    if (state_changed)
+        queue_draw();
+}
+
+void DockItem::set_magnified_scale(double scale)
+{
+    if (m_hover_effect != DockHoverEffect::magnified)
+        return;
+
+    scale = std::clamp(scale, 1.0, 2.25);
+    // The frame interpolator owns convergence. Discarding its small final
+    // steps here can leave the effect permanently short of its target.
+    if (scale == m_magnified_scale)
+        return;
+
+    m_magnified_scale = scale;
+}
+
+Glib::RefPtr<Gdk::Pixbuf> DockItem::magnified_icon(
+    double scale) const
+{
+    // Most icons stay at normal scale during pointer motion. Keep one frame
+    // per item instead of allocating and rasterizing every icon on every tick.
+    if (m_magnified_cached_source != m_icon_pixbuf ||
+        m_magnified_cached_scale != scale ||
+        m_magnified_cached_size != m_icon_size)
+    {
+        m_magnified_cached_source = m_icon_pixbuf;
+        m_magnified_cached_scale = scale;
+        m_magnified_cached_size = m_icon_size;
+        m_magnified_cached_icon = DockIconRenderer::create_magnified(
+            m_icon_pixbuf,
+            m_icon_size,
+            scale);
+    }
+    return m_magnified_cached_icon;
+}
+
+double DockItem::magnified_scale() const
+{
+    return m_magnified_scale;
 }
 
 void DockItem::set_indicator(
@@ -468,31 +540,61 @@ bool DockItem::draw_indicator(
     const Cairo::RefPtr<Cairo::Context>
         &context)
 {
-    if (!context ||
-        m_indicator_window_count == 0)
-    {
+    // The dock-wide magnified frame paints a moved copy after all normal GTK
+    // children. Keeping this copy would leave the indicator at the old item
+    // center underneath the shifted icon.
+    if (m_magnified_layer_active)
         return false;
-    }
 
     const auto allocation =
         get_allocation();
 
-    const double width =
-        allocation.get_width();
-    const double height =
-        allocation.get_height();
+    paint_indicator_visual(
+        context,
+        indicator_visual(),
+        0.0,
+        0.0,
+        allocation.get_width(),
+        allocation.get_height());
 
-    if (width <= 0.0 || height <= 0.0)
-        return false;
+    return false;
+}
+
+DockIndicatorVisual DockItem::indicator_visual() const
+{
+    DockIndicatorVisual visual;
+    visual.style = m_indicator;
+    visual.color = m_indicator_color;
+    visual.window_count = m_indicator_window_count;
+    visual.icon_size = m_icon_size;
+    return visual;
+}
+
+void DockItem::paint_indicator_visual(
+    const Cairo::RefPtr<Cairo::Context> &context,
+    const DockIndicatorVisual &visual,
+    double x,
+    double y,
+    double width,
+    double height)
+{
+    if (!context ||
+        visual.window_count == 0 ||
+        width <= 0.0 ||
+        height <= 0.0)
+    {
+        return;
+    }
 
     context->save();
+    context->translate(x, y);
     context->set_source_rgba(
-        m_indicator_color.get_red(),
-        m_indicator_color.get_green(),
-        m_indicator_color.get_blue(),
-        m_indicator_color.get_alpha());
+        visual.color.get_red(),
+        visual.color.get_green(),
+        visual.color.get_blue(),
+        visual.color.get_alpha());
 
-    if (m_indicator ==
+    if (visual.style ==
         DockIndicator::lines)
     {
         const double length =
@@ -501,7 +603,7 @@ bool DockItem::draw_indicator(
                 std::max(
                     0.0,
                     static_cast<double>(
-                        m_icon_size) -
+                        visual.icon_size) -
                         2.0 *
                             INDICATOR_LINE_INSET));
 
@@ -524,7 +626,7 @@ bool DockItem::draw_indicator(
                 INDICATOR_THICKNESS);
         };
 
-        if (m_indicator_window_count == 1)
+        if (visual.window_count == 1)
         {
             const double half_length =
                 length / 2.0;
@@ -565,7 +667,7 @@ bool DockItem::draw_indicator(
                     INDICATOR_PI);
         };
 
-        if (m_indicator_window_count == 1)
+        if (visual.window_count == 1)
         {
             draw_dot(main_center);
         }
@@ -588,8 +690,6 @@ bool DockItem::draw_indicator(
     }
 
     context->restore();
-
-    return false;
 }
 
 void DockItem::set_context_menu_corner_radius(
@@ -915,6 +1015,26 @@ bool DockItem::on_leave_notify_event(
     return false;
 }
 
+bool DockItem::on_motion_notify_event(
+    GdkEventMotion *event)
+{
+    if (event &&
+        m_hover_effect == DockHoverEffect::magnified)
+    {
+        int x = 0;
+        int y = 0;
+        translate_coordinates(
+            m_dock,
+            static_cast<int>(event->x),
+            static_cast<int>(event->y),
+            x,
+            y);
+        m_dock.update_magnified_hover(x, y);
+    }
+
+    return Gtk::EventBox::on_motion_notify_event(event);
+}
+
 bool DockItem::on_scroll_event(
     GdkEventScroll *event)
 {
@@ -973,10 +1093,25 @@ bool DockItem::on_scroll_event(
 
 void DockItem::set_vertical(bool vertical)
 {
+    if (m_vertical == vertical)
+        return;
+
+    m_vertical = vertical;
+    if (m_hover_effect == DockHoverEffect::magnified)
+        apply_magnified_size_request();
     if (vertical)
         label.hide();
     else
         label.show();
+}
+
+void DockItem::apply_magnified_size_request()
+{
+    const int base_size =
+        DockLayoutMetrics::item_size_for(m_icon_size);
+    set_size_request(
+        base_size,
+        base_size);
 }
 
 bool DockItem::on_button_press_event(GdkEventButton *event)

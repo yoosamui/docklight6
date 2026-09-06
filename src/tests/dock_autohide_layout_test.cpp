@@ -19,13 +19,78 @@
 // ------------------------------------------------------------
 
 #include "layout/dock_layout_engine.h"
+#include "layout/dock_layout_metrics.h"
 #include "autohide/dock_intellihide_policy.h"
 
 #include <cassert>
 
 int main()
 {
+    const int full_dock_icon_size =
+        DockLayoutMetrics::fitted_icon_size_for(
+            80,
+            8,
+            627,
+            true);
+    const int full_dock_required_length =
+        8 * DockLayoutMetrics::item_size_for(
+                full_dock_icon_size) +
+        DockLayoutMetrics::magnified_main_axis_extra_for(
+            full_dock_icon_size) +
+        2 * DockLayoutMetrics::DOCK_MARGIN;
+    assert(full_dock_icon_size < 80);
+    assert(full_dock_required_length <= 627);
+    assert(
+        DockLayoutMetrics::fitted_icon_size_for(
+            48,
+            4,
+            627,
+            true) == 48);
+    assert(
+        DockLayoutMetrics::tooltip_distance_for(48) ==
+        12);
+    assert(
+        DockLayoutMetrics::tooltip_distance_for(96) ==
+        24);
+    assert(
+        DockLayoutMetrics::magnified_tooltip_distance_for(48) ==
+        -10);
+    assert(
+        DockLayoutMetrics::magnified_tooltip_distance_for(96) ==
+        -20);
+
     DockLayoutEngine engine;
+    // Side previews must fit the actual remaining space even when the work
+    // area includes our dock or the mapped surface has magnified overflow.
+    for (const auto location : {DockLocation::left, DockLocation::right})
+    {
+        const MonitorGeometry area{20, 30, 1000, 600};
+        const DockWindowGeometry side{
+            location == DockLocation::left ? 20 : 896,
+            130, 124, 400, true};
+        for (const int distance : {12, -10})
+        {
+            const int width = engine.preview_available_width(
+                location, area, side, distance);
+            assert(width == 1000 - 124 - distance - 8);
+            const MonitorGeometry reserved_area{
+                location == DockLocation::left ? 144 : 20,
+                30, 876, 600};
+            assert(engine.preview_available_width(
+                location, reserved_area, side, distance) == width);
+            DockLayoutRequest side_request;
+            side_request.location = location;
+            const auto position = engine.calculate_tooltip_position(
+                side_request, area, side, {0, 0, 64, 64, 32, 32},
+                width, 200, distance);
+            assert(position.x >= area.x + 8);
+            assert(position.x + width <= area.x + area.width - 8);
+        }
+    }
+    assert(engine.preview_available_width(
+        DockLocation::bottom, {20, 30, 1000, 600}, {}, 12) == 984);
+    assert(engine.preview_available_width(
+        DockLocation::top, {20, 30, 1000, 600}, {}, -10) == 984);
     DockLayoutRequest request;
 
     const MonitorGeometry monitor{
@@ -618,6 +683,53 @@ int main()
         right_layer_position.x - 120;
     assert(right_margin == 12);
 
+    // Magnification maps 120 px but reserves only the normal 60 px body.
+    // Reconstruct the compositor position for both a tooltip and a preview:
+    // the 60 px overflow must survive work-area-to-margin conversion on every
+    // edge, including outputs with an existing top panel.
+    for (const auto edge : {DockLocation::left, DockLocation::right,
+                            DockLocation::top, DockLocation::bottom})
+    {
+        const bool horizontal = edge == DockLocation::top ||
+                                edge == DockLocation::bottom;
+        const int x = edge == DockLocation::right ? 2440 : 0;
+        const int y = edge == DockLocation::bottom ? 1320 : 44;
+        const auto reserved = overlay_workarea_for_dock(
+            plasma_workarea, edge, DockAutohide::none,
+            x, y, horizontal ? 400 : 120, horizontal ? 120 : 400,
+            60);
+        assert(reserved.x == (edge == DockLocation::left ? 60 : 0));
+        assert(reserved.y == (edge == DockLocation::top ? 104 : 44));
+        assert(reserved.width == (horizontal ? 2560 : 2500));
+        assert(reserved.height == (horizontal ? 1336 : 1396));
+
+        for (const int size : {30, 200})
+        {
+            const int gap = -10;
+            const ScreenPosition target{
+                edge == DockLocation::left ? 120 + gap :
+                edge == DockLocation::right ? 2440 - gap - size : 500,
+                edge == DockLocation::top ? 164 + gap :
+                edge == DockLocation::bottom ? 1320 - gap - size : 500};
+            const auto local = overlay_position_in_workarea(target, reserved);
+            const int margin = edge == DockLocation::left ? local.x :
+                edge == DockLocation::right ? reserved.width - local.x - size :
+                edge == DockLocation::top ? local.y :
+                reserved.height - local.y - size;
+            assert(margin == 60 + gap);
+        }
+
+        // Unreserved docks retain their entire mapped geometry, regardless
+        // of the supplied body thickness.
+        const auto hidden = overlay_workarea_for_dock(
+            plasma_workarea, edge, DockAutohide::autohide,
+            x, y, horizontal ? 400 : 120, horizontal ? 120 : 400, 60);
+        assert(hidden.x == plasma_workarea.x);
+        assert(hidden.y == plasma_workarea.y);
+        assert(hidden.width == plasma_workarea.width);
+        assert(hidden.height == plasma_workarea.height);
+    }
+
     // Autohide docks reserve no layer-shell work area. The bottom dock's
     // layout rectangle can nevertheless contain Docklight's sizing-only
     // compatibility inset; recover KWin's real bottom edge from the mapped
@@ -698,6 +810,37 @@ int main()
          overlay_height);
     assert(top_gap == overlay_distance);
     assert(bottom_gap == top_gap);
+
+    const int reduced_overlay_distance =
+        DockLayoutMetrics::magnified_tooltip_distance_for(
+            DockLayoutMetrics::BASE_ICON_SIZE);
+    const auto reduced_top_overlay_position =
+        engine.calculate_tooltip_position(
+            top_overlay_request,
+            full_overlay_workarea,
+            top_dock,
+            horizontal_item,
+            overlay_width,
+            overlay_height,
+            reduced_overlay_distance);
+    const auto reduced_bottom_overlay_position =
+        engine.calculate_tooltip_position(
+            bottom_overlay_request,
+            full_overlay_workarea,
+            bottom_dock,
+            horizontal_item,
+            overlay_width,
+            overlay_height,
+            reduced_overlay_distance);
+    assert(
+        reduced_top_overlay_position.y -
+            (top_dock.y + top_dock.height) ==
+        -10);
+    assert(
+        bottom_dock.y -
+            (reduced_bottom_overlay_position.y +
+             overlay_height) ==
+        -10);
 
     const auto bottom_layer_position =
         overlay_position_in_workarea(

@@ -7,8 +7,9 @@
 // dock_window.cpp
 //
 // Implementation overview:
-// Implements DockWindow construction, simple controller forwarding,
-// tooltip scheduling, and autohide inhibition.
+// Native X11 magnification uses a reusable complete-frame buffer and painted margins.
+// Implements DockWindow construction, magnified overflow painting, simple
+// controller forwarding, tooltip scheduling, and autohide inhibition.
 //
 // Cohesive item, surface, and drag-and-drop behavior lives in the companion
 // dock_window_*.cpp translation units.
@@ -25,10 +26,78 @@
 #include "dock_window_controller.h"
 
 #include <gdk/gdkx.h>
+#include <gdkmm/general.h>
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <vector>
+
+DockMagnifiedLayer::DockMagnifiedLayer()
+{
+    // Paint into Gtk::Overlay's existing surface. A native child window makes
+    // transparent animation frames compositor-dependent and can hide the
+    // dock background while the child is repainted.
+    set_has_window(false);
+    set_app_paintable(true);
+    set_double_buffered(true);
+    set_events(static_cast<Gdk::EventMask>(0));
+    set_can_focus(false);
+    set_sensitive(false);
+}
+
+void DockMagnifiedLayer::set_icons(
+    std::vector<DockMagnifiedIcon> icons)
+{
+    m_icons = std::move(icons);
+}
+
+void DockMagnifiedLayer::paint(
+    const Cairo::RefPtr<Cairo::Context> &context)
+    const
+{
+    if (!context)
+        return;
+
+    context->save();
+    context->set_operator(Cairo::OPERATOR_OVER);
+
+    // Keep indicators in the moved visual frame, but composite them beneath
+    // the icons. In particular, a top dock grows downward over its indicator;
+    // painting the marker last would draw it across the enlarged icon.
+    for (const auto &icon : m_icons)
+    {
+        DockItem::paint_indicator_visual(
+            context,
+            icon.indicator,
+            icon.indicator_x,
+            icon.indicator_y,
+            icon.indicator_width,
+            icon.indicator_height);
+    }
+
+    for (const auto &icon : m_icons)
+    {
+        if (!icon.pixbuf)
+            continue;
+
+        Gdk::Cairo::set_source_pixbuf(
+            context,
+            icon.pixbuf,
+            icon.x,
+            icon.y);
+        context->paint();
+    }
+
+    context->restore();
+}
+
+bool DockMagnifiedLayer::on_draw(
+    const Cairo::RefPtr<Cairo::Context> &context)
+{
+    paint(context);
+    return true;
+}
 
 DockWindow::DockWindow(
     const DockConfiguration &configuration,
@@ -50,6 +119,9 @@ DockWindow::DockWindow(
     set_accept_focus(false);
     set_focus_on_map(false);
     set_title("Docklight 6 Dock");
+    add_events(
+        Gdk::LEAVE_NOTIFY_MASK |
+        Gdk::POINTER_MOTION_MASK);
 
     // Rounded CSS corners expose pixels from the toplevel underneath the
     // dock box. Give that toplevel an alpha-capable visual so those pixels
@@ -127,6 +199,16 @@ DockWindow::DockWindow(
     m_visual_css =
         Gtk::CssProvider::create();
 
+    m_dock_alignment.set(
+        Gtk::ALIGN_FILL,
+        Gtk::ALIGN_END,
+        1.0F,
+        0.0F);
+    m_dock_alignment.add(m_dock_box);
+    m_dock_alignment.show();
+    m_dock_overlay.add(m_dock_alignment);
+    add(m_dock_overlay);
+
     m_dock_box.get_style_context()
         ->add_provider(
             m_visual_css,
@@ -147,6 +229,10 @@ DockWindow::DockWindow(
                 ->settings()
                 .icon_size());
 
+    set_magnified_enabled(
+        m_controller->settings().hover_effect() ==
+        DockHoverEffect::magnified);
+
     apply_visual_style();
     m_controller->initialize();
 }
@@ -154,6 +240,114 @@ DockWindow::DockWindow(
 DockWindow::~DockWindow()
 {
     m_dock_item_sync.disconnect();
+    if (m_magnified_tick_callback != 0)
+    {
+        remove_tick_callback(
+            m_magnified_tick_callback);
+        m_magnified_tick_callback = 0;
+    }
+}
+
+bool DockWindow::on_draw(
+    const Cairo::RefPtr<Cairo::Context> &context)
+{
+    if (m_magnified_x11_buffered)
+    {
+        const int scale = std::max(1, get_scale_factor());
+        const int width = std::max(1, get_allocated_width()) * scale;
+        const int height = std::max(1, get_allocated_height()) * scale;
+        if (!m_magnified_x11_frame ||
+            m_magnified_x11_frame->get_width() != width ||
+            m_magnified_x11_frame->get_height() != height ||
+            m_magnified_x11_frame_scale != scale)
+        {
+            m_magnified_x11_frame = Cairo::ImageSurface::create(
+                Cairo::FORMAT_ARGB32, width, height);
+            cairo_surface_set_device_scale(
+                m_magnified_x11_frame->cobj(), scale, scale);
+            m_magnified_x11_frame_scale = scale;
+        }
+        auto frame = Cairo::Context::create(m_magnified_x11_frame);
+        frame->set_operator(Cairo::OPERATOR_CLEAR);
+        frame->paint();
+        frame->set_operator(Cairo::OPERATOR_OVER);
+
+        int box_x = 0;
+        int box_y = 0;
+        m_dock_box.translate_coordinates(*this, 0, 0, box_x, box_y);
+        const bool horizontal =
+            m_dock_box.get_orientation() == Gtk::ORIENTATION_HORIZONTAL;
+        const double extra = m_magnified_painted_margin_extra;
+        const double x = box_x - (horizontal ? extra : 0.0);
+        const double y = box_y - (horizontal ? 0.0 : extra);
+        const double body_width = m_dock_box.get_allocated_width() +
+            (horizontal ? 2.0 * extra : 0.0);
+        const double body_height = m_dock_box.get_allocated_height() +
+            (horizontal ? 0.0 : 2.0 * extra);
+        auto style = m_dock_box.get_style_context();
+        style->render_background(frame, x, y, body_width, body_height);
+        style->render_frame(frame, x, y, body_width, body_height);
+        Gtk::Window::on_draw(frame);
+        m_magnified_layer.paint(frame);
+
+        // As in Plank's renderer, present background and icons as one frame.
+        // SOURCE also replaces pixels exposed when the painted body contracts.
+        context->save();
+        context->set_operator(Cairo::OPERATOR_SOURCE);
+        context->set_source(m_magnified_x11_frame, 0.0, 0.0);
+        context->paint();
+        context->restore();
+        return true;
+    }
+
+    const bool handled =
+        Gtk::Window::on_draw(context);
+    if (m_magnified_pointer_active)
+        m_magnified_layer.paint(context);
+    return handled;
+}
+
+bool DockWindow::on_leave_notify_event(
+    GdkEventCrossing *event)
+{
+    // A leave-notify can be generated while the pointer crosses from the
+    // toplevel into one of the dock's child widgets. Release only after the
+    // pointer has actually left the visible dock body; otherwise the
+    // animation reverses during ordinary icon-to-icon motion.
+    if (!pointer_is_over_dock_body())
+        release_magnified_hover();
+    return Gtk::Window::on_leave_notify_event(event);
+}
+
+bool DockWindow::on_motion_notify_event(
+    GdkEventMotion *event)
+{
+    if (event &&
+        m_magnified_enabled &&
+        m_magnified_pointer_active &&
+        get_window() &&
+        event->window == get_window()->gobj())
+    {
+        update_magnified_hover(
+            static_cast<int>(std::lround(event->x)),
+            static_cast<int>(std::lround(event->y)));
+    }
+
+    return Gtk::Window::on_motion_notify_event(event);
+}
+
+void DockWindow::set_magnified_enabled(bool enabled)
+{
+    m_magnified_enabled = enabled;
+    if (m_home_item)
+        m_home_item->set_magnified_enabled(enabled);
+
+    set_magnified_layer_active(false);
+    if (!enabled)
+    {
+        m_magnified_layer.set_icons({});
+        queue_draw();
+    }
 }
 
 void DockWindow::apply_configuration(
@@ -341,6 +535,79 @@ bool DockWindow::pointer_is_inside()
            y >= 0 &&
            x < get_allocated_width() &&
            y < get_allocated_height();
+}
+
+bool DockWindow::point_is_over_dock_body(int x, int y)
+{
+    int box_x = 0;
+    int box_y = 0;
+    if (!m_dock_box.translate_coordinates(
+            *this,
+            0,
+            0,
+            box_x,
+            box_y))
+    {
+        return false;
+    }
+
+    const auto allocation =
+        m_dock_box.get_allocation();
+    return x >= box_x &&
+           y >= box_y &&
+           x < box_x + allocation.get_width() &&
+           y < box_y + allocation.get_height();
+}
+
+bool DockWindow::pointer_is_over_dock_body()
+{
+    auto *window = gtk_widget_get_window(
+        GTK_WIDGET(gobj()));
+    if (!window)
+        return false;
+
+    auto *display =
+        gdk_window_get_display(window);
+    auto *seat = display
+                     ? gdk_display_get_default_seat(
+                           display)
+                     : nullptr;
+    auto *pointer = seat
+                        ? gdk_seat_get_pointer(seat)
+                        : nullptr;
+    if (!pointer)
+        return false;
+
+    int x = 0;
+    int y = 0;
+    if (GDK_IS_X11_DISPLAY(display))
+    {
+        int window_x = 0;
+        int window_y = 0;
+        gdk_device_get_position(
+            pointer,
+            nullptr,
+            &x,
+            &y);
+        get_position(window_x, window_y);
+        x -= window_x;
+        y -= window_y;
+    }
+    else
+    {
+        GdkModifierType modifiers{};
+        if (!gdk_window_get_device_position(
+                window,
+                pointer,
+                &x,
+                &y,
+                &modifiers))
+        {
+            return false;
+        }
+    }
+
+    return point_is_over_dock_body(x, y);
 }
 
 DockLocation DockWindow::location() const

@@ -51,6 +51,24 @@ bool same_monitor_geometry(
            left.height == right.height;
 }
 
+bool same_dock_placement(
+    const DockPlacement &left,
+    const DockPlacement &right)
+{
+    return left.anchor_left == right.anchor_left &&
+           left.anchor_right == right.anchor_right &&
+           left.anchor_top == right.anchor_top &&
+           left.anchor_bottom == right.anchor_bottom &&
+           left.width == right.width &&
+           left.height == right.height &&
+           left.margin_left == right.margin_left &&
+           left.margin_right == right.margin_right &&
+           left.margin_top == right.margin_top &&
+           left.margin_bottom == right.margin_bottom &&
+           left.exclusive_zone == right.exclusive_zone &&
+           left.orientation == right.orientation;
+}
+
 }
 
 DockWindowController::DockWindowController(
@@ -658,6 +676,8 @@ void DockWindowController::apply_configuration(
         m_window.prepare_surface_change();
     }
 
+    m_window.reset_magnified_hover();
+
     m_settings =
         configuration.settings;
 
@@ -668,6 +688,9 @@ void DockWindowController::apply_configuration(
 
     if (m_window.m_home_item)
     {
+        m_window.set_magnified_enabled(
+            m_settings.hover_effect() ==
+            DockHoverEffect::magnified);
         m_window.m_home_item->set_icon_path(
             m_settings.home_icon_path());
 
@@ -822,6 +845,10 @@ void DockWindowController::update_dock_layout()
         monitor_layout.native_workarea;
     const auto workarea_geometry =
         monitor_layout.sizing_workarea;
+    const bool output_changed =
+        !same_monitor_geometry(
+            m_output_geometry,
+            output_geometry);
     m_output_geometry = output_geometry;
     m_usable_monitor_geometry =
         monitor_layout.usable_monitor;
@@ -887,12 +914,25 @@ void DockWindowController::update_dock_layout()
             native_workarea_geometry);
     }
 
-    m_window.apply_dock_layout(
-        placement,
-        output_geometry,
-        native_workarea_geometry);
+    const bool placement_changed =
+        !m_has_applied_layout ||
+        output_changed ||
+        !same_dock_placement(
+            m_placement,
+            placement);
+
+    if (placement_changed)
+    {
+        m_window.apply_dock_layout(
+            placement,
+            output_geometry,
+            native_workarea_geometry);
+    }
 
     m_placement = placement;
+
+    if (!placement_changed)
+        return;
 
     const int requested_width =
         placement.width > 0
@@ -963,6 +1003,12 @@ void DockWindowController::update_dock_layout()
     schedule_icon_geometry_update();
 }
 
+bool DockWindowController::is_fully_revealed() const
+{
+    return m_autohide_controller &&
+           m_autohide_controller->is_fully_revealed();
+}
+
 void DockWindowController::inhibit_autohide()
 {
     m_autohide_controller->inhibit();
@@ -1005,69 +1051,17 @@ void DockWindowController::update_effective_icon_size(
     const int requested_icon_size =
         std::max(1, m_settings.icon_size());
 
-    int effective_icon_size =
-        requested_icon_size;
-
     const int monitor_length =
         orientation == DockOrientation::horizontal
             ? monitor.width
             : monitor.height;
 
-    if (item_count > 0 && monitor_length > 0)
-    {
-        const int available_length =
-            std::max(
-                0,
-                monitor_length -
-                    2 * DockLayoutMetrics::DOCK_MARGIN);
-
-        const int maximum_item_size =
-            available_length /
-            item_count;
-
-        const int maximum_icon_size =
-            std::max(
-                1,
-                maximum_item_size -
-                    2 * DockLayoutMetrics::DOCK_ITEM_PADDING);
-
-        effective_icon_size =
-            std::min(
-                requested_icon_size,
-                maximum_icon_size);
-    }
-
-    m_window.m_leading_main_axis_margin =
-        DockLayoutMetrics::DOCK_MARGIN;
-
-    m_window.m_trailing_main_axis_margin =
-        DockLayoutMetrics::DOCK_MARGIN;
-
-    const bool constrained =
-        effective_icon_size < requested_icon_size;
-
-    if (constrained && item_count > 0)
-    {
-        const int items_length =
-            item_count *
-            DockLayoutMetrics::item_size_for(
-                effective_icon_size);
-
-        const int remaining_length =
-            std::max(
-                0,
-                monitor_length - items_length);
-
-        m_window.m_leading_main_axis_margin =
-            remaining_length / 2;
-
-        m_window.m_trailing_main_axis_margin =
-            remaining_length -
-            m_window.m_leading_main_axis_margin;
-    }
-
-    m_window.apply_main_axis_end_margins(
-        orientation);
+    const int effective_icon_size =
+        DockLayoutMetrics::fitted_icon_size_for(
+            requested_icon_size,
+            item_count,
+            monitor_length,
+            m_window.magnified_surface_enabled());
 
     const bool size_changed =
         effective_icon_size !=
@@ -1075,6 +1069,20 @@ void DockWindowController::update_effective_icon_size(
 
     m_window.m_effective_icon_size =
         effective_icon_size;
+
+    m_window.m_leading_main_axis_margin =
+        DockLayoutMetrics::DOCK_MARGIN;
+
+    m_window.m_trailing_main_axis_margin =
+        DockLayoutMetrics::DOCK_MARGIN;
+
+    m_window.m_leading_main_axis_margin +=
+        m_window.m_magnified_main_axis_margin_extra;
+    m_window.m_trailing_main_axis_margin +=
+        m_window.m_magnified_main_axis_margin_extra;
+
+    m_window.apply_main_axis_end_margins(
+        orientation);
 
     for (auto *item : items)
     {
