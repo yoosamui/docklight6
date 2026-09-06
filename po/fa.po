@@ -6,15 +6,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 13:58+0700\n"
+"POT-Creation-Date: 2026-09-06 21:59+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
 "Language: fa\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: none\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
 #: src/main.cpp:355
@@ -23,457 +23,449 @@ msgstr "پیش نمایش پنجره غیرفعال است"
 
 #: src/main.cpp:361
 msgid "DockLight"
-msgstr "نور Dock"
+msgstr "DockLight"
 
 #: src/main.cpp:368
-msgid ""
-"Openbox requires an X11 compositor for complete window previews. Display "
-"Preview is disabled. Start compton or picom, then enable Display Preview in "
-"DockLight Settings."
-msgstr ""
-"Openbox برای پیش نمایش کامل پنجره به یک کامپوزیتور X11 نیاز دارد. نمایش پیش "
-"نمایش غیرفعال است. Compton یا picom را شروع کنید، سپس نمایش پیش نمایش را در "
-"تنظیمات DockLight فعال کنید."
+msgid "Openbox requires an X11 compositor for complete window previews. Display Preview is disabled. Start compton or picom, then enable Display Preview in DockLight Settings."
+msgstr "Openbox برای پیش نمایش کامل پنجره به یک کامپوزیتور X11 نیاز دارد. نمایش پیش نمایش غیرفعال است. Compton یا picom را شروع کنید، سپس نمایش پیش نمایش را در تنظیمات DockLight فعال کنید."
 
-#: src/dock/dock_item.cpp:159
+#: src/dock/dock_item.cpp:162
 msgid "_Edit"
-msgstr ""
+msgstr "_ویرایش کنید"
 
-#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+#: src/dialogs/dock_session_editor_item.cpp:108 src/dock/dock_item.cpp:165
 msgid "_Remove"
 msgstr "_حذف"
 
-#: src/dock/dock_item.cpp:165
+#: src/dock/dock_item.cpp:168
 msgid "_Attach"
 msgstr "_پین به داک"
 
-#: src/dock/dock_item.cpp:168
+#: src/dock/dock_item.cpp:171
 msgid "_Open New Window"
 msgstr "_پنجره جدید را باز کنید"
 
-#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
+#: src/dock/dock_home_item.cpp:77 src/dock/dock_item.cpp:174
 msgid "_Close All"
 msgstr "_همه را ببند"
 
-#: src/dock/dock_item.cpp:174
+#: src/dock/dock_item.cpp:177
 msgid "_Minimize"
 msgstr "_به حداقل برسانید"
 
-#: src/dock/dock_item.cpp:177
+#: src/dock/dock_item.cpp:180
 msgid "_Unminimize"
 msgstr "_بازیابی"
 
-#: src/dock/dock_item.cpp:180
-msgid "_Maximize"
+#: src/dock/dock_item.cpp:183
+msgid "Ma_ximize"
 msgstr "_به حداکثر رساندن"
 
-#: src/dock/dock_home_item.cpp:59
+#: src/dock/dock_home_item.cpp:62
 msgid "_Settings"
 msgstr "_تنظیمات"
 
-#: src/dock/dock_home_item.cpp:62
-msgid "Sessi_on"
-msgstr ""
-
 #: src/dock/dock_home_item.cpp:65
+msgid "Sessi_on"
+msgstr "_جلسه"
+
+#: src/dock/dock_home_item.cpp:68
 msgid "_Minimize All"
 msgstr "_به حداقل رساندن همه"
 
-#: src/dock/dock_home_item.cpp:68
+#: src/dock/dock_home_item.cpp:71
 msgid "_Unminimize All"
 msgstr "_بازیابی همه"
 
-#: src/dock/dock_home_item.cpp:71
-msgid "_Maximize All"
+#: src/dock/dock_home_item.cpp:74
+msgid "Ma_ximize All"
 msgstr "_به حداکثر رساندن همه"
 
-#: src/dock/dock_home_item.cpp:77
+#: src/dock/dock_home_item.cpp:80
 msgid "_About"
 msgstr "_درباره"
 
-#: src/dock/dock_home_item.cpp:80
+#: src/dock/dock_home_item.cpp:83
 msgid "_Exit"
 msgstr "_خروج"
 
-#: src/dock/dock_home_item.cpp:194
+#: src/dock/dock_home_item.cpp:310
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "صفحه اصلی"
 
-#: src/dialogs/dock_settings_dialog.cpp:215
-#: src/dialogs/dock_settings_dialog.cpp:260
+#: src/dialogs/dock_settings_dialog.cpp:243
+#: src/dialogs/dock_settings_dialog.cpp:288
 msgid "DockLight Settings"
 msgstr "تنظیمات DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:288
-#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
+#: src/dialogs/dock_session_dialog.cpp:1019
+#: src/dialogs/dock_settings_dialog.cpp:316
 msgid "_Close"
 msgstr "_ببند"
 
-#: src/dialogs/dock_settings_dialog.cpp:299
+#: src/dialogs/dock_settings_dialog.cpp:327
 msgid "Appearance"
 msgstr "ظاهر"
 
-#: src/dialogs/dock_settings_dialog.cpp:301
+#: src/dialogs/dock_settings_dialog.cpp:329
 msgid "Behavior"
 msgstr "رفتار"
 
-#: src/dialogs/dock_settings_dialog.cpp:303
+#: src/dialogs/dock_settings_dialog.cpp:331
 msgid "Position & Autohide"
 msgstr "موقعیت و مخفی شدن خودکار"
 
-#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:358
 msgid "Monitor"
 msgstr "نظارت کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:332
+#: src/dialogs/dock_settings_dialog.cpp:360
 msgid "Hover Effect"
 msgstr "اثر شناور"
 
-#: src/dialogs/dock_settings_dialog.cpp:334
+#: src/dialogs/dock_settings_dialog.cpp:362
 msgid "Indicator"
 msgstr "شاخص"
 
-#: src/dialogs/dock_settings_dialog.cpp:336
-#: src/dialogs/dock_settings_dialog.cpp:551
+#: src/dialogs/dock_settings_dialog.cpp:364
+#: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Indicator Color"
 msgstr "رنگ نشانگر"
 
-#: src/dialogs/dock_settings_dialog.cpp:338
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:366
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgid "Preview Color"
 msgstr "رنگ پیش‌نمایش"
 
-#: src/dialogs/dock_settings_dialog.cpp:340
+#: src/dialogs/dock_settings_dialog.cpp:368
 msgid "Display Home Icon"
 msgstr "نمایش نماد صفحه اصلی"
 
-#: src/dialogs/dock_settings_dialog.cpp:342
+#: src/dialogs/dock_settings_dialog.cpp:370
 msgid "Home Icon"
 msgstr "نماد صفحه اصلی"
 
-#: src/dialogs/dock_settings_dialog.cpp:344
+#: src/dialogs/dock_settings_dialog.cpp:372
 msgid "Display Tooltips"
 msgstr "نمایش نکات ابزار"
 
-#: src/dialogs/dock_settings_dialog.cpp:346
+#: src/dialogs/dock_settings_dialog.cpp:374
 msgid "Display Preview"
 msgstr "نمایش پیش نمایش"
 
-#: src/dialogs/dock_settings_dialog.cpp:348
+#: src/dialogs/dock_settings_dialog.cpp:376
 msgid "Close Preview After Activation"
 msgstr "پیش نمایش را بعد از فعال سازی ببندید"
 
-#: src/dialogs/dock_settings_dialog.cpp:350
+#: src/dialogs/dock_settings_dialog.cpp:378
 msgid "Manage All Workspaces"
 msgstr "مدیریت همه فضاهای کاری"
 
-#: src/dialogs/dock_settings_dialog.cpp:352
+#: src/dialogs/dock_settings_dialog.cpp:380
 msgid "Icon Size"
 msgstr "اندازه آیکون"
 
-#: src/dialogs/dock_settings_dialog.cpp:354
+#: src/dialogs/dock_settings_dialog.cpp:382
 msgid "Preview Card Height"
 msgstr "پیش نمایش ارتفاع کارت"
 
-#: src/dialogs/dock_settings_dialog.cpp:356
+#: src/dialogs/dock_settings_dialog.cpp:384
 msgid "Preview Show Delay (ms)"
 msgstr "پیش نمایش نمایش تاخیر (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:358
+#: src/dialogs/dock_settings_dialog.cpp:386
 msgid "Location"
 msgstr "مکان"
 
-#: src/dialogs/dock_settings_dialog.cpp:360
+#: src/dialogs/dock_settings_dialog.cpp:388
 msgid "Gradient Background"
 msgstr "پس زمینه گرادیان"
 
-#: src/dialogs/dock_settings_dialog.cpp:362
+#: src/dialogs/dock_settings_dialog.cpp:390
 msgid "Rounded Corners"
 msgstr "گوشه های گرد"
 
-#: src/dialogs/dock_settings_dialog.cpp:364
+#: src/dialogs/dock_settings_dialog.cpp:392
 msgid "Corner Radius"
 msgstr "شعاع گوشه"
 
-#: src/dialogs/dock_settings_dialog.cpp:366
+#: src/dialogs/dock_settings_dialog.cpp:394
 msgid "Alignment"
 msgstr "تراز"
 
-#: src/dialogs/dock_settings_dialog.cpp:368
+#: src/dialogs/dock_settings_dialog.cpp:396
 msgid "Autohide"
 msgstr "پنهان کردن خودکار"
 
-#: src/dialogs/dock_settings_dialog.cpp:370
+#: src/dialogs/dock_settings_dialog.cpp:398
 msgid "Autohide Effect"
 msgstr "جلوهٔ پنهان‌سازی خودکار"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:400
 msgid "Autohide Delay (ms)"
 msgstr "تأخیر پنهان کردن خودکار (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:430
+#: src/dialogs/dock_settings_dialog.cpp:458
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "مانیتور اولیه"
 
-#: src/dialogs/dock_settings_dialog.cpp:469
+#: src/dialogs/dock_settings_dialog.cpp:496
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "اثر استاندارد"
 
-#: src/dialogs/dock_settings_dialog.cpp:471
+#: src/dialogs/dock_settings_dialog.cpp:498
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "جلوه زوم"
 
-#: src/dialogs/dock_settings_dialog.cpp:473
+#: src/dialogs/dock_settings_dialog.cpp:500
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "جلوه تاری"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
+#: src/dialogs/dock_settings_dialog.cpp:502
+msgctxt "hover effect"
+msgid "Magnified"
+msgstr "بزرگنمایی شده است"
+
+#: src/dialogs/dock_settings_dialog.cpp:535
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "نشانگرهای خطی"
 
-#: src/dialogs/dock_settings_dialog.cpp:512
+#: src/dialogs/dock_settings_dialog.cpp:537
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "نشانگرهای نقطه"
 
-#: src/dialogs/dock_settings_dialog.cpp:553
+#: src/dialogs/dock_settings_dialog.cpp:572
 msgid "Choose the indicator color"
 msgstr "رنگ نشانگر را انتخاب کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:572
+#: src/dialogs/dock_settings_dialog.cpp:591
 msgid "Choose the preview color"
 msgstr "رنگ پیش‌نمایش را انتخاب کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:584
+#: src/dialogs/dock_settings_dialog.cpp:603
 msgid "Select…"
 msgstr "انتخاب…"
 
-#: src/dialogs/dock_settings_dialog.cpp:586
+#: src/dialogs/dock_settings_dialog.cpp:605
 msgid "Use Default"
 msgstr "از پیش فرض استفاده کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:594
+#: src/dialogs/dock_settings_dialog.cpp:613
 msgid "Built-in DockLight icon"
 msgstr "نماد DockLight داخلی"
 
-#: src/dialogs/dock_settings_dialog.cpp:628
+#: src/dialogs/dock_settings_dialog.cpp:647
 msgid "Otherwise keep the preview open until the pointer leaves it"
-msgstr ""
-"در غیر این صورت پیش نمایش را باز نگه دارید تا زمانی که نشانگر آن را ترک کند"
+msgstr "در غیر این صورت پیش نمایش را باز نگه دارید تا زمانی که نشانگر آن را ترک کند"
 
-#: src/dialogs/dock_settings_dialog.cpp:635
+#: src/dialogs/dock_settings_dialog.cpp:654
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
-msgstr ""
-"اعمال نمادها و دوچرخه‌سواری با چرخ ماوس را در تمام فضاهای کاری اعمال کنید"
+msgstr "اعمال نمادها و دوچرخه‌سواری با چرخ ماوس را در تمام فضاهای کاری اعمال کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:666
+#: src/dialogs/dock_settings_dialog.cpp:685
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
-msgstr ""
-"0 اندازه خودکار را انتخاب می کند. در غیر این صورت از 64 تا 512 پیکسل استفاده "
-"کنید"
+msgstr "0 اندازه خودکار را انتخاب می کند. در غیر این صورت از 64 تا 512 پیکسل استفاده کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:683
+#: src/dialogs/dock_settings_dialog.cpp:702
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr "تأخیر قبل از نمایش پیش نمایش پنجره، از 0 تا 5000 میلی ثانیه"
 
-#: src/dialogs/dock_settings_dialog.cpp:701
+#: src/dialogs/dock_settings_dialog.cpp:720
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "تاخیر قبل از پنهان شدن حوض، از 0 تا 5000 میلی ثانیه"
 
-#: src/dialogs/dock_settings_dialog.cpp:708
+#: src/dialogs/dock_settings_dialog.cpp:726
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "لبه پایین"
 
-#: src/dialogs/dock_settings_dialog.cpp:710
+#: src/dialogs/dock_settings_dialog.cpp:728
 msgctxt "dock location"
 msgid "Left"
 msgstr "لبه سمت چپ"
 
-#: src/dialogs/dock_settings_dialog.cpp:712
+#: src/dialogs/dock_settings_dialog.cpp:730
 msgctxt "dock location"
 msgid "Top"
 msgstr "لبه بالایی"
 
-#: src/dialogs/dock_settings_dialog.cpp:714
+#: src/dialogs/dock_settings_dialog.cpp:732
 msgctxt "dock location"
 msgid "Right"
 msgstr "لبه سمت راست"
 
-#: src/dialogs/dock_settings_dialog.cpp:782
+#: src/dialogs/dock_settings_dialog.cpp:788
 msgid "-1 selects the automatic radius"
 msgstr "-1 شعاع خودکار را انتخاب می کند"
 
-#: src/dialogs/dock_settings_dialog.cpp:788
+#: src/dialogs/dock_settings_dialog.cpp:793
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "تراز شروع"
 
-#: src/dialogs/dock_settings_dialog.cpp:790
+#: src/dialogs/dock_settings_dialog.cpp:795
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "متمرکز شده است"
 
-#: src/dialogs/dock_settings_dialog.cpp:792
+#: src/dialogs/dock_settings_dialog.cpp:797
 msgctxt "dock alignment"
 msgid "End"
 msgstr "تراز انتهایی"
 
-#: src/dialogs/dock_settings_dialog.cpp:794
+#: src/dialogs/dock_settings_dialog.cpp:799
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "فضای موجود را پر کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:840
+#: src/dialogs/dock_settings_dialog.cpp:832
 msgctxt "autohide mode"
 msgid "None"
 msgstr "از کار افتاده است"
 
-#: src/dialogs/dock_settings_dialog.cpp:842
+#: src/dialogs/dock_settings_dialog.cpp:834
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "خودکار"
 
-#: src/dialogs/dock_settings_dialog.cpp:844
+#: src/dialogs/dock_settings_dialog.cpp:836
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "باهوش"
 
-#: src/dialogs/dock_settings_dialog.cpp:903
+#: src/dialogs/dock_settings_dialog.cpp:885
 msgctxt "autohide effect"
 msgid "Plasma"
 msgstr "Plasma"
 
-#: src/dialogs/dock_settings_dialog.cpp:909
-#: src/dialogs/dock_settings_dialog.cpp:918
+#: src/dialogs/dock_settings_dialog.cpp:890
+#: src/dialogs/dock_settings_dialog.cpp:898
 msgctxt "autohide effect"
 msgid "Slide"
 msgstr "لغزش"
 
-#: src/dialogs/dock_settings_dialog.cpp:921
+#: src/dialogs/dock_settings_dialog.cpp:901
 msgctxt "autohide effect"
 msgid "Slide and Fade"
 msgstr "لغزش و محو شدن"
 
-#: src/dialogs/dock_settings_dialog.cpp:927
+#: src/dialogs/dock_settings_dialog.cpp:906
 msgctxt "autohide effect"
 msgid "GNOME"
 msgstr "GNOME"
 
-#: src/dialogs/dock_settings_dialog.cpp:1050
+#: src/dialogs/dock_settings_dialog.cpp:1029
 msgid "Set the dock icon size from 32 to 128 pixels."
 msgstr "اندازه نماد داک را از 32 تا 128 پیکسل تنظیم کنید."
 
-#: src/dialogs/dock_settings_dialog.cpp:1057
+#: src/dialogs/dock_settings_dialog.cpp:1036
 msgid "Choose how icons respond when the pointer moves over them."
 msgstr "انتخاب کنید که نمادها هنگام حرکت نشانگر روی آن‌ها چگونه پاسخ دهند."
 
-#: src/dialogs/dock_settings_dialog.cpp:1064
+#: src/dialogs/dock_settings_dialog.cpp:1043
 msgid "Select how running applications are marked on the dock."
 msgstr "انتخاب کنید که برنامه‌های در حال اجرا چگونه روی داک علامت‌گذاری شوند."
 
-#: src/dialogs/dock_settings_dialog.cpp:1071
+#: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the color of running-application indicators."
 msgstr "رنگ نشانگرهای برنامه‌های در حال اجرا را تنظیم کنید."
 
-#: src/dialogs/dock_settings_dialog.cpp:1078
+#: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Use a GTK theme-derived gradient instead of a solid background."
 msgstr "به جای پس‌زمینه یک‌دست، از گرادیان مشتق‌شده از تم GTK استفاده کنید."
 
-#: src/dialogs/dock_settings_dialog.cpp:1085
+#: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Round the corners of the dock background."
 msgstr "گوشه‌های پس‌زمینه داک را گرد کنید."
 
-#: src/dialogs/dock_settings_dialog.cpp:1092
+#: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
 msgstr "شعاع گوشه را بر حسب پیکسل تنظیم کنید؛ -1 انتخاب اندازه خودکار است."
 
-#: src/dialogs/dock_settings_dialog.cpp:1099
+#: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Show the DockLight home and launcher-management icon."
 msgstr "نمایش نماد خانه و مدیریت راه‌انداز DockLight."
 
-#: src/dialogs/dock_settings_dialog.cpp:1106
+#: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Choose a custom image for the home icon, or use the built-in icon."
 msgstr "انتخاب یک تصویر سفارشی برای نماد خانه، یا استفاده از نماد پیش‌فرض."
 
-#: src/dialogs/dock_settings_dialog.cpp:1115
+#: src/dialogs/dock_settings_dialog.cpp:1094
 msgid "Show application names when the pointer rests on dock icons."
 msgstr "نمایش نام برنامه‌ها هنگامی که نشانگر بر روی آیکون‌های داک قرار می‌گیرد."
 
-#: src/dialogs/dock_settings_dialog.cpp:1122
+#: src/dialogs/dock_settings_dialog.cpp:1101
 msgid "Include windows from every workspace in dock actions and cycling."
 msgstr "شامل کردن پنجره‌ها از تمام فضای کاری در عملکردها و چرخه داک."
 
-#: src/dialogs/dock_settings_dialog.cpp:1129
+#: src/dialogs/dock_settings_dialog.cpp:1108
 msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
-"نمایش پیش‌نمایش پنجره‌ها هنگامی که نشانگر بر روی برنامه‌های در حال اجرا قرار "
-"می‌گیرد."
+msgstr "نمایش پیش‌نمایش پنجره‌ها هنگامی که نشانگر بر روی برنامه‌های در حال اجرا قرار می‌گیرد."
 
-#: src/dialogs/dock_settings_dialog.cpp:1136
+#: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Close the preview popup after activating one of its windows."
 msgstr "بستن پنجره پیش‌نمایش پس از فعال کردن یکی از پنجره‌های آن."
 
-#: src/dialogs/dock_settings_dialog.cpp:1143
+#: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Set the accent color used by window previews."
 msgstr "تنظیم رنگ تأکید استفاده‌شده در پیش‌نمایش پنجره‌ها."
 
-#: src/dialogs/dock_settings_dialog.cpp:1150
+#: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
-"تنظیم ارتفاع پیش‌نمایش بر حسب پیکسل؛ 0 برای اندازه‌گیری خودکار انتخاب می‌شود."
+msgstr "تنظیم ارتفاع پیش‌نمایش بر حسب پیکسل؛ 0 برای اندازه‌گیری خودکار انتخاب می‌شود."
 
-#: src/dialogs/dock_settings_dialog.cpp:1157
+#: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Set how long to wait before showing a preview."
 msgstr "تنظیم مدت زمان انتظار قبل از نمایش پیش‌نمایش."
 
-#: src/dialogs/dock_settings_dialog.cpp:1165
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Choose the display where DockLight appears."
 msgstr "انتخاب نمایشگری که DockLight در آن ظاهر می‌شود."
 
-#: src/dialogs/dock_settings_dialog.cpp:1172
+#: src/dialogs/dock_settings_dialog.cpp:1151
 msgid "Choose the screen edge where the dock is placed."
 msgstr "انتخاب لبه صفحه نمایش که داک در آن قرار می‌گیرد."
 
-#: src/dialogs/dock_settings_dialog.cpp:1179
+#: src/dialogs/dock_settings_dialog.cpp:1158
 msgid "Align dock content along the selected screen edge."
 msgstr "تراز کردن محتوای داک در طول لبه صفحه نمایش انتخاب‌شده."
 
-#: src/dialogs/dock_settings_dialog.cpp:1186
+#: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose when the dock moves out of view."
 msgstr "انتخاب زمان حرکت داک به خارج از دید."
 
-#: src/dialogs/dock_settings_dialog.cpp:1193
+#: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Set how long to wait before hiding the dock."
 msgstr "تنظیم مدت زمان انتظار قبل از پنهان شدن داک."
 
-#: src/dialogs/dock_settings_dialog.cpp:1203
+#: src/dialogs/dock_settings_dialog.cpp:1182
 msgid "Choose an autohide animation supported by this desktop."
 msgstr "انتخاب یک انیمیشن پنهان‌سازی خودکار که توسط این دسکتاپ پشتیبانی می‌شود."
 
-#: src/dialogs/dock_settings_dialog.cpp:1451
-#: src/dialogs/dock_settings_dialog.cpp:1488
+#: src/dialogs/dock_settings_dialog.cpp:1432
+#: src/dialogs/dock_settings_dialog.cpp:1469
 msgid "Select Home Icon"
 msgstr "نماد صفحه اصلی را انتخاب کنید"
 
-#: src/dialogs/dock_settings_dialog.cpp:1456
 #: src/dialogs/dock_session_dialog.cpp:509
+#: src/dialogs/dock_settings_dialog.cpp:1437
 msgid "_Cancel"
 msgstr "_لغو"
 
-#: src/dialogs/dock_settings_dialog.cpp:1459
+#: src/dialogs/dock_settings_dialog.cpp:1440
 msgid "_Open"
 msgstr "_باز کن"
 
-#: src/dialogs/dock_settings_dialog.cpp:1525
 #: src/dialogs/dock_session_dialog.cpp:520
+#: src/dialogs/dock_settings_dialog.cpp:1506
 msgid "Image Files"
 msgstr "فایل‌های تصویری"
 
@@ -487,7 +479,7 @@ msgid "_Session Name"
 msgstr "_نام جلسه"
 
 #: src/dialogs/dock_session_dialog.cpp:315
-#: src/dialogs/dock_session_dialog.cpp:717
+#: src/dialogs/dock_session_dialog.cpp:702
 msgid "Session name"
 msgstr "نام جلسه"
 
@@ -512,66 +504,61 @@ msgid "_Select"
 msgstr "_نام جلسه"
 
 #: src/dialogs/dock_session_dialog.cpp:578
-#: src/dialogs/dock_session_dialog.cpp:987
+#: src/dialogs/dock_session_dialog.cpp:941
 msgid "Custom"
 msgstr "سفارشی"
 
-#: src/dialogs/dock_session_dialog.cpp:702
+#: src/dialogs/dock_session_dialog.cpp:687
 msgid "Cannot save Session."
 msgstr "ذخیرهٔ نشست ممکن نیست."
 
-#: src/dialogs/dock_session_dialog.cpp:709
+#: src/dialogs/dock_session_dialog.cpp:694
 msgid "%1 cannot be empty or contain only whitespace."
 msgstr "%1 نمی‌تواند خالی باشد یا فقط شامل فاصله باشد."
 
-#: src/dialogs/dock_session_dialog.cpp:724
+#: src/dialogs/dock_session_dialog.cpp:709
 msgid "Session icon"
 msgstr "نماد نشست"
 
-#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_dialog.cpp:730
 #: src/dialogs/dock_session_editor_item.cpp:109
 msgid "Desktop File"
 msgstr "فایل دسکتاپ"
 
-#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_dialog.cpp:738
 #: src/dialogs/dock_session_editor_item.cpp:110
 msgid "App Name"
 msgstr "نام برنامه"
 
-#: src/dialogs/dock_session_dialog.cpp:761
+#: src/dialogs/dock_session_dialog.cpp:746
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
 msgstr "عنوان برنامه"
 
-#: src/dialogs/dock_session_dialog.cpp:769
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr "پارامترها"
-
-#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_dialog.cpp:754
 #: src/dialogs/dock_session_editor_item.cpp:112
 msgid "Workspace"
 msgstr "فضای کاری"
 
-#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_dialog.cpp:762
 #: src/dialogs/dock_session_editor_item.cpp:113
 msgid "Dimensions"
 msgstr "ابعاد"
 
-#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_dialog.cpp:770
 #: src/dialogs/dock_session_editor_item.cpp:114
 msgid "Position"
 msgstr "موقعیت"
 
-#: src/dialogs/dock_session_dialog.cpp:818
+#: src/dialogs/dock_session_dialog.cpp:795
 msgid "A Session with this name already exists."
 msgstr "یک جلسه با این نام از قبل وجود دارد."
 
-#: src/dialogs/dock_session_dialog.cpp:825
+#: src/dialogs/dock_session_dialog.cpp:802
 msgid "Choose a different name for “%1”."
 msgstr "نام دیگری برای “%1” انتخاب کنید."
 
-#: src/dialogs/dock_session_dialog.cpp:1059
+#: src/dialogs/dock_session_dialog.cpp:1013
 msgid "_Save"
 msgstr "_ذخیره"
 
@@ -583,61 +570,61 @@ msgstr "_چسباندن"
 msgid "_Launch"
 msgstr "_اجرا"
 
-#: src/dialogs/dock_session_editor_item.cpp:144
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "پارامترها"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
 msgid "Application title"
 msgstr "عنوان برنامه"
 
-#: src/dialogs/dock_session_editor_item.cpp:148
+#: src/dialogs/dock_session_editor_item.cpp:147
 msgid "Desktop file"
 msgstr "فایل دسکتاپ"
 
-#: src/dialogs/dock_session_editor_item.cpp:152
+#: src/dialogs/dock_session_editor_item.cpp:151
 msgid "Application name"
 msgstr "نام برنامه"
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:155
 msgid "Command-line parameters"
 msgstr "پارامترهای خط فرمان"
 
-#: src/dialogs/dock_session_editor_item.cpp:161
+#: src/dialogs/dock_session_editor_item.cpp:160
 msgid "Workspace number"
 msgstr "شماره فضای کاری"
 
-#: src/dialogs/dock_session_editor_item.cpp:253
+#: src/dialogs/dock_session_editor_item.cpp:252
 msgid "No application window is available to copy."
 msgstr "هیچ پنجره‌ای از برنامه برای کپی کردن در دسترس نیست."
 
-#: src/dialogs/dock_session_editor_item.cpp:422
+#: src/dialogs/dock_session_editor_item.cpp:421
 msgid "Paste a window into this item before launching it."
 msgstr "قبل از اجرای این مورد، یک پنجره را در آن جای‌گذاری کنید."
 
-#: src/dialogs/dock_session_editor_item.cpp:450
-msgid ""
-"The application was launched. This desktop session cannot place windows, so "
-"Workspace, Dimensions, and Position were ignored."
-msgstr ""
-"برنامه اجرا شد. این جلسه دسکتاپ نمی‌تواند پنجره‌ها را قرار دهد، بنابراین فضای "
-"کاری، ابعاد و موقعیت نادیده گرفته شدند."
+#: src/dialogs/dock_session_editor_item.cpp:449
+msgid "The application was launched. This desktop session cannot place windows, so Workspace, Dimensions, and Position were ignored."
+msgstr "برنامه اجرا شد. این جلسه دسکتاپ نمی‌تواند پنجره‌ها را قرار دهد، بنابراین فضای کاری، ابعاد و موقعیت نادیده گرفته شدند."
 
 #: src/launchers/session_launcher.cpp:622
 msgid "This Session item has no application."
-msgstr ""
+msgstr "این مورد Session کاربردی ندارد."
 
 #: src/launchers/session_launcher.cpp:631
 msgid "No installed application matches \"%1\"."
-msgstr ""
+msgstr "هیچ برنامه نصب شده با \"%1\" مطابقت ندارد."
 
 #: src/launchers/session_launcher.cpp:646
 msgid "The parameters cannot be parsed: %1"
-msgstr ""
+msgstr "پارامترها قابل تجزیه نیستند: %1"
 
 #: src/launchers/session_launcher.cpp:653
 msgid "%1 does not declare a command that accepts parameters."
-msgstr ""
+msgstr "%1 فرمانی را که پارامترها را می پذیرد، اعلام نمی کند."
 
 #: src/launchers/session_launcher.cpp:697
 msgid "%1 cannot be launched: %2"
-msgstr ""
+msgstr "%1 نمی تواند راه اندازی شود: %2"
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -648,15 +635,16 @@ msgid "Version %1"
 msgstr "نسخه نرم افزار %1"
 
 #: src/dialogs/dock_about_dialog.cpp:201
-#, fuzzy
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui\n"
 "\n"
 "Copyright © 2018-2026 Juan González"
 msgstr ""
-"یک داک کاربردی سبک.\n"
-"نویسنده و نگهدارنده: yoosamui"
+"یک داک نرم افزاری سبک.\n"
+"نویسنده و نگهدارنده: yoosamui\n"
+"\n"
+"حق چاپ © 2018-2026 Juan González"
 
 #: src/dialogs/dock_about_dialog.cpp:211
 msgid ""
@@ -695,8 +683,16 @@ msgstr "مانیتور اولیه"
 msgctxt "monitor status"
 msgid "default"
 msgstr "مانیتور پیش فرض"
+
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "از گرادیان پس‌زمینه داک سیاه به خاکستری استفاده کنید"
+
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "محو شدن"
+
+#~ msgid "_Maximize"
+#~ msgstr "_به حداکثر رساندن"
+
+#~ msgid "_Maximize All"
+#~ msgstr "_به حداکثر رساندن همه"

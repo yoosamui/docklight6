@@ -6,16 +6,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 13:58+0700\n"
+"POT-Creation-Date: 2026-09-06 21:59+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
 "Language: cy\n"
+"Language-Team: none\n"
+"Plural-Forms: nplurals=5; plural=(n==1 ? 1 : n==2 ? 2 : n==3 ? 3 : n==6 ? 4 : 0);\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=5; plural=(n==1 ? 1 : n==2 ? 2 : n==3 ? 3 : n==6 ? "
-"4 : 0);\n"
 "Generated-By: Babel 2.17.0\n"
 
 #: src/main.cpp:355
@@ -24,625 +23,608 @@ msgstr "Mae rhagolygon ffenestri wedi'u hanalluogi"
 
 #: src/main.cpp:361
 msgid "DockLight"
-msgstr "DockGolau"
+msgstr "DockLight"
 
 #: src/main.cpp:368
-msgid ""
-"Openbox requires an X11 compositor for complete window previews. Display "
-"Preview is disabled. Start compton or picom, then enable Display Preview in "
-"DockLight Settings."
-msgstr ""
-"Mae angen cyfansoddwr X11 ar Openbox ar gyfer rhagolygon ffenestr cyflawn. "
-"Mae Rhagolwg Arddangos wedi'i analluogi. Dechreuwch compton neu picom, yna "
-"galluogwch Rhagolwg Arddangos mewn Gosodiadau DockLight."
+msgid "Openbox requires an X11 compositor for complete window previews. Display Preview is disabled. Start compton or picom, then enable Display Preview in DockLight Settings."
+msgstr "Mae angen cyfansoddwr X11 ar Openbox ar gyfer rhagolygon ffenestr cyflawn. Mae Rhagolwg Arddangos wedi'i analluogi. Dechreuwch compton neu picom, yna galluogwch Rhagolwg Arddangos mewn Gosodiadau DockLight."
 
-#: src/dock/dock_item.cpp:159
+#: src/dock/dock_item.cpp:162
 msgid "_Edit"
-msgstr ""
+msgstr "_Golygu"
 
-#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+#: src/dialogs/dock_session_editor_item.cpp:108 src/dock/dock_item.cpp:165
 msgid "_Remove"
-msgstr ""
+msgstr "_Dileu"
 
-#: src/dock/dock_item.cpp:165
+#: src/dock/dock_item.cpp:168
 msgid "_Attach"
 msgstr "_Pin i Ddoc"
 
-#: src/dock/dock_item.cpp:168
+#: src/dock/dock_item.cpp:171
 msgid "_Open New Window"
 msgstr "_Agor Ffenest Newydd"
 
-#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
+#: src/dock/dock_home_item.cpp:77 src/dock/dock_item.cpp:174
 msgid "_Close All"
 msgstr "_Cau Pawb"
 
-#: src/dock/dock_item.cpp:174
+#: src/dock/dock_item.cpp:177
 msgid "_Minimize"
 msgstr "_Llai"
 
-#: src/dock/dock_item.cpp:177
+#: src/dock/dock_item.cpp:180
 msgid "_Unminimize"
 msgstr "_Adfer"
 
-#: src/dock/dock_item.cpp:180
-msgid "_Maximize"
-msgstr "_Mwyafu"
+#: src/dock/dock_item.cpp:183
+msgid "Ma_ximize"
+msgstr "_Mwyhau"
 
-#: src/dock/dock_home_item.cpp:59
+#: src/dock/dock_home_item.cpp:62
 msgid "_Settings"
 msgstr "_Gosodiadau"
 
-#: src/dock/dock_home_item.cpp:62
-msgid "Sessi_on"
-msgstr ""
-
 #: src/dock/dock_home_item.cpp:65
+msgid "Sessi_on"
+msgstr "_Sesiwn"
+
+#: src/dock/dock_home_item.cpp:68
 msgid "_Minimize All"
 msgstr "_Lleihau Pawb"
 
-#: src/dock/dock_home_item.cpp:68
+#: src/dock/dock_home_item.cpp:71
 msgid "_Unminimize All"
 msgstr "_Adfer Pawb"
 
-#: src/dock/dock_home_item.cpp:71
-msgid "_Maximize All"
-msgstr "_Masimeiddio Pawb"
+#: src/dock/dock_home_item.cpp:74
+msgid "Ma_ximize All"
+msgstr "_Mwyhau Pawb"
 
-#: src/dock/dock_home_item.cpp:77
+#: src/dock/dock_home_item.cpp:80
 msgid "_About"
 msgstr "_Am"
 
-#: src/dock/dock_home_item.cpp:80
+#: src/dock/dock_home_item.cpp:83
 msgid "_Exit"
 msgstr "_Gadael"
 
-#: src/dock/dock_home_item.cpp:194
+#: src/dock/dock_home_item.cpp:310
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Cartref"
 
-#: src/dialogs/dock_settings_dialog.cpp:215
-#: src/dialogs/dock_settings_dialog.cpp:260
+#: src/dialogs/dock_settings_dialog.cpp:243
+#: src/dialogs/dock_settings_dialog.cpp:288
 msgid "DockLight Settings"
 msgstr "Gosodiadau DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:288
-#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
+#: src/dialogs/dock_session_dialog.cpp:1019
+#: src/dialogs/dock_settings_dialog.cpp:316
 msgid "_Close"
 msgstr "_Cau"
 
-#: src/dialogs/dock_settings_dialog.cpp:299
+#: src/dialogs/dock_settings_dialog.cpp:327
 msgid "Appearance"
 msgstr "Ymddangosiad"
 
-#: src/dialogs/dock_settings_dialog.cpp:301
+#: src/dialogs/dock_settings_dialog.cpp:329
 msgid "Behavior"
 msgstr "Ymddygiad"
 
-#: src/dialogs/dock_settings_dialog.cpp:303
+#: src/dialogs/dock_settings_dialog.cpp:331
 msgid "Position & Autohide"
 msgstr "Safle a Chuddio'n Awtomatig"
 
-#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:358
 msgid "Monitor"
 msgstr "Monitro"
 
-#: src/dialogs/dock_settings_dialog.cpp:332
+#: src/dialogs/dock_settings_dialog.cpp:360
 msgid "Hover Effect"
 msgstr "Effaith Hofran"
 
-#: src/dialogs/dock_settings_dialog.cpp:334
+#: src/dialogs/dock_settings_dialog.cpp:362
 msgid "Indicator"
 msgstr "Dangosydd"
 
-#: src/dialogs/dock_settings_dialog.cpp:336
-#: src/dialogs/dock_settings_dialog.cpp:551
+#: src/dialogs/dock_settings_dialog.cpp:364
+#: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Indicator Color"
 msgstr "Lliw Dangosydd"
 
-#: src/dialogs/dock_settings_dialog.cpp:338
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:366
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgid "Preview Color"
 msgstr "Lliw Rhagolwg"
 
-#: src/dialogs/dock_settings_dialog.cpp:340
+#: src/dialogs/dock_settings_dialog.cpp:368
 msgid "Display Home Icon"
 msgstr "Arddangos Eicon Cartref"
 
-#: src/dialogs/dock_settings_dialog.cpp:342
+#: src/dialogs/dock_settings_dialog.cpp:370
 msgid "Home Icon"
 msgstr "Eicon Cartref"
 
-#: src/dialogs/dock_settings_dialog.cpp:344
+#: src/dialogs/dock_settings_dialog.cpp:372
 msgid "Display Tooltips"
 msgstr "Awgrymiadau Offer Arddangos"
 
-#: src/dialogs/dock_settings_dialog.cpp:346
+#: src/dialogs/dock_settings_dialog.cpp:374
 msgid "Display Preview"
 msgstr "Rhagolwg Arddangos"
 
-#: src/dialogs/dock_settings_dialog.cpp:348
+#: src/dialogs/dock_settings_dialog.cpp:376
 msgid "Close Preview After Activation"
 msgstr "Cau Rhagolwg Ar ôl Ysgogi"
 
-#: src/dialogs/dock_settings_dialog.cpp:350
+#: src/dialogs/dock_settings_dialog.cpp:378
 msgid "Manage All Workspaces"
 msgstr "Rheoli Pob Man Gwaith"
 
-#: src/dialogs/dock_settings_dialog.cpp:352
+#: src/dialogs/dock_settings_dialog.cpp:380
 msgid "Icon Size"
 msgstr "Maint Eicon"
 
-#: src/dialogs/dock_settings_dialog.cpp:354
+#: src/dialogs/dock_settings_dialog.cpp:382
 msgid "Preview Card Height"
 msgstr "Rhagolwg Uchder Cerdyn"
 
-#: src/dialogs/dock_settings_dialog.cpp:356
+#: src/dialogs/dock_settings_dialog.cpp:384
 msgid "Preview Show Delay (ms)"
 msgstr "Rhagolwg Oedi Dangos (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:358
+#: src/dialogs/dock_settings_dialog.cpp:386
 msgid "Location"
 msgstr "Lleoliad"
 
-#: src/dialogs/dock_settings_dialog.cpp:360
+#: src/dialogs/dock_settings_dialog.cpp:388
 msgid "Gradient Background"
 msgstr "Cefndir Graddiant"
 
-#: src/dialogs/dock_settings_dialog.cpp:362
+#: src/dialogs/dock_settings_dialog.cpp:390
 msgid "Rounded Corners"
 msgstr "Corneli Crwn"
 
-#: src/dialogs/dock_settings_dialog.cpp:364
+#: src/dialogs/dock_settings_dialog.cpp:392
 msgid "Corner Radius"
 msgstr "Radiws Cornel"
 
-#: src/dialogs/dock_settings_dialog.cpp:366
+#: src/dialogs/dock_settings_dialog.cpp:394
 msgid "Alignment"
 msgstr "Aliniad"
 
-#: src/dialogs/dock_settings_dialog.cpp:368
+#: src/dialogs/dock_settings_dialog.cpp:396
 msgid "Autohide"
 msgstr "Cuddio'n awtomatig"
 
-#: src/dialogs/dock_settings_dialog.cpp:370
+#: src/dialogs/dock_settings_dialog.cpp:398
 msgid "Autohide Effect"
 msgstr "Effaith cuddio awtomatig"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:400
 msgid "Autohide Delay (ms)"
 msgstr "Cuddio Oedi yn Awtomatig (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:430
+#: src/dialogs/dock_settings_dialog.cpp:458
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Monitor cynradd"
 
-#: src/dialogs/dock_settings_dialog.cpp:469
+#: src/dialogs/dock_settings_dialog.cpp:496
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Effaith safonol"
 
-#: src/dialogs/dock_settings_dialog.cpp:471
+#: src/dialogs/dock_settings_dialog.cpp:498
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Effaith chwyddo"
 
-#: src/dialogs/dock_settings_dialog.cpp:473
+#: src/dialogs/dock_settings_dialog.cpp:500
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Effaith aneglur"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
+#: src/dialogs/dock_settings_dialog.cpp:502
+msgctxt "hover effect"
+msgid "Magnified"
+msgstr "Chwyddedig"
+
+#: src/dialogs/dock_settings_dialog.cpp:535
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Dangosyddion llinell"
 
-#: src/dialogs/dock_settings_dialog.cpp:512
+#: src/dialogs/dock_settings_dialog.cpp:537
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Dangosyddion dot"
 
-#: src/dialogs/dock_settings_dialog.cpp:553
+#: src/dialogs/dock_settings_dialog.cpp:572
 msgid "Choose the indicator color"
 msgstr "Dewiswch liw'r dangosydd"
 
-#: src/dialogs/dock_settings_dialog.cpp:572
+#: src/dialogs/dock_settings_dialog.cpp:591
 msgid "Choose the preview color"
 msgstr "Dewiswch liw'r rhagolwg"
 
-#: src/dialogs/dock_settings_dialog.cpp:584
+#: src/dialogs/dock_settings_dialog.cpp:603
 msgid "Select…"
 msgstr "Dewiswch…"
 
-#: src/dialogs/dock_settings_dialog.cpp:586
+#: src/dialogs/dock_settings_dialog.cpp:605
 msgid "Use Default"
 msgstr "Defnyddiwch Diofyn"
 
-#: src/dialogs/dock_settings_dialog.cpp:594
+#: src/dialogs/dock_settings_dialog.cpp:613
 msgid "Built-in DockLight icon"
 msgstr "Eicon DockLight wedi'i ymgorffori"
 
-#: src/dialogs/dock_settings_dialog.cpp:628
+#: src/dialogs/dock_settings_dialog.cpp:647
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "Fel arall, cadwch y rhagolwg ar agor nes bod y pwyntydd yn ei adael"
 
-#: src/dialogs/dock_settings_dialog.cpp:635
+#: src/dialogs/dock_settings_dialog.cpp:654
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
-msgstr ""
-"Cymhwyso gweithredoedd eicon a seiclo olwyn y llygoden ar draws pob man "
-"gwaith"
+msgstr "Cymhwyso gweithredoedd eicon a seiclo olwyn y llygoden ar draws pob man gwaith"
 
-#: src/dialogs/dock_settings_dialog.cpp:666
+#: src/dialogs/dock_settings_dialog.cpp:685
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0 yn dewis maint awtomatig; fel arall defnyddiwch 64 i 512 picsel"
 
-#: src/dialogs/dock_settings_dialog.cpp:683
+#: src/dialogs/dock_settings_dialog.cpp:702
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr "Oedi cyn i ragolwg ffenestr ymddangos, o 0 i 5000 milieiliad"
 
-#: src/dialogs/dock_settings_dialog.cpp:701
+#: src/dialogs/dock_settings_dialog.cpp:720
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "Oedi cyn i'r doc guddio, o 0 i 5000 milieiliad"
 
-#: src/dialogs/dock_settings_dialog.cpp:708
+#: src/dialogs/dock_settings_dialog.cpp:726
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Ymyl gwaelod"
 
-#: src/dialogs/dock_settings_dialog.cpp:710
+#: src/dialogs/dock_settings_dialog.cpp:728
 msgctxt "dock location"
 msgid "Left"
 msgstr "Ymyl chwith"
 
-#: src/dialogs/dock_settings_dialog.cpp:712
+#: src/dialogs/dock_settings_dialog.cpp:730
 msgctxt "dock location"
 msgid "Top"
 msgstr "Ymyl uchaf"
 
-#: src/dialogs/dock_settings_dialog.cpp:714
+#: src/dialogs/dock_settings_dialog.cpp:732
 msgctxt "dock location"
 msgid "Right"
 msgstr "Ymyl dde"
 
-#: src/dialogs/dock_settings_dialog.cpp:782
+#: src/dialogs/dock_settings_dialog.cpp:788
 msgid "-1 selects the automatic radius"
 msgstr "-1 yn dewis y radiws awtomatig"
 
-#: src/dialogs/dock_settings_dialog.cpp:788
+#: src/dialogs/dock_settings_dialog.cpp:793
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Cychwyn-alinio"
 
-#: src/dialogs/dock_settings_dialog.cpp:790
+#: src/dialogs/dock_settings_dialog.cpp:795
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Wedi'i ganoli"
 
-#: src/dialogs/dock_settings_dialog.cpp:792
+#: src/dialogs/dock_settings_dialog.cpp:797
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Wedi'i alinio â'r diwedd"
 
-#: src/dialogs/dock_settings_dialog.cpp:794
+#: src/dialogs/dock_settings_dialog.cpp:799
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Llenwch y gofod sydd ar gael"
 
-#: src/dialogs/dock_settings_dialog.cpp:840
+#: src/dialogs/dock_settings_dialog.cpp:832
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Anabl"
 
-#: src/dialogs/dock_settings_dialog.cpp:842
+#: src/dialogs/dock_settings_dialog.cpp:834
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Awtomatig"
 
-#: src/dialogs/dock_settings_dialog.cpp:844
+#: src/dialogs/dock_settings_dialog.cpp:836
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Deallus"
 
-#: src/dialogs/dock_settings_dialog.cpp:903
+#: src/dialogs/dock_settings_dialog.cpp:885
 msgctxt "autohide effect"
 msgid "Plasma"
 msgstr "Plasma"
 
-#: src/dialogs/dock_settings_dialog.cpp:909
-#: src/dialogs/dock_settings_dialog.cpp:918
+#: src/dialogs/dock_settings_dialog.cpp:890
+#: src/dialogs/dock_settings_dialog.cpp:898
 msgctxt "autohide effect"
 msgid "Slide"
 msgstr "Llithro"
 
-#: src/dialogs/dock_settings_dialog.cpp:921
+#: src/dialogs/dock_settings_dialog.cpp:901
 msgctxt "autohide effect"
 msgid "Slide and Fade"
 msgstr "Llithro a pylu"
 
-#: src/dialogs/dock_settings_dialog.cpp:927
+#: src/dialogs/dock_settings_dialog.cpp:906
 msgctxt "autohide effect"
 msgid "GNOME"
 msgstr "GNOME"
 
-#: src/dialogs/dock_settings_dialog.cpp:1050
+#: src/dialogs/dock_settings_dialog.cpp:1029
 msgid "Set the dock icon size from 32 to 128 pixels."
 msgstr "Gosod maint eicon y doc o 32 i 128 picsel."
 
-#: src/dialogs/dock_settings_dialog.cpp:1057
+#: src/dialogs/dock_settings_dialog.cpp:1036
 msgid "Choose how icons respond when the pointer moves over them."
 msgstr "Dewis sut mae eiconau'n ymateb pan fydd y pwyntydd yn symud drosynt."
 
-#: src/dialogs/dock_settings_dialog.cpp:1064
+#: src/dialogs/dock_settings_dialog.cpp:1043
 msgid "Select how running applications are marked on the dock."
 msgstr "Dewis sut mae rhaglenni sy'n rhedeg yn cael eu nodi ar y doc."
 
-#: src/dialogs/dock_settings_dialog.cpp:1071
+#: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the color of running-application indicators."
 msgstr "Gosod lliw dangosyddion rhaglenni sy'n rhedeg."
 
-#: src/dialogs/dock_settings_dialog.cpp:1078
+#: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Use a GTK theme-derived gradient instead of a solid background."
 msgstr "Defnyddio graddiant wedi'i deillio o themâu GTK yn lle cefndir solet."
 
-#: src/dialogs/dock_settings_dialog.cpp:1085
+#: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Round the corners of the dock background."
 msgstr "Cylchdroi corneli cefndir y doc."
 
-#: src/dialogs/dock_settings_dialog.cpp:1092
+#: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr ""
-"Gosod radiws y cornel mewn picselau; dewis -1 ar gyfer maint awtomatig."
+msgstr "Gosod radiws y cornel mewn picselau; dewis -1 ar gyfer maint awtomatig."
 
-#: src/dialogs/dock_settings_dialog.cpp:1099
+#: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Show the DockLight home and launcher-management icon."
 msgstr "Dangos eicon cartref a rheoli lansiad DockLight."
 
-#: src/dialogs/dock_settings_dialog.cpp:1106
+#: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
-"Dewis delwedd arferol ar gyfer yr eicon cartref, neu ddefnyddio'r eicon "
-"adeiledig."
+msgstr "Dewis delwedd arferol ar gyfer yr eicon cartref, neu ddefnyddio'r eicon adeiledig."
 
-#: src/dialogs/dock_settings_dialog.cpp:1115
+#: src/dialogs/dock_settings_dialog.cpp:1094
 msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
-"Dangos enwau cymwysiadau pan fydd y dangosydd yn gorffwys ar eiconau'r doc."
+msgstr "Dangos enwau cymwysiadau pan fydd y dangosydd yn gorffwys ar eiconau'r doc."
 
-#: src/dialogs/dock_settings_dialog.cpp:1122
+#: src/dialogs/dock_settings_dialog.cpp:1101
 msgid "Include windows from every workspace in dock actions and cycling."
 msgstr "Cynnwys ffenestri o bob gweithle yn gweithredoedd a throi'r doc."
 
-#: src/dialogs/dock_settings_dialog.cpp:1129
+#: src/dialogs/dock_settings_dialog.cpp:1108
 msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
-"Dangos rhagolwg ffenestri pan fydd y dangosydd yn gorffwys ar gymwysiadau "
-"sy'n rhedeg."
+msgstr "Dangos rhagolwg ffenestri pan fydd y dangosydd yn gorffwys ar gymwysiadau sy'n rhedeg."
 
-#: src/dialogs/dock_settings_dialog.cpp:1136
+#: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Close the preview popup after activating one of its windows."
 msgstr "Cau'r pop-up rhagolwg ar ôl actifadu un o'i ffenestri."
 
-#: src/dialogs/dock_settings_dialog.cpp:1143
+#: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Set the accent color used by window previews."
 msgstr "Gosod lliw acren a ddefnyddir gan ragolwg ffenestri."
 
-#: src/dialogs/dock_settings_dialog.cpp:1150
+#: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Set preview height in pixels; 0 selects automatic sizing."
 msgstr "Gosod uchder y rhagolwg mewn picsel; mae 0 yn dewis maint awtomatig."
 
-#: src/dialogs/dock_settings_dialog.cpp:1157
+#: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Set how long to wait before showing a preview."
 msgstr "Gosod pa mor hir i aros cyn dangos rhagolwg."
 
-#: src/dialogs/dock_settings_dialog.cpp:1165
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Choose the display where DockLight appears."
 msgstr "Dewiswch y dangosydd lle mae DockLight yn ymddangos."
 
-#: src/dialogs/dock_settings_dialog.cpp:1172
+#: src/dialogs/dock_settings_dialog.cpp:1151
 msgid "Choose the screen edge where the dock is placed."
 msgstr "Dewiswch ymyl y sgrin lle mae'r doc wedi'i leoli."
 
-#: src/dialogs/dock_settings_dialog.cpp:1179
+#: src/dialogs/dock_settings_dialog.cpp:1158
 msgid "Align dock content along the selected screen edge."
 msgstr "Alinio cynnwys y doc ar hyd yr ymyl sgrin a ddewiswyd."
 
-#: src/dialogs/dock_settings_dialog.cpp:1186
+#: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose when the dock moves out of view."
 msgstr "Dewiswch pryd mae'r doc yn symud allan o'r golwg."
 
-#: src/dialogs/dock_settings_dialog.cpp:1193
+#: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Set how long to wait before hiding the dock."
 msgstr "Gosod pa mor hir i aros cyn cuddio'r doc."
 
-#: src/dialogs/dock_settings_dialog.cpp:1203
+#: src/dialogs/dock_settings_dialog.cpp:1182
 msgid "Choose an autohide animation supported by this desktop."
 msgstr "Dewis animeiddiad cuddio awtomatig a gefnogir gan y bwrdd gwaith hwn."
 
-#: src/dialogs/dock_settings_dialog.cpp:1451
-#: src/dialogs/dock_settings_dialog.cpp:1488
+#: src/dialogs/dock_settings_dialog.cpp:1432
+#: src/dialogs/dock_settings_dialog.cpp:1469
 msgid "Select Home Icon"
 msgstr "Dewiswch Eicon Cartref"
 
-#: src/dialogs/dock_settings_dialog.cpp:1456
 #: src/dialogs/dock_session_dialog.cpp:509
+#: src/dialogs/dock_settings_dialog.cpp:1437
 msgid "_Cancel"
 msgstr "_Canslo"
 
-#: src/dialogs/dock_settings_dialog.cpp:1459
+#: src/dialogs/dock_settings_dialog.cpp:1440
 msgid "_Open"
 msgstr "_Agored"
 
-#: src/dialogs/dock_settings_dialog.cpp:1525
 #: src/dialogs/dock_session_dialog.cpp:520
+#: src/dialogs/dock_settings_dialog.cpp:1506
 msgid "Image Files"
 msgstr "Ffeiliau Delwedd"
 
 #: src/dialogs/dock_session_dialog.cpp:241
 #: src/dialogs/dock_session_dialog.cpp:275
 msgid "Session"
-msgstr ""
+msgstr "Sesiwn"
 
 #: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_Enw sesiwn"
 
 #: src/dialogs/dock_session_dialog.cpp:315
-#: src/dialogs/dock_session_dialog.cpp:717
+#: src/dialogs/dock_session_dialog.cpp:702
 msgid "Session name"
 msgstr "Enw sesiwn"
 
 #: src/dialogs/dock_session_dialog.cpp:320
 msgid "_Icon"
-msgstr ""
+msgstr "E_icon"
 
 #: src/dialogs/dock_session_dialog.cpp:363
-#, fuzzy
 msgid "Select _Icon"
-msgstr "Dewiswch Eicon Cartref"
+msgstr "Dew_iswch Eicon"
 
 #: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
-msgstr ""
+msgstr "Ychw_anegu"
 
 #: src/dialogs/dock_session_dialog.cpp:503
-#, fuzzy
 msgid "Select Session Icon"
-msgstr "Dewiswch Eicon Cartref"
+msgstr "Dewiswch Eicon Sesiwn"
 
 #: src/dialogs/dock_session_dialog.cpp:512
-#, fuzzy
 msgid "_Select"
-msgstr "Dewiswch…"
+msgstr "Dewi_swch"
 
 #: src/dialogs/dock_session_dialog.cpp:578
-#: src/dialogs/dock_session_dialog.cpp:987
+#: src/dialogs/dock_session_dialog.cpp:941
 msgid "Custom"
-msgstr ""
+msgstr "Personol"
 
-#: src/dialogs/dock_session_dialog.cpp:702
+#: src/dialogs/dock_session_dialog.cpp:687
 msgid "Cannot save Session."
 msgstr "Methu cadw'r sesiwn."
 
-#: src/dialogs/dock_session_dialog.cpp:709
+#: src/dialogs/dock_session_dialog.cpp:694
 msgid "%1 cannot be empty or contain only whitespace."
 msgstr "Ni all %1 fod yn wag na chynnwys bylchau gwyn yn unig."
 
-#: src/dialogs/dock_session_dialog.cpp:724
+#: src/dialogs/dock_session_dialog.cpp:709
 msgid "Session icon"
 msgstr "Eicon y sesiwn"
 
-#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_dialog.cpp:730
 #: src/dialogs/dock_session_editor_item.cpp:109
 msgid "Desktop File"
-msgstr ""
+msgstr "Ffeil Bwrdd Gwaith"
 
-#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_dialog.cpp:738
 #: src/dialogs/dock_session_editor_item.cpp:110
 msgid "App Name"
-msgstr ""
+msgstr "Enw Ap"
 
-#: src/dialogs/dock_session_dialog.cpp:761
+#: src/dialogs/dock_session_dialog.cpp:746
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
-msgstr ""
+msgstr "Teitl yr Ap"
 
-#: src/dialogs/dock_session_dialog.cpp:769
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr ""
-
-#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_dialog.cpp:754
 #: src/dialogs/dock_session_editor_item.cpp:112
-#, fuzzy
 msgid "Workspace"
-msgstr "Rheoli Pob Man Gwaith"
+msgstr "Gweithle"
 
-#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_dialog.cpp:762
 #: src/dialogs/dock_session_editor_item.cpp:113
 msgid "Dimensions"
-msgstr ""
+msgstr "Dimensiynau"
 
-#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_dialog.cpp:770
 #: src/dialogs/dock_session_editor_item.cpp:114
-#, fuzzy
 msgid "Position"
-msgstr "Lleoliad"
+msgstr "Swydd"
 
-#: src/dialogs/dock_session_dialog.cpp:818
+#: src/dialogs/dock_session_dialog.cpp:795
 msgid "A Session with this name already exists."
-msgstr ""
+msgstr "Mae Sesiwn gyda'r enw hwn eisoes yn bodoli."
 
-#: src/dialogs/dock_session_dialog.cpp:825
+#: src/dialogs/dock_session_dialog.cpp:802
 msgid "Choose a different name for “%1”."
-msgstr ""
+msgstr "Dewiswch enw gwahanol ar gyfer “%1”."
 
-#: src/dialogs/dock_session_dialog.cpp:1059
+#: src/dialogs/dock_session_dialog.cpp:1013
 msgid "_Save"
-msgstr ""
+msgstr "_Arbed"
 
 #: src/dialogs/dock_session_editor_item.cpp:106
 msgid "_Paste"
-msgstr ""
+msgstr "_Gludo"
 
 #: src/dialogs/dock_session_editor_item.cpp:107
 msgid "_Launch"
-msgstr ""
+msgstr "_Lansio"
 
-#: src/dialogs/dock_session_editor_item.cpp:144
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "Paramedrau"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
 msgid "Application title"
-msgstr ""
+msgstr "Teitl y cais"
 
-#: src/dialogs/dock_session_editor_item.cpp:148
+#: src/dialogs/dock_session_editor_item.cpp:147
 msgid "Desktop file"
-msgstr ""
+msgstr "Ffeil bwrdd gwaith"
 
-#: src/dialogs/dock_session_editor_item.cpp:152
+#: src/dialogs/dock_session_editor_item.cpp:151
 msgid "Application name"
-msgstr ""
+msgstr "Enw cais"
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:155
 msgid "Command-line parameters"
-msgstr ""
+msgstr "Paramedrau llinell orchymyn"
 
-#: src/dialogs/dock_session_editor_item.cpp:161
+#: src/dialogs/dock_session_editor_item.cpp:160
 msgid "Workspace number"
-msgstr ""
+msgstr "Rhif gweithle"
 
-#: src/dialogs/dock_session_editor_item.cpp:253
+#: src/dialogs/dock_session_editor_item.cpp:252
 msgid "No application window is available to copy."
-msgstr ""
+msgstr "Nid oes ffenestr ymgeisio ar gael i'w chopïo."
 
-#: src/dialogs/dock_session_editor_item.cpp:422
+#: src/dialogs/dock_session_editor_item.cpp:421
 msgid "Paste a window into this item before launching it."
-msgstr ""
+msgstr "Gludwch ffenestr i'r eitem hon cyn ei lansio."
 
-#: src/dialogs/dock_session_editor_item.cpp:450
-msgid ""
-"The application was launched. This desktop session cannot place windows, so "
-"Workspace, Dimensions, and Position were ignored."
-msgstr ""
+#: src/dialogs/dock_session_editor_item.cpp:449
+msgid "The application was launched. This desktop session cannot place windows, so Workspace, Dimensions, and Position were ignored."
+msgstr "Lansiwyd y cais. Ni all y sesiwn bwrdd gwaith hwn osod ffenestri, felly anwybyddwyd Workspace, Dimensions a Position."
 
 #: src/launchers/session_launcher.cpp:622
 msgid "This Session item has no application."
-msgstr ""
+msgstr "Nid oes gan yr eitem Sesiwn hon unrhyw gymhwysiad."
 
 #: src/launchers/session_launcher.cpp:631
 msgid "No installed application matches \"%1\"."
-msgstr ""
+msgstr "Nid oes rhaglen osod yn cyfateb i \"%1\"."
 
 #: src/launchers/session_launcher.cpp:646
 msgid "The parameters cannot be parsed: %1"
-msgstr ""
+msgstr "Ni ellir dosrannu'r paramedrau: %1"
 
 #: src/launchers/session_launcher.cpp:653
 msgid "%1 does not declare a command that accepts parameters."
-msgstr ""
+msgstr "Nid yw %1 yn datgan gorchymyn sy'n derbyn paramedrau."
 
 #: src/launchers/session_launcher.cpp:697
 msgid "%1 cannot be launched: %2"
-msgstr ""
+msgstr "Ni ellir lansio %1: %2"
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -653,7 +635,6 @@ msgid "Version %1"
 msgstr "Fersiwn meddalwedd %1"
 
 #: src/dialogs/dock_about_dialog.cpp:201
-#, fuzzy
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui\n"
@@ -661,7 +642,9 @@ msgid ""
 "Copyright © 2018-2026 Juan González"
 msgstr ""
 "Doc cais ysgafn.\n"
-"Awdur a Chynhaliwr: yoosamui"
+"Awdur a Chynhaliwr: yoosamui\n"
+"\n"
+"Hawlfraint © 2018-2026 Juan González"
 
 #: src/dialogs/dock_about_dialog.cpp:211
 msgid ""
@@ -700,8 +683,16 @@ msgstr "Monitor cynradd"
 msgctxt "monitor status"
 msgid "default"
 msgstr "Monitor diofyn"
+
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "Defnyddiwch raddiant cefndir y doc du-i-llwyd"
+
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Pylu"
+
+#~ msgid "_Maximize"
+#~ msgstr "_Mwyafu"
+
+#~ msgid "_Maximize All"
+#~ msgstr "_Masimeiddio Pawb"

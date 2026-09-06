@@ -6,15 +6,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 13:58+0700\n"
+"POT-Creation-Date: 2026-09-06 21:59+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
 "Language: cs\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: none\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
 #: src/main.cpp:355
@@ -23,468 +23,463 @@ msgstr "Náhledy oken jsou zakázány"
 
 #: src/main.cpp:361
 msgid "DockLight"
-msgstr "DockSvětlo"
+msgstr "DockLight"
 
 #: src/main.cpp:368
-msgid ""
-"Openbox requires an X11 compositor for complete window previews. Display "
-"Preview is disabled. Start compton or picom, then enable Display Preview in "
-"DockLight Settings."
-msgstr ""
-"Openbox vyžaduje X11 compositor pro kompletní náhledy oken. Náhled zobrazení "
-"je zakázán. Spusťte compton nebo picom a poté povolte náhled zobrazení v "
-"nastavení DockLight."
+msgid "Openbox requires an X11 compositor for complete window previews. Display Preview is disabled. Start compton or picom, then enable Display Preview in DockLight Settings."
+msgstr "Openbox vyžaduje X11 compositor pro kompletní náhledy oken. Náhled zobrazení je zakázán. Spusťte compton nebo picom a poté povolte náhled zobrazení v nastavení DockLight."
 
-#: src/dock/dock_item.cpp:159
+#: src/dock/dock_item.cpp:162
 msgid "_Edit"
-msgstr ""
+msgstr "_Upravit"
 
-#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+#: src/dialogs/dock_session_editor_item.cpp:108 src/dock/dock_item.cpp:165
 msgid "_Remove"
 msgstr "_Odstranit"
 
-#: src/dock/dock_item.cpp:165
+#: src/dock/dock_item.cpp:168
 msgid "_Attach"
 msgstr "_Připnout do doku"
 
-#: src/dock/dock_item.cpp:168
+#: src/dock/dock_item.cpp:171
 msgid "_Open New Window"
 msgstr "_Otevřete nové okno"
 
-#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
+#: src/dock/dock_home_item.cpp:77 src/dock/dock_item.cpp:174
 msgid "_Close All"
 msgstr "_Zavřít vše"
 
-#: src/dock/dock_item.cpp:174
+#: src/dock/dock_item.cpp:177
 msgid "_Minimize"
 msgstr "_Minimalizovat"
 
-#: src/dock/dock_item.cpp:177
+#: src/dock/dock_item.cpp:180
 msgid "_Unminimize"
 msgstr "_Obnovit"
 
-#: src/dock/dock_item.cpp:180
-msgid "_Maximize"
-msgstr "_Maximalizovat"
+#: src/dock/dock_item.cpp:183
+msgid "Ma_ximize"
+msgstr "Ma_ximalizovat"
 
-#: src/dock/dock_home_item.cpp:59
+#: src/dock/dock_home_item.cpp:62
 msgid "_Settings"
 msgstr "_Nastavení"
 
-#: src/dock/dock_home_item.cpp:62
-msgid "Sessi_on"
-msgstr ""
-
 #: src/dock/dock_home_item.cpp:65
+msgid "Sessi_on"
+msgstr "_Zasedání"
+
+#: src/dock/dock_home_item.cpp:68
 msgid "_Minimize All"
 msgstr "_Minimalizovat vše"
 
-#: src/dock/dock_home_item.cpp:68
+#: src/dock/dock_home_item.cpp:71
 msgid "_Unminimize All"
 msgstr "_Obnovit vše"
 
-#: src/dock/dock_home_item.cpp:71
-msgid "_Maximize All"
-msgstr "_Maximalizovat vše"
+#: src/dock/dock_home_item.cpp:74
+msgid "Ma_ximize All"
+msgstr "Ma_ximalizovat vše"
 
-#: src/dock/dock_home_item.cpp:77
+#: src/dock/dock_home_item.cpp:80
 msgid "_About"
 msgstr "_O"
 
-#: src/dock/dock_home_item.cpp:80
+#: src/dock/dock_home_item.cpp:83
 msgid "_Exit"
 msgstr "_Odejít"
 
-#: src/dock/dock_home_item.cpp:194
+#: src/dock/dock_home_item.cpp:310
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Domů"
 
-#: src/dialogs/dock_settings_dialog.cpp:215
-#: src/dialogs/dock_settings_dialog.cpp:260
+#: src/dialogs/dock_settings_dialog.cpp:243
+#: src/dialogs/dock_settings_dialog.cpp:288
 msgid "DockLight Settings"
 msgstr "Nastavení DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:288
-#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
+#: src/dialogs/dock_session_dialog.cpp:1019
+#: src/dialogs/dock_settings_dialog.cpp:316
 msgid "_Close"
 msgstr "_Zavřít"
 
-#: src/dialogs/dock_settings_dialog.cpp:299
+#: src/dialogs/dock_settings_dialog.cpp:327
 msgid "Appearance"
 msgstr "Vzhled"
 
-#: src/dialogs/dock_settings_dialog.cpp:301
+#: src/dialogs/dock_settings_dialog.cpp:329
 msgid "Behavior"
 msgstr "Chování"
 
-#: src/dialogs/dock_settings_dialog.cpp:303
+#: src/dialogs/dock_settings_dialog.cpp:331
 msgid "Position & Autohide"
 msgstr "Poloha a automatické skrytí"
 
-#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:358
 msgid "Monitor"
 msgstr "Monitor"
 
-#: src/dialogs/dock_settings_dialog.cpp:332
+#: src/dialogs/dock_settings_dialog.cpp:360
 msgid "Hover Effect"
 msgstr "Efekt přechodu"
 
-#: src/dialogs/dock_settings_dialog.cpp:334
+#: src/dialogs/dock_settings_dialog.cpp:362
 msgid "Indicator"
 msgstr "Indikátor"
 
-#: src/dialogs/dock_settings_dialog.cpp:336
-#: src/dialogs/dock_settings_dialog.cpp:551
+#: src/dialogs/dock_settings_dialog.cpp:364
+#: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Indicator Color"
 msgstr "Barva indikátoru"
 
-#: src/dialogs/dock_settings_dialog.cpp:338
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:366
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgid "Preview Color"
 msgstr "Barva náhledu"
 
-#: src/dialogs/dock_settings_dialog.cpp:340
+#: src/dialogs/dock_settings_dialog.cpp:368
 msgid "Display Home Icon"
 msgstr "Zobrazit ikonu Domů"
 
-#: src/dialogs/dock_settings_dialog.cpp:342
+#: src/dialogs/dock_settings_dialog.cpp:370
 msgid "Home Icon"
 msgstr "Ikona Domů"
 
-#: src/dialogs/dock_settings_dialog.cpp:344
+#: src/dialogs/dock_settings_dialog.cpp:372
 msgid "Display Tooltips"
 msgstr "Zobrazit popisky"
 
-#: src/dialogs/dock_settings_dialog.cpp:346
+#: src/dialogs/dock_settings_dialog.cpp:374
 msgid "Display Preview"
 msgstr "Zobrazit náhled"
 
-#: src/dialogs/dock_settings_dialog.cpp:348
+#: src/dialogs/dock_settings_dialog.cpp:376
 msgid "Close Preview After Activation"
 msgstr "Zavřít náhled po aktivaci"
 
-#: src/dialogs/dock_settings_dialog.cpp:350
+#: src/dialogs/dock_settings_dialog.cpp:378
 msgid "Manage All Workspaces"
 msgstr "Spravovat všechny pracovní prostory"
 
-#: src/dialogs/dock_settings_dialog.cpp:352
+#: src/dialogs/dock_settings_dialog.cpp:380
 msgid "Icon Size"
 msgstr "Velikost ikony"
 
-#: src/dialogs/dock_settings_dialog.cpp:354
+#: src/dialogs/dock_settings_dialog.cpp:382
 msgid "Preview Card Height"
 msgstr "Náhled výšky karty"
 
-#: src/dialogs/dock_settings_dialog.cpp:356
+#: src/dialogs/dock_settings_dialog.cpp:384
 msgid "Preview Show Delay (ms)"
 msgstr "Zpoždění zobrazení náhledu (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:358
+#: src/dialogs/dock_settings_dialog.cpp:386
 msgid "Location"
 msgstr "Umístění"
 
-#: src/dialogs/dock_settings_dialog.cpp:360
+#: src/dialogs/dock_settings_dialog.cpp:388
 msgid "Gradient Background"
 msgstr "Přechod pozadí"
 
-#: src/dialogs/dock_settings_dialog.cpp:362
+#: src/dialogs/dock_settings_dialog.cpp:390
 msgid "Rounded Corners"
 msgstr "Zaoblené rohy"
 
-#: src/dialogs/dock_settings_dialog.cpp:364
+#: src/dialogs/dock_settings_dialog.cpp:392
 msgid "Corner Radius"
 msgstr "Poloměr rohu"
 
-#: src/dialogs/dock_settings_dialog.cpp:366
+#: src/dialogs/dock_settings_dialog.cpp:394
 msgid "Alignment"
 msgstr "Zarovnání"
 
-#: src/dialogs/dock_settings_dialog.cpp:368
+#: src/dialogs/dock_settings_dialog.cpp:396
 msgid "Autohide"
 msgstr "Automaticky skrýt"
 
-#: src/dialogs/dock_settings_dialog.cpp:370
+#: src/dialogs/dock_settings_dialog.cpp:398
 msgid "Autohide Effect"
 msgstr "Efekt automatického skrývání"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:400
 msgid "Autohide Delay (ms)"
 msgstr "Zpoždění automatického skrytí (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:430
+#: src/dialogs/dock_settings_dialog.cpp:458
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Primární monitor"
 
-#: src/dialogs/dock_settings_dialog.cpp:469
+#: src/dialogs/dock_settings_dialog.cpp:496
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Standardní efekt"
 
-#: src/dialogs/dock_settings_dialog.cpp:471
+#: src/dialogs/dock_settings_dialog.cpp:498
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Zoom efekt"
 
-#: src/dialogs/dock_settings_dialog.cpp:473
+#: src/dialogs/dock_settings_dialog.cpp:500
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Efekt rozostření"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
+#: src/dialogs/dock_settings_dialog.cpp:502
+msgctxt "hover effect"
+msgid "Magnified"
+msgstr "Zvětšený"
+
+#: src/dialogs/dock_settings_dialog.cpp:535
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Linkové indikátory"
 
-#: src/dialogs/dock_settings_dialog.cpp:512
+#: src/dialogs/dock_settings_dialog.cpp:537
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Bodové indikátory"
 
-#: src/dialogs/dock_settings_dialog.cpp:553
+#: src/dialogs/dock_settings_dialog.cpp:572
 msgid "Choose the indicator color"
 msgstr "Vyberte barvu indikátoru"
 
-#: src/dialogs/dock_settings_dialog.cpp:572
+#: src/dialogs/dock_settings_dialog.cpp:591
 msgid "Choose the preview color"
 msgstr "Vyberte barvu náhledu"
 
-#: src/dialogs/dock_settings_dialog.cpp:584
+#: src/dialogs/dock_settings_dialog.cpp:603
 msgid "Select…"
 msgstr "Vyberte…"
 
-#: src/dialogs/dock_settings_dialog.cpp:586
+#: src/dialogs/dock_settings_dialog.cpp:605
 msgid "Use Default"
 msgstr "Použít výchozí"
 
-#: src/dialogs/dock_settings_dialog.cpp:594
+#: src/dialogs/dock_settings_dialog.cpp:613
 msgid "Built-in DockLight icon"
 msgstr "Vestavěná ikona DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:628
+#: src/dialogs/dock_settings_dialog.cpp:647
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "Jinak ponechte náhled otevřený, dokud jej ukazatel neopustí"
 
-#: src/dialogs/dock_settings_dialog.cpp:635
+#: src/dialogs/dock_settings_dialog.cpp:654
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
-msgstr ""
-"Aplikujte akce ikon a cyklování kolečkem myši na všech pracovních plochách"
+msgstr "Aplikujte akce ikon a cyklování kolečkem myši na všech pracovních plochách"
 
-#: src/dialogs/dock_settings_dialog.cpp:666
+#: src/dialogs/dock_settings_dialog.cpp:685
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
-msgstr ""
-"0 vybere automatické nastavení velikosti; jinak použijte 64 až 512 pixelů"
+msgstr "0 vybere automatické nastavení velikosti; jinak použijte 64 až 512 pixelů"
 
-#: src/dialogs/dock_settings_dialog.cpp:683
+#: src/dialogs/dock_settings_dialog.cpp:702
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr "Prodleva, než se zobrazí náhled okna, od 0 do 5000 milisekund"
 
-#: src/dialogs/dock_settings_dialog.cpp:701
+#: src/dialogs/dock_settings_dialog.cpp:720
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "Prodleva, než se dok skryje, od 0 do 5000 milisekund"
 
-#: src/dialogs/dock_settings_dialog.cpp:708
+#: src/dialogs/dock_settings_dialog.cpp:726
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Spodní okraj"
 
-#: src/dialogs/dock_settings_dialog.cpp:710
+#: src/dialogs/dock_settings_dialog.cpp:728
 msgctxt "dock location"
 msgid "Left"
 msgstr "Levý okraj"
 
-#: src/dialogs/dock_settings_dialog.cpp:712
+#: src/dialogs/dock_settings_dialog.cpp:730
 msgctxt "dock location"
 msgid "Top"
 msgstr "Horní okraj"
 
-#: src/dialogs/dock_settings_dialog.cpp:714
+#: src/dialogs/dock_settings_dialog.cpp:732
 msgctxt "dock location"
 msgid "Right"
 msgstr "Pravý okraj"
 
-#: src/dialogs/dock_settings_dialog.cpp:782
+#: src/dialogs/dock_settings_dialog.cpp:788
 msgid "-1 selects the automatic radius"
 msgstr "-1 vybere automatický poloměr"
 
-#: src/dialogs/dock_settings_dialog.cpp:788
+#: src/dialogs/dock_settings_dialog.cpp:793
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Start-zarovnaný"
 
-#: src/dialogs/dock_settings_dialog.cpp:790
+#: src/dialogs/dock_settings_dialog.cpp:795
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Na střed"
 
-#: src/dialogs/dock_settings_dialog.cpp:792
+#: src/dialogs/dock_settings_dialog.cpp:797
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Zarovnáno na konec"
 
-#: src/dialogs/dock_settings_dialog.cpp:794
+#: src/dialogs/dock_settings_dialog.cpp:799
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Vyplňte dostupný prostor"
 
-#: src/dialogs/dock_settings_dialog.cpp:840
+#: src/dialogs/dock_settings_dialog.cpp:832
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Zakázáno"
 
-#: src/dialogs/dock_settings_dialog.cpp:842
+#: src/dialogs/dock_settings_dialog.cpp:834
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Automaticky"
 
-#: src/dialogs/dock_settings_dialog.cpp:844
+#: src/dialogs/dock_settings_dialog.cpp:836
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Inteligentní"
 
-#: src/dialogs/dock_settings_dialog.cpp:903
+#: src/dialogs/dock_settings_dialog.cpp:885
 msgctxt "autohide effect"
 msgid "Plasma"
 msgstr "Plasma"
 
-#: src/dialogs/dock_settings_dialog.cpp:909
-#: src/dialogs/dock_settings_dialog.cpp:918
+#: src/dialogs/dock_settings_dialog.cpp:890
+#: src/dialogs/dock_settings_dialog.cpp:898
 msgctxt "autohide effect"
 msgid "Slide"
 msgstr "Posunutí"
 
-#: src/dialogs/dock_settings_dialog.cpp:921
+#: src/dialogs/dock_settings_dialog.cpp:901
 msgctxt "autohide effect"
 msgid "Slide and Fade"
 msgstr "Posunutí a prolnutí"
 
-#: src/dialogs/dock_settings_dialog.cpp:927
+#: src/dialogs/dock_settings_dialog.cpp:906
 msgctxt "autohide effect"
 msgid "GNOME"
 msgstr "GNOME"
 
-#: src/dialogs/dock_settings_dialog.cpp:1050
+#: src/dialogs/dock_settings_dialog.cpp:1029
 msgid "Set the dock icon size from 32 to 128 pixels."
 msgstr "Nastavte velikost ikony doku od 32 do 128 pixelů."
 
-#: src/dialogs/dock_settings_dialog.cpp:1057
+#: src/dialogs/dock_settings_dialog.cpp:1036
 msgid "Choose how icons respond when the pointer moves over them."
 msgstr "Vyberte, jak ikony reagují, když nad nimi pohybujete ukazatelem."
 
-#: src/dialogs/dock_settings_dialog.cpp:1064
+#: src/dialogs/dock_settings_dialog.cpp:1043
 msgid "Select how running applications are marked on the dock."
 msgstr "Vyberte, jak jsou běžící aplikace označeny na doku."
 
-#: src/dialogs/dock_settings_dialog.cpp:1071
+#: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the color of running-application indicators."
 msgstr "Nastavte barvu indikátorů běžících aplikací."
 
-#: src/dialogs/dock_settings_dialog.cpp:1078
+#: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Use a GTK theme-derived gradient instead of a solid background."
 msgstr "Použijte gradient odvozený z tématu GTK místo jednotného pozadí."
 
-#: src/dialogs/dock_settings_dialog.cpp:1085
+#: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Round the corners of the dock background."
 msgstr "Zaoblete rohy pozadí doku."
 
-#: src/dialogs/dock_settings_dialog.cpp:1092
+#: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
 msgstr "Nastavte poloměr rohu v pixelech; -1 vybere automatickou velikost."
 
-#: src/dialogs/dock_settings_dialog.cpp:1099
+#: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Show the DockLight home and launcher-management icon."
 msgstr "Zobrazte ikonu domova DockLight a správu spouštěče."
 
-#: src/dialogs/dock_settings_dialog.cpp:1106
+#: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
-"Vyberte vlastní obrázek pro ikonu domova nebo použijte vestavěnou ikonu."
+msgstr "Vyberte vlastní obrázek pro ikonu domova nebo použijte vestavěnou ikonu."
 
-#: src/dialogs/dock_settings_dialog.cpp:1115
+#: src/dialogs/dock_settings_dialog.cpp:1094
 msgid "Show application names when the pointer rests on dock icons."
 msgstr "Zobrazovat názvy aplikací, když ukazatel spočívá na ikonách doku."
 
-#: src/dialogs/dock_settings_dialog.cpp:1122
+#: src/dialogs/dock_settings_dialog.cpp:1101
 msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
-"Zahrnout okna ze všech pracovních prostorů při akcích s dokem a cyklování."
+msgstr "Zahrnout okna ze všech pracovních prostorů při akcích s dokem a cyklování."
 
-#: src/dialogs/dock_settings_dialog.cpp:1129
+#: src/dialogs/dock_settings_dialog.cpp:1108
 msgid "Show window previews when the pointer rests on running apps."
 msgstr "Zobrazovat náhledy oken, když ukazatel spočívá na běžících aplikacích."
 
-#: src/dialogs/dock_settings_dialog.cpp:1136
+#: src/dialogs/dock_settings_dialog.cpp:1115
 msgid "Close the preview popup after activating one of its windows."
 msgstr "Zavřít vyskakovací náhled po aktivaci jednoho z jeho oken."
 
-#: src/dialogs/dock_settings_dialog.cpp:1143
+#: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Set the accent color used by window previews."
 msgstr "Nastavit akcentní barvu používanou náhledy oken."
 
-#: src/dialogs/dock_settings_dialog.cpp:1150
+#: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Set preview height in pixels; 0 selects automatic sizing."
 msgstr "Nastavit výšku náhledu v pixelech; 0 vybere automatické velikosti."
 
-#: src/dialogs/dock_settings_dialog.cpp:1157
+#: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Set how long to wait before showing a preview."
 msgstr "Nastavit, jak dlouho čekat před zobrazením náhledu."
 
-#: src/dialogs/dock_settings_dialog.cpp:1165
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Choose the display where DockLight appears."
 msgstr "Vybrat displej, na kterém se DockLight objeví."
 
-#: src/dialogs/dock_settings_dialog.cpp:1172
+#: src/dialogs/dock_settings_dialog.cpp:1151
 msgid "Choose the screen edge where the dock is placed."
 msgstr "Vybrat hranu obrazovky, na které je dok umístěn."
 
-#: src/dialogs/dock_settings_dialog.cpp:1179
+#: src/dialogs/dock_settings_dialog.cpp:1158
 msgid "Align dock content along the selected screen edge."
 msgstr "Zarovnat obsah doku podél vybrané hrany obrazovky."
 
-#: src/dialogs/dock_settings_dialog.cpp:1186
+#: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose when the dock moves out of view."
 msgstr "Vybrat, kdy se dok skryje."
 
-#: src/dialogs/dock_settings_dialog.cpp:1193
+#: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Set how long to wait before hiding the dock."
 msgstr "Nastavit, jak dlouho čekat před skrytím doku."
 
-#: src/dialogs/dock_settings_dialog.cpp:1203
+#: src/dialogs/dock_settings_dialog.cpp:1182
 msgid "Choose an autohide animation supported by this desktop."
 msgstr "Vybrat animaci automatického skrytí podporovanou touto plochou."
 
-#: src/dialogs/dock_settings_dialog.cpp:1451
-#: src/dialogs/dock_settings_dialog.cpp:1488
+#: src/dialogs/dock_settings_dialog.cpp:1432
+#: src/dialogs/dock_settings_dialog.cpp:1469
 msgid "Select Home Icon"
 msgstr "Vyberte ikonu Domů"
 
-#: src/dialogs/dock_settings_dialog.cpp:1456
 #: src/dialogs/dock_session_dialog.cpp:509
+#: src/dialogs/dock_settings_dialog.cpp:1437
 msgid "_Cancel"
 msgstr "_Zrušit"
 
-#: src/dialogs/dock_settings_dialog.cpp:1459
+#: src/dialogs/dock_settings_dialog.cpp:1440
 msgid "_Open"
 msgstr "_Otevřete"
 
-#: src/dialogs/dock_settings_dialog.cpp:1525
 #: src/dialogs/dock_session_dialog.cpp:520
+#: src/dialogs/dock_settings_dialog.cpp:1506
 msgid "Image Files"
 msgstr "Soubory obrázků"
 
 #: src/dialogs/dock_session_dialog.cpp:241
 #: src/dialogs/dock_session_dialog.cpp:275
 msgid "Session"
-msgstr ""
+msgstr "Zasedání"
 
 #: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_Název relace"
 
 #: src/dialogs/dock_session_dialog.cpp:315
-#: src/dialogs/dock_session_dialog.cpp:717
+#: src/dialogs/dock_session_dialog.cpp:702
 msgid "Session name"
 msgstr "Název relace"
 
@@ -493,85 +488,77 @@ msgid "_Icon"
 msgstr "_Ikona"
 
 #: src/dialogs/dock_session_dialog.cpp:363
-#, fuzzy
 msgid "Select _Icon"
-msgstr "Vyberte ikonu Domů"
+msgstr "Vyberte _ikonu"
 
 #: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
 msgstr "_Přidat"
 
 #: src/dialogs/dock_session_dialog.cpp:503
-#, fuzzy
 msgid "Select Session Icon"
-msgstr "Vyberte ikonu Domů"
+msgstr "Vyberte ikonu relace"
 
 #: src/dialogs/dock_session_dialog.cpp:512
 msgid "_Select"
 msgstr "_Vyberte"
 
 #: src/dialogs/dock_session_dialog.cpp:578
-#: src/dialogs/dock_session_dialog.cpp:987
+#: src/dialogs/dock_session_dialog.cpp:941
 msgid "Custom"
-msgstr ""
+msgstr "Zvyk"
 
-#: src/dialogs/dock_session_dialog.cpp:702
+#: src/dialogs/dock_session_dialog.cpp:687
 msgid "Cannot save Session."
 msgstr "Relaci se nepodařilo uložit."
 
-#: src/dialogs/dock_session_dialog.cpp:709
+#: src/dialogs/dock_session_dialog.cpp:694
 msgid "%1 cannot be empty or contain only whitespace."
 msgstr "%1 nesmí být prázdné ani obsahovat pouze bílé znaky."
 
-#: src/dialogs/dock_session_dialog.cpp:724
+#: src/dialogs/dock_session_dialog.cpp:709
 msgid "Session icon"
 msgstr "Ikona relace"
 
-#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_dialog.cpp:730
 #: src/dialogs/dock_session_editor_item.cpp:109
 msgid "Desktop File"
-msgstr ""
+msgstr "Soubor na ploše"
 
-#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_dialog.cpp:738
 #: src/dialogs/dock_session_editor_item.cpp:110
 msgid "App Name"
-msgstr ""
+msgstr "Název aplikace"
 
-#: src/dialogs/dock_session_dialog.cpp:761
+#: src/dialogs/dock_session_dialog.cpp:746
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
-msgstr ""
+msgstr "Název aplikace"
 
-#: src/dialogs/dock_session_dialog.cpp:769
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr ""
-
-#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_dialog.cpp:754
 #: src/dialogs/dock_session_editor_item.cpp:112
 msgid "Workspace"
 msgstr "Pracovní prostor"
 
-#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_dialog.cpp:762
 #: src/dialogs/dock_session_editor_item.cpp:113
 msgid "Dimensions"
-msgstr ""
+msgstr "Rozměry"
 
-#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_dialog.cpp:770
 #: src/dialogs/dock_session_editor_item.cpp:114
-#, fuzzy
 msgid "Position"
-msgstr "Umístění"
+msgstr "Pozice"
 
-#: src/dialogs/dock_session_dialog.cpp:818
+#: src/dialogs/dock_session_dialog.cpp:795
 msgid "A Session with this name already exists."
-msgstr ""
+msgstr "Relace s tímto názvem již existuje."
 
-#: src/dialogs/dock_session_dialog.cpp:825
+#: src/dialogs/dock_session_dialog.cpp:802
 msgid "Choose a different name for “%1”."
-msgstr ""
+msgstr "Vyberte jiný název pro „%1“."
 
-#: src/dialogs/dock_session_dialog.cpp:1059
+#: src/dialogs/dock_session_dialog.cpp:1013
 msgid "_Save"
 msgstr "_Uložit"
 
@@ -583,61 +570,61 @@ msgstr "_Vložit"
 msgid "_Launch"
 msgstr "_Spustit"
 
-#: src/dialogs/dock_session_editor_item.cpp:144
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "Parametry"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
 msgid "Application title"
-msgstr ""
+msgstr "Název aplikace"
 
-#: src/dialogs/dock_session_editor_item.cpp:148
+#: src/dialogs/dock_session_editor_item.cpp:147
 msgid "Desktop file"
-msgstr ""
+msgstr "Soubor na ploše"
 
-#: src/dialogs/dock_session_editor_item.cpp:152
+#: src/dialogs/dock_session_editor_item.cpp:151
 msgid "Application name"
-msgstr ""
+msgstr "Název aplikace"
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:155
 msgid "Command-line parameters"
-msgstr ""
+msgstr "Parametry příkazového řádku"
 
-#: src/dialogs/dock_session_editor_item.cpp:161
+#: src/dialogs/dock_session_editor_item.cpp:160
 msgid "Workspace number"
 msgstr "Číslo pracovního prostoru"
 
-#: src/dialogs/dock_session_editor_item.cpp:253
+#: src/dialogs/dock_session_editor_item.cpp:252
 msgid "No application window is available to copy."
-msgstr ""
+msgstr "Není k dispozici žádné okno aplikace ke kopírování."
 
-#: src/dialogs/dock_session_editor_item.cpp:422
+#: src/dialogs/dock_session_editor_item.cpp:421
 msgid "Paste a window into this item before launching it."
-msgstr ""
+msgstr "Před spuštěním této položky vložte okno."
 
-#: src/dialogs/dock_session_editor_item.cpp:450
-msgid ""
-"The application was launched. This desktop session cannot place windows, so "
-"Workspace, Dimensions, and Position were ignored."
-msgstr ""
-"Aplikace byla spuštěna. Tato relace plochy nemůže umístit okna, takže "
-"pracovní prostor, rozměry a pozice byly ignorovány."
+#: src/dialogs/dock_session_editor_item.cpp:449
+msgid "The application was launched. This desktop session cannot place windows, so Workspace, Dimensions, and Position were ignored."
+msgstr "Aplikace byla spuštěna. Tato relace plochy nemůže umístit okna, takže pracovní prostor, rozměry a pozice byly ignorovány."
 
 #: src/launchers/session_launcher.cpp:622
 msgid "This Session item has no application."
-msgstr ""
+msgstr "Tato položka relace nemá žádnou aplikaci."
 
 #: src/launchers/session_launcher.cpp:631
 msgid "No installed application matches \"%1\"."
-msgstr ""
+msgstr "Žádná nainstalovaná aplikace neodpovídá \"%1\"."
 
 #: src/launchers/session_launcher.cpp:646
 msgid "The parameters cannot be parsed: %1"
-msgstr ""
+msgstr "Parametry nelze analyzovat: %1"
 
 #: src/launchers/session_launcher.cpp:653
 msgid "%1 does not declare a command that accepts parameters."
-msgstr ""
+msgstr "%1 nedeklaruje příkaz, který přijímá parametry."
 
 #: src/launchers/session_launcher.cpp:697
 msgid "%1 cannot be launched: %2"
-msgstr ""
+msgstr "%1 nelze spustit: %2"
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -648,7 +635,6 @@ msgid "Version %1"
 msgstr "Verze softwaru %1"
 
 #: src/dialogs/dock_about_dialog.cpp:201
-#, fuzzy
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui\n"
@@ -656,7 +642,9 @@ msgid ""
 "Copyright © 2018-2026 Juan González"
 msgstr ""
 "Lehký aplikační dok.\n"
-"Autor a správce: yoosamui"
+"Autor a správce: yoosamui\n"
+"\n"
+"Copyright © 2018-2026 Juan González"
 
 #: src/dialogs/dock_about_dialog.cpp:211
 msgid ""
@@ -695,8 +683,16 @@ msgstr "Primární monitor"
 msgctxt "monitor status"
 msgid "default"
 msgstr "Výchozí monitor"
+
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "Použijte přechod pozadí z černé do šedé"
+
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Prolnutí"
+
+#~ msgid "_Maximize"
+#~ msgstr "_Maximalizovat"
+
+#~ msgid "_Maximize All"
+#~ msgstr "_Maximalizovat vše"

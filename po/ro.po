@@ -6,16 +6,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 13:58+0700\n"
+"POT-Creation-Date: 2026-09-06 21:59+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
 "Language: ro\n"
+"Language-Team: none\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < 20)) ? 1 : 2;\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
-"20)) ? 1 : 2;\n"
 "Generated-By: Babel 2.17.0\n"
 
 #: src/main.cpp:355
@@ -24,641 +23,608 @@ msgstr "Previzualizările ferestrelor sunt dezactivate"
 
 #: src/main.cpp:361
 msgid "DockLight"
-msgstr "DockLumină"
+msgstr "DockLight"
 
 #: src/main.cpp:368
-msgid ""
-"Openbox requires an X11 compositor for complete window previews. Display "
-"Preview is disabled. Start compton or picom, then enable Display Preview in "
-"DockLight Settings."
-msgstr ""
-"Openbox necesită un compozitor X11 pentru previzualizări complete ale "
-"ferestrelor. Previzualizarea afișajului este dezactivată. Porniți compton "
-"sau picom, apoi activați Previzualizarea afișajului în Setări DockLight."
+msgid "Openbox requires an X11 compositor for complete window previews. Display Preview is disabled. Start compton or picom, then enable Display Preview in DockLight Settings."
+msgstr "Openbox necesită un compozitor X11 pentru previzualizări complete ale ferestrelor. Previzualizarea afișajului este dezactivată. Porniți compton sau picom, apoi activați Previzualizarea afișajului în Setări DockLight."
 
-#: src/dock/dock_item.cpp:159
+#: src/dock/dock_item.cpp:162
 msgid "_Edit"
-msgstr ""
+msgstr "_Edita"
 
-#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+#: src/dialogs/dock_session_editor_item.cpp:108 src/dock/dock_item.cpp:165
 msgid "_Remove"
-msgstr ""
+msgstr "_Elimina"
 
-#: src/dock/dock_item.cpp:165
+#: src/dock/dock_item.cpp:168
 msgid "_Attach"
 msgstr "_Fixați pe Dock"
 
-#: src/dock/dock_item.cpp:168
+#: src/dock/dock_item.cpp:171
 msgid "_Open New Window"
 msgstr "_Deschide o fereastră nouă"
 
-#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
+#: src/dock/dock_home_item.cpp:77 src/dock/dock_item.cpp:174
 msgid "_Close All"
 msgstr "_Închide totul"
 
-#: src/dock/dock_item.cpp:174
+#: src/dock/dock_item.cpp:177
 msgid "_Minimize"
 msgstr "_Minimizează"
 
-#: src/dock/dock_item.cpp:177
+#: src/dock/dock_item.cpp:180
 msgid "_Unminimize"
 msgstr "_Restaurare"
 
-#: src/dock/dock_item.cpp:180
-msgid "_Maximize"
-msgstr "_Maximizați"
+#: src/dock/dock_item.cpp:183
+msgid "Ma_ximize"
+msgstr "Ma_ximizați"
 
-#: src/dock/dock_home_item.cpp:59
+#: src/dock/dock_home_item.cpp:62
 msgid "_Settings"
 msgstr "_Setări"
 
-#: src/dock/dock_home_item.cpp:62
-msgid "Sessi_on"
-msgstr ""
-
 #: src/dock/dock_home_item.cpp:65
+msgid "Sessi_on"
+msgstr "_Sesiune"
+
+#: src/dock/dock_home_item.cpp:68
 msgid "_Minimize All"
 msgstr "_Minimizează-le pe toate"
 
-#: src/dock/dock_home_item.cpp:68
+#: src/dock/dock_home_item.cpp:71
 msgid "_Unminimize All"
 msgstr "_Restaurați totul"
 
-#: src/dock/dock_home_item.cpp:71
-msgid "_Maximize All"
-msgstr "_Maximizați toate"
+#: src/dock/dock_home_item.cpp:74
+msgid "Ma_ximize All"
+msgstr "Ma_ximizați totul"
 
-#: src/dock/dock_home_item.cpp:77
+#: src/dock/dock_home_item.cpp:80
 msgid "_About"
 msgstr "_Despre"
 
-#: src/dock/dock_home_item.cpp:80
+#: src/dock/dock_home_item.cpp:83
 msgid "_Exit"
 msgstr "_Ieșire"
 
-#: src/dock/dock_home_item.cpp:194
+#: src/dock/dock_home_item.cpp:310
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Acasă"
 
-#: src/dialogs/dock_settings_dialog.cpp:215
-#: src/dialogs/dock_settings_dialog.cpp:260
+#: src/dialogs/dock_settings_dialog.cpp:243
+#: src/dialogs/dock_settings_dialog.cpp:288
 msgid "DockLight Settings"
 msgstr "Setări DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:288
-#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
+#: src/dialogs/dock_session_dialog.cpp:1019
+#: src/dialogs/dock_settings_dialog.cpp:316
 msgid "_Close"
 msgstr "_Închide"
 
-#: src/dialogs/dock_settings_dialog.cpp:299
+#: src/dialogs/dock_settings_dialog.cpp:327
 msgid "Appearance"
 msgstr "Aspect"
 
-#: src/dialogs/dock_settings_dialog.cpp:301
+#: src/dialogs/dock_settings_dialog.cpp:329
 msgid "Behavior"
 msgstr "Comportament"
 
-#: src/dialogs/dock_settings_dialog.cpp:303
+#: src/dialogs/dock_settings_dialog.cpp:331
 msgid "Position & Autohide"
 msgstr "Poziție și ascundere automată"
 
-#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:358
 msgid "Monitor"
 msgstr "Monitorizați"
 
-#: src/dialogs/dock_settings_dialog.cpp:332
+#: src/dialogs/dock_settings_dialog.cpp:360
 msgid "Hover Effect"
 msgstr "Efectul Hover"
 
-#: src/dialogs/dock_settings_dialog.cpp:334
+#: src/dialogs/dock_settings_dialog.cpp:362
 msgid "Indicator"
 msgstr "Indicator"
 
-#: src/dialogs/dock_settings_dialog.cpp:336
-#: src/dialogs/dock_settings_dialog.cpp:551
+#: src/dialogs/dock_settings_dialog.cpp:364
+#: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Indicator Color"
 msgstr "Culoarea indicatorului"
 
-#: src/dialogs/dock_settings_dialog.cpp:338
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:366
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgid "Preview Color"
 msgstr "Culoarea previzualizării"
 
-#: src/dialogs/dock_settings_dialog.cpp:340
+#: src/dialogs/dock_settings_dialog.cpp:368
 msgid "Display Home Icon"
 msgstr "Afișează pictograma Acasă"
 
-#: src/dialogs/dock_settings_dialog.cpp:342
+#: src/dialogs/dock_settings_dialog.cpp:370
 msgid "Home Icon"
 msgstr "Pictograma Acasă"
 
-#: src/dialogs/dock_settings_dialog.cpp:344
+#: src/dialogs/dock_settings_dialog.cpp:372
 msgid "Display Tooltips"
 msgstr "Afișați sfaturi cu instrumente"
 
-#: src/dialogs/dock_settings_dialog.cpp:346
+#: src/dialogs/dock_settings_dialog.cpp:374
 msgid "Display Preview"
 msgstr "Afișează Previzualizare"
 
-#: src/dialogs/dock_settings_dialog.cpp:348
+#: src/dialogs/dock_settings_dialog.cpp:376
 msgid "Close Preview After Activation"
 msgstr "Închideți previzualizarea după activare"
 
-#: src/dialogs/dock_settings_dialog.cpp:350
+#: src/dialogs/dock_settings_dialog.cpp:378
 msgid "Manage All Workspaces"
 msgstr "Gestionați toate spațiile de lucru"
 
-#: src/dialogs/dock_settings_dialog.cpp:352
+#: src/dialogs/dock_settings_dialog.cpp:380
 msgid "Icon Size"
 msgstr "Dimensiunea pictogramei"
 
-#: src/dialogs/dock_settings_dialog.cpp:354
+#: src/dialogs/dock_settings_dialog.cpp:382
 msgid "Preview Card Height"
 msgstr "Previzualizează înălțimea cardului"
 
-#: src/dialogs/dock_settings_dialog.cpp:356
+#: src/dialogs/dock_settings_dialog.cpp:384
 msgid "Preview Show Delay (ms)"
 msgstr "Previzualizare Afișare Întârziere (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:358
+#: src/dialogs/dock_settings_dialog.cpp:386
 msgid "Location"
 msgstr "Locație"
 
-#: src/dialogs/dock_settings_dialog.cpp:360
+#: src/dialogs/dock_settings_dialog.cpp:388
 msgid "Gradient Background"
 msgstr "Fundal Gradient"
 
-#: src/dialogs/dock_settings_dialog.cpp:362
+#: src/dialogs/dock_settings_dialog.cpp:390
 msgid "Rounded Corners"
 msgstr "Colțuri rotunjite"
 
-#: src/dialogs/dock_settings_dialog.cpp:364
+#: src/dialogs/dock_settings_dialog.cpp:392
 msgid "Corner Radius"
 msgstr "Raza de colț"
 
-#: src/dialogs/dock_settings_dialog.cpp:366
+#: src/dialogs/dock_settings_dialog.cpp:394
 msgid "Alignment"
 msgstr "Alinierea"
 
-#: src/dialogs/dock_settings_dialog.cpp:368
+#: src/dialogs/dock_settings_dialog.cpp:396
 msgid "Autohide"
 msgstr "Ascundere automată"
 
-#: src/dialogs/dock_settings_dialog.cpp:370
+#: src/dialogs/dock_settings_dialog.cpp:398
 msgid "Autohide Effect"
 msgstr "Efect de ascundere automată"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:400
 msgid "Autohide Delay (ms)"
 msgstr "Întârziere de ascundere automată (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:430
+#: src/dialogs/dock_settings_dialog.cpp:458
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Monitorul principal"
 
-#: src/dialogs/dock_settings_dialog.cpp:469
+#: src/dialogs/dock_settings_dialog.cpp:496
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Efect standard"
 
-#: src/dialogs/dock_settings_dialog.cpp:471
+#: src/dialogs/dock_settings_dialog.cpp:498
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Efect de zoom"
 
-#: src/dialogs/dock_settings_dialog.cpp:473
+#: src/dialogs/dock_settings_dialog.cpp:500
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Efect de estompare"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
+#: src/dialogs/dock_settings_dialog.cpp:502
+msgctxt "hover effect"
+msgid "Magnified"
+msgstr "Mărită"
+
+#: src/dialogs/dock_settings_dialog.cpp:535
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Indicatoare de linie"
 
-#: src/dialogs/dock_settings_dialog.cpp:512
+#: src/dialogs/dock_settings_dialog.cpp:537
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Indicatori cu puncte"
 
-#: src/dialogs/dock_settings_dialog.cpp:553
+#: src/dialogs/dock_settings_dialog.cpp:572
 msgid "Choose the indicator color"
 msgstr "Alegeți culoarea indicatorului"
 
-#: src/dialogs/dock_settings_dialog.cpp:572
+#: src/dialogs/dock_settings_dialog.cpp:591
 msgid "Choose the preview color"
 msgstr "Alegeți culoarea previzualizării"
 
-#: src/dialogs/dock_settings_dialog.cpp:584
+#: src/dialogs/dock_settings_dialog.cpp:603
 msgid "Select…"
 msgstr "Selectați…"
 
-#: src/dialogs/dock_settings_dialog.cpp:586
+#: src/dialogs/dock_settings_dialog.cpp:605
 msgid "Use Default"
 msgstr "Utilizați implicit"
 
-#: src/dialogs/dock_settings_dialog.cpp:594
+#: src/dialogs/dock_settings_dialog.cpp:613
 msgid "Built-in DockLight icon"
 msgstr "Pictograma DockLight încorporată"
 
-#: src/dialogs/dock_settings_dialog.cpp:628
+#: src/dialogs/dock_settings_dialog.cpp:647
 msgid "Otherwise keep the preview open until the pointer leaves it"
-msgstr ""
-"În caz contrar, păstrați previzualizarea deschisă până când indicatorul o "
-"părăsește"
+msgstr "În caz contrar, păstrați previzualizarea deschisă până când indicatorul o părăsește"
 
-#: src/dialogs/dock_settings_dialog.cpp:635
+#: src/dialogs/dock_settings_dialog.cpp:654
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
-msgstr ""
-"Aplicați acțiuni cu pictograme și rotație cu roata mouse-ului în toate "
-"spațiile de lucru"
+msgstr "Aplicați acțiuni cu pictograme și rotație cu roata mouse-ului în toate spațiile de lucru"
 
-#: src/dialogs/dock_settings_dialog.cpp:666
+#: src/dialogs/dock_settings_dialog.cpp:685
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
-msgstr ""
-"0 selectează dimensionarea automată; în caz contrar, utilizați 64 până la "
-"512 pixeli"
+msgstr "0 selectează dimensionarea automată; în caz contrar, utilizați 64 până la 512 pixeli"
 
-#: src/dialogs/dock_settings_dialog.cpp:683
+#: src/dialogs/dock_settings_dialog.cpp:702
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
-msgstr ""
-"Întârziere înainte de apariția unei previzualizări a ferestrei, de la 0 la "
-"5000 de milisecunde"
+msgstr "Întârziere înainte de apariția unei previzualizări a ferestrei, de la 0 la 5000 de milisecunde"
 
-#: src/dialogs/dock_settings_dialog.cpp:701
+#: src/dialogs/dock_settings_dialog.cpp:720
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
-msgstr ""
-"Întârziere înainte de ascunderea dock-ului, de la 0 la 5000 milisecunde"
+msgstr "Întârziere înainte de ascunderea dock-ului, de la 0 la 5000 milisecunde"
 
-#: src/dialogs/dock_settings_dialog.cpp:708
+#: src/dialogs/dock_settings_dialog.cpp:726
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Marginea de jos"
 
-#: src/dialogs/dock_settings_dialog.cpp:710
+#: src/dialogs/dock_settings_dialog.cpp:728
 msgctxt "dock location"
 msgid "Left"
 msgstr "Marginea din stânga"
 
-#: src/dialogs/dock_settings_dialog.cpp:712
+#: src/dialogs/dock_settings_dialog.cpp:730
 msgctxt "dock location"
 msgid "Top"
 msgstr "Marginea de sus"
 
-#: src/dialogs/dock_settings_dialog.cpp:714
+#: src/dialogs/dock_settings_dialog.cpp:732
 msgctxt "dock location"
 msgid "Right"
 msgstr "Marginea dreaptă"
 
-#: src/dialogs/dock_settings_dialog.cpp:782
+#: src/dialogs/dock_settings_dialog.cpp:788
 msgid "-1 selects the automatic radius"
 msgstr "-1 selectează raza automată"
 
-#: src/dialogs/dock_settings_dialog.cpp:788
+#: src/dialogs/dock_settings_dialog.cpp:793
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Start-aliniat"
 
-#: src/dialogs/dock_settings_dialog.cpp:790
+#: src/dialogs/dock_settings_dialog.cpp:795
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Centrat"
 
-#: src/dialogs/dock_settings_dialog.cpp:792
+#: src/dialogs/dock_settings_dialog.cpp:797
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Aliniat la capăt"
 
-#: src/dialogs/dock_settings_dialog.cpp:794
+#: src/dialogs/dock_settings_dialog.cpp:799
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Umpleți spațiul disponibil"
 
-#: src/dialogs/dock_settings_dialog.cpp:840
+#: src/dialogs/dock_settings_dialog.cpp:832
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Dezactivat"
 
-#: src/dialogs/dock_settings_dialog.cpp:842
+#: src/dialogs/dock_settings_dialog.cpp:834
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "automată"
 
-#: src/dialogs/dock_settings_dialog.cpp:844
+#: src/dialogs/dock_settings_dialog.cpp:836
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Inteligent"
 
-#: src/dialogs/dock_settings_dialog.cpp:903
+#: src/dialogs/dock_settings_dialog.cpp:885
 msgctxt "autohide effect"
 msgid "Plasma"
 msgstr "Plasma"
 
-#: src/dialogs/dock_settings_dialog.cpp:909
-#: src/dialogs/dock_settings_dialog.cpp:918
+#: src/dialogs/dock_settings_dialog.cpp:890
+#: src/dialogs/dock_settings_dialog.cpp:898
 msgctxt "autohide effect"
 msgid "Slide"
 msgstr "Glisare"
 
-#: src/dialogs/dock_settings_dialog.cpp:921
+#: src/dialogs/dock_settings_dialog.cpp:901
 msgctxt "autohide effect"
 msgid "Slide and Fade"
 msgstr "Glisare și estompare"
 
-#: src/dialogs/dock_settings_dialog.cpp:927
+#: src/dialogs/dock_settings_dialog.cpp:906
 msgctxt "autohide effect"
 msgid "GNOME"
 msgstr "GNOME"
 
-#: src/dialogs/dock_settings_dialog.cpp:1050
+#: src/dialogs/dock_settings_dialog.cpp:1029
 msgid "Set the dock icon size from 32 to 128 pixels."
 msgstr "Setează dimensiunea pictogramei Dock de la 32 la 128 de pixeli."
 
-#: src/dialogs/dock_settings_dialog.cpp:1057
+#: src/dialogs/dock_settings_dialog.cpp:1036
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr ""
-"Alege modul în care răspund pictogramele când cursorul trece peste ele."
+msgstr "Alege modul în care răspund pictogramele când cursorul trece peste ele."
 
-#: src/dialogs/dock_settings_dialog.cpp:1064
+#: src/dialogs/dock_settings_dialog.cpp:1043
 msgid "Select how running applications are marked on the dock."
 msgstr "Selectează cum sunt marcate aplicațiile care rulează pe Dock."
 
-#: src/dialogs/dock_settings_dialog.cpp:1071
+#: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the color of running-application indicators."
 msgstr "Setează culoarea indicatorilor aplicațiilor în curs de rulare."
 
-#: src/dialogs/dock_settings_dialog.cpp:1078
+#: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Use a GTK theme-derived gradient instead of a solid background."
-msgstr ""
-"Folosește un gradient derivat dintr-o temă GTK în loc de un fundal uniform."
+msgstr "Folosește un gradient derivat dintr-o temă GTK în loc de un fundal uniform."
 
-#: src/dialogs/dock_settings_dialog.cpp:1085
+#: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Round the corners of the dock background."
 msgstr "Rotunjește colțurile fundalului Dock."
 
-#: src/dialogs/dock_settings_dialog.cpp:1092
+#: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
 msgstr "Setează raza colțului în pixeli; -1 selectează dimensiunea automată."
 
-#: src/dialogs/dock_settings_dialog.cpp:1099
+#: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Show the DockLight home and launcher-management icon."
 msgstr "Afișează pictograma DockLight pentru gestionarea acasă și lansator."
 
-#: src/dialogs/dock_settings_dialog.cpp:1106
+#: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
-"Alege o imagine personalizată pentru pictograma de acasă sau folosește "
-"pictograma încorporată."
+msgstr "Alege o imagine personalizată pentru pictograma de acasă sau folosește pictograma încorporată."
+
+#: src/dialogs/dock_settings_dialog.cpp:1094
+msgid "Show application names when the pointer rests on dock icons."
+msgstr "Afișați numele aplicațiilor când cursorul se află deasupra pictogramelor din dock."
+
+#: src/dialogs/dock_settings_dialog.cpp:1101
+msgid "Include windows from every workspace in dock actions and cycling."
+msgstr "Includeți ferestre din toate spațiile de lucru în acțiunile și ciclarea dock-ului."
+
+#: src/dialogs/dock_settings_dialog.cpp:1108
+msgid "Show window previews when the pointer rests on running apps."
+msgstr "Afișați previzualizările ferestrelor când cursorul se află deasupra aplicațiilor deschise."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
-msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
-"Afișați numele aplicațiilor când cursorul se află deasupra pictogramelor din "
-"dock."
+msgid "Close the preview popup after activating one of its windows."
+msgstr "Închideți fereastra pop-up de previzualizare după activarea uneia dintre ferestrele sale."
 
 #: src/dialogs/dock_settings_dialog.cpp:1122
-msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
-"Includeți ferestre din toate spațiile de lucru în acțiunile și ciclarea dock-"
-"ului."
-
-#: src/dialogs/dock_settings_dialog.cpp:1129
-msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
-"Afișați previzualizările ferestrelor când cursorul se află deasupra "
-"aplicațiilor deschise."
-
-#: src/dialogs/dock_settings_dialog.cpp:1136
-msgid "Close the preview popup after activating one of its windows."
-msgstr ""
-"Închideți fereastra pop-up de previzualizare după activarea uneia dintre "
-"ferestrele sale."
-
-#: src/dialogs/dock_settings_dialog.cpp:1143
 msgid "Set the accent color used by window previews."
 msgstr "Setați culoarea de accent utilizată de previzualizările ferestrelor."
 
-#: src/dialogs/dock_settings_dialog.cpp:1150
+#: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
-"Setați înălțimea previzualizării în pixeli; 0 selectează redimensionarea "
-"automată."
+msgstr "Setați înălțimea previzualizării în pixeli; 0 selectează redimensionarea automată."
 
-#: src/dialogs/dock_settings_dialog.cpp:1157
+#: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Set how long to wait before showing a preview."
 msgstr "Setați cât timp să așteptați înainte de a afișa o previzualizare."
 
-#: src/dialogs/dock_settings_dialog.cpp:1165
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Choose the display where DockLight appears."
 msgstr "Alegeți ecranul pe care apare DockLight."
 
-#: src/dialogs/dock_settings_dialog.cpp:1172
+#: src/dialogs/dock_settings_dialog.cpp:1151
 msgid "Choose the screen edge where the dock is placed."
 msgstr "Alegeți marginea ecranului pe care este plasat dock-ul."
 
-#: src/dialogs/dock_settings_dialog.cpp:1179
+#: src/dialogs/dock_settings_dialog.cpp:1158
 msgid "Align dock content along the selected screen edge."
-msgstr ""
-"Aliniați conținutul dock-ului de-a lungul marginii selectate a ecranului."
+msgstr "Aliniați conținutul dock-ului de-a lungul marginii selectate a ecranului."
 
-#: src/dialogs/dock_settings_dialog.cpp:1186
+#: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose when the dock moves out of view."
 msgstr "Alegeți când dock-ul se va ascunde din vedere."
 
-#: src/dialogs/dock_settings_dialog.cpp:1193
+#: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Set how long to wait before hiding the dock."
 msgstr "Setați cât timp să așteptați înainte de a ascunde dock-ul."
 
-#: src/dialogs/dock_settings_dialog.cpp:1203
+#: src/dialogs/dock_settings_dialog.cpp:1182
 msgid "Choose an autohide animation supported by this desktop."
 msgstr "Alegeți o animație de ascundere automată acceptată de acest desktop."
 
-#: src/dialogs/dock_settings_dialog.cpp:1451
-#: src/dialogs/dock_settings_dialog.cpp:1488
+#: src/dialogs/dock_settings_dialog.cpp:1432
+#: src/dialogs/dock_settings_dialog.cpp:1469
 msgid "Select Home Icon"
 msgstr "Selectați pictograma Acasă"
 
-#: src/dialogs/dock_settings_dialog.cpp:1456
 #: src/dialogs/dock_session_dialog.cpp:509
+#: src/dialogs/dock_settings_dialog.cpp:1437
 msgid "_Cancel"
 msgstr "_Anulează"
 
-#: src/dialogs/dock_settings_dialog.cpp:1459
+#: src/dialogs/dock_settings_dialog.cpp:1440
 msgid "_Open"
 msgstr "_Deschide"
 
-#: src/dialogs/dock_settings_dialog.cpp:1525
 #: src/dialogs/dock_session_dialog.cpp:520
+#: src/dialogs/dock_settings_dialog.cpp:1506
 msgid "Image Files"
 msgstr "Fișiere imagine"
 
 #: src/dialogs/dock_session_dialog.cpp:241
 #: src/dialogs/dock_session_dialog.cpp:275
 msgid "Session"
-msgstr ""
+msgstr "Sesiune"
 
 #: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_Numele sesiunii"
 
 #: src/dialogs/dock_session_dialog.cpp:315
-#: src/dialogs/dock_session_dialog.cpp:717
+#: src/dialogs/dock_session_dialog.cpp:702
 msgid "Session name"
 msgstr "Numele sesiunii"
 
 #: src/dialogs/dock_session_dialog.cpp:320
 msgid "_Icon"
-msgstr ""
+msgstr "P_ictogramă"
 
 #: src/dialogs/dock_session_dialog.cpp:363
-#, fuzzy
 msgid "Select _Icon"
-msgstr "Selectați pictograma Acasă"
+msgstr "Selectaț_i pictograma"
 
 #: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
-msgstr ""
+msgstr "_Adăuga"
 
 #: src/dialogs/dock_session_dialog.cpp:503
-#, fuzzy
 msgid "Select Session Icon"
-msgstr "Selectați pictograma Acasă"
+msgstr "Selectați pictograma sesiune"
 
 #: src/dialogs/dock_session_dialog.cpp:512
-#, fuzzy
 msgid "_Select"
-msgstr "Selectați…"
+msgstr "_Selecta"
 
 #: src/dialogs/dock_session_dialog.cpp:578
-#: src/dialogs/dock_session_dialog.cpp:987
+#: src/dialogs/dock_session_dialog.cpp:941
 msgid "Custom"
-msgstr ""
+msgstr "Personalizat"
 
-#: src/dialogs/dock_session_dialog.cpp:702
+#: src/dialogs/dock_session_dialog.cpp:687
 msgid "Cannot save Session."
 msgstr "Sesiunea nu poate fi salvată."
 
-#: src/dialogs/dock_session_dialog.cpp:709
+#: src/dialogs/dock_session_dialog.cpp:694
 msgid "%1 cannot be empty or contain only whitespace."
 msgstr "%1 nu poate fi gol sau să conțină doar spații albe."
 
-#: src/dialogs/dock_session_dialog.cpp:724
+#: src/dialogs/dock_session_dialog.cpp:709
 msgid "Session icon"
 msgstr "Pictograma sesiunii"
 
-#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_dialog.cpp:730
 #: src/dialogs/dock_session_editor_item.cpp:109
 msgid "Desktop File"
-msgstr ""
+msgstr "Fișier desktop"
 
-#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_dialog.cpp:738
 #: src/dialogs/dock_session_editor_item.cpp:110
 msgid "App Name"
-msgstr ""
+msgstr "Numele aplicației"
 
-#: src/dialogs/dock_session_dialog.cpp:761
+#: src/dialogs/dock_session_dialog.cpp:746
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
-msgstr ""
+msgstr "Titlul aplicației"
 
-#: src/dialogs/dock_session_dialog.cpp:769
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr ""
-
-#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_dialog.cpp:754
 #: src/dialogs/dock_session_editor_item.cpp:112
-#, fuzzy
 msgid "Workspace"
-msgstr "Gestionați toate spațiile de lucru"
+msgstr "Spațiul de lucru"
 
-#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_dialog.cpp:762
 #: src/dialogs/dock_session_editor_item.cpp:113
 msgid "Dimensions"
-msgstr ""
+msgstr "Dimensiuni"
 
-#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_dialog.cpp:770
 #: src/dialogs/dock_session_editor_item.cpp:114
-#, fuzzy
 msgid "Position"
-msgstr "Locație"
+msgstr "Poziţie"
 
-#: src/dialogs/dock_session_dialog.cpp:818
+#: src/dialogs/dock_session_dialog.cpp:795
 msgid "A Session with this name already exists."
-msgstr ""
+msgstr "O sesiune cu acest nume există deja."
 
-#: src/dialogs/dock_session_dialog.cpp:825
+#: src/dialogs/dock_session_dialog.cpp:802
 msgid "Choose a different name for “%1”."
-msgstr ""
+msgstr "Alegeți un alt nume pentru „%1”."
 
-#: src/dialogs/dock_session_dialog.cpp:1059
+#: src/dialogs/dock_session_dialog.cpp:1013
 msgid "_Save"
-msgstr ""
+msgstr "_Salva"
 
 #: src/dialogs/dock_session_editor_item.cpp:106
 msgid "_Paste"
-msgstr ""
+msgstr "_Pastă"
 
 #: src/dialogs/dock_session_editor_item.cpp:107
 msgid "_Launch"
-msgstr ""
+msgstr "_Lansa"
 
-#: src/dialogs/dock_session_editor_item.cpp:144
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "Parametrii"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
 msgid "Application title"
-msgstr ""
+msgstr "Titlul aplicației"
 
-#: src/dialogs/dock_session_editor_item.cpp:148
+#: src/dialogs/dock_session_editor_item.cpp:147
 msgid "Desktop file"
-msgstr ""
+msgstr "Fișier desktop"
 
-#: src/dialogs/dock_session_editor_item.cpp:152
+#: src/dialogs/dock_session_editor_item.cpp:151
 msgid "Application name"
-msgstr ""
+msgstr "Numele aplicației"
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:155
 msgid "Command-line parameters"
-msgstr ""
+msgstr "Parametrii liniei de comandă"
 
-#: src/dialogs/dock_session_editor_item.cpp:161
+#: src/dialogs/dock_session_editor_item.cpp:160
 msgid "Workspace number"
-msgstr ""
+msgstr "Numărul spațiului de lucru"
 
-#: src/dialogs/dock_session_editor_item.cpp:253
+#: src/dialogs/dock_session_editor_item.cpp:252
 msgid "No application window is available to copy."
-msgstr ""
+msgstr "Nicio fereastră de aplicație nu este disponibilă pentru copiere."
 
-#: src/dialogs/dock_session_editor_item.cpp:422
+#: src/dialogs/dock_session_editor_item.cpp:421
 msgid "Paste a window into this item before launching it."
-msgstr ""
+msgstr "Lipiți o fereastră în acest articol înainte de a o lansa."
 
-#: src/dialogs/dock_session_editor_item.cpp:450
-msgid ""
-"The application was launched. This desktop session cannot place windows, so "
-"Workspace, Dimensions, and Position were ignored."
-msgstr ""
+#: src/dialogs/dock_session_editor_item.cpp:449
+msgid "The application was launched. This desktop session cannot place windows, so Workspace, Dimensions, and Position were ignored."
+msgstr "Aplicația a fost lansată. Această sesiune desktop nu poate plasa ferestre, așa că Spațiul de lucru, Dimensiunile și Poziția au fost ignorate."
 
 #: src/launchers/session_launcher.cpp:622
 msgid "This Session item has no application."
-msgstr ""
+msgstr "Acest articol de sesiune nu are aplicație."
 
 #: src/launchers/session_launcher.cpp:631
 msgid "No installed application matches \"%1\"."
-msgstr ""
+msgstr "Nicio aplicație instalată nu se potrivește cu „%1”."
 
 #: src/launchers/session_launcher.cpp:646
 msgid "The parameters cannot be parsed: %1"
-msgstr ""
+msgstr "Parametrii nu pot fi analizați: %1"
 
 #: src/launchers/session_launcher.cpp:653
 msgid "%1 does not declare a command that accepts parameters."
-msgstr ""
+msgstr "%1 nu declară o comandă care acceptă parametri."
 
 #: src/launchers/session_launcher.cpp:697
 msgid "%1 cannot be launched: %2"
-msgstr ""
+msgstr "%1 nu poate fi lansat: %2"
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -669,7 +635,6 @@ msgid "Version %1"
 msgstr "Versiunea de software %1"
 
 #: src/dialogs/dock_about_dialog.cpp:201
-#, fuzzy
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui\n"
@@ -677,7 +642,9 @@ msgid ""
 "Copyright © 2018-2026 Juan González"
 msgstr ""
 "Un dock pentru aplicații ușor.\n"
-"Autor și întreținător: yoosamui"
+"Autor și întreținător: yoosamui\n"
+"\n"
+"Copyright © 2018-2026 Juan González"
 
 #: src/dialogs/dock_about_dialog.cpp:211
 msgid ""
@@ -716,8 +683,16 @@ msgstr "Monitorul principal"
 msgctxt "monitor status"
 msgid "default"
 msgstr "Monitor implicit"
+
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "Utilizați gradientul de fundal de andocare de la negru la gri"
+
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Estompare"
+
+#~ msgid "_Maximize"
+#~ msgstr "_Maximizați"
+
+#~ msgid "_Maximize All"
+#~ msgstr "_Maximizați toate"

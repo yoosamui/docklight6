@@ -6,15 +6,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-04 13:58+0700\n"
+"POT-Creation-Date: 2026-09-06 21:59+0700\n"
 "PO-Revision-Date: 2026-08-16 14:25+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
 "Language: hu\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Language-Team: none\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
 #: src/main.cpp:355
@@ -23,636 +23,608 @@ msgstr "Az ablak előnézete le van tiltva"
 
 #: src/main.cpp:361
 msgid "DockLight"
-msgstr "DockFény"
+msgstr "DockLight"
 
 #: src/main.cpp:368
-msgid ""
-"Openbox requires an X11 compositor for complete window previews. Display "
-"Preview is disabled. Start compton or picom, then enable Display Preview in "
-"DockLight Settings."
-msgstr ""
-"Az Openboxhoz X11-es összeállító szükséges a teljes ablak-előnézethez. "
-"Megjelenítési előnézet le van tiltva. Indítsa el a comptont vagy a picom-ot, "
-"majd engedélyezze a Display Preview funkciót a DockLight beállításaiban."
+msgid "Openbox requires an X11 compositor for complete window previews. Display Preview is disabled. Start compton or picom, then enable Display Preview in DockLight Settings."
+msgstr "Az Openboxhoz X11-es összeállító szükséges a teljes ablak-előnézethez. Megjelenítési előnézet le van tiltva. Indítsa el a comptont vagy a picom-ot, majd engedélyezze a Display Preview funkciót a DockLight beállításaiban."
 
-#: src/dock/dock_item.cpp:159
+#: src/dock/dock_item.cpp:162
 msgid "_Edit"
-msgstr ""
+msgstr "Sz_erkesztés"
 
-#: src/dock/dock_item.cpp:162 src/dialogs/dock_session_editor_item.cpp:108
+#: src/dialogs/dock_session_editor_item.cpp:108 src/dock/dock_item.cpp:165
 msgid "_Remove"
-msgstr ""
+msgstr "_Távolítsa el"
 
-#: src/dock/dock_item.cpp:165
+#: src/dock/dock_item.cpp:168
 msgid "_Attach"
 msgstr "_Rögzítés a dokkolóhoz"
 
-#: src/dock/dock_item.cpp:168
+#: src/dock/dock_item.cpp:171
 msgid "_Open New Window"
 msgstr "_Nyissa meg az új ablakot"
 
-#: src/dock/dock_item.cpp:171 src/dock/dock_home_item.cpp:74
+#: src/dock/dock_home_item.cpp:77 src/dock/dock_item.cpp:174
 msgid "_Close All"
 msgstr "_Az összes bezárása"
 
-#: src/dock/dock_item.cpp:174
+#: src/dock/dock_item.cpp:177
 msgid "_Minimize"
 msgstr "_ Minimalizálás"
 
-#: src/dock/dock_item.cpp:177
+#: src/dock/dock_item.cpp:180
 msgid "_Unminimize"
 msgstr "_Visszaállítás"
 
-#: src/dock/dock_item.cpp:180
-msgid "_Maximize"
-msgstr "_Maximalizálás"
+#: src/dock/dock_item.cpp:183
+msgid "Ma_ximize"
+msgstr "Ma_ximalizálás"
 
-#: src/dock/dock_home_item.cpp:59
+#: src/dock/dock_home_item.cpp:62
 msgid "_Settings"
 msgstr "_Beállítások"
 
-#: src/dock/dock_home_item.cpp:62
-msgid "Sessi_on"
-msgstr ""
-
 #: src/dock/dock_home_item.cpp:65
-msgid "_Minimize All"
-msgstr "_Minimize All"
+msgid "Sessi_on"
+msgstr "_Ülés"
 
 #: src/dock/dock_home_item.cpp:68
+msgid "_Minimize All"
+msgstr "_Mindent minimalizálni"
+
+#: src/dock/dock_home_item.cpp:71
 msgid "_Unminimize All"
 msgstr "_Restore All"
 
-#: src/dock/dock_home_item.cpp:71
-msgid "_Maximize All"
-msgstr "_Minden maximalizálása"
+#: src/dock/dock_home_item.cpp:74
+msgid "Ma_ximize All"
+msgstr "Ma_ximalize All"
 
-#: src/dock/dock_home_item.cpp:77
+#: src/dock/dock_home_item.cpp:80
 msgid "_About"
 msgstr "_Körülbelül"
 
-#: src/dock/dock_home_item.cpp:80
+#: src/dock/dock_home_item.cpp:83
 msgid "_Exit"
 msgstr "_Kilépés"
 
-#: src/dock/dock_home_item.cpp:194
+#: src/dock/dock_home_item.cpp:310
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Otthon"
 
-#: src/dialogs/dock_settings_dialog.cpp:215
-#: src/dialogs/dock_settings_dialog.cpp:260
+#: src/dialogs/dock_settings_dialog.cpp:243
+#: src/dialogs/dock_settings_dialog.cpp:288
 msgid "DockLight Settings"
 msgstr "DockLight beállítások"
 
-#: src/dialogs/dock_settings_dialog.cpp:288
-#: src/dialogs/dock_session_dialog.cpp:1065
 #: src/dialogs/dock_about_dialog.cpp:188
+#: src/dialogs/dock_session_dialog.cpp:1019
+#: src/dialogs/dock_settings_dialog.cpp:316
 msgid "_Close"
 msgstr "_Bezárás"
 
-#: src/dialogs/dock_settings_dialog.cpp:299
+#: src/dialogs/dock_settings_dialog.cpp:327
 msgid "Appearance"
 msgstr "Megjelenés"
 
-#: src/dialogs/dock_settings_dialog.cpp:301
+#: src/dialogs/dock_settings_dialog.cpp:329
 msgid "Behavior"
 msgstr "Viselkedés"
 
-#: src/dialogs/dock_settings_dialog.cpp:303
+#: src/dialogs/dock_settings_dialog.cpp:331
 msgid "Position & Autohide"
 msgstr "Pozíció és automatikus elrejtés"
 
-#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:358
 msgid "Monitor"
 msgstr "Monitor"
 
-#: src/dialogs/dock_settings_dialog.cpp:332
+#: src/dialogs/dock_settings_dialog.cpp:360
 msgid "Hover Effect"
 msgstr "Lebegő effektus"
 
-#: src/dialogs/dock_settings_dialog.cpp:334
+#: src/dialogs/dock_settings_dialog.cpp:362
 msgid "Indicator"
 msgstr "Mutató"
 
-#: src/dialogs/dock_settings_dialog.cpp:336
-#: src/dialogs/dock_settings_dialog.cpp:551
+#: src/dialogs/dock_settings_dialog.cpp:364
+#: src/dialogs/dock_settings_dialog.cpp:570
 msgid "Indicator Color"
 msgstr "Jelző színe"
 
-#: src/dialogs/dock_settings_dialog.cpp:338
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:366
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgid "Preview Color"
 msgstr "Előnézet színe"
 
-#: src/dialogs/dock_settings_dialog.cpp:340
+#: src/dialogs/dock_settings_dialog.cpp:368
 msgid "Display Home Icon"
 msgstr "Kezdőlap ikon megjelenítése"
 
-#: src/dialogs/dock_settings_dialog.cpp:342
+#: src/dialogs/dock_settings_dialog.cpp:370
 msgid "Home Icon"
 msgstr "Kezdőlap ikon"
 
-#: src/dialogs/dock_settings_dialog.cpp:344
+#: src/dialogs/dock_settings_dialog.cpp:372
 msgid "Display Tooltips"
 msgstr "Megjelenítési eszköztippek"
 
-#: src/dialogs/dock_settings_dialog.cpp:346
+#: src/dialogs/dock_settings_dialog.cpp:374
 msgid "Display Preview"
 msgstr "Megjelenítés előnézete"
 
-#: src/dialogs/dock_settings_dialog.cpp:348
+#: src/dialogs/dock_settings_dialog.cpp:376
 msgid "Close Preview After Activation"
 msgstr "Zárja be az előnézetet az aktiválás után"
 
-#: src/dialogs/dock_settings_dialog.cpp:350
+#: src/dialogs/dock_settings_dialog.cpp:378
 msgid "Manage All Workspaces"
 msgstr "Az összes munkaterület kezelése"
 
-#: src/dialogs/dock_settings_dialog.cpp:352
+#: src/dialogs/dock_settings_dialog.cpp:380
 msgid "Icon Size"
 msgstr "Ikon mérete"
 
-#: src/dialogs/dock_settings_dialog.cpp:354
+#: src/dialogs/dock_settings_dialog.cpp:382
 msgid "Preview Card Height"
 msgstr "Előnézet kártya magassága"
 
-#: src/dialogs/dock_settings_dialog.cpp:356
+#: src/dialogs/dock_settings_dialog.cpp:384
 msgid "Preview Show Delay (ms)"
 msgstr "Előnézet megjelenítési késleltetés (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:358
+#: src/dialogs/dock_settings_dialog.cpp:386
 msgid "Location"
 msgstr "Helyszín"
 
-#: src/dialogs/dock_settings_dialog.cpp:360
+#: src/dialogs/dock_settings_dialog.cpp:388
 msgid "Gradient Background"
 msgstr "Színátmenetes háttér"
 
-#: src/dialogs/dock_settings_dialog.cpp:362
+#: src/dialogs/dock_settings_dialog.cpp:390
 msgid "Rounded Corners"
 msgstr "Lekerekített sarkok"
 
-#: src/dialogs/dock_settings_dialog.cpp:364
+#: src/dialogs/dock_settings_dialog.cpp:392
 msgid "Corner Radius"
 msgstr "Saroksugár"
 
-#: src/dialogs/dock_settings_dialog.cpp:366
+#: src/dialogs/dock_settings_dialog.cpp:394
 msgid "Alignment"
 msgstr "Igazítás"
 
-#: src/dialogs/dock_settings_dialog.cpp:368
+#: src/dialogs/dock_settings_dialog.cpp:396
 msgid "Autohide"
 msgstr "Automatikus elrejtés"
 
-#: src/dialogs/dock_settings_dialog.cpp:370
+#: src/dialogs/dock_settings_dialog.cpp:398
 msgid "Autohide Effect"
 msgstr "Automatikus elrejtési effektus"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:400
 msgid "Autohide Delay (ms)"
 msgstr "Automatikus elrejtés késleltetése (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:430
+#: src/dialogs/dock_settings_dialog.cpp:458
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Elsődleges monitor"
 
-#: src/dialogs/dock_settings_dialog.cpp:469
+#: src/dialogs/dock_settings_dialog.cpp:496
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Standard hatás"
 
-#: src/dialogs/dock_settings_dialog.cpp:471
+#: src/dialogs/dock_settings_dialog.cpp:498
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Zoom hatás"
 
-#: src/dialogs/dock_settings_dialog.cpp:473
+#: src/dialogs/dock_settings_dialog.cpp:500
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Elmosódás hatás"
 
-#: src/dialogs/dock_settings_dialog.cpp:510
+#: src/dialogs/dock_settings_dialog.cpp:502
+msgctxt "hover effect"
+msgid "Magnified"
+msgstr "Nagyított"
+
+#: src/dialogs/dock_settings_dialog.cpp:535
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Vonaljelzők"
 
-#: src/dialogs/dock_settings_dialog.cpp:512
+#: src/dialogs/dock_settings_dialog.cpp:537
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Pontjelzők"
 
-#: src/dialogs/dock_settings_dialog.cpp:553
+#: src/dialogs/dock_settings_dialog.cpp:572
 msgid "Choose the indicator color"
 msgstr "Válassza ki az indikátor színét"
 
-#: src/dialogs/dock_settings_dialog.cpp:572
+#: src/dialogs/dock_settings_dialog.cpp:591
 msgid "Choose the preview color"
 msgstr "Válassza ki az előnézet színét"
 
-#: src/dialogs/dock_settings_dialog.cpp:584
+#: src/dialogs/dock_settings_dialog.cpp:603
 msgid "Select…"
 msgstr "Válasszon…"
 
-#: src/dialogs/dock_settings_dialog.cpp:586
+#: src/dialogs/dock_settings_dialog.cpp:605
 msgid "Use Default"
 msgstr "Használja az alapértelmezett értéket"
 
-#: src/dialogs/dock_settings_dialog.cpp:594
+#: src/dialogs/dock_settings_dialog.cpp:613
 msgid "Built-in DockLight icon"
 msgstr "Beépített DockLight ikon"
 
-#: src/dialogs/dock_settings_dialog.cpp:628
+#: src/dialogs/dock_settings_dialog.cpp:647
 msgid "Otherwise keep the preview open until the pointer leaves it"
-msgstr ""
-"Ellenkező esetben tartsa nyitva az előnézetet, amíg a mutató el nem hagyja"
+msgstr "Ellenkező esetben tartsa nyitva az előnézetet, amíg a mutató el nem hagyja"
 
-#: src/dialogs/dock_settings_dialog.cpp:635
+#: src/dialogs/dock_settings_dialog.cpp:654
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
-msgstr ""
-"Alkalmazza az ikonműveleteket és az egérgörgőt az összes munkaterületen"
+msgstr "Alkalmazza az ikonműveleteket és az egérgörgőt az összes munkaterületen"
 
-#: src/dialogs/dock_settings_dialog.cpp:666
+#: src/dialogs/dock_settings_dialog.cpp:685
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
-msgstr ""
-"0 kiválasztja az automatikus méretezést; egyébként 64–512 képpontot "
-"használjon"
+msgstr "0 kiválasztja az automatikus méretezést; egyébként 64–512 képpontot használjon"
 
-#: src/dialogs/dock_settings_dialog.cpp:683
+#: src/dialogs/dock_settings_dialog.cpp:702
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
-msgstr ""
-"Késleltetés az ablak előnézetének megjelenése előtt, 0 és 5000 "
-"ezredmásodperc között"
+msgstr "Késleltetés az ablak előnézetének megjelenése előtt, 0 és 5000 ezredmásodperc között"
 
-#: src/dialogs/dock_settings_dialog.cpp:701
+#: src/dialogs/dock_settings_dialog.cpp:720
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "Késleltetés a dokkoló elrejtése előtt, 0 és 5000 ezredmásodperc között"
 
-#: src/dialogs/dock_settings_dialog.cpp:708
+#: src/dialogs/dock_settings_dialog.cpp:726
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Alsó él"
 
-#: src/dialogs/dock_settings_dialog.cpp:710
+#: src/dialogs/dock_settings_dialog.cpp:728
 msgctxt "dock location"
 msgid "Left"
 msgstr "Bal széle"
 
-#: src/dialogs/dock_settings_dialog.cpp:712
+#: src/dialogs/dock_settings_dialog.cpp:730
 msgctxt "dock location"
 msgid "Top"
 msgstr "Felső él"
 
-#: src/dialogs/dock_settings_dialog.cpp:714
+#: src/dialogs/dock_settings_dialog.cpp:732
 msgctxt "dock location"
 msgid "Right"
 msgstr "Jobb széle"
 
-#: src/dialogs/dock_settings_dialog.cpp:782
+#: src/dialogs/dock_settings_dialog.cpp:788
 msgid "-1 selects the automatic radius"
 msgstr "-1 kiválasztja az automatikus sugarat"
 
-#: src/dialogs/dock_settings_dialog.cpp:788
+#: src/dialogs/dock_settings_dialog.cpp:793
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Start-igazított"
 
-#: src/dialogs/dock_settings_dialog.cpp:790
+#: src/dialogs/dock_settings_dialog.cpp:795
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Középre állított"
 
-#: src/dialogs/dock_settings_dialog.cpp:792
+#: src/dialogs/dock_settings_dialog.cpp:797
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Végre igazított"
 
-#: src/dialogs/dock_settings_dialog.cpp:794
+#: src/dialogs/dock_settings_dialog.cpp:799
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Töltse ki a rendelkezésre álló helyet"
 
-#: src/dialogs/dock_settings_dialog.cpp:840
+#: src/dialogs/dock_settings_dialog.cpp:832
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Letiltva"
 
-#: src/dialogs/dock_settings_dialog.cpp:842
+#: src/dialogs/dock_settings_dialog.cpp:834
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Automatikus"
 
-#: src/dialogs/dock_settings_dialog.cpp:844
+#: src/dialogs/dock_settings_dialog.cpp:836
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Intelligens"
 
-#: src/dialogs/dock_settings_dialog.cpp:903
+#: src/dialogs/dock_settings_dialog.cpp:885
 msgctxt "autohide effect"
 msgid "Plasma"
 msgstr "Plasma"
 
-#: src/dialogs/dock_settings_dialog.cpp:909
-#: src/dialogs/dock_settings_dialog.cpp:918
+#: src/dialogs/dock_settings_dialog.cpp:890
+#: src/dialogs/dock_settings_dialog.cpp:898
 msgctxt "autohide effect"
 msgid "Slide"
 msgstr "Csúsztatás"
 
-#: src/dialogs/dock_settings_dialog.cpp:921
+#: src/dialogs/dock_settings_dialog.cpp:901
 msgctxt "autohide effect"
 msgid "Slide and Fade"
 msgstr "Csúsztatás és elhalványítás"
 
-#: src/dialogs/dock_settings_dialog.cpp:927
+#: src/dialogs/dock_settings_dialog.cpp:906
 msgctxt "autohide effect"
 msgid "GNOME"
 msgstr "GNOME"
 
-#: src/dialogs/dock_settings_dialog.cpp:1050
+#: src/dialogs/dock_settings_dialog.cpp:1029
 msgid "Set the dock icon size from 32 to 128 pixels."
 msgstr "Állítsa be a dokkikon méretét 32 és 128 pixel között."
 
-#: src/dialogs/dock_settings_dialog.cpp:1057
+#: src/dialogs/dock_settings_dialog.cpp:1036
 msgid "Choose how icons respond when the pointer moves over them."
-msgstr ""
-"Válassza ki, hogyan reagálnak az ikonok, amikor az egérmutató föléjük mozog."
+msgstr "Válassza ki, hogyan reagálnak az ikonok, amikor az egérmutató föléjük mozog."
 
-#: src/dialogs/dock_settings_dialog.cpp:1064
+#: src/dialogs/dock_settings_dialog.cpp:1043
 msgid "Select how running applications are marked on the dock."
 msgstr "Válassza ki, hogyan legyenek jelölve a futó alkalmazások a dokkon."
 
-#: src/dialogs/dock_settings_dialog.cpp:1071
+#: src/dialogs/dock_settings_dialog.cpp:1050
 msgid "Set the color of running-application indicators."
 msgstr "Állítsa be a futó alkalmazásokat jelző színt."
 
-#: src/dialogs/dock_settings_dialog.cpp:1078
+#: src/dialogs/dock_settings_dialog.cpp:1057
 msgid "Use a GTK theme-derived gradient instead of a solid background."
 msgstr "Használjon GTK témából származó gradienst szilárd háttér helyett."
 
-#: src/dialogs/dock_settings_dialog.cpp:1085
+#: src/dialogs/dock_settings_dialog.cpp:1064
 msgid "Round the corners of the dock background."
 msgstr "Kerekítse le a dokkháttér sarkait."
 
-#: src/dialogs/dock_settings_dialog.cpp:1092
+#: src/dialogs/dock_settings_dialog.cpp:1071
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
-msgstr ""
-"Állítsa be a sarok sugárát pixelekben; -1 automatikus méretezést választ."
+msgstr "Állítsa be a sarok sugárát pixelekben; -1 automatikus méretezést választ."
 
-#: src/dialogs/dock_settings_dialog.cpp:1099
+#: src/dialogs/dock_settings_dialog.cpp:1078
 msgid "Show the DockLight home and launcher-management icon."
 msgstr "Mutassa a DockLight kezdőlap és indítókezelő ikonját."
 
-#: src/dialogs/dock_settings_dialog.cpp:1106
+#: src/dialogs/dock_settings_dialog.cpp:1085
 msgid "Choose a custom image for the home icon, or use the built-in icon."
-msgstr ""
-"Válasszon egyedi képet a kezdőikonhoz, vagy használja a beépített ikont."
+msgstr "Válasszon egyedi képet a kezdőikonhoz, vagy használja a beépített ikont."
+
+#: src/dialogs/dock_settings_dialog.cpp:1094
+msgid "Show application names when the pointer rests on dock icons."
+msgstr "Mutassa az alkalmazásneveket, amikor az egérmutató a dokkolóikonok fölött áll."
+
+#: src/dialogs/dock_settings_dialog.cpp:1101
+msgid "Include windows from every workspace in dock actions and cycling."
+msgstr "Tartalmazza az összes munkaasztal ablakait a dokkoló műveleteiben és ciklikus váltásában."
+
+#: src/dialogs/dock_settings_dialog.cpp:1108
+msgid "Show window previews when the pointer rests on running apps."
+msgstr "Mutassa az ablakelőnézeteket, amikor az egérmutató a futó alkalmazások fölött áll."
 
 #: src/dialogs/dock_settings_dialog.cpp:1115
-msgid "Show application names when the pointer rests on dock icons."
-msgstr ""
-"Mutassa az alkalmazásneveket, amikor az egérmutató a dokkolóikonok fölött "
-"áll."
-
-#: src/dialogs/dock_settings_dialog.cpp:1122
-msgid "Include windows from every workspace in dock actions and cycling."
-msgstr ""
-"Tartalmazza az összes munkaasztal ablakait a dokkoló műveleteiben és "
-"ciklikus váltásában."
-
-#: src/dialogs/dock_settings_dialog.cpp:1129
-msgid "Show window previews when the pointer rests on running apps."
-msgstr ""
-"Mutassa az ablakelőnézeteket, amikor az egérmutató a futó alkalmazások "
-"fölött áll."
-
-#: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Close the preview popup after activating one of its windows."
 msgstr "Zárja be az előnézeti felugró ablakot, miután aktivált egy ablakot."
 
-#: src/dialogs/dock_settings_dialog.cpp:1143
+#: src/dialogs/dock_settings_dialog.cpp:1122
 msgid "Set the accent color used by window previews."
 msgstr "Állítsa be az ablakelőnézetekhez használt kiemelő színt."
 
-#: src/dialogs/dock_settings_dialog.cpp:1150
+#: src/dialogs/dock_settings_dialog.cpp:1129
 msgid "Set preview height in pixels; 0 selects automatic sizing."
-msgstr ""
-"Állítsa be az előnézet magasságát pixelekben; 0 az automatikus méretezést "
-"választja."
+msgstr "Állítsa be az előnézet magasságát pixelekben; 0 az automatikus méretezést választja."
 
-#: src/dialogs/dock_settings_dialog.cpp:1157
+#: src/dialogs/dock_settings_dialog.cpp:1136
 msgid "Set how long to wait before showing a preview."
 msgstr "Állítsa be, mennyi ideig várjon az előnézet megjelenítése előtt."
 
-#: src/dialogs/dock_settings_dialog.cpp:1165
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Choose the display where DockLight appears."
 msgstr "Válassza ki a képernyőt, amelyen a DockLight megjelenik."
 
-#: src/dialogs/dock_settings_dialog.cpp:1172
+#: src/dialogs/dock_settings_dialog.cpp:1151
 msgid "Choose the screen edge where the dock is placed."
 msgstr "Válassza ki a képernyő szélét, ahol a dokkoló elhelyezkedik."
 
-#: src/dialogs/dock_settings_dialog.cpp:1179
+#: src/dialogs/dock_settings_dialog.cpp:1158
 msgid "Align dock content along the selected screen edge."
 msgstr "Igazítsa a dokkoló tartalmát a kiválasztott képernyőél mentén."
 
-#: src/dialogs/dock_settings_dialog.cpp:1186
+#: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Choose when the dock moves out of view."
 msgstr "Válassza ki, mikor mozduljon ki a dokkoló a látómezőből."
 
-#: src/dialogs/dock_settings_dialog.cpp:1193
+#: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Set how long to wait before hiding the dock."
 msgstr "Állítsa be, mennyi ideig várjon a dokkoló elrejtése előtt."
 
-#: src/dialogs/dock_settings_dialog.cpp:1203
+#: src/dialogs/dock_settings_dialog.cpp:1182
 msgid "Choose an autohide animation supported by this desktop."
-msgstr ""
-"Válasszon egy automatikus elrejtési animációt, amelyet ez az asztali "
-"környezet támogat."
+msgstr "Válasszon egy automatikus elrejtési animációt, amelyet ez az asztali környezet támogat."
 
-#: src/dialogs/dock_settings_dialog.cpp:1451
-#: src/dialogs/dock_settings_dialog.cpp:1488
+#: src/dialogs/dock_settings_dialog.cpp:1432
+#: src/dialogs/dock_settings_dialog.cpp:1469
 msgid "Select Home Icon"
 msgstr "Válassza a Kezdőlap ikont"
 
-#: src/dialogs/dock_settings_dialog.cpp:1456
 #: src/dialogs/dock_session_dialog.cpp:509
+#: src/dialogs/dock_settings_dialog.cpp:1437
 msgid "_Cancel"
 msgstr "_Mégse"
 
-#: src/dialogs/dock_settings_dialog.cpp:1459
+#: src/dialogs/dock_settings_dialog.cpp:1440
 msgid "_Open"
 msgstr "_Nyitva"
 
-#: src/dialogs/dock_settings_dialog.cpp:1525
 #: src/dialogs/dock_session_dialog.cpp:520
+#: src/dialogs/dock_settings_dialog.cpp:1506
 msgid "Image Files"
 msgstr "Képfájlok"
 
 #: src/dialogs/dock_session_dialog.cpp:241
 #: src/dialogs/dock_session_dialog.cpp:275
 msgid "Session"
-msgstr ""
+msgstr "Ülés"
 
 #: src/dialogs/dock_session_dialog.cpp:310
 msgid "_Session Name"
 msgstr "_Munkamenet neve"
 
 #: src/dialogs/dock_session_dialog.cpp:315
-#: src/dialogs/dock_session_dialog.cpp:717
+#: src/dialogs/dock_session_dialog.cpp:702
 msgid "Session name"
 msgstr "Munkamenet neve"
 
 #: src/dialogs/dock_session_dialog.cpp:320
 msgid "_Icon"
-msgstr ""
+msgstr "_Ikon"
 
 #: src/dialogs/dock_session_dialog.cpp:363
-#, fuzzy
 msgid "Select _Icon"
-msgstr "Válassza a Kezdőlap ikont"
+msgstr "Válassza az _Ikont"
 
 #: src/dialogs/dock_session_dialog.cpp:366
 msgid "_Add"
-msgstr ""
+msgstr "Hozz_áadás"
 
 #: src/dialogs/dock_session_dialog.cpp:503
-#, fuzzy
 msgid "Select Session Icon"
-msgstr "Válassza a Kezdőlap ikont"
+msgstr "Válassza a Munkamenet ikont"
 
 #: src/dialogs/dock_session_dialog.cpp:512
-#, fuzzy
 msgid "_Select"
-msgstr "Válasszon…"
+msgstr "Vála_ssza ki"
 
 #: src/dialogs/dock_session_dialog.cpp:578
-#: src/dialogs/dock_session_dialog.cpp:987
+#: src/dialogs/dock_session_dialog.cpp:941
 msgid "Custom"
-msgstr ""
+msgstr "Szokás"
 
-#: src/dialogs/dock_session_dialog.cpp:702
+#: src/dialogs/dock_session_dialog.cpp:687
 msgid "Cannot save Session."
 msgstr "A munkamenet nem menthető."
 
-#: src/dialogs/dock_session_dialog.cpp:709
+#: src/dialogs/dock_session_dialog.cpp:694
 msgid "%1 cannot be empty or contain only whitespace."
 msgstr "A(z) %1 nem lehet üres, és nem tartalmazhat csak szóközöket."
 
-#: src/dialogs/dock_session_dialog.cpp:724
+#: src/dialogs/dock_session_dialog.cpp:709
 msgid "Session icon"
 msgstr "Munkamenet ikonja"
 
-#: src/dialogs/dock_session_dialog.cpp:745
+#: src/dialogs/dock_session_dialog.cpp:730
 #: src/dialogs/dock_session_editor_item.cpp:109
 msgid "Desktop File"
-msgstr ""
+msgstr "Asztali fájl"
 
-#: src/dialogs/dock_session_dialog.cpp:753
+#: src/dialogs/dock_session_dialog.cpp:738
 #: src/dialogs/dock_session_editor_item.cpp:110
 msgid "App Name"
-msgstr ""
+msgstr "Alkalmazás neve"
 
-#: src/dialogs/dock_session_dialog.cpp:761
+#: src/dialogs/dock_session_dialog.cpp:746
 #: src/dialogs/dock_session_editor_item.cpp:104
 msgid "App Title"
-msgstr ""
+msgstr "Alkalmazás címe"
 
-#: src/dialogs/dock_session_dialog.cpp:769
-#: src/dialogs/dock_session_editor_item.cpp:111
-msgid "Parameters"
-msgstr ""
-
-#: src/dialogs/dock_session_dialog.cpp:777
+#: src/dialogs/dock_session_dialog.cpp:754
 #: src/dialogs/dock_session_editor_item.cpp:112
-#, fuzzy
 msgid "Workspace"
-msgstr "Az összes munkaterület kezelése"
+msgstr "Munkaterület"
 
-#: src/dialogs/dock_session_dialog.cpp:785
+#: src/dialogs/dock_session_dialog.cpp:762
 #: src/dialogs/dock_session_editor_item.cpp:113
 msgid "Dimensions"
-msgstr ""
+msgstr "Méretek"
 
-#: src/dialogs/dock_session_dialog.cpp:793
+#: src/dialogs/dock_session_dialog.cpp:770
 #: src/dialogs/dock_session_editor_item.cpp:114
-#, fuzzy
 msgid "Position"
-msgstr "Helyszín"
+msgstr "Pozíció"
 
-#: src/dialogs/dock_session_dialog.cpp:818
+#: src/dialogs/dock_session_dialog.cpp:795
 msgid "A Session with this name already exists."
-msgstr ""
+msgstr "Már létezik ilyen nevű munkamenet."
 
-#: src/dialogs/dock_session_dialog.cpp:825
+#: src/dialogs/dock_session_dialog.cpp:802
 msgid "Choose a different name for “%1”."
-msgstr ""
+msgstr "Válasszon egy másik nevet a „%1” számára."
 
-#: src/dialogs/dock_session_dialog.cpp:1059
+#: src/dialogs/dock_session_dialog.cpp:1013
 msgid "_Save"
-msgstr ""
+msgstr "Megtakarítá_s"
 
 #: src/dialogs/dock_session_editor_item.cpp:106
 msgid "_Paste"
-msgstr ""
+msgstr "_Paszta"
 
 #: src/dialogs/dock_session_editor_item.cpp:107
 msgid "_Launch"
-msgstr ""
+msgstr "_Dob"
 
-#: src/dialogs/dock_session_editor_item.cpp:144
+#: src/dialogs/dock_session_editor_item.cpp:111
+msgid "Parameters"
+msgstr "Paraméterek"
+
+#: src/dialogs/dock_session_editor_item.cpp:143
 msgid "Application title"
-msgstr ""
+msgstr "Pályázat címe"
 
-#: src/dialogs/dock_session_editor_item.cpp:148
+#: src/dialogs/dock_session_editor_item.cpp:147
 msgid "Desktop file"
-msgstr ""
+msgstr "Asztali fájl"
 
-#: src/dialogs/dock_session_editor_item.cpp:152
+#: src/dialogs/dock_session_editor_item.cpp:151
 msgid "Application name"
-msgstr ""
+msgstr "Alkalmazás neve"
 
-#: src/dialogs/dock_session_editor_item.cpp:156
+#: src/dialogs/dock_session_editor_item.cpp:155
 msgid "Command-line parameters"
-msgstr ""
+msgstr "Parancssori paraméterek"
 
-#: src/dialogs/dock_session_editor_item.cpp:161
+#: src/dialogs/dock_session_editor_item.cpp:160
 msgid "Workspace number"
-msgstr ""
+msgstr "Munkaterület száma"
 
-#: src/dialogs/dock_session_editor_item.cpp:253
+#: src/dialogs/dock_session_editor_item.cpp:252
 msgid "No application window is available to copy."
-msgstr ""
+msgstr "Nincs másolható alkalmazásablak."
 
-#: src/dialogs/dock_session_editor_item.cpp:422
+#: src/dialogs/dock_session_editor_item.cpp:421
 msgid "Paste a window into this item before launching it."
-msgstr ""
+msgstr "Illesszen be egy ablakot ebbe az elembe, mielőtt elindítaná."
 
-#: src/dialogs/dock_session_editor_item.cpp:450
-msgid ""
-"The application was launched. This desktop session cannot place windows, so "
-"Workspace, Dimensions, and Position were ignored."
-msgstr ""
+#: src/dialogs/dock_session_editor_item.cpp:449
+msgid "The application was launched. This desktop session cannot place windows, so Workspace, Dimensions, and Position were ignored."
+msgstr "Az alkalmazás elindult. Ez az asztali munkamenet nem tud ablakokat elhelyezni, ezért a munkaterületet, a méreteket és a pozíciót figyelmen kívül hagyta."
 
 #: src/launchers/session_launcher.cpp:622
 msgid "This Session item has no application."
-msgstr ""
+msgstr "Ennek a munkamenet-elemnek nincs alkalmazása."
 
 #: src/launchers/session_launcher.cpp:631
 msgid "No installed application matches \"%1\"."
-msgstr ""
+msgstr "Nincs telepített alkalmazás, amely megfelel a következőnek: \"%1\"."
 
 #: src/launchers/session_launcher.cpp:646
 msgid "The parameters cannot be parsed: %1"
-msgstr ""
+msgstr "A paraméterek nem elemezhetők: %1"
 
 #: src/launchers/session_launcher.cpp:653
 msgid "%1 does not declare a command that accepts parameters."
-msgstr ""
+msgstr "%1 nem deklarál paramétereket elfogadó parancsot."
 
 #: src/launchers/session_launcher.cpp:697
 msgid "%1 cannot be launched: %2"
-msgstr ""
+msgstr "%1 nem indítható: %2"
 
 #: src/dialogs/dock_about_dialog.cpp:114 src/dialogs/dock_about_dialog.cpp:161
 msgid "About DockLight"
@@ -663,7 +635,6 @@ msgid "Version %1"
 msgstr "Szoftververzió %1"
 
 #: src/dialogs/dock_about_dialog.cpp:201
-#, fuzzy
 msgid ""
 "A lightweight application dock.\n"
 "Author and Maintainer: yoosamui\n"
@@ -671,7 +642,9 @@ msgid ""
 "Copyright © 2018-2026 Juan González"
 msgstr ""
 "Könnyű alkalmazási dokkoló.\n"
-"Szerző és karbantartó: yoosamui"
+"Szerző és fenntartó: yoosamui\n"
+"\n"
+"Copyright © 2018-2026 Juan González"
 
 #: src/dialogs/dock_about_dialog.cpp:211
 msgid ""
@@ -710,8 +683,16 @@ msgstr "Elsődleges monitor"
 msgctxt "monitor status"
 msgid "default"
 msgstr "Alapértelmezett monitor"
+
 #~ msgid "Use the black-to-gray dock background gradient"
 #~ msgstr "Használja a fekete-szürke dokkolóháttér gradienst"
+
 #~ msgctxt "autohide effect"
 #~ msgid "Fade"
 #~ msgstr "Elhalványítás"
+
+#~ msgid "_Maximize"
+#~ msgstr "_Maximalizálás"
+
+#~ msgid "_Maximize All"
+#~ msgstr "_Minden maximalizálása"
