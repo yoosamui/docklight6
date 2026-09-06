@@ -1629,7 +1629,8 @@ export default class DocklightWindowIntegration extends Extension {
             return;
 
         this._dockRevealActor = new St.Widget({
-            reactive: true,
+            name: 'docklight-reveal-strip',
+            reactive: false,
             track_hover: true,
             can_focus: false,
             visible: false,
@@ -1662,8 +1663,13 @@ export default class DocklightWindowIntegration extends Extension {
         if (!actor)
             return;
 
+        // LayoutManager's fullscreen tracking can show this chrome actor
+        // again when overview closes, independently of our hide() calls.
+        // Keep input disabled unless the dock actually needs edge reveal;
+        // otherwise the invisible six-pixel strip steals dock pointer motion.
         if (!this._enabled || this._dockAutohide === 'none' ||
             this._dockVisibilityState !== 'hidden' || !this._dockPlacement) {
+            actor.reactive = false;
             actor.hide();
             return;
         }
@@ -1671,6 +1677,7 @@ export default class DocklightWindowIntegration extends Extension {
         const monitorIndex = this._dockMonitorIndex();
         const monitor = Main.layoutManager.monitors[monitorIndex];
         if (!monitor) {
+            actor.reactive = false;
             actor.hide();
             return;
         }
@@ -1685,6 +1692,7 @@ export default class DocklightWindowIntegration extends Extension {
 
         actor.set_position(reveal.x, reveal.y);
         actor.set_size(reveal.width, reveal.height);
+        actor.reactive = true;
         actor.show();
     }
 

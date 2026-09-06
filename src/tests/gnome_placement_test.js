@@ -1479,4 +1479,85 @@ assert.deepStrictEqual(
     {...calculateDockRevealRect(pointerFixtures[3].placement)},
     {x: 1164, y: 340, width: 6, height: 400});
 
+// Shell fullscreen tracking overwrites chrome visibility after overview.
+// Run the real reveal methods against that behavior: a visible but inactive
+// edge strip must not take input from the dock, including Autohide=None.
+{
+    class RevealActor {
+        constructor(properties) { Object.assign(this, properties); }
+        connect() { return 1; }
+        hide() { this.visible = false; }
+        show() { this.visible = true; }
+        set_position(x, y) { Object.assign(this, {x, y}); }
+        set_size(width, height) { Object.assign(this, {width, height}); }
+    }
+    const layoutManager = {
+        monitors: [{x: 0, y: 0, width: 2560, height: 1440}],
+        addChrome(actor) {
+            // LayoutManager._updateActorVisibility() runs at registration
+            // and again when overview changes, regardless of actor.hide().
+            actor.visible = true;
+            assert.strictEqual(actor.reactive, false);
+        },
+    };
+    const methods = extensionSource.match(
+        /    _ensureDockRevealActor\(\) \{[\s\S]*?(?=    _destroyDockRevealActor\(\))/)[0];
+    const RevealController = vm.runInNewContext(
+        `(class { ${methods} })`, {
+            St: {Widget: RevealActor},
+            Main: {layoutManager},
+            placeDockInWorkArea,
+            calculateDockRevealRect,
+        });
+    const controller = new RevealController();
+    Object.assign(controller, {
+        _enabled: true,
+        _dockAutohide: 'none',
+        _dockVisibilityState: 'visible',
+        _dockPlacement: {x: 378, y: 1296, width: 1804, height: 144},
+        _dockAlignment: 'center',
+        _dockLocation: 'bottom',
+        _dockMonitorIndex: () => 0,
+        _workAreaForMonitor: () => layoutManager.monitors[0],
+    });
+    controller._ensureDockRevealActor();
+    const actor = controller._dockRevealActor;
+    const simulateOverviewReturn = () => { actor.visible = true; };
+    controller._updateDockRevealActor();
+    simulateOverviewReturn();
+    assert.strictEqual(actor.reactive, false,
+        'overview must not turn Autohide=None into an invisible input barrier');
+
+    controller._dockAutohide = 'autohide';
+    controller._dockVisibilityState = 'hidden';
+    controller._updateDockRevealActor();
+    assert.strictEqual(actor.visible && actor.reactive, true,
+        'the hidden dock must still accept edge reveal');
+    assert.strictEqual(actor.y, 1434);
+    assert.strictEqual(actor.height, 6);
+
+    for (const state of ['revealing', 'visible', 'hiding']) {
+        controller._dockVisibilityState = state;
+        controller._updateDockRevealActor();
+        simulateOverviewReturn();
+        assert.strictEqual(actor.reactive, false,
+            `${state} dock must retain edge input after overview`);
+    }
+    controller._dockVisibilityState = 'hidden';
+    controller._updateDockRevealActor();
+    controller._dockAutohide = 'none';
+    controller._updateDockRevealActor();
+    simulateOverviewReturn();
+    assert.strictEqual(actor.reactive, false,
+        'switching back to None must disarm the previously active reveal strip');
+
+    controller._dockAutohide = 'autohide';
+    controller._updateDockRevealActor();
+    layoutManager.monitors = [];
+    controller._updateDockRevealActor();
+    simulateOverviewReturn();
+    assert.strictEqual(actor.reactive, false,
+        'a removed monitor must not leave an active stale input strip');
+}
+
 console.log("GNOME placement tests passed");

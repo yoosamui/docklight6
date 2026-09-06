@@ -16,6 +16,7 @@
 // - Menu, effect, and drag methods live in neighboring build units while
 //   sharing the same class declaration.
 // - Unchanged magnified icon frames are cached per item.
+// - Broken theme assets fall back to installed application icons.
 //
 // ------------------------------------------------------------
 
@@ -738,67 +739,85 @@ void DockItem::reload_icon()
         return;
     }
 
-    Gtk::IconInfo icon_info;
+    // A successful lookup may still name a broken symlink or corrupt image.
+    // Treat decoding failure as a failed candidate, not a completed lookup.
+    const auto try_load = [](const Gtk::IconInfo &info)
+        -> Glib::RefPtr<Gdk::Pixbuf>
+    {
+        if (!info)
+            return {};
 
+        try
+        {
+            return info.load_icon();
+        }
+        catch (const Glib::Error &)
+        {
+            return {};
+        }
+    };
+
+    Glib::RefPtr<Gdk::Pixbuf> pixbuf;
     if (icon)
     {
-        icon_info =
+        pixbuf = try_load(
             icon_theme->lookup_icon(
                 icon,
                 m_icon_size,
-                Gtk::ICON_LOOKUP_USE_BUILTIN);
+                Gtk::ICON_LOOKUP_USE_BUILTIN));
+
+        if (!pixbuf)
+        {
+            // Bypass a broken override in the selected theme while keeping
+            // the application's identity and the user's icon search paths.
+            auto fallback_theme = Gtk::IconTheme::create();
+            fallback_theme->set_search_path(icon_theme->get_search_path());
+            fallback_theme->set_custom_theme("hicolor");
+            pixbuf = try_load(
+                fallback_theme->lookup_icon(
+                    icon,
+                    m_icon_size,
+                    Gtk::ICON_LOOKUP_USE_BUILTIN));
+        }
     }
 
-    if (!icon_info)
+    if (!pixbuf)
     {
         for (const auto &entry :
-             m_application_controller
-                 .window_entries())
+             m_application_controller.window_entries())
         {
             if (entry.icon_name.empty())
                 continue;
 
-            icon_info =
+            pixbuf = try_load(
                 icon_theme->lookup_icon(
                     entry.icon_name,
                     m_icon_size,
-                    Gtk::ICON_LOOKUP_USE_BUILTIN);
-
-            if (icon_info)
+                    Gtk::ICON_LOOKUP_USE_BUILTIN));
+            if (pixbuf)
                 break;
         }
     }
 
-    if (!icon_info)
+    if (!pixbuf)
     {
-        icon_info =
+        pixbuf = try_load(
             icon_theme->lookup_icon(
                 "application-x-executable",
                 m_icon_size,
-                Gtk::ICON_LOOKUP_USE_BUILTIN);
+                Gtk::ICON_LOOKUP_USE_BUILTIN));
     }
 
-    if (!icon_info)
+    if (!pixbuf)
     {
         g_warning(
-            "Cannot find an icon for %s in the current theme",
+            "Cannot load an icon for %s in the current theme",
             app_name().c_str());
         return;
     }
 
     try
     {
-        auto pixbuf =
-            icon_info.load_icon();
-
-        if (!pixbuf)
-        {
-            g_warning(
-                "Cannot load icon for %s from the current theme",
-                app_name().c_str());
-            return;
-        }
-
         const int pixbuf_width =
             pixbuf->get_width();
 
