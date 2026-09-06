@@ -14,6 +14,8 @@
 // - Controls are initialized from the current configuration snapshot.
 // - User changes are written through DockConfigurationManager.
 // - Settings remains a decorated toplevel so nested choosers retain modality.
+// - Translated radio choices wrap within their settings column.
+// - Initial placement uses the final dialog size on the parent monitor.
 //
 // ------------------------------------------------------------
 
@@ -33,171 +35,197 @@
 
 namespace
 {
-constexpr int SETTINGS_DIALOG_DEFAULT_WIDTH = 900;
-constexpr int SETTINGS_DIALOG_DEFAULT_HEIGHT = 560;
-constexpr int SETTINGS_DIALOG_MINIMUM_WIDTH = 680;
-constexpr int SETTINGS_DIALOG_MINIMUM_HEIGHT = 320;
-constexpr int SETTINGS_DIALOG_HORIZONTAL_MARGIN = 64;
-constexpr int SETTINGS_DIALOG_VERTICAL_MARGIN = 112;
-constexpr int SETTINGS_DIALOG_VERTICAL_OFFSET = 60;
-constexpr int SETTINGS_PAGE_MINIMUM_HEIGHT = 180;
-constexpr int SETTINGS_PAGE_NATURAL_HEIGHT = 340;
-constexpr int SETTINGS_DESCRIPTION_WIDTH_CHARS = 48;
+    constexpr int SETTINGS_DIALOG_DEFAULT_WIDTH = 900;
+    constexpr int SETTINGS_DIALOG_DEFAULT_HEIGHT = 730;
+    constexpr int SETTINGS_DIALOG_MINIMUM_WIDTH = 680;
+    constexpr int SETTINGS_DIALOG_MINIMUM_HEIGHT = 320;
+    constexpr int SETTINGS_DIALOG_HORIZONTAL_MARGIN = 64;
+    constexpr int SETTINGS_DIALOG_VERTICAL_MARGIN = 112;
+    constexpr int SETTINGS_PAGE_MINIMUM_HEIGHT = 180;
+    constexpr int SETTINGS_PAGE_NATURAL_HEIGHT = 340;
+    constexpr int SETTINGS_DESCRIPTION_WIDTH_CHARS = 48;
 
-void keep_dialog_above(
-    Gtk::Window &dialog)
-{
-    dialog.set_keep_above(true);
-}
+    void keep_dialog_above(
+        Gtk::Window &dialog)
+    {
+        dialog.set_keep_above(true);
+    }
 
-void center_dialog_on_parent_monitor(
-    Gtk::Window &dialog,
-    Gtk::Window &parent)
-{
-    const auto parent_window = parent.get_window();
-    if (!parent_window)
-        return;
+    void size_dialog_on_parent_monitor(
+        Gtk::Window &dialog,
+        Gtk::Window &parent)
+    {
+        const auto parent_window = parent.get_window();
+        if (!parent_window)
+            return;
 
-    const auto display = parent_window->get_display();
-    const auto monitor = display
-                             ? display->get_monitor_at_window(
-                                   parent_window)
-                             : Glib::RefPtr<Gdk::Monitor>{};
-    if (!monitor)
-        return;
+        const auto display = parent_window->get_display();
+        const auto monitor = display
+                                 ? display->get_monitor_at_window(
+                                       parent_window)
+                                 : Glib::RefPtr<Gdk::Monitor>{};
+        if (!monitor)
+            return;
 
-    Gdk::Rectangle geometry;
-    monitor->get_geometry(geometry);
+        Gdk::Rectangle geometry;
+        monitor->get_workarea(geometry);
 
-    int default_width = -1;
-    int default_height = -1;
-    dialog.get_default_size(
-        default_width,
-        default_height);
+        int default_width = -1;
+        int default_height = -1;
+        dialog.get_default_size(
+            default_width,
+            default_height);
 
-    Gtk::Requisition minimum;
-    Gtk::Requisition natural;
-    dialog.get_preferred_size(minimum, natural);
+        Gtk::Requisition minimum;
+        Gtk::Requisition natural;
+        dialog.get_preferred_size(minimum, natural);
 
-    // Leave room for client-side decorations and a small usable margin.
-    // Gtk::Window's default size does not include those decorations.
-    const int available_width = std::max(
-        1,
-        geometry.get_width() -
-            SETTINGS_DIALOG_HORIZONTAL_MARGIN);
-    const int available_height = std::max(
-        1,
-        geometry.get_height() -
-            SETTINGS_DIALOG_VERTICAL_MARGIN);
-    const int width = std::min(
-        available_width,
-        std::max(
+        // Leave room for client-side decorations and a small usable margin.
+        // Gtk::Window's default size does not include those decorations.
+        const int available_width = std::max(
             1,
-            default_width > 0
-                ? default_width
-                : natural.width));
-    const int height = std::min(
-        available_height,
-        std::max(
+            geometry.get_width() -
+                SETTINGS_DIALOG_HORIZONTAL_MARGIN);
+        const int available_height = std::max(
             1,
-            default_height > 0
-                ? default_height
-                : natural.height));
-
-    dialog.resize(width, height);
-
-    dialog.set_position(Gtk::WIN_POS_NONE);
-    dialog.move(
-        geometry.get_x() +
-            (geometry.get_width() - width) / 2,
-        geometry.get_y() +
+            geometry.get_height() -
+                SETTINGS_DIALOG_VERTICAL_MARGIN);
+        const int width = std::min(
+            available_width,
             std::max(
-                0,
-                (geometry.get_height() - height) /
-                        2 -
-                    SETTINGS_DIALOG_VERTICAL_OFFSET));
-}
+                minimum.width,
+                default_width > 0
+                    ? default_width
+                    : natural.width));
+        const int height = std::min(
+            available_height,
+            std::max(
+                minimum.height,
+                default_height > 0
+                    ? default_height
+                    : natural.height));
 
-void configure_settings_page(
-    Gtk::ScrolledWindow &scroller,
-    Gtk::Grid &grid)
-{
-    scroller.set_policy(
-        Gtk::POLICY_NEVER,
-        Gtk::POLICY_AUTOMATIC);
-    scroller.set_shadow_type(
-        Gtk::SHADOW_NONE);
-    scroller.set_hexpand(true);
-    scroller.set_vexpand(true);
-    scroller.set_min_content_height(
-        SETTINGS_PAGE_MINIMUM_HEIGHT);
-    scroller.set_max_content_height(
-        SETTINGS_PAGE_NATURAL_HEIGHT);
-    scroller.set_propagate_natural_height(true);
+        dialog.resize(width, height);
+    }
 
-    grid.set_hexpand(true);
-    grid.set_vexpand(false);
-    grid.set_border_width(14);
-    grid.set_row_spacing(12);
-    grid.set_column_spacing(28);
-    grid.set_column_homogeneous(true);
+    void center_dialog_on_parent_monitor(
+        Gtk::Window &dialog,
+        Gtk::Window &parent)
+    {
+        const auto parent_window = parent.get_window();
+        if (!parent_window)
+            return;
 
-    scroller.add(grid);
-}
+        const auto monitor = parent_window->get_display()
+                                 ->get_monitor_at_window(parent_window);
+        if (!monitor)
+            return;
 
-void attach_setting(
-    Gtk::Grid &grid,
-    Gtk::Label &title,
-    Gtk::Widget &control,
-    const Glib::ustring &description,
-    int column,
-    int row,
-    int width = 1)
-{
-    auto *setting = Gtk::manage(
-        new Gtk::Box(
-            Gtk::ORIENTATION_VERTICAL,
-            3));
-    auto *details = Gtk::manage(
-        new Gtk::Label());
+        Gdk::Rectangle geometry;
+        monitor->get_workarea(geometry);
+        int width = 0;
+        int height = 0;
+        dialog.get_size(width, height);
+        dialog.move(
+            geometry.get_x() +
+                std::max(0, (geometry.get_width() - width) / 2),
+            geometry.get_y() +
+                std::max(0, (geometry.get_height() - height) / 2));
+    }
 
-    title.set_halign(Gtk::ALIGN_START);
-    title.set_valign(Gtk::ALIGN_CENTER);
+    void configure_settings_page(
+        Gtk::ScrolledWindow &scroller,
+        Gtk::Grid &grid)
+    {
+        scroller.set_policy(
+            Gtk::POLICY_NEVER,
+            Gtk::POLICY_AUTOMATIC);
+        scroller.set_shadow_type(
+            Gtk::SHADOW_NONE);
+        scroller.set_hexpand(true);
+        scroller.set_vexpand(true);
+        scroller.set_min_content_height(
+            SETTINGS_PAGE_MINIMUM_HEIGHT);
+        scroller.set_max_content_height(
+            SETTINGS_PAGE_NATURAL_HEIGHT);
+        scroller.set_propagate_natural_height(true);
 
-    details->set_markup(
-        Glib::ustring("<small>") +
-        Glib::Markup::escape_text(description) +
-        "</small>");
-    details->set_halign(Gtk::ALIGN_START);
-    details->set_valign(Gtk::ALIGN_START);
-    details->set_xalign(0.0f);
-    details->set_line_wrap(true);
-    details->set_max_width_chars(
-        SETTINGS_DESCRIPTION_WIDTH_CHARS);
-    details->get_style_context()->add_class(
-        "dim-label");
+        grid.set_hexpand(true);
+        grid.set_vexpand(false);
+        grid.set_border_width(14);
+        grid.set_row_spacing(12);
+        grid.set_column_spacing(28);
+        grid.set_column_homogeneous(true);
 
-    setting->set_hexpand(true);
-    setting->pack_start(
-        title,
-        false,
-        false);
-    setting->pack_start(
-        *details,
-        false,
-        false);
-    setting->pack_start(
-        control,
-        false,
-        false);
+        scroller.add(grid);
+    }
 
-    grid.attach(
-        *setting,
-        column,
-        row,
-        width,
-        1);
-}
+    void configure_setting_choices(
+        Gtk::FlowBox &choices)
+    {
+        choices.set_selection_mode(Gtk::SELECTION_NONE);
+        choices.set_min_children_per_line(1);
+        choices.set_max_children_per_line(4);
+        choices.set_column_spacing(6);
+        choices.set_row_spacing(6);
+    }
+
+    void attach_setting(
+        Gtk::Grid &grid,
+        Gtk::Label &title,
+        Gtk::Widget &control,
+        const Glib::ustring &description,
+        int column,
+        int row,
+        int width = 1)
+    {
+        auto *setting = Gtk::manage(
+            new Gtk::Box(
+                Gtk::ORIENTATION_VERTICAL,
+                3));
+        auto *details = Gtk::manage(
+            new Gtk::Label());
+
+        title.set_halign(Gtk::ALIGN_START);
+        title.set_valign(Gtk::ALIGN_CENTER);
+        title.set_xalign(0.0f);
+        title.set_line_wrap(true);
+        title.set_max_width_chars(SETTINGS_DESCRIPTION_WIDTH_CHARS);
+
+        details->set_markup(
+            Glib::ustring("<small>") +
+            Glib::Markup::escape_text(description) +
+            "</small>");
+        details->set_halign(Gtk::ALIGN_START);
+        details->set_valign(Gtk::ALIGN_START);
+        details->set_xalign(0.0f);
+        details->set_line_wrap(true);
+        details->set_max_width_chars(
+            SETTINGS_DESCRIPTION_WIDTH_CHARS);
+        details->get_style_context()->add_class(
+            "dim-label");
+
+        setting->set_hexpand(true);
+        setting->pack_start(
+            title,
+            false,
+            false);
+        setting->pack_start(
+            *details,
+            false,
+            false);
+        setting->pack_start(
+            control,
+            false,
+            false);
+
+        grid.attach(
+            *setting,
+            column,
+            row,
+            width,
+            1);
+    }
 }
 
 void DockSettingsDialog::show(
@@ -462,9 +490,8 @@ void DockSettingsDialog::show(
             *selected_monitor_row);
     }
 
-    Gtk::Box hover_choices(
-        Gtk::ORIENTATION_HORIZONTAL,
-        6);
+    Gtk::FlowBox hover_choices;
+    configure_setting_choices(hover_choices);
     Gtk::RadioButton hover_standard(
         C_("hover effect", "Standard"));
     Gtk::RadioButton hover_zoom(
@@ -481,22 +508,10 @@ void DockSettingsDialog::show(
     hover_magnified.join_group(
         hover_standard);
 
-    hover_choices.pack_start(
-        hover_standard,
-        false,
-        false);
-    hover_choices.pack_start(
-        hover_zoom,
-        false,
-        false);
-    hover_choices.pack_start(
-        hover_blur,
-        false,
-        false);
-    hover_choices.pack_start(
-        hover_magnified,
-        false,
-        false);
+    hover_choices.add(hover_standard);
+    hover_choices.add(hover_zoom);
+    hover_choices.add(hover_blur);
+    hover_choices.add(hover_magnified);
 
     switch (current.settings.hover_effect())
     {
@@ -514,9 +529,8 @@ void DockSettingsDialog::show(
         break;
     }
 
-    Gtk::Box indicator_choices(
-        Gtk::ORIENTATION_HORIZONTAL,
-        6);
+    Gtk::FlowBox indicator_choices;
+    configure_setting_choices(indicator_choices);
     Gtk::RadioButton indicator_lines(
         C_("running indicator style", "Lines"));
     Gtk::RadioButton indicator_dots(
@@ -525,14 +539,8 @@ void DockSettingsDialog::show(
     indicator_dots.join_group(
         indicator_lines);
 
-    indicator_choices.pack_start(
-        indicator_lines,
-        false,
-        false);
-    indicator_choices.pack_start(
-        indicator_dots,
-        false,
-        false);
+    indicator_choices.add(indicator_lines);
+    indicator_choices.add(indicator_dots);
 
     if (current.settings.indicator() ==
         DockIndicator::dots)
@@ -712,9 +720,8 @@ void DockSettingsDialog::show(
         _("Delay before the dock hides, "
           "from 0 to 5000 milliseconds"));
 
-    Gtk::Box location_choices(
-        Gtk::ORIENTATION_HORIZONTAL,
-        6);
+    Gtk::FlowBox location_choices;
+    configure_setting_choices(location_choices);
     Gtk::RadioButton location_bottom(
         C_("dock location", "Bottom"));
     Gtk::RadioButton location_left(
@@ -731,22 +738,10 @@ void DockSettingsDialog::show(
     location_right.join_group(
         location_bottom);
 
-    location_choices.pack_start(
-        location_bottom,
-        false,
-        false);
-    location_choices.pack_start(
-        location_left,
-        false,
-        false);
-    location_choices.pack_start(
-        location_top,
-        false,
-        false);
-    location_choices.pack_start(
-        location_right,
-        false,
-        false);
+    location_choices.add(location_bottom);
+    location_choices.add(location_left);
+    location_choices.add(location_top);
+    location_choices.add(location_right);
 
     switch (current.layout_request.location)
     {
@@ -792,9 +787,8 @@ void DockSettingsDialog::show(
     corner_radius_spin.set_tooltip_text(
         _("-1 selects the automatic radius"));
 
-    Gtk::Box alignment_choices(
-        Gtk::ORIENTATION_HORIZONTAL,
-        6);
+    Gtk::FlowBox alignment_choices;
+    configure_setting_choices(alignment_choices);
     Gtk::RadioButton alignment_start(
         C_("dock alignment", "Start"));
     Gtk::RadioButton alignment_center(
@@ -811,22 +805,10 @@ void DockSettingsDialog::show(
     alignment_fill.join_group(
         alignment_start);
 
-    alignment_choices.pack_start(
-        alignment_start,
-        false,
-        false);
-    alignment_choices.pack_start(
-        alignment_center,
-        false,
-        false);
-    alignment_choices.pack_start(
-        alignment_end,
-        false,
-        false);
-    alignment_choices.pack_start(
-        alignment_fill,
-        false,
-        false);
+    alignment_choices.add(alignment_start);
+    alignment_choices.add(alignment_center);
+    alignment_choices.add(alignment_end);
+    alignment_choices.add(alignment_fill);
 
     switch (current.layout_request.alignment)
     {
@@ -844,9 +826,8 @@ void DockSettingsDialog::show(
         break;
     }
 
-    Gtk::Box autohide_choices(
-        Gtk::ORIENTATION_HORIZONTAL,
-        6);
+    Gtk::FlowBox autohide_choices;
+    configure_setting_choices(autohide_choices);
     Gtk::RadioButton autohide_none(
         C_("autohide mode", "None"));
     Gtk::RadioButton autohide_always(
@@ -859,18 +840,9 @@ void DockSettingsDialog::show(
     autohide_intelligent.join_group(
         autohide_none);
 
-    autohide_choices.pack_start(
-        autohide_none,
-        false,
-        false);
-    autohide_choices.pack_start(
-        autohide_always,
-        false,
-        false);
-    autohide_choices.pack_start(
-        autohide_intelligent,
-        false,
-        false);
+    autohide_choices.add(autohide_none);
+    autohide_choices.add(autohide_always);
+    autohide_choices.add(autohide_intelligent);
 
     switch (current.layout_request.autohide)
     {
@@ -908,34 +880,30 @@ void DockSettingsDialog::show(
         switch (effect)
         {
         case DockAutohideEffect::plasma:
-            autohide_effect_choices.push_back({
-                effect,
-                "plasma",
-                C_("autohide effect", "Plasma")});
+            autohide_effect_choices.push_back({effect,
+                                               "plasma",
+                                               C_("autohide effect", "Plasma")});
             break;
         case DockAutohideEffect::slide:
-            autohide_effect_choices.push_back({
-                effect,
-                "slide",
-                C_("autohide effect", "Slide")});
+            autohide_effect_choices.push_back({effect,
+                                               "slide",
+                                               C_("autohide effect", "Slide")});
             break;
         case DockAutohideEffect::fade:
             break;
         case DockAutohideEffect::slide_fade:
-            autohide_effect_choices.push_back({
-                effect,
-                "slide_fade",
-                gnome_wayland_effects
-                    ? C_("autohide effect", "Slide")
-                    : C_(
-                          "autohide effect",
-                          "Slide and Fade")});
+            autohide_effect_choices.push_back({effect,
+                                               "slide_fade",
+                                               gnome_wayland_effects
+                                                   ? C_("autohide effect", "Slide")
+                                                   : C_(
+                                                         "autohide effect",
+                                                         "Slide and Fade")});
             break;
         case DockAutohideEffect::gnome:
-            autohide_effect_choices.push_back({
-                effect,
-                "gnome",
-                C_("autohide effect", "GNOME")});
+            autohide_effect_choices.push_back({effect,
+                                               "gnome",
+                                               C_("autohide effect", "GNOME")});
             break;
         case DockAutohideEffect::scale:
             break;
@@ -1223,41 +1191,8 @@ void DockSettingsDialog::show(
         monitor_list
             .signal_row_selected()
             .connect(
-            [&configuration,
-             &monitor_identifiers](
-                Gtk::ListBoxRow *row)
-            {
-                if (!row)
-                    return;
-
-                const int index =
-                    row->get_index();
-
-                if (index < 0 ||
-                    index >=
-                        static_cast<int>(
-                            monitor_identifiers
-                                .size()))
-                {
-                    return;
-                }
-
-                configuration.save_setting(
-                    "monitor",
-                    monitor_identifiers[
-                        static_cast<
-                            std::size_t>(
-                            index)]);
-            }));
-
-    if (!autohide_effect_choices.empty())
-    {
-        settings_connections.push_back(
-            autohide_effect_list
-                .signal_row_selected()
-                .connect(
                 [&configuration,
-                 &autohide_effect_choices](
+                 &monitor_identifiers](
                     Gtk::ListBoxRow *row)
                 {
                     if (!row)
@@ -1267,20 +1202,51 @@ void DockSettingsDialog::show(
                         row->get_index();
 
                     if (index < 0 ||
-                        index >= static_cast<int>(
-                            autohide_effect_choices
-                                .size()))
+                        index >=
+                            static_cast<int>(
+                                monitor_identifiers
+                                    .size()))
                     {
                         return;
                     }
 
                     configuration.save_setting(
-                        "autohide_effect",
-                        autohide_effect_choices[
-                            static_cast<std::size_t>(
-                                index)]
-                            .value);
+                        "monitor",
+                        monitor_identifiers[static_cast<
+                            std::size_t>(
+                            index)]);
                 }));
+
+    if (!autohide_effect_choices.empty())
+    {
+        settings_connections.push_back(
+            autohide_effect_list
+                .signal_row_selected()
+                .connect(
+                    [&configuration,
+                     &autohide_effect_choices](
+                        Gtk::ListBoxRow *row)
+                    {
+                        if (!row)
+                            return;
+
+                        const int index =
+                            row->get_index();
+
+                        if (index < 0 ||
+                            index >= static_cast<int>(
+                                         autohide_effect_choices
+                                             .size()))
+                        {
+                            return;
+                        }
+
+                        configuration.save_setting(
+                            "autohide_effect",
+                            autohide_effect_choices[static_cast<std::size_t>(
+                                                        index)]
+                                .value);
+                    }));
     }
 
     const auto connect_radio =
@@ -1294,18 +1260,18 @@ void DockSettingsDialog::show(
             button
                 .signal_toggled()
                 .connect(
-                [&configuration,
-                 &button,
-                 key,
-                 value]()
-                {
-                    if (button.get_active())
+                    [&configuration,
+                     &button,
+                     key,
+                     value]()
                     {
-                        configuration.save_setting(
-                            key,
-                            value);
-                    }
-                }));
+                        if (button.get_active())
+                        {
+                            configuration.save_setting(
+                                key,
+                                value);
+                        }
+                    }));
     };
 
     connect_radio(
@@ -1381,389 +1347,389 @@ void DockSettingsDialog::show(
         home_icon_enabled
             .signal_toggled()
             .connect(
-            [&configuration,
-             &home_icon_enabled]()
-            {
-                configuration.save_setting(
-                    "home_icon_enabled",
-                    home_icon_enabled
-                            .get_active()
-                        ? "true"
-                        : "false");
-            }));
+                [&configuration,
+                 &home_icon_enabled]()
+                {
+                    configuration.save_setting(
+                        "home_icon_enabled",
+                        home_icon_enabled
+                                .get_active()
+                            ? "true"
+                            : "false");
+                }));
 
     settings_connections.push_back(
         display_tooltips
             .signal_toggled()
             .connect(
-            [&configuration,
-             &display_tooltips]()
-            {
-                configuration.save_setting(
-                    "display_tooltips",
-                    display_tooltips
-                            .get_active()
-                        ? "true"
-                        : "false");
-            }));
+                [&configuration,
+                 &display_tooltips]()
+                {
+                    configuration.save_setting(
+                        "display_tooltips",
+                        display_tooltips
+                                .get_active()
+                            ? "true"
+                            : "false");
+                }));
 
     settings_connections.push_back(
         display_preview
             .signal_toggled()
             .connect(
-            [&configuration,
-             &display_preview]()
-            {
-                configuration.save_setting(
-                    "display_preview",
-                    display_preview
-                            .get_active()
-                        ? "true"
-                        : "false");
-            }));
+                [&configuration,
+                 &display_preview]()
+                {
+                    configuration.save_setting(
+                        "display_preview",
+                        display_preview
+                                .get_active()
+                            ? "true"
+                            : "false");
+                }));
 
     settings_connections.push_back(
         close_preview_after_activation
             .signal_toggled()
             .connect(
-            [&configuration,
-             &close_preview_after_activation]()
-            {
-                configuration.save_setting(
-                    "close_preview_after_activation",
-                    close_preview_after_activation
-                            .get_active()
-                        ? "true"
-                        : "false");
-            }));
+                [&configuration,
+                 &close_preview_after_activation]()
+                {
+                    configuration.save_setting(
+                        "close_preview_after_activation",
+                        close_preview_after_activation
+                                .get_active()
+                            ? "true"
+                            : "false");
+                }));
 
     settings_connections.push_back(
         manage_all_workspaces
             .signal_toggled()
             .connect(
-            [&configuration,
-             &manage_all_workspaces]()
-            {
-                configuration.save_setting(
-                    "manage_all_workspaces",
-                    manage_all_workspaces
-                            .get_active()
-                        ? "true"
-                        : "false");
-            }));
+                [&configuration,
+                 &manage_all_workspaces]()
+                {
+                    configuration.save_setting(
+                        "manage_all_workspaces",
+                        manage_all_workspaces
+                                .get_active()
+                            ? "true"
+                            : "false");
+                }));
 
     settings_connections.push_back(
         select_home_icon
             .signal_clicked()
             .connect(
-            [&configuration,
-             &dialog,
-             &home_icon_path,
-             &icon]()
-            {
-                Gtk::Dialog
-                    icon_dialog(
-                        _("Select Home Icon"),
-                        dialog,
+                [&configuration,
+                 &dialog,
+                 &home_icon_path,
+                 &icon]()
+                {
+                    Gtk::Dialog
+                        icon_dialog(
+                            _("Select Home Icon"),
+                            dialog,
+                            true);
+
+                    icon_dialog.add_button(
+                        _("_Cancel"),
+                        Gtk::RESPONSE_CANCEL);
+                    icon_dialog.add_button(
+                        _("_Open"),
+                        Gtk::RESPONSE_OK);
+                    icon_dialog.set_type_hint(
+                        Gdk::WINDOW_TYPE_HINT_DIALOG);
+                    gtk_window_set_role(
+                        GTK_WINDOW(
+                            icon_dialog.gobj()),
+                        DocklightSurfaceIdentity::
+                            ICON_CHOOSER_ROLE);
+                    keep_dialog_above(icon_dialog);
+                    icon_dialog.set_decorated(true);
+                    icon_dialog.set_resizable(true);
+                    icon_dialog
+                        .property_destroy_with_parent() =
+                        true;
+                    icon_dialog
+                        .set_skip_taskbar_hint(true);
+                    icon_dialog
+                        .set_skip_pager_hint(true);
+                    icon_dialog.set_position(
+                        Gtk::WIN_POS_CENTER_ON_PARENT);
+                    icon_dialog.set_default_size(
+                        760,
+                        520);
+
+                    Gtk::HeaderBar icon_header;
+                    Gtk::Image icon_header_icon;
+
+                    icon_header.set_title(
+                        _("Select Home Icon"));
+                    icon_header
+                        .set_show_close_button(true);
+                    icon_header.set_decoration_layout(
+                        ":close");
+
+                    if (icon)
+                    {
+                        icon_dialog.set_icon(
+                            icon);
+
+                        const auto small_home_icon =
+                            icon->scale_simple(
+                                20,
+                                20,
+                                Gdk::INTERP_BILINEAR);
+
+                        if (small_home_icon)
+                        {
+                            icon_header_icon.set(
+                                small_home_icon);
+                            icon_header.pack_start(
+                                icon_header_icon);
+                        }
+                    }
+
+                    icon_dialog.set_titlebar(
+                        icon_header);
+
+                    Gtk::FileChooserWidget
+                        icon_chooser(
+                            Gtk::
+                                FILE_CHOOSER_ACTION_OPEN);
+
+                    auto image_filter =
+                        Gtk::FileFilter::create();
+                    image_filter->set_name(
+                        _("Image Files"));
+                    image_filter
+                        ->add_pixbuf_formats();
+                    icon_chooser.add_filter(
+                        image_filter);
+
+                    const auto current_path =
+                        home_icon_path.get_text();
+
+                    if (!current_path.empty())
+                    {
+                        icon_chooser.set_filename(
+                            current_path);
+                    }
+
+                    auto *icon_content =
+                        icon_dialog.get_content_area();
+
+                    icon_content->pack_start(
+                        icon_chooser,
+                        true,
                         true);
 
-                icon_dialog.add_button(
-                    _("_Cancel"),
-                    Gtk::RESPONSE_CANCEL);
-                icon_dialog.add_button(
-                    _("_Open"),
-                    Gtk::RESPONSE_OK);
-                icon_dialog.set_type_hint(
-                    Gdk::WINDOW_TYPE_HINT_DIALOG);
-                gtk_window_set_role(
-                    GTK_WINDOW(
-                        icon_dialog.gobj()),
-                    DocklightSurfaceIdentity::
-                        ICON_CHOOSER_ROLE);
-                keep_dialog_above(icon_dialog);
-                icon_dialog.set_decorated(true);
-                icon_dialog.set_resizable(true);
-                icon_dialog
-                    .property_destroy_with_parent() =
-                    true;
-                icon_dialog
-                    .set_skip_taskbar_hint(true);
-                icon_dialog
-                    .set_skip_pager_hint(true);
-                icon_dialog.set_position(
-                    Gtk::WIN_POS_CENTER_ON_PARENT);
-                icon_dialog.set_default_size(
-                    760,
-                    520);
+                    icon_dialog.show_all_children();
+                    icon_dialog.present();
 
-                Gtk::HeaderBar icon_header;
-                Gtk::Image icon_header_icon;
-
-                icon_header.set_title(
-                    _("Select Home Icon"));
-                icon_header
-                    .set_show_close_button(true);
-                icon_header.set_decoration_layout(
-                    ":close");
-
-                if (icon)
-                {
-                    icon_dialog.set_icon(
-                        icon);
-
-                    const auto small_home_icon =
-                        icon->scale_simple(
-                            20,
-                            20,
-                            Gdk::INTERP_BILINEAR);
-
-                    if (small_home_icon)
+                    if (icon_dialog.run() ==
+                        Gtk::RESPONSE_OK)
                     {
-                        icon_header_icon.set(
-                            small_home_icon);
-                        icon_header.pack_start(
-                            icon_header_icon);
-                    }
-                }
+                        const auto selected_path =
+                            icon_chooser
+                                .get_filename();
 
-                icon_dialog.set_titlebar(
-                    icon_header);
-
-                Gtk::FileChooserWidget
-                    icon_chooser(
-                        Gtk::
-                            FILE_CHOOSER_ACTION_OPEN);
-
-                auto image_filter =
-                    Gtk::FileFilter::create();
-                image_filter->set_name(
-                    _("Image Files"));
-                image_filter
-                    ->add_pixbuf_formats();
-                icon_chooser.add_filter(
-                    image_filter);
-
-                const auto current_path =
-                    home_icon_path.get_text();
-
-                if (!current_path.empty())
-                {
-                    icon_chooser.set_filename(
-                        current_path);
-                }
-
-                auto *icon_content =
-                    icon_dialog.get_content_area();
-
-                icon_content->pack_start(
-                    icon_chooser,
-                    true,
-                    true);
-
-                icon_dialog.show_all_children();
-                icon_dialog.present();
-
-                if (icon_dialog.run() ==
-                    Gtk::RESPONSE_OK)
-                {
-                    const auto selected_path =
-                        icon_chooser
-                            .get_filename();
-
-                    if (!selected_path.empty())
-                    {
-                        home_icon_path.set_text(
-                            selected_path);
-                        home_icon_path
-                            .set_tooltip_text(
+                        if (!selected_path.empty())
+                        {
+                            home_icon_path.set_text(
                                 selected_path);
-                        configuration.save_setting(
-                            "home_icon_path",
-                            selected_path);
+                            home_icon_path
+                                .set_tooltip_text(
+                                    selected_path);
+                            configuration.save_setting(
+                                "home_icon_path",
+                                selected_path);
+                        }
                     }
-                }
 
-                icon_dialog.hide();
-            }));
+                    icon_dialog.hide();
+                }));
 
     settings_connections.push_back(
         use_default_home_icon
             .signal_clicked()
             .connect(
-            [&configuration,
-             &home_icon_path]()
-            {
-                home_icon_path.set_text("");
-                home_icon_path
-                    .set_tooltip_text("");
-                configuration.save_setting(
-                    "home_icon_path",
-                    "");
-            }));
+                [&configuration,
+                 &home_icon_path]()
+                {
+                    home_icon_path.set_text("");
+                    home_icon_path
+                        .set_tooltip_text("");
+                    configuration.save_setting(
+                        "home_icon_path",
+                        "");
+                }));
 
     settings_connections.push_back(
         indicator_color
             .signal_color_set()
             .connect(
-            [&configuration,
-             &indicator_color]()
-            {
-                configuration.save_setting(
-                    "indicator_color",
-                    indicator_color.get_rgba()
-                        .to_string());
-            }));
+                [&configuration,
+                 &indicator_color]()
+                {
+                    configuration.save_setting(
+                        "indicator_color",
+                        indicator_color.get_rgba()
+                            .to_string());
+                }));
 
     settings_connections.push_back(
         preview_color
             .signal_color_set()
             .connect(
-            [&configuration,
-             &preview_color]()
-            {
-                configuration.save_setting(
-                    "preview_color",
-                    preview_color.get_rgba()
-                        .to_string());
-            }));
+                [&configuration,
+                 &preview_color]()
+                {
+                    configuration.save_setting(
+                        "preview_color",
+                        preview_color.get_rgba()
+                            .to_string());
+                }));
 
     settings_connections.push_back(
         icon_size_spin
-        .signal_value_changed()
-        .connect(
-            [&configuration,
-             &icon_size_spin,
-             &corner_radius_spin,
-             &corner_radius_adjustment]()
-            {
-                const int icon_size =
-                    icon_size_spin
-                        .get_value_as_int();
-
-                const int maximum_radius =
-                    icon_size / 2;
-
-                corner_radius_adjustment
-                    ->set_upper(
-                        maximum_radius);
-
-                const int corner_radius =
-                    corner_radius_spin
-                        .get_value_as_int();
-
-                if (corner_radius != -1 &&
-                    corner_radius >
-                        maximum_radius)
+            .signal_value_changed()
+            .connect(
+                [&configuration,
+                 &icon_size_spin,
+                 &corner_radius_spin,
+                 &corner_radius_adjustment]()
                 {
-                    corner_radius_spin
-                        .set_value(
-                            maximum_radius);
-                }
+                    const int icon_size =
+                        icon_size_spin
+                            .get_value_as_int();
 
-                // Saving triggers a monitored configuration reload. Finish
-                // touching dialog-owned GTK objects before that reload can
-                // reconfigure the dock and its transient settings dialog.
-                configuration.save_setting(
-                    "icon_size",
-                    std::to_string(
-                        icon_size));
-            }));
+                    const int maximum_radius =
+                        icon_size / 2;
+
+                    corner_radius_adjustment
+                        ->set_upper(
+                            maximum_radius);
+
+                    const int corner_radius =
+                        corner_radius_spin
+                            .get_value_as_int();
+
+                    if (corner_radius != -1 &&
+                        corner_radius >
+                            maximum_radius)
+                    {
+                        corner_radius_spin
+                            .set_value(
+                                maximum_radius);
+                    }
+
+                    // Saving triggers a monitored configuration reload. Finish
+                    // touching dialog-owned GTK objects before that reload can
+                    // reconfigure the dock and its transient settings dialog.
+                    configuration.save_setting(
+                        "icon_size",
+                        std::to_string(
+                            icon_size));
+                }));
 
     settings_connections.push_back(
         preview_card_height_spin
             .signal_value_changed()
             .connect(
-            [&configuration,
-             &preview_card_height_spin]()
-            {
-                int height =
-                    preview_card_height_spin
-                        .get_value_as_int();
-
-                if (height > 0 && height < 64)
+                [&configuration,
+                 &preview_card_height_spin]()
                 {
-                    height = 64;
-                    preview_card_height_spin
-                        .set_value(height);
-                    return;
-                }
+                    int height =
+                        preview_card_height_spin
+                            .get_value_as_int();
 
-                configuration.save_setting(
-                    "preview_card_height",
-                    std::to_string(height));
-            }));
+                    if (height > 0 && height < 64)
+                    {
+                        height = 64;
+                        preview_card_height_spin
+                            .set_value(height);
+                        return;
+                    }
+
+                    configuration.save_setting(
+                        "preview_card_height",
+                        std::to_string(height));
+                }));
 
     settings_connections.push_back(
         preview_show_delay_spin
             .signal_value_changed()
             .connect(
-            [&configuration,
-             &preview_show_delay_spin]()
-            {
-                configuration.save_setting(
-                    "preview_show_delay",
-                    std::to_string(
-                        preview_show_delay_spin
-                            .get_value_as_int()));
-            }));
+                [&configuration,
+                 &preview_show_delay_spin]()
+                {
+                    configuration.save_setting(
+                        "preview_show_delay",
+                        std::to_string(
+                            preview_show_delay_spin
+                                .get_value_as_int()));
+                }));
 
     settings_connections.push_back(
         autohide_hide_delay_spin
             .signal_value_changed()
             .connect(
-            [&configuration,
-             &autohide_hide_delay_spin]()
-            {
-                configuration.save_setting(
-                    "autohide_hide_delay",
-                    std::to_string(
-                        autohide_hide_delay_spin
-                            .get_value_as_int()));
-            }));
+                [&configuration,
+                 &autohide_hide_delay_spin]()
+                {
+                    configuration.save_setting(
+                        "autohide_hide_delay",
+                        std::to_string(
+                            autohide_hide_delay_spin
+                                .get_value_as_int()));
+                }));
 
     settings_connections.push_back(
         gradient_background
             .signal_toggled()
             .connect(
-            [&configuration,
-             &gradient_background]()
-            {
-                configuration.save_setting(
-                    "gradient_background",
-                    gradient_background
-                            .get_active()
-                        ? "true"
-                        : "false");
-            }));
+                [&configuration,
+                 &gradient_background]()
+                {
+                    configuration.save_setting(
+                        "gradient_background",
+                        gradient_background
+                                .get_active()
+                            ? "true"
+                            : "false");
+                }));
 
     settings_connections.push_back(
         rounded_corners
             .signal_toggled()
             .connect(
-            [&configuration,
-             &rounded_corners]()
-            {
-                configuration.save_setting(
-                    "rounded_corners",
-                    rounded_corners
-                            .get_active()
-                        ? "true"
-                        : "false");
-            }));
+                [&configuration,
+                 &rounded_corners]()
+                {
+                    configuration.save_setting(
+                        "rounded_corners",
+                        rounded_corners
+                                .get_active()
+                            ? "true"
+                            : "false");
+                }));
 
     settings_connections.push_back(
         corner_radius_spin
-        .signal_value_changed()
-        .connect(
-            [&configuration,
-             &corner_radius_spin]()
-            {
-                configuration.save_setting(
-                    "corner_radius",
-                    std::to_string(
-                        corner_radius_spin
-                            .get_value_as_int()));
-            }));
+            .signal_value_changed()
+            .connect(
+                [&configuration,
+                 &corner_radius_spin]()
+                {
+                    configuration.save_setting(
+                        "corner_radius",
+                        std::to_string(
+                            corner_radius_spin
+                                .get_value_as_int()));
+                }));
 
     auto *content =
         dialog.get_content_area();
@@ -1774,11 +1740,20 @@ void DockSettingsDialog::show(
         true);
 
     dialog.show_all_children();
-    center_dialog_on_parent_monitor(
+    size_dialog_on_parent_monitor(
         dialog,
         parent);
     dialog.present();
+    // GTK may enlarge the requested size for translated controls or the
+    // current theme. Center once after that allocation, not on every resize.
+    auto center_connection = Glib::signal_idle().connect(
+        [&dialog, &parent]()
+        {
+            center_dialog_on_parent_monitor(dialog, parent);
+            return false;
+        });
     dialog.run();
+    center_connection.disconnect();
 
     // Several GTK controls can emit signals while being torn down. Their
     // callbacks refer to other stack-owned dialog controls, whose destruction

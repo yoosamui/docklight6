@@ -50,8 +50,12 @@ assert.match(
     "the initial dialog size must be bounded by the parent monitor");
 assert.match(
     settingsSource,
-    /dialog\.move\([\s\S]*?geometry\.get_y\(\)[\s\S]*?std::max\([\s\S]*?\(geometry\.get_height\(\) - height\)[\s\S]*?-\s*SETTINGS_DIALOG_VERTICAL_OFFSET\)/,
-    "the settings dialog must move upward by 60 pixels without crossing the monitor top");
+    /dialog\.get_size\(width, height\);[\s\S]*?dialog\.move\([\s\S]*?geometry\.get_width\(\) - width[\s\S]*?geometry\.get_height\(\) - height/,
+    "centering must use the allocated dialog size on both axes");
+assert.match(
+    settingsSource,
+    /dialog\.present\(\);[\s\S]*?signal_idle\(\)\.connect\([\s\S]*?center_dialog_on_parent_monitor\(dialog, parent\);[\s\S]*?return false;[\s\S]*?dialog\.run\(\);[\s\S]*?center_connection\.disconnect\(\);/,
+    "initial centering must run once after presentation and be cancelled on close");
 assert.match(
     settingsSource,
     /details->set_markup\([\s\S]*?"<small>"[\s\S]*?escape_text\(description\)[\s\S]*?"<\/small>"/,
