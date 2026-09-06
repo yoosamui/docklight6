@@ -620,6 +620,14 @@ assert.match(
     "an XWayland or scoped-X11 edge change must not recapture DockLight's previous strut as native work area");
 assert.match(
     dockWindowControllerSource,
+    /m_window\.signal_map\(\)\.connect\([\s\S]*?m_has_applied_layout = false;\s*schedule_layout_update\(\);/,
+    "mapping must invalidate applied placement so Mutter's initial positioning cannot suppress the reserved-space correction");
+assert.match(
+    dockWindowControllerSource,
+    /const bool placement_changed =[\s\S]*?!m_has_applied_layout[\s\S]*?if \(placement_changed\)[\s\S]*?m_window\.apply_dock_layout/,
+    "invalidated map placement must reach the surface backend even when calculated geometry is unchanged");
+assert.match(
+    dockWindowControllerSource,
     /monitor_geometry_changed[\s\S]*?output_changed[\s\S]*?prepare_surface_change\(\)[\s\S]*?m_autohide_controller->set_monitor/,
     "moving or resizing the selected output must invalidate cached X11 placement state");
 assert.match(

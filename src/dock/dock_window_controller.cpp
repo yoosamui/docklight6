@@ -13,6 +13,7 @@
 // Important implementation decisions:
 // - Expensive GTK reactions are coalesced through idle callbacks.
 // - Pure placement is calculated before DockWindow applies side effects.
+// - Mapping invalidates applied placement because the WM may reposition it.
 // - Effective icon size is derived from available monitor space.
 // - Published icon geometry prefers compositor surface coordinates.
 // - Tooltip and preview timers are owned by their focused managers.
@@ -519,6 +520,10 @@ void DockWindowController::initialize()
             m_window.signal_map().connect(
                 [this]()
                 {
+                    // The WM may have replaced the pre-map coordinates.
+                    // An identical calculated layout must still be applied
+                    // once after mapping; retain the panel-only work area.
+                    m_has_applied_layout = false;
                     schedule_layout_update();
                 });
     }
