@@ -10,7 +10,7 @@ DockLight is a Generic lightweight application dock for Linux with X11 and Wayla
 support. It provides application launchers, window management, live window
 previews, multi-monitor placement, bookmarks (sessions) and configurable auto-hide behavior.
 
-**Current version:** `6.0.32`
+**Current version:** `6.0.40`
 
 
 Important current-code details:

@@ -4,7 +4,7 @@
 # Automatically generated, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: docklight6 6.0.29\n"
+"Project-Id-Version: docklight6 6.0.40\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
 "POT-Creation-Date: 2026-09-07 15:20+0700\n"
 "PO-Revision-Date: 2026-09-07 15:30+0700\n"
