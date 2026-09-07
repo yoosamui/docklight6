@@ -12,6 +12,8 @@
 // activating it starts.
 //
 // Important implementation decisions:
+// - Deferred launch continuation belongs to this widget and is cancelled on
+//   destruction. Clear its connection before dispatch to allow rescheduling.
 // - A window becomes the Session's only when the Session's own launcher starts
 //   it. SessionLauncher reports each window it identifies together with the
 //   tag the launch carried, and that tag is the stored item's row identity.
@@ -249,6 +251,11 @@ DockSessionItem::DockSessionItem(
         });
 
     reload_icon();
+}
+
+DockSessionItem::~DockSessionItem()
+{
+    m_launch_idle.disconnect();
 }
 
 const std::string &
@@ -580,11 +587,7 @@ void DockSessionItem::launch_next_stored_item()
     if (!error.empty() ||
         !m_launcher.tracks_windows())
     {
-        Glib::signal_idle().connect_once(
-            [this]()
-            {
-                launch_next_stored_item();
-            });
+        schedule_next_stored_item();
     }
 }
 
@@ -593,10 +596,20 @@ void DockSessionItem::on_launch_finished(
 {
     // The signal is emitted while SessionLauncher is draining its pending
     // vector. Defer the next launch so it cannot invalidate that iteration.
-    Glib::signal_idle().connect_once(
+    schedule_next_stored_item();
+}
+
+void DockSessionItem::schedule_next_stored_item()
+{
+    if (m_launch_idle.connected())
+        return;
+
+    m_launch_idle = Glib::signal_idle().connect(
         [this]()
         {
+            m_launch_idle.disconnect();
             launch_next_stored_item();
+            return false;
         });
 }
 

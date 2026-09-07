@@ -19,6 +19,7 @@
 // Borrows DockWindow and WindowRegistry through DockItem. Owns its Session
 // record, its SessionLauncher, and the bindings from stored items to the
 // windows that launching them produced.
+// Owns and cancels the idle connection used to continue Session launches.
 //
 // Design notes:
 // A stored item read from docklight.data corresponds to no live window. There
@@ -63,6 +64,8 @@ public:
         DockIndicator indicator,
         const std::string &indicator_color);
 
+    ~DockSessionItem() override;
+
     void set_session(SessionRecord session);
     const std::string &session_name() const;
 
@@ -94,6 +97,7 @@ private:
     void launch_stored_item(
         std::size_t index);
     void launch_next_stored_item();
+    void schedule_next_stored_item();
     void on_launch_finished(
         std::string tag);
 
@@ -124,6 +128,7 @@ private:
 
     SessionRecord m_session;
     SessionLauncher m_launcher;
+    sigc::connection m_launch_idle;
     WindowRegistry *m_session_window_registry =
         nullptr;
     // Stored-item row identity to the window launching it produced.
