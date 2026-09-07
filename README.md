@@ -203,6 +203,8 @@ DockLight's window backend; the desktop controls focus and dialog placement.
 
 DockLight creates `~/.config/docklight6/docklight.conf` automatically and
 monitors it for changes. Use the settings dialog for normal configuration.
+The default hover effect is **Magnified**. A missing or empty `hover_effect`
+uses this default; an explicit effect selection is preserved.
 On GNOME Wayland, **Autohide Effect** offers a `GNOME` compositor effect which
 keeps the dock at its edge while scaling the complete dock around its centre
 and fading, matching Plasma Wayland's map/unmap behavior. `Slide and Fade`

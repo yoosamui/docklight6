@@ -106,7 +106,7 @@ private:
     int m_minimum_bottom_workarea_inset = 36;
 
     DockHoverEffect m_hover_effect =
-        DockHoverEffect::standard;
+        DockHoverEffect::magnified;
 
     DockIndicator m_indicator =
         DockIndicator::lines;

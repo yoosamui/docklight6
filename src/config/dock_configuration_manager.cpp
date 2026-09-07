@@ -62,7 +62,7 @@ monitor =
 
 // Configuration block added when the hover-effect setting is missing.
 const char *HOVER_EFFECT_SETTING_TEMPLATE = R"(# Effect shown while the pointer is over an icon.
-# Empty uses default: standard
+# Empty uses default: magnified
 # Valid values: standard, zoom, blur, magnified
 hover_effect =
 
@@ -182,7 +182,7 @@ config_version = 1
 monitor =
 
 # Effect shown while the pointer is over an icon.
-# Empty uses default: standard
+# Empty uses default: magnified
 # Valid values: standard, zoom, blur, magnified
 hover_effect =
 
@@ -846,8 +846,12 @@ void DockConfigurationManager::reload()
                 key_file,
                 "hover_effect");
 
-        if (hover_effect.empty() ||
-            hover_effect == "standard")
+        if (hover_effect.empty())
+        {
+            candidate.settings.set_hover_effect(
+                defaults.settings.hover_effect());
+        }
+        else if (hover_effect == "standard")
         {
             candidate.settings.set_hover_effect(
                 DockHoverEffect::standard);
