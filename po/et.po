@@ -6,26 +6,26 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-06 21:59+0700\n"
-"PO-Revision-Date: 2026-08-16 14:25+0700\n"
+"POT-Creation-Date: 2026-09-07 15:20+0700\n"
+"PO-Revision-Date: 2026-09-07 15:30+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language: et\n"
 "Language-Team: none\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: et\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: src/main.cpp:355
+#: src/main.cpp:362
 msgid "Window previews are disabled"
 msgstr "Akende eelvaated on keelatud"
 
-#: src/main.cpp:361
+#: src/main.cpp:368
 msgid "DockLight"
 msgstr "DockLight"
 
-#: src/main.cpp:368
+#: src/main.cpp:375
 msgid "Openbox requires an X11 compositor for complete window previews. Display Preview is disabled. Start compton or picom, then enable Display Preview in DockLight Settings."
 msgstr "Openbox vajab täieliku akna eelvaate jaoks X11-koostajat. Kuva eelvaade on keelatud. Käivitage compton või picom, seejärel lubage DockLighti seadetes kuva eelvaade."
 
@@ -33,7 +33,7 @@ msgstr "Openbox vajab täieliku akna eelvaate jaoks X11-koostajat. Kuva eelvaade
 msgid "_Edit"
 msgstr "_Muuda"
 
-#: src/dialogs/dock_session_editor_item.cpp:108 src/dock/dock_item.cpp:165
+#: src/dock/dock_item.cpp:165 src/dialogs/dock_session_editor_item.cpp:108
 msgid "_Remove"
 msgstr "_Eemalda"
 
@@ -45,7 +45,7 @@ msgstr "_Kinnita dokki"
 msgid "_Open New Window"
 msgstr "_Ava uus aken"
 
-#: src/dock/dock_home_item.cpp:77 src/dock/dock_item.cpp:174
+#: src/dock/dock_item.cpp:174 src/dock/dock_home_item.cpp:78
 msgid "_Close All"
 msgstr "_Sule kõik"
 
@@ -61,411 +61,449 @@ msgstr "_Taasta"
 msgid "Ma_ximize"
 msgstr "_Maksimeerida"
 
-#: src/dock/dock_home_item.cpp:62
+#: src/dock/dock_home_item.cpp:63
 msgid "_Settings"
 msgstr "_Seaded"
 
-#: src/dock/dock_home_item.cpp:65
+#: src/dock/dock_home_item.cpp:66
 msgid "Sessi_on"
 msgstr "_Seanss"
 
-#: src/dock/dock_home_item.cpp:68
+#: src/dock/dock_home_item.cpp:69
 msgid "_Minimize All"
 msgstr "_Minimize kõik"
 
-#: src/dock/dock_home_item.cpp:71
+#: src/dock/dock_home_item.cpp:72
 msgid "_Unminimize All"
 msgstr "_Taasta kõik"
 
-#: src/dock/dock_home_item.cpp:74
+#: src/dock/dock_home_item.cpp:75
 msgid "Ma_ximize All"
 msgstr "_Maksimeeri kõik"
 
-#: src/dock/dock_home_item.cpp:80
+#: src/dock/dock_home_item.cpp:81
 msgid "_About"
 msgstr "_Umbes"
 
-#: src/dock/dock_home_item.cpp:83
+#: src/dock/dock_home_item.cpp:84
 msgid "_Exit"
 msgstr "_Välju"
 
-#: src/dock/dock_home_item.cpp:310
+#: src/dock/dock_home_item.cpp:311
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Kodu"
 
-#: src/dialogs/dock_settings_dialog.cpp:243
-#: src/dialogs/dock_settings_dialog.cpp:288
-msgid "DockLight Settings"
-msgstr "DockLighti sätted"
+#: src/dialogs/dock_settings_dialog.cpp:141
+#: src/dialogs/dock_settings_dialog.cpp:155
+msgid "Desktop Shortcuts"
+msgstr "Töölaua kiirklahvid"
 
-#: src/dialogs/dock_about_dialog.cpp:188
+#: src/dialogs/dock_settings_dialog.cpp:150
+#: src/dialogs/dock_settings_dialog.cpp:403
 #: src/dialogs/dock_session_dialog.cpp:1019
-#: src/dialogs/dock_settings_dialog.cpp:316
+#: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_Sule"
 
-#: src/dialogs/dock_settings_dialog.cpp:327
+#: src/dialogs/dock_settings_dialog.cpp:160
+msgid "If you disable the <b>Home icon</b>, its context menu will no longer be available. This means you will need another way to access DockLight settings and other actions."
+msgstr "Kui keelad <b>avakuva ikooni</b>, pole selle kontekstimenüü enam saadaval. Siis vajad DockLighti seadetele ja muudele toimingutele juurdepääsuks teist võimalust."
+
+#: src/dialogs/dock_settings_dialog.cpp:165
+msgid "You can create desktop keyboard shortcuts using the following commands:"
+msgstr "Töölaua kiirklahve saad luua järgmiste käskudega:"
+
+#: src/dialogs/dock_settings_dialog.cpp:177
+msgid "Open Settings"
+msgstr "Ava seaded"
+
+#: src/dialogs/dock_settings_dialog.cpp:180
+msgid "Open Sessions"
+msgstr "Ava seansid"
+
+#: src/dialogs/dock_settings_dialog.cpp:183
+msgid "Open About"
+msgstr "Ava teave"
+
+#: src/dialogs/dock_settings_dialog.cpp:186
+msgid "Exit DockLight"
+msgstr "Välju DockLightist"
+
+#: src/dialogs/dock_settings_dialog.cpp:190
+msgid "Assign these commands to any keyboard shortcuts you prefer using your desktop environment's keyboard shortcut settings."
+msgstr "Määra need käsud oma töölauakeskkonna kiirklahviseadetes soovitud klahvikombinatsioonidele."
+
+#: src/dialogs/dock_settings_dialog.cpp:194
+msgid "For more information about DockLight shortcuts, see README.md."
+msgstr "Lisateavet DockLighti kiirklahvide kohta leiad failist README.md."
+
+#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:375
+msgid "DockLight Settings"
+msgstr "DockLighti sätted"
+
+#: src/dialogs/dock_settings_dialog.cpp:414
 msgid "Appearance"
 msgstr "Välimus"
 
-#: src/dialogs/dock_settings_dialog.cpp:329
+#: src/dialogs/dock_settings_dialog.cpp:416
 msgid "Behavior"
 msgstr "Käitumine"
 
-#: src/dialogs/dock_settings_dialog.cpp:331
+#: src/dialogs/dock_settings_dialog.cpp:418
 msgid "Position & Autohide"
 msgstr "Asend & Automaatselt peitmine"
 
-#: src/dialogs/dock_settings_dialog.cpp:358
+#: src/dialogs/dock_settings_dialog.cpp:445
 msgid "Monitor"
 msgstr "Monitor"
 
-#: src/dialogs/dock_settings_dialog.cpp:360
+#: src/dialogs/dock_settings_dialog.cpp:447
 msgid "Hover Effect"
 msgstr "Hõljuja efekt"
 
-#: src/dialogs/dock_settings_dialog.cpp:362
+#: src/dialogs/dock_settings_dialog.cpp:449
 msgid "Indicator"
 msgstr "Näitaja"
 
-#: src/dialogs/dock_settings_dialog.cpp:364
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:451
+#: src/dialogs/dock_settings_dialog.cpp:657
 msgid "Indicator Color"
 msgstr "Näidiku värv"
 
-#: src/dialogs/dock_settings_dialog.cpp:366
-#: src/dialogs/dock_settings_dialog.cpp:589
+#: src/dialogs/dock_settings_dialog.cpp:453
+#: src/dialogs/dock_settings_dialog.cpp:676
 msgid "Preview Color"
 msgstr "Eelvaate värv"
 
-#: src/dialogs/dock_settings_dialog.cpp:368
+#: src/dialogs/dock_settings_dialog.cpp:455
 msgid "Display Home Icon"
 msgstr "Kuva avalehe ikoon"
 
-#: src/dialogs/dock_settings_dialog.cpp:370
+#: src/dialogs/dock_settings_dialog.cpp:457
 msgid "Home Icon"
 msgstr "Avalehe ikoon"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:459
 msgid "Display Tooltips"
 msgstr "Kuva tööriistaspikrid"
 
-#: src/dialogs/dock_settings_dialog.cpp:374
+#: src/dialogs/dock_settings_dialog.cpp:461
 msgid "Display Preview"
 msgstr "Kuva eelvaade"
 
-#: src/dialogs/dock_settings_dialog.cpp:376
+#: src/dialogs/dock_settings_dialog.cpp:463
 msgid "Close Preview After Activation"
 msgstr "Pärast aktiveerimist sulgege eelvaade"
 
-#: src/dialogs/dock_settings_dialog.cpp:378
+#: src/dialogs/dock_settings_dialog.cpp:465
 msgid "Manage All Workspaces"
 msgstr "Hallake kõiki tööruume"
 
-#: src/dialogs/dock_settings_dialog.cpp:380
+#: src/dialogs/dock_settings_dialog.cpp:467
 msgid "Icon Size"
 msgstr "Ikooni suurus"
 
-#: src/dialogs/dock_settings_dialog.cpp:382
+#: src/dialogs/dock_settings_dialog.cpp:469
 msgid "Preview Card Height"
 msgstr "Kaardi kõrguse eelvaade"
 
-#: src/dialogs/dock_settings_dialog.cpp:384
+#: src/dialogs/dock_settings_dialog.cpp:471
 msgid "Preview Show Delay (ms)"
 msgstr "Kuva eelvaate viivitus (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:386
+#: src/dialogs/dock_settings_dialog.cpp:473
 msgid "Location"
 msgstr "Asukoht"
 
-#: src/dialogs/dock_settings_dialog.cpp:388
+#: src/dialogs/dock_settings_dialog.cpp:475
 msgid "Gradient Background"
 msgstr "Gradiendi taust"
 
-#: src/dialogs/dock_settings_dialog.cpp:390
+#: src/dialogs/dock_settings_dialog.cpp:477
 msgid "Rounded Corners"
 msgstr "Ümardatud nurgad"
 
-#: src/dialogs/dock_settings_dialog.cpp:392
+#: src/dialogs/dock_settings_dialog.cpp:479
 msgid "Corner Radius"
 msgstr "Nurga raadius"
 
-#: src/dialogs/dock_settings_dialog.cpp:394
+#: src/dialogs/dock_settings_dialog.cpp:481
 msgid "Alignment"
 msgstr "Joondamine"
 
-#: src/dialogs/dock_settings_dialog.cpp:396
+#: src/dialogs/dock_settings_dialog.cpp:483
 msgid "Autohide"
 msgstr "Peida automaatselt"
 
-#: src/dialogs/dock_settings_dialog.cpp:398
+#: src/dialogs/dock_settings_dialog.cpp:485
 msgid "Autohide Effect"
 msgstr "Automaatse peitmise efekt"
 
-#: src/dialogs/dock_settings_dialog.cpp:400
+#: src/dialogs/dock_settings_dialog.cpp:487
 msgid "Autohide Delay (ms)"
 msgstr "Automaatselt peitmise viivitus (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:458
+#: src/dialogs/dock_settings_dialog.cpp:545
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Esmane monitor"
 
-#: src/dialogs/dock_settings_dialog.cpp:496
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Standardne efekt"
 
-#: src/dialogs/dock_settings_dialog.cpp:498
+#: src/dialogs/dock_settings_dialog.cpp:585
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Suumi efekt"
 
-#: src/dialogs/dock_settings_dialog.cpp:500
+#: src/dialogs/dock_settings_dialog.cpp:587
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Hägususe efekt"
 
-#: src/dialogs/dock_settings_dialog.cpp:502
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "hover effect"
 msgid "Magnified"
 msgstr "Suurendatud"
 
-#: src/dialogs/dock_settings_dialog.cpp:535
+#: src/dialogs/dock_settings_dialog.cpp:622
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Joone indikaatorid"
 
-#: src/dialogs/dock_settings_dialog.cpp:537
+#: src/dialogs/dock_settings_dialog.cpp:624
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Punkti indikaatorid"
 
-#: src/dialogs/dock_settings_dialog.cpp:572
+#: src/dialogs/dock_settings_dialog.cpp:659
 msgid "Choose the indicator color"
 msgstr "Valige indikaatori värv"
 
-#: src/dialogs/dock_settings_dialog.cpp:591
+#: src/dialogs/dock_settings_dialog.cpp:678
 msgid "Choose the preview color"
 msgstr "Vali eelvaate värv"
 
-#: src/dialogs/dock_settings_dialog.cpp:603
+#: src/dialogs/dock_settings_dialog.cpp:690
 msgid "Select…"
 msgstr "Vali…"
 
-#: src/dialogs/dock_settings_dialog.cpp:605
+#: src/dialogs/dock_settings_dialog.cpp:692
 msgid "Use Default"
 msgstr "Kasuta vaikeseadet"
 
-#: src/dialogs/dock_settings_dialog.cpp:613
+#: src/dialogs/dock_settings_dialog.cpp:700
 msgid "Built-in DockLight icon"
 msgstr "Sisseehitatud DockLighti ikoon"
 
-#: src/dialogs/dock_settings_dialog.cpp:647
+#: src/dialogs/dock_settings_dialog.cpp:734
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "Vastasel juhul hoidke eelvaade avatuna, kuni kursor sealt lahkub"
 
-#: src/dialogs/dock_settings_dialog.cpp:654
+#: src/dialogs/dock_settings_dialog.cpp:741
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr "Rakendage ikoonitoiminguid ja hiirerattaga liikumist kõigis tööruumides"
 
-#: src/dialogs/dock_settings_dialog.cpp:685
+#: src/dialogs/dock_settings_dialog.cpp:772
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0 valib automaatse suuruse määramise; muul juhul kasutage 64 kuni 512 pikslit"
 
-#: src/dialogs/dock_settings_dialog.cpp:702
+#: src/dialogs/dock_settings_dialog.cpp:789
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr "Viivitus enne akna eelvaate ilmumist 0 kuni 5000 millisekundit"
 
-#: src/dialogs/dock_settings_dialog.cpp:720
+#: src/dialogs/dock_settings_dialog.cpp:807
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "Viivitus enne doki peitmist, 0 kuni 5000 millisekundit"
 
-#: src/dialogs/dock_settings_dialog.cpp:726
+#: src/dialogs/dock_settings_dialog.cpp:813
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Alumine serv"
 
-#: src/dialogs/dock_settings_dialog.cpp:728
+#: src/dialogs/dock_settings_dialog.cpp:815
 msgctxt "dock location"
 msgid "Left"
 msgstr "Vasak serv"
 
-#: src/dialogs/dock_settings_dialog.cpp:730
+#: src/dialogs/dock_settings_dialog.cpp:817
 msgctxt "dock location"
 msgid "Top"
 msgstr "Ülemine serv"
 
-#: src/dialogs/dock_settings_dialog.cpp:732
+#: src/dialogs/dock_settings_dialog.cpp:819
 msgctxt "dock location"
 msgid "Right"
 msgstr "Parem serv"
 
-#: src/dialogs/dock_settings_dialog.cpp:788
+#: src/dialogs/dock_settings_dialog.cpp:875
 msgid "-1 selects the automatic radius"
 msgstr "-1 valib automaatse raadiuse"
 
-#: src/dialogs/dock_settings_dialog.cpp:793
+#: src/dialogs/dock_settings_dialog.cpp:880
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Alusta joondatud"
 
-#: src/dialogs/dock_settings_dialog.cpp:795
+#: src/dialogs/dock_settings_dialog.cpp:882
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Tsentreeritud"
 
-#: src/dialogs/dock_settings_dialog.cpp:797
+#: src/dialogs/dock_settings_dialog.cpp:884
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Otsa joondatud"
 
-#: src/dialogs/dock_settings_dialog.cpp:799
+#: src/dialogs/dock_settings_dialog.cpp:886
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Täitke vaba ruum"
 
-#: src/dialogs/dock_settings_dialog.cpp:832
+#: src/dialogs/dock_settings_dialog.cpp:919
 msgctxt "autohide mode"
 msgid "None"
 msgstr "Keelatud"
 
-#: src/dialogs/dock_settings_dialog.cpp:834
+#: src/dialogs/dock_settings_dialog.cpp:921
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Automaatne"
 
-#: src/dialogs/dock_settings_dialog.cpp:836
+#: src/dialogs/dock_settings_dialog.cpp:923
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Arukas"
 
-#: src/dialogs/dock_settings_dialog.cpp:885
+#: src/dialogs/dock_settings_dialog.cpp:972
 msgctxt "autohide effect"
 msgid "Plasma"
 msgstr "Plasma"
 
-#: src/dialogs/dock_settings_dialog.cpp:890
-#: src/dialogs/dock_settings_dialog.cpp:898
+#: src/dialogs/dock_settings_dialog.cpp:977
+#: src/dialogs/dock_settings_dialog.cpp:985
 msgctxt "autohide effect"
 msgid "Slide"
 msgstr "Libisemine"
 
-#: src/dialogs/dock_settings_dialog.cpp:901
+#: src/dialogs/dock_settings_dialog.cpp:988
 msgctxt "autohide effect"
 msgid "Slide and Fade"
 msgstr "Libisemine ja hajumine"
 
-#: src/dialogs/dock_settings_dialog.cpp:906
+#: src/dialogs/dock_settings_dialog.cpp:993
 msgctxt "autohide effect"
 msgid "GNOME"
 msgstr "GNOME"
 
-#: src/dialogs/dock_settings_dialog.cpp:1029
+#: src/dialogs/dock_settings_dialog.cpp:1116
 msgid "Set the dock icon size from 32 to 128 pixels."
 msgstr "Määra doki ikooni suurus 32 kuni 128 pikslini."
 
-#: src/dialogs/dock_settings_dialog.cpp:1036
+#: src/dialogs/dock_settings_dialog.cpp:1123
 msgid "Choose how icons respond when the pointer moves over them."
 msgstr "Vali, kuidas ikoonid reageerivad, kui kursor nende peale liigub."
 
-#: src/dialogs/dock_settings_dialog.cpp:1043
+#: src/dialogs/dock_settings_dialog.cpp:1130
 msgid "Select how running applications are marked on the dock."
 msgstr "Vali, kuidas töötavaid rakendusi dokil märgitakse."
 
-#: src/dialogs/dock_settings_dialog.cpp:1050
+#: src/dialogs/dock_settings_dialog.cpp:1137
 msgid "Set the color of running-application indicators."
 msgstr "Määra töötavate rakenduste indikaatorite värv."
 
-#: src/dialogs/dock_settings_dialog.cpp:1057
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Use a GTK theme-derived gradient instead of a solid background."
 msgstr "Kasuta tahke tausta asemel GTK-teemast tuletatud gradiendi."
 
-#: src/dialogs/dock_settings_dialog.cpp:1064
+#: src/dialogs/dock_settings_dialog.cpp:1151
 msgid "Round the corners of the dock background."
 msgstr "Ümarad doki tausta nurgad."
 
-#: src/dialogs/dock_settings_dialog.cpp:1071
+#: src/dialogs/dock_settings_dialog.cpp:1158
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
 msgstr "Määra nurgakaarte mõõt pikslites; -1 valib automaatse suuruse."
 
-#: src/dialogs/dock_settings_dialog.cpp:1078
+#: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Show the DockLight home and launcher-management icon."
 msgstr "Näita DockLighti kodu- ja käivitushalduri ikooni."
 
-#: src/dialogs/dock_settings_dialog.cpp:1085
+#: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose a custom image for the home icon, or use the built-in icon."
 msgstr "Vali kohandatud pilt kodulehe ikooniks või kasuta sisseehitatud ikooni."
 
-#: src/dialogs/dock_settings_dialog.cpp:1094
+#: src/dialogs/dock_settings_dialog.cpp:1181
 msgid "Show application names when the pointer rests on dock icons."
 msgstr "Kuvada rakenduste nimed, kui kursor on doki ikoonide kohal."
 
-#: src/dialogs/dock_settings_dialog.cpp:1101
+#: src/dialogs/dock_settings_dialog.cpp:1188
 msgid "Include windows from every workspace in dock actions and cycling."
 msgstr "Lisada kõik tööpindade aknad doki toimingutesse ja tsüklisse."
 
-#: src/dialogs/dock_settings_dialog.cpp:1108
+#: src/dialogs/dock_settings_dialog.cpp:1195
 msgid "Show window previews when the pointer rests on running apps."
 msgstr "Kuvada akna eelvaated, kui kursor on töötavate rakenduste kohal."
 
-#: src/dialogs/dock_settings_dialog.cpp:1115
+#: src/dialogs/dock_settings_dialog.cpp:1202
 msgid "Close the preview popup after activating one of its windows."
 msgstr "Sulgeda eelvaate hüpikaken pärast ühe akna aktiveerimist."
 
-#: src/dialogs/dock_settings_dialog.cpp:1122
+#: src/dialogs/dock_settings_dialog.cpp:1209
 msgid "Set the accent color used by window previews."
 msgstr "Määrata akna eelvaadetes kasutatav esiletõstmise värv."
 
-#: src/dialogs/dock_settings_dialog.cpp:1129
+#: src/dialogs/dock_settings_dialog.cpp:1216
 msgid "Set preview height in pixels; 0 selects automatic sizing."
 msgstr "Määrata eelvaate kõrgus pikslites; 0 valib automaatse suuruse."
 
-#: src/dialogs/dock_settings_dialog.cpp:1136
+#: src/dialogs/dock_settings_dialog.cpp:1223
 msgid "Set how long to wait before showing a preview."
 msgstr "Määrata, kui kaua oodata enne eelvaate kuvamist."
 
-#: src/dialogs/dock_settings_dialog.cpp:1144
+#: src/dialogs/dock_settings_dialog.cpp:1231
 msgid "Choose the display where DockLight appears."
 msgstr "Valida kuvar, kus DockLight kuvatakse."
 
-#: src/dialogs/dock_settings_dialog.cpp:1151
+#: src/dialogs/dock_settings_dialog.cpp:1238
 msgid "Choose the screen edge where the dock is placed."
 msgstr "Valida ekraani serv, kuhu dokk paigutatakse."
 
-#: src/dialogs/dock_settings_dialog.cpp:1158
+#: src/dialogs/dock_settings_dialog.cpp:1245
 msgid "Align dock content along the selected screen edge."
 msgstr "Joondada doki sisu valitud ekraani serva järgi."
 
-#: src/dialogs/dock_settings_dialog.cpp:1165
+#: src/dialogs/dock_settings_dialog.cpp:1252
 msgid "Choose when the dock moves out of view."
 msgstr "Valida, millal dokk liigub vaateväljast välja."
 
-#: src/dialogs/dock_settings_dialog.cpp:1172
+#: src/dialogs/dock_settings_dialog.cpp:1259
 msgid "Set how long to wait before hiding the dock."
 msgstr "Määrata, kui kaua oodata enne doki peitmist."
 
-#: src/dialogs/dock_settings_dialog.cpp:1182
+#: src/dialogs/dock_settings_dialog.cpp:1269
 msgid "Choose an autohide animation supported by this desktop."
 msgstr "Valida selle töölaua poolt toetatud automaatse peitmise animatsioon."
 
-#: src/dialogs/dock_settings_dialog.cpp:1432
-#: src/dialogs/dock_settings_dialog.cpp:1469
+#: src/dialogs/dock_settings_dialog.cpp:1532
+#: src/dialogs/dock_settings_dialog.cpp:1569
 msgid "Select Home Icon"
 msgstr "Valige avalehe ikoon"
 
+#: src/dialogs/dock_settings_dialog.cpp:1537
 #: src/dialogs/dock_session_dialog.cpp:509
-#: src/dialogs/dock_settings_dialog.cpp:1437
 msgid "_Cancel"
 msgstr "_Tühista"
 
-#: src/dialogs/dock_settings_dialog.cpp:1440
+#: src/dialogs/dock_settings_dialog.cpp:1540
 msgid "_Open"
 msgstr "_Avatud"
 
+#: src/dialogs/dock_settings_dialog.cpp:1606
 #: src/dialogs/dock_session_dialog.cpp:520
-#: src/dialogs/dock_settings_dialog.cpp:1506
 msgid "Image Files"
 msgstr "Pildifailid"
 

@@ -6,26 +6,26 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-06 21:59+0700\n"
-"PO-Revision-Date: 2026-08-16 14:25+0700\n"
+"POT-Creation-Date: 2026-09-07 15:20+0700\n"
+"PO-Revision-Date: 2026-09-07 15:30+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language: ko\n"
 "Language-Team: none\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: ko\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: src/main.cpp:355
+#: src/main.cpp:362
 msgid "Window previews are disabled"
 msgstr "창 미리보기가 비활성화되었습니다."
 
-#: src/main.cpp:361
+#: src/main.cpp:368
 msgid "DockLight"
 msgstr "DockLight"
 
-#: src/main.cpp:368
+#: src/main.cpp:375
 msgid "Openbox requires an X11 compositor for complete window previews. Display Preview is disabled. Start compton or picom, then enable Display Preview in DockLight Settings."
 msgstr "Openbox에서는 전체 창 미리보기를 위해 X11 합성기가 필요합니다. 디스플레이 미리보기가 비활성화되었습니다. compton 또는 picom을 시작한 다음 DockLight 설정에서 디스플레이 미리 보기를 활성화합니다."
 
@@ -33,7 +33,7 @@ msgstr "Openbox에서는 전체 창 미리보기를 위해 X11 합성기가 필�
 msgid "_Edit"
 msgstr "_편집하다"
 
-#: src/dialogs/dock_session_editor_item.cpp:108 src/dock/dock_item.cpp:165
+#: src/dock/dock_item.cpp:165 src/dialogs/dock_session_editor_item.cpp:108
 msgid "_Remove"
 msgstr "_제거하다"
 
@@ -45,7 +45,7 @@ msgstr "_도크에 고정"
 msgid "_Open New Window"
 msgstr "_새 창 열기"
 
-#: src/dock/dock_home_item.cpp:77 src/dock/dock_item.cpp:174
+#: src/dock/dock_item.cpp:174 src/dock/dock_home_item.cpp:78
 msgid "_Close All"
 msgstr "_모두 닫기"
 
@@ -61,411 +61,449 @@ msgstr "_복원"
 msgid "Ma_ximize"
 msgstr "_최대화"
 
-#: src/dock/dock_home_item.cpp:62
+#: src/dock/dock_home_item.cpp:63
 msgid "_Settings"
 msgstr "_설정"
 
-#: src/dock/dock_home_item.cpp:65
+#: src/dock/dock_home_item.cpp:66
 msgid "Sessi_on"
 msgstr "_세션"
 
-#: src/dock/dock_home_item.cpp:68
+#: src/dock/dock_home_item.cpp:69
 msgid "_Minimize All"
 msgstr "_모두 최소화"
 
-#: src/dock/dock_home_item.cpp:71
+#: src/dock/dock_home_item.cpp:72
 msgid "_Unminimize All"
 msgstr "_모두 복원"
 
-#: src/dock/dock_home_item.cpp:74
+#: src/dock/dock_home_item.cpp:75
 msgid "Ma_ximize All"
 msgstr "_모두 최대화"
 
-#: src/dock/dock_home_item.cpp:80
+#: src/dock/dock_home_item.cpp:81
 msgid "_About"
 msgstr "_소개"
 
-#: src/dock/dock_home_item.cpp:83
+#: src/dock/dock_home_item.cpp:84
 msgid "_Exit"
 msgstr "_출구"
 
-#: src/dock/dock_home_item.cpp:310
+#: src/dock/dock_home_item.cpp:311
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "홈"
 
-#: src/dialogs/dock_settings_dialog.cpp:243
-#: src/dialogs/dock_settings_dialog.cpp:288
-msgid "DockLight Settings"
-msgstr "DockLight 설정"
+#: src/dialogs/dock_settings_dialog.cpp:141
+#: src/dialogs/dock_settings_dialog.cpp:155
+msgid "Desktop Shortcuts"
+msgstr "데스크톱 키보드 단축키"
 
-#: src/dialogs/dock_about_dialog.cpp:188
+#: src/dialogs/dock_settings_dialog.cpp:150
+#: src/dialogs/dock_settings_dialog.cpp:403
 #: src/dialogs/dock_session_dialog.cpp:1019
-#: src/dialogs/dock_settings_dialog.cpp:316
+#: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_닫기"
 
-#: src/dialogs/dock_settings_dialog.cpp:327
+#: src/dialogs/dock_settings_dialog.cpp:160
+msgid "If you disable the <b>Home icon</b>, its context menu will no longer be available. This means you will need another way to access DockLight settings and other actions."
+msgstr "<b>홈 아이콘</b>을 비활성화하면 해당 아이콘의 상황별 메뉴를 더 이상 사용할 수 없습니다. 따라서 DockLight 설정과 다른 동작에 접근하려면 다른 방법이 필요합니다."
+
+#: src/dialogs/dock_settings_dialog.cpp:165
+msgid "You can create desktop keyboard shortcuts using the following commands:"
+msgstr "다음 명령으로 데스크톱 키보드 단축키를 만들 수 있습니다:"
+
+#: src/dialogs/dock_settings_dialog.cpp:177
+msgid "Open Settings"
+msgstr "설정 열기"
+
+#: src/dialogs/dock_settings_dialog.cpp:180
+msgid "Open Sessions"
+msgstr "세션 열기"
+
+#: src/dialogs/dock_settings_dialog.cpp:183
+msgid "Open About"
+msgstr "프로그램 정보 열기"
+
+#: src/dialogs/dock_settings_dialog.cpp:186
+msgid "Exit DockLight"
+msgstr "DockLight 종료"
+
+#: src/dialogs/dock_settings_dialog.cpp:190
+msgid "Assign these commands to any keyboard shortcuts you prefer using your desktop environment's keyboard shortcut settings."
+msgstr "데스크톱 환경의 키보드 단축키 설정에서 이 명령들에 원하는 단축키를 지정하세요."
+
+#: src/dialogs/dock_settings_dialog.cpp:194
+msgid "For more information about DockLight shortcuts, see README.md."
+msgstr "DockLight 단축키에 대한 자세한 내용은 README.md를 참고하세요."
+
+#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:375
+msgid "DockLight Settings"
+msgstr "DockLight 설정"
+
+#: src/dialogs/dock_settings_dialog.cpp:414
 msgid "Appearance"
 msgstr "외관"
 
-#: src/dialogs/dock_settings_dialog.cpp:329
+#: src/dialogs/dock_settings_dialog.cpp:416
 msgid "Behavior"
 msgstr "동작"
 
-#: src/dialogs/dock_settings_dialog.cpp:331
+#: src/dialogs/dock_settings_dialog.cpp:418
 msgid "Position & Autohide"
 msgstr "위치 및 자동 숨기기"
 
-#: src/dialogs/dock_settings_dialog.cpp:358
+#: src/dialogs/dock_settings_dialog.cpp:445
 msgid "Monitor"
 msgstr "모니터"
 
-#: src/dialogs/dock_settings_dialog.cpp:360
+#: src/dialogs/dock_settings_dialog.cpp:447
 msgid "Hover Effect"
 msgstr "호버 효과"
 
-#: src/dialogs/dock_settings_dialog.cpp:362
+#: src/dialogs/dock_settings_dialog.cpp:449
 msgid "Indicator"
 msgstr "표시기"
 
-#: src/dialogs/dock_settings_dialog.cpp:364
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:451
+#: src/dialogs/dock_settings_dialog.cpp:657
 msgid "Indicator Color"
 msgstr "표시 색상"
 
-#: src/dialogs/dock_settings_dialog.cpp:366
-#: src/dialogs/dock_settings_dialog.cpp:589
+#: src/dialogs/dock_settings_dialog.cpp:453
+#: src/dialogs/dock_settings_dialog.cpp:676
 msgid "Preview Color"
 msgstr "미리보기 색상"
 
-#: src/dialogs/dock_settings_dialog.cpp:368
+#: src/dialogs/dock_settings_dialog.cpp:455
 msgid "Display Home Icon"
 msgstr "홈 아이콘 표시"
 
-#: src/dialogs/dock_settings_dialog.cpp:370
+#: src/dialogs/dock_settings_dialog.cpp:457
 msgid "Home Icon"
 msgstr "홈 아이콘"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:459
 msgid "Display Tooltips"
 msgstr "도구 설명 표시"
 
-#: src/dialogs/dock_settings_dialog.cpp:374
+#: src/dialogs/dock_settings_dialog.cpp:461
 msgid "Display Preview"
 msgstr "미리보기 표시"
 
-#: src/dialogs/dock_settings_dialog.cpp:376
+#: src/dialogs/dock_settings_dialog.cpp:463
 msgid "Close Preview After Activation"
 msgstr "활성화 후 미리보기 닫기"
 
-#: src/dialogs/dock_settings_dialog.cpp:378
+#: src/dialogs/dock_settings_dialog.cpp:465
 msgid "Manage All Workspaces"
 msgstr "모든 작업공간 관리"
 
-#: src/dialogs/dock_settings_dialog.cpp:380
+#: src/dialogs/dock_settings_dialog.cpp:467
 msgid "Icon Size"
 msgstr "아이콘 크기"
 
-#: src/dialogs/dock_settings_dialog.cpp:382
+#: src/dialogs/dock_settings_dialog.cpp:469
 msgid "Preview Card Height"
 msgstr "미리보기 카드 높이"
 
-#: src/dialogs/dock_settings_dialog.cpp:384
+#: src/dialogs/dock_settings_dialog.cpp:471
 msgid "Preview Show Delay (ms)"
 msgstr "미리보기 표시 지연(ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:386
+#: src/dialogs/dock_settings_dialog.cpp:473
 msgid "Location"
 msgstr "위치"
 
-#: src/dialogs/dock_settings_dialog.cpp:388
+#: src/dialogs/dock_settings_dialog.cpp:475
 msgid "Gradient Background"
 msgstr "그라데이션 배경"
 
-#: src/dialogs/dock_settings_dialog.cpp:390
+#: src/dialogs/dock_settings_dialog.cpp:477
 msgid "Rounded Corners"
 msgstr "둥근 모서리"
 
-#: src/dialogs/dock_settings_dialog.cpp:392
+#: src/dialogs/dock_settings_dialog.cpp:479
 msgid "Corner Radius"
 msgstr "코너 반경"
 
-#: src/dialogs/dock_settings_dialog.cpp:394
+#: src/dialogs/dock_settings_dialog.cpp:481
 msgid "Alignment"
 msgstr "정렬"
 
-#: src/dialogs/dock_settings_dialog.cpp:396
+#: src/dialogs/dock_settings_dialog.cpp:483
 msgid "Autohide"
 msgstr "자동 숨기기"
 
-#: src/dialogs/dock_settings_dialog.cpp:398
+#: src/dialogs/dock_settings_dialog.cpp:485
 msgid "Autohide Effect"
 msgstr "자동 숨기기 효과"
 
-#: src/dialogs/dock_settings_dialog.cpp:400
+#: src/dialogs/dock_settings_dialog.cpp:487
 msgid "Autohide Delay (ms)"
 msgstr "자동 숨기기 지연(ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:458
+#: src/dialogs/dock_settings_dialog.cpp:545
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "기본 모니터"
 
-#: src/dialogs/dock_settings_dialog.cpp:496
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "표준 효과"
 
-#: src/dialogs/dock_settings_dialog.cpp:498
+#: src/dialogs/dock_settings_dialog.cpp:585
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "줌 효과"
 
-#: src/dialogs/dock_settings_dialog.cpp:500
+#: src/dialogs/dock_settings_dialog.cpp:587
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "흐림 효과"
 
-#: src/dialogs/dock_settings_dialog.cpp:502
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "hover effect"
 msgid "Magnified"
 msgstr "확대"
 
-#: src/dialogs/dock_settings_dialog.cpp:535
+#: src/dialogs/dock_settings_dialog.cpp:622
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "라인 표시기"
 
-#: src/dialogs/dock_settings_dialog.cpp:537
+#: src/dialogs/dock_settings_dialog.cpp:624
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "도트 표시기"
 
-#: src/dialogs/dock_settings_dialog.cpp:572
+#: src/dialogs/dock_settings_dialog.cpp:659
 msgid "Choose the indicator color"
 msgstr "표시기 색상을 선택하세요"
 
-#: src/dialogs/dock_settings_dialog.cpp:591
+#: src/dialogs/dock_settings_dialog.cpp:678
 msgid "Choose the preview color"
 msgstr "미리보기 색상 선택"
 
-#: src/dialogs/dock_settings_dialog.cpp:603
+#: src/dialogs/dock_settings_dialog.cpp:690
 msgid "Select…"
 msgstr "선택…"
 
-#: src/dialogs/dock_settings_dialog.cpp:605
+#: src/dialogs/dock_settings_dialog.cpp:692
 msgid "Use Default"
 msgstr "기본값 사용"
 
-#: src/dialogs/dock_settings_dialog.cpp:613
+#: src/dialogs/dock_settings_dialog.cpp:700
 msgid "Built-in DockLight icon"
 msgstr "내장 DockLight 아이콘"
 
-#: src/dialogs/dock_settings_dialog.cpp:647
+#: src/dialogs/dock_settings_dialog.cpp:734
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "그렇지 않으면 포인터가 떠날 때까지 미리보기를 열어 두십시오"
 
-#: src/dialogs/dock_settings_dialog.cpp:654
+#: src/dialogs/dock_settings_dialog.cpp:741
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr "모든 작업 공간에 아이콘 동작 및 마우스 휠 순환 적용"
 
-#: src/dialogs/dock_settings_dialog.cpp:685
+#: src/dialogs/dock_settings_dialog.cpp:772
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0은 자동 크기 조정을 선택합니다. 그렇지 않으면 64~512픽셀을 사용하세요."
 
-#: src/dialogs/dock_settings_dialog.cpp:702
+#: src/dialogs/dock_settings_dialog.cpp:789
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr "창 미리보기가 나타나기 전의 지연 시간(0~5000밀리초)"
 
-#: src/dialogs/dock_settings_dialog.cpp:720
+#: src/dialogs/dock_settings_dialog.cpp:807
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "도크가 숨겨지기 전 지연 시간(0~5000밀리초)"
 
-#: src/dialogs/dock_settings_dialog.cpp:726
+#: src/dialogs/dock_settings_dialog.cpp:813
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "하단 가장자리"
 
-#: src/dialogs/dock_settings_dialog.cpp:728
+#: src/dialogs/dock_settings_dialog.cpp:815
 msgctxt "dock location"
 msgid "Left"
 msgstr "왼쪽 가장자리"
 
-#: src/dialogs/dock_settings_dialog.cpp:730
+#: src/dialogs/dock_settings_dialog.cpp:817
 msgctxt "dock location"
 msgid "Top"
 msgstr "상단 가장자리"
 
-#: src/dialogs/dock_settings_dialog.cpp:732
+#: src/dialogs/dock_settings_dialog.cpp:819
 msgctxt "dock location"
 msgid "Right"
 msgstr "오른쪽 가장자리"
 
-#: src/dialogs/dock_settings_dialog.cpp:788
+#: src/dialogs/dock_settings_dialog.cpp:875
 msgid "-1 selects the automatic radius"
 msgstr "-1은 자동 반경을 선택합니다."
 
-#: src/dialogs/dock_settings_dialog.cpp:793
+#: src/dialogs/dock_settings_dialog.cpp:880
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "시작 정렬됨"
 
-#: src/dialogs/dock_settings_dialog.cpp:795
+#: src/dialogs/dock_settings_dialog.cpp:882
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "가운데 맞춤"
 
-#: src/dialogs/dock_settings_dialog.cpp:797
+#: src/dialogs/dock_settings_dialog.cpp:884
 msgctxt "dock alignment"
 msgid "End"
 msgstr "최종 정렬됨"
 
-#: src/dialogs/dock_settings_dialog.cpp:799
+#: src/dialogs/dock_settings_dialog.cpp:886
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "사용 가능한 공간 채우기"
 
-#: src/dialogs/dock_settings_dialog.cpp:832
+#: src/dialogs/dock_settings_dialog.cpp:919
 msgctxt "autohide mode"
 msgid "None"
 msgstr "장애인"
 
-#: src/dialogs/dock_settings_dialog.cpp:834
+#: src/dialogs/dock_settings_dialog.cpp:921
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "자동"
 
-#: src/dialogs/dock_settings_dialog.cpp:836
+#: src/dialogs/dock_settings_dialog.cpp:923
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "지능형"
 
-#: src/dialogs/dock_settings_dialog.cpp:885
+#: src/dialogs/dock_settings_dialog.cpp:972
 msgctxt "autohide effect"
 msgid "Plasma"
 msgstr "Plasma"
 
-#: src/dialogs/dock_settings_dialog.cpp:890
-#: src/dialogs/dock_settings_dialog.cpp:898
+#: src/dialogs/dock_settings_dialog.cpp:977
+#: src/dialogs/dock_settings_dialog.cpp:985
 msgctxt "autohide effect"
 msgid "Slide"
 msgstr "슬라이드"
 
-#: src/dialogs/dock_settings_dialog.cpp:901
+#: src/dialogs/dock_settings_dialog.cpp:988
 msgctxt "autohide effect"
 msgid "Slide and Fade"
 msgstr "슬라이드 및 페이드"
 
-#: src/dialogs/dock_settings_dialog.cpp:906
+#: src/dialogs/dock_settings_dialog.cpp:993
 msgctxt "autohide effect"
 msgid "GNOME"
 msgstr "GNOME"
 
-#: src/dialogs/dock_settings_dialog.cpp:1029
+#: src/dialogs/dock_settings_dialog.cpp:1116
 msgid "Set the dock icon size from 32 to 128 pixels."
 msgstr "도크 아이콘 크기를 32에서 128 픽셀 사이로 설정합니다."
 
-#: src/dialogs/dock_settings_dialog.cpp:1036
+#: src/dialogs/dock_settings_dialog.cpp:1123
 msgid "Choose how icons respond when the pointer moves over them."
 msgstr "아이콘 위에 포인터가 이동할 때 아이콘이 반응하는 방식을 선택합니다."
 
-#: src/dialogs/dock_settings_dialog.cpp:1043
+#: src/dialogs/dock_settings_dialog.cpp:1130
 msgid "Select how running applications are marked on the dock."
 msgstr "실행 중인 애플리케이션이 도크에서 표시되는 방식을 선택합니다."
 
-#: src/dialogs/dock_settings_dialog.cpp:1050
+#: src/dialogs/dock_settings_dialog.cpp:1137
 msgid "Set the color of running-application indicators."
 msgstr "실행 중인 애플리케이션 표시기의 색상을 설정합니다."
 
-#: src/dialogs/dock_settings_dialog.cpp:1057
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Use a GTK theme-derived gradient instead of a solid background."
 msgstr "단색 배경 대신 GTK 테마에서 가져온 그라데이션을 사용합니다."
 
-#: src/dialogs/dock_settings_dialog.cpp:1064
+#: src/dialogs/dock_settings_dialog.cpp:1151
 msgid "Round the corners of the dock background."
 msgstr "도크 배경의 모서리를 둥글게 합니다."
 
-#: src/dialogs/dock_settings_dialog.cpp:1071
+#: src/dialogs/dock_settings_dialog.cpp:1158
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
 msgstr "픽셀 단위로 모서리 반경을 설정합니다; -1은 자동 크기 선택입니다."
 
-#: src/dialogs/dock_settings_dialog.cpp:1078
+#: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Show the DockLight home and launcher-management icon."
 msgstr "DockLight 홈 및 런처 관리 아이콘을 표시합니다."
 
-#: src/dialogs/dock_settings_dialog.cpp:1085
+#: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose a custom image for the home icon, or use the built-in icon."
 msgstr "홈 아이콘에 사용할 사용자 정의 이미지를 선택하거나 내장 아이콘을 사용합니다."
 
-#: src/dialogs/dock_settings_dialog.cpp:1094
+#: src/dialogs/dock_settings_dialog.cpp:1181
 msgid "Show application names when the pointer rests on dock icons."
 msgstr "도크 아이콘 위에 포인터가 머물 때 애플리케이션 이름 표시."
 
-#: src/dialogs/dock_settings_dialog.cpp:1101
+#: src/dialogs/dock_settings_dialog.cpp:1188
 msgid "Include windows from every workspace in dock actions and cycling."
 msgstr "도크 동작 및 순환 시 모든 작업 공간의 창 포함."
 
-#: src/dialogs/dock_settings_dialog.cpp:1108
+#: src/dialogs/dock_settings_dialog.cpp:1195
 msgid "Show window previews when the pointer rests on running apps."
 msgstr "실행 중인 앱 위에 포인터가 있을 때 창 미리보기 표시."
 
-#: src/dialogs/dock_settings_dialog.cpp:1115
+#: src/dialogs/dock_settings_dialog.cpp:1202
 msgid "Close the preview popup after activating one of its windows."
 msgstr "미리보기 팝업에서 창을 활성화한 후 닫기."
 
-#: src/dialogs/dock_settings_dialog.cpp:1122
+#: src/dialogs/dock_settings_dialog.cpp:1209
 msgid "Set the accent color used by window previews."
 msgstr "창 미리보기에서 사용할 강조 색 설정."
 
-#: src/dialogs/dock_settings_dialog.cpp:1129
+#: src/dialogs/dock_settings_dialog.cpp:1216
 msgid "Set preview height in pixels; 0 selects automatic sizing."
 msgstr "픽셀 단위로 미리보기 높이 설정; 0은 자동 크기 선택."
 
-#: src/dialogs/dock_settings_dialog.cpp:1136
+#: src/dialogs/dock_settings_dialog.cpp:1223
 msgid "Set how long to wait before showing a preview."
 msgstr "미리보기를 표시하기 전에 기다릴 시간 설정."
 
-#: src/dialogs/dock_settings_dialog.cpp:1144
+#: src/dialogs/dock_settings_dialog.cpp:1231
 msgid "Choose the display where DockLight appears."
 msgstr "DockLight가 표시될 화면 선택."
 
-#: src/dialogs/dock_settings_dialog.cpp:1151
+#: src/dialogs/dock_settings_dialog.cpp:1238
 msgid "Choose the screen edge where the dock is placed."
 msgstr "도크가 배치될 화면 가장자리 선택."
 
-#: src/dialogs/dock_settings_dialog.cpp:1158
+#: src/dialogs/dock_settings_dialog.cpp:1245
 msgid "Align dock content along the selected screen edge."
 msgstr "선택한 화면 가장자리를 따라 도크 콘텐츠 정렬."
 
-#: src/dialogs/dock_settings_dialog.cpp:1165
+#: src/dialogs/dock_settings_dialog.cpp:1252
 msgid "Choose when the dock moves out of view."
 msgstr "도크가 화면에서 사라질 시점 선택."
 
-#: src/dialogs/dock_settings_dialog.cpp:1172
+#: src/dialogs/dock_settings_dialog.cpp:1259
 msgid "Set how long to wait before hiding the dock."
 msgstr "도크를 숨기기 전에 기다릴 시간 설정."
 
-#: src/dialogs/dock_settings_dialog.cpp:1182
+#: src/dialogs/dock_settings_dialog.cpp:1269
 msgid "Choose an autohide animation supported by this desktop."
 msgstr "이 데스크탑에서 지원하는 자동 숨기기 애니메이션 선택."
 
-#: src/dialogs/dock_settings_dialog.cpp:1432
-#: src/dialogs/dock_settings_dialog.cpp:1469
+#: src/dialogs/dock_settings_dialog.cpp:1532
+#: src/dialogs/dock_settings_dialog.cpp:1569
 msgid "Select Home Icon"
 msgstr "홈 아이콘 선택"
 
+#: src/dialogs/dock_settings_dialog.cpp:1537
 #: src/dialogs/dock_session_dialog.cpp:509
-#: src/dialogs/dock_settings_dialog.cpp:1437
 msgid "_Cancel"
 msgstr "_취소"
 
-#: src/dialogs/dock_settings_dialog.cpp:1440
+#: src/dialogs/dock_settings_dialog.cpp:1540
 msgid "_Open"
 msgstr "_열다"
 
+#: src/dialogs/dock_settings_dialog.cpp:1606
 #: src/dialogs/dock_session_dialog.cpp:520
-#: src/dialogs/dock_settings_dialog.cpp:1506
 msgid "Image Files"
 msgstr "이미지 파일"
 

@@ -6,26 +6,26 @@ msgid ""
 msgstr ""
 "Project-Id-Version: docklight6 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-06 21:59+0700\n"
-"PO-Revision-Date: 2026-08-16 14:25+0700\n"
+"POT-Creation-Date: 2026-09-07 15:20+0700\n"
+"PO-Revision-Date: 2026-09-07 15:30+0700\n"
 "Last-Translator: Automatically generated\n"
-"Language: el\n"
 "Language-Team: none\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: el\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: src/main.cpp:355
+#: src/main.cpp:362
 msgid "Window previews are disabled"
 msgstr "Οι προεπισκοπήσεις παραθύρων είναι απενεργοποιημένες"
 
-#: src/main.cpp:361
+#: src/main.cpp:368
 msgid "DockLight"
 msgstr "DockLight"
 
-#: src/main.cpp:368
+#: src/main.cpp:375
 msgid "Openbox requires an X11 compositor for complete window previews. Display Preview is disabled. Start compton or picom, then enable Display Preview in DockLight Settings."
 msgstr "Το Openbox απαιτεί ένα X11 compositor για πλήρεις προεπισκοπήσεις παραθύρων. Η προεπισκόπηση οθόνης είναι απενεργοποιημένη. Ξεκινήστε το compton ή το picom και, στη συνέχεια, ενεργοποιήστε την Προεπισκόπηση οθόνης στις Ρυθμίσεις DockLight."
 
@@ -33,7 +33,7 @@ msgstr "Το Openbox απαιτεί ένα X11 compositor για πλήρεις 
 msgid "_Edit"
 msgstr "_Εκδίδω"
 
-#: src/dialogs/dock_session_editor_item.cpp:108 src/dock/dock_item.cpp:165
+#: src/dock/dock_item.cpp:165 src/dialogs/dock_session_editor_item.cpp:108
 msgid "_Remove"
 msgstr "_Αφαιρώ"
 
@@ -45,7 +45,7 @@ msgstr "_Καρφίτσωμα στο Dock"
 msgid "_Open New Window"
 msgstr "_Άνοιγμα νέου παραθύρου"
 
-#: src/dock/dock_home_item.cpp:77 src/dock/dock_item.cpp:174
+#: src/dock/dock_item.cpp:174 src/dock/dock_home_item.cpp:78
 msgid "_Close All"
 msgstr "_Κλείσιμο όλων"
 
@@ -61,411 +61,449 @@ msgstr "_Επαναφορά"
 msgid "Ma_ximize"
 msgstr "_Αυξάνω στον ανώτατο βαθμό"
 
-#: src/dock/dock_home_item.cpp:62
+#: src/dock/dock_home_item.cpp:63
 msgid "_Settings"
 msgstr "_Ρυθμίσεις"
 
-#: src/dock/dock_home_item.cpp:65
+#: src/dock/dock_home_item.cpp:66
 msgid "Sessi_on"
 msgstr "_Συνεδρίαση"
 
-#: src/dock/dock_home_item.cpp:68
+#: src/dock/dock_home_item.cpp:69
 msgid "_Minimize All"
 msgstr "_Ελαχιστοποίηση όλων"
 
-#: src/dock/dock_home_item.cpp:71
+#: src/dock/dock_home_item.cpp:72
 msgid "_Unminimize All"
 msgstr "_Επαναφορά όλων"
 
-#: src/dock/dock_home_item.cpp:74
+#: src/dock/dock_home_item.cpp:75
 msgid "Ma_ximize All"
 msgstr "_Μεγιστοποίηση όλων"
 
-#: src/dock/dock_home_item.cpp:80
+#: src/dock/dock_home_item.cpp:81
 msgid "_About"
 msgstr "_Σχετικά"
 
-#: src/dock/dock_home_item.cpp:83
+#: src/dock/dock_home_item.cpp:84
 msgid "_Exit"
 msgstr "_Έξοδος"
 
-#: src/dock/dock_home_item.cpp:310
+#: src/dock/dock_home_item.cpp:311
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "Σπίτι"
 
-#: src/dialogs/dock_settings_dialog.cpp:243
-#: src/dialogs/dock_settings_dialog.cpp:288
-msgid "DockLight Settings"
-msgstr "Ρυθμίσεις DockLight"
+#: src/dialogs/dock_settings_dialog.cpp:141
+#: src/dialogs/dock_settings_dialog.cpp:155
+msgid "Desktop Shortcuts"
+msgstr "Συντομεύσεις πληκτρολογίου επιφάνειας εργασίας"
 
-#: src/dialogs/dock_about_dialog.cpp:188
+#: src/dialogs/dock_settings_dialog.cpp:150
+#: src/dialogs/dock_settings_dialog.cpp:403
 #: src/dialogs/dock_session_dialog.cpp:1019
-#: src/dialogs/dock_settings_dialog.cpp:316
+#: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_Κλείσε"
 
-#: src/dialogs/dock_settings_dialog.cpp:327
+#: src/dialogs/dock_settings_dialog.cpp:160
+msgid "If you disable the <b>Home icon</b>, its context menu will no longer be available. This means you will need another way to access DockLight settings and other actions."
+msgstr "Αν απενεργοποιήσετε το <b>εικονίδιο αρχικής σελίδας</b>, το μενού περιβάλλοντός του δεν θα είναι πλέον διαθέσιμο. Θα χρειαστείτε επομένως έναν άλλο τρόπο πρόσβασης στις ρυθμίσεις του DockLight και στις άλλες ενέργειες."
+
+#: src/dialogs/dock_settings_dialog.cpp:165
+msgid "You can create desktop keyboard shortcuts using the following commands:"
+msgstr "Μπορείτε να δημιουργήσετε συντομεύσεις πληκτρολογίου επιφάνειας εργασίας με τις ακόλουθες εντολές:"
+
+#: src/dialogs/dock_settings_dialog.cpp:177
+msgid "Open Settings"
+msgstr "Άνοιγμα ρυθμίσεων"
+
+#: src/dialogs/dock_settings_dialog.cpp:180
+msgid "Open Sessions"
+msgstr "Άνοιγμα συνεδριών"
+
+#: src/dialogs/dock_settings_dialog.cpp:183
+msgid "Open About"
+msgstr "Άνοιγμα πληροφοριών"
+
+#: src/dialogs/dock_settings_dialog.cpp:186
+msgid "Exit DockLight"
+msgstr "Έξοδος από το DockLight"
+
+#: src/dialogs/dock_settings_dialog.cpp:190
+msgid "Assign these commands to any keyboard shortcuts you prefer using your desktop environment's keyboard shortcut settings."
+msgstr "Αντιστοιχίστε αυτές τις εντολές στις συντομεύσεις πληκτρολογίου που προτιμάτε, στις ρυθμίσεις συντομεύσεων πληκτρολογίου του περιβάλλοντος επιφάνειας εργασίας σας."
+
+#: src/dialogs/dock_settings_dialog.cpp:194
+msgid "For more information about DockLight shortcuts, see README.md."
+msgstr "Για περισσότερες πληροφορίες σχετικά με τις συντομεύσεις του DockLight, δείτε το README.md."
+
+#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:375
+msgid "DockLight Settings"
+msgstr "Ρυθμίσεις DockLight"
+
+#: src/dialogs/dock_settings_dialog.cpp:414
 msgid "Appearance"
 msgstr "Εμφάνιση"
 
-#: src/dialogs/dock_settings_dialog.cpp:329
+#: src/dialogs/dock_settings_dialog.cpp:416
 msgid "Behavior"
 msgstr "Συμπεριφορά"
 
-#: src/dialogs/dock_settings_dialog.cpp:331
+#: src/dialogs/dock_settings_dialog.cpp:418
 msgid "Position & Autohide"
 msgstr "Θέση & Αυτόματη Απόκρυψη"
 
-#: src/dialogs/dock_settings_dialog.cpp:358
+#: src/dialogs/dock_settings_dialog.cpp:445
 msgid "Monitor"
 msgstr "Παρακολούθηση"
 
-#: src/dialogs/dock_settings_dialog.cpp:360
+#: src/dialogs/dock_settings_dialog.cpp:447
 msgid "Hover Effect"
 msgstr "Εφέ Hover"
 
-#: src/dialogs/dock_settings_dialog.cpp:362
+#: src/dialogs/dock_settings_dialog.cpp:449
 msgid "Indicator"
 msgstr "Δείκτης"
 
-#: src/dialogs/dock_settings_dialog.cpp:364
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:451
+#: src/dialogs/dock_settings_dialog.cpp:657
 msgid "Indicator Color"
 msgstr "Χρώμα ένδειξης"
 
-#: src/dialogs/dock_settings_dialog.cpp:366
-#: src/dialogs/dock_settings_dialog.cpp:589
+#: src/dialogs/dock_settings_dialog.cpp:453
+#: src/dialogs/dock_settings_dialog.cpp:676
 msgid "Preview Color"
 msgstr "Χρώμα προεπισκόπησης"
 
-#: src/dialogs/dock_settings_dialog.cpp:368
+#: src/dialogs/dock_settings_dialog.cpp:455
 msgid "Display Home Icon"
 msgstr "Εμφάνιση εικονιδίου αρχικής σελίδας"
 
-#: src/dialogs/dock_settings_dialog.cpp:370
+#: src/dialogs/dock_settings_dialog.cpp:457
 msgid "Home Icon"
 msgstr "Εικονίδιο"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:459
 msgid "Display Tooltips"
 msgstr "Επεξηγήσεις εργαλείων εμφάνισης"
 
-#: src/dialogs/dock_settings_dialog.cpp:374
+#: src/dialogs/dock_settings_dialog.cpp:461
 msgid "Display Preview"
 msgstr "Προεπισκόπηση οθόνης"
 
-#: src/dialogs/dock_settings_dialog.cpp:376
+#: src/dialogs/dock_settings_dialog.cpp:463
 msgid "Close Preview After Activation"
 msgstr "Κλείστε την προεπισκόπηση μετά την ενεργοποίηση"
 
-#: src/dialogs/dock_settings_dialog.cpp:378
+#: src/dialogs/dock_settings_dialog.cpp:465
 msgid "Manage All Workspaces"
 msgstr "Διαχείριση όλων των χώρων εργασίας"
 
-#: src/dialogs/dock_settings_dialog.cpp:380
+#: src/dialogs/dock_settings_dialog.cpp:467
 msgid "Icon Size"
 msgstr "Μέγεθος εικονιδίου"
 
-#: src/dialogs/dock_settings_dialog.cpp:382
+#: src/dialogs/dock_settings_dialog.cpp:469
 msgid "Preview Card Height"
 msgstr "Προεπισκόπηση Ύψος κάρτας"
 
-#: src/dialogs/dock_settings_dialog.cpp:384
+#: src/dialogs/dock_settings_dialog.cpp:471
 msgid "Preview Show Delay (ms)"
 msgstr "Προεπισκόπηση Εμφάνιση καθυστέρησης (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:386
+#: src/dialogs/dock_settings_dialog.cpp:473
 msgid "Location"
 msgstr "Τοποθεσία"
 
-#: src/dialogs/dock_settings_dialog.cpp:388
+#: src/dialogs/dock_settings_dialog.cpp:475
 msgid "Gradient Background"
 msgstr "ντεγκραντέ φόντο"
 
-#: src/dialogs/dock_settings_dialog.cpp:390
+#: src/dialogs/dock_settings_dialog.cpp:477
 msgid "Rounded Corners"
 msgstr "Στρογγυλεμένες γωνίες"
 
-#: src/dialogs/dock_settings_dialog.cpp:392
+#: src/dialogs/dock_settings_dialog.cpp:479
 msgid "Corner Radius"
 msgstr "Γωνιακή ακτίνα"
 
-#: src/dialogs/dock_settings_dialog.cpp:394
+#: src/dialogs/dock_settings_dialog.cpp:481
 msgid "Alignment"
 msgstr "Ευθυγράμμιση"
 
-#: src/dialogs/dock_settings_dialog.cpp:396
+#: src/dialogs/dock_settings_dialog.cpp:483
 msgid "Autohide"
 msgstr "Αυτόματη απόκρυψη"
 
-#: src/dialogs/dock_settings_dialog.cpp:398
+#: src/dialogs/dock_settings_dialog.cpp:485
 msgid "Autohide Effect"
 msgstr "Εφέ αυτόματης απόκρυψης"
 
-#: src/dialogs/dock_settings_dialog.cpp:400
+#: src/dialogs/dock_settings_dialog.cpp:487
 msgid "Autohide Delay (ms)"
 msgstr "Καθυστέρηση αυτόματης απόκρυψης (ms)"
 
-#: src/dialogs/dock_settings_dialog.cpp:458
+#: src/dialogs/dock_settings_dialog.cpp:545
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "Κύρια οθόνη"
 
-#: src/dialogs/dock_settings_dialog.cpp:496
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "Τυπικό εφέ"
 
-#: src/dialogs/dock_settings_dialog.cpp:498
+#: src/dialogs/dock_settings_dialog.cpp:585
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "Εφέ ζουμ"
 
-#: src/dialogs/dock_settings_dialog.cpp:500
+#: src/dialogs/dock_settings_dialog.cpp:587
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "Εφέ θαμπώματος"
 
-#: src/dialogs/dock_settings_dialog.cpp:502
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "hover effect"
 msgid "Magnified"
 msgstr "Μεγεθύνεται"
 
-#: src/dialogs/dock_settings_dialog.cpp:535
+#: src/dialogs/dock_settings_dialog.cpp:622
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "Ενδείξεις γραμμής"
 
-#: src/dialogs/dock_settings_dialog.cpp:537
+#: src/dialogs/dock_settings_dialog.cpp:624
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "Ενδείξεις κουκκίδων"
 
-#: src/dialogs/dock_settings_dialog.cpp:572
+#: src/dialogs/dock_settings_dialog.cpp:659
 msgid "Choose the indicator color"
 msgstr "Επιλέξτε το χρώμα του δείκτη"
 
-#: src/dialogs/dock_settings_dialog.cpp:591
+#: src/dialogs/dock_settings_dialog.cpp:678
 msgid "Choose the preview color"
 msgstr "Επιλέξτε το χρώμα προεπισκόπησης"
 
-#: src/dialogs/dock_settings_dialog.cpp:603
+#: src/dialogs/dock_settings_dialog.cpp:690
 msgid "Select…"
 msgstr "Επιλέξτε…"
 
-#: src/dialogs/dock_settings_dialog.cpp:605
+#: src/dialogs/dock_settings_dialog.cpp:692
 msgid "Use Default"
 msgstr "Χρησιμοποιήστε την προεπιλογή"
 
-#: src/dialogs/dock_settings_dialog.cpp:613
+#: src/dialogs/dock_settings_dialog.cpp:700
 msgid "Built-in DockLight icon"
 msgstr "Ενσωματωμένο εικονίδιο DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:647
+#: src/dialogs/dock_settings_dialog.cpp:734
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "Διαφορετικά, κρατήστε την προεπισκόπηση ανοιχτή μέχρι να την αφήσει ο δείκτης"
 
-#: src/dialogs/dock_settings_dialog.cpp:654
+#: src/dialogs/dock_settings_dialog.cpp:741
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr "Εφαρμόστε ενέργειες εικονιδίων και ποδηλασία με τον τροχό του ποντικιού σε όλους τους χώρους εργασίας"
 
-#: src/dialogs/dock_settings_dialog.cpp:685
+#: src/dialogs/dock_settings_dialog.cpp:772
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0 επιλέγει αυτόματο μέγεθος. διαφορετικά χρησιμοποιήστε 64 έως 512 pixel"
 
-#: src/dialogs/dock_settings_dialog.cpp:702
+#: src/dialogs/dock_settings_dialog.cpp:789
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr "Καθυστέρηση πριν από την εμφάνιση μιας προεπισκόπησης παραθύρου, από 0 έως 5000 χιλιοστά του δευτερολέπτου"
 
-#: src/dialogs/dock_settings_dialog.cpp:720
+#: src/dialogs/dock_settings_dialog.cpp:807
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "Καθυστέρηση πριν κρυφτεί η αποβάθρα, από 0 έως 5000 χιλιοστά του δευτερολέπτου"
 
-#: src/dialogs/dock_settings_dialog.cpp:726
+#: src/dialogs/dock_settings_dialog.cpp:813
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "Κάτω άκρη"
 
-#: src/dialogs/dock_settings_dialog.cpp:728
+#: src/dialogs/dock_settings_dialog.cpp:815
 msgctxt "dock location"
 msgid "Left"
 msgstr "Αριστερό άκρο"
 
-#: src/dialogs/dock_settings_dialog.cpp:730
+#: src/dialogs/dock_settings_dialog.cpp:817
 msgctxt "dock location"
 msgid "Top"
 msgstr "Επάνω άκρη"
 
-#: src/dialogs/dock_settings_dialog.cpp:732
+#: src/dialogs/dock_settings_dialog.cpp:819
 msgctxt "dock location"
 msgid "Right"
 msgstr "Δεξιά άκρη"
 
-#: src/dialogs/dock_settings_dialog.cpp:788
+#: src/dialogs/dock_settings_dialog.cpp:875
 msgid "-1 selects the automatic radius"
 msgstr "-1 επιλέγει την αυτόματη ακτίνα"
 
-#: src/dialogs/dock_settings_dialog.cpp:793
+#: src/dialogs/dock_settings_dialog.cpp:880
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "Στοίχιση εκκίνησης"
 
-#: src/dialogs/dock_settings_dialog.cpp:795
+#: src/dialogs/dock_settings_dialog.cpp:882
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "Κέντρο"
 
-#: src/dialogs/dock_settings_dialog.cpp:797
+#: src/dialogs/dock_settings_dialog.cpp:884
 msgctxt "dock alignment"
 msgid "End"
 msgstr "Τελική ευθυγράμμιση"
 
-#: src/dialogs/dock_settings_dialog.cpp:799
+#: src/dialogs/dock_settings_dialog.cpp:886
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "Συμπληρώστε τον διαθέσιμο χώρο"
 
-#: src/dialogs/dock_settings_dialog.cpp:832
+#: src/dialogs/dock_settings_dialog.cpp:919
 msgctxt "autohide mode"
 msgid "None"
 msgstr "ΑμεΑ"
 
-#: src/dialogs/dock_settings_dialog.cpp:834
+#: src/dialogs/dock_settings_dialog.cpp:921
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "Αυτόματο"
 
-#: src/dialogs/dock_settings_dialog.cpp:836
+#: src/dialogs/dock_settings_dialog.cpp:923
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "Ευφυής"
 
-#: src/dialogs/dock_settings_dialog.cpp:885
+#: src/dialogs/dock_settings_dialog.cpp:972
 msgctxt "autohide effect"
 msgid "Plasma"
 msgstr "Plasma"
 
-#: src/dialogs/dock_settings_dialog.cpp:890
-#: src/dialogs/dock_settings_dialog.cpp:898
+#: src/dialogs/dock_settings_dialog.cpp:977
+#: src/dialogs/dock_settings_dialog.cpp:985
 msgctxt "autohide effect"
 msgid "Slide"
 msgstr "Ολίσθηση"
 
-#: src/dialogs/dock_settings_dialog.cpp:901
+#: src/dialogs/dock_settings_dialog.cpp:988
 msgctxt "autohide effect"
 msgid "Slide and Fade"
 msgstr "Ολίσθηση και σταδιακή εξαφάνιση"
 
-#: src/dialogs/dock_settings_dialog.cpp:906
+#: src/dialogs/dock_settings_dialog.cpp:993
 msgctxt "autohide effect"
 msgid "GNOME"
 msgstr "GNOME"
 
-#: src/dialogs/dock_settings_dialog.cpp:1029
+#: src/dialogs/dock_settings_dialog.cpp:1116
 msgid "Set the dock icon size from 32 to 128 pixels."
 msgstr "Ορίστε το μέγεθος του εικονιδίου του dock από 32 έως 128 pixels."
 
-#: src/dialogs/dock_settings_dialog.cpp:1036
+#: src/dialogs/dock_settings_dialog.cpp:1123
 msgid "Choose how icons respond when the pointer moves over them."
 msgstr "Επιλέξτε πώς ανταποκρίνονται τα εικονίδια όταν ο δείκτης κινείται πάνω τους."
 
-#: src/dialogs/dock_settings_dialog.cpp:1043
+#: src/dialogs/dock_settings_dialog.cpp:1130
 msgid "Select how running applications are marked on the dock."
 msgstr "Επιλέξτε πώς επισημαίνονται οι εφαρμογές που λειτουργούν στο dock."
 
-#: src/dialogs/dock_settings_dialog.cpp:1050
+#: src/dialogs/dock_settings_dialog.cpp:1137
 msgid "Set the color of running-application indicators."
 msgstr "Ορίστε το χρώμα των δεικτών των εφαρμογών που λειτουργούν."
 
-#: src/dialogs/dock_settings_dialog.cpp:1057
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Use a GTK theme-derived gradient instead of a solid background."
 msgstr "Χρησιμοποιήστε ένα gradient που προέρχεται από θέμα GTK αντί για συμπαγές φόντο."
 
-#: src/dialogs/dock_settings_dialog.cpp:1064
+#: src/dialogs/dock_settings_dialog.cpp:1151
 msgid "Round the corners of the dock background."
 msgstr "Στρογγυλέψτε τις γωνίες του φόντου του dock."
 
-#: src/dialogs/dock_settings_dialog.cpp:1071
+#: src/dialogs/dock_settings_dialog.cpp:1158
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
 msgstr "Ορίστε την ακτίνα της γωνίας σε pixels· -1 επιλέγει αυτόματο μέγεθος."
 
-#: src/dialogs/dock_settings_dialog.cpp:1078
+#: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Show the DockLight home and launcher-management icon."
 msgstr "Εμφανίστε το εικονίδιο διαχείρισης αρχικής και launcher του DockLight."
 
-#: src/dialogs/dock_settings_dialog.cpp:1085
+#: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose a custom image for the home icon, or use the built-in icon."
 msgstr "Επιλέξτε μια προσαρμοσμένη εικόνα για το εικονίδιο αρχικής σελίδας, ή χρησιμοποιήστε το ενσωματωμένο εικονίδιο."
 
-#: src/dialogs/dock_settings_dialog.cpp:1094
+#: src/dialogs/dock_settings_dialog.cpp:1181
 msgid "Show application names when the pointer rests on dock icons."
 msgstr "Εμφάνιση ονομάτων εφαρμογών όταν ο δείκτης βρίσκεται πάνω σε εικονίδια του dock."
 
-#: src/dialogs/dock_settings_dialog.cpp:1101
+#: src/dialogs/dock_settings_dialog.cpp:1188
 msgid "Include windows from every workspace in dock actions and cycling."
 msgstr "Συμπερίληψη παραθύρων από κάθε χώρο εργασίας στις ενέργειες και την εναλλαγή του dock."
 
-#: src/dialogs/dock_settings_dialog.cpp:1108
+#: src/dialogs/dock_settings_dialog.cpp:1195
 msgid "Show window previews when the pointer rests on running apps."
 msgstr "Εμφάνιση προεπισκοπήσεων παραθύρων όταν ο δείκτης βρίσκεται πάνω σε τρέχουσες εφαρμογές."
 
-#: src/dialogs/dock_settings_dialog.cpp:1115
+#: src/dialogs/dock_settings_dialog.cpp:1202
 msgid "Close the preview popup after activating one of its windows."
 msgstr "Κλείσιμο του αναδυόμενου παραθύρου προεπισκόπησης μετά την ενεργοποίηση ενός από τα παράθυρά του."
 
-#: src/dialogs/dock_settings_dialog.cpp:1122
+#: src/dialogs/dock_settings_dialog.cpp:1209
 msgid "Set the accent color used by window previews."
 msgstr "Ρύθμιση του χρώματος έμφασης που χρησιμοποιείται στις προεπισκοπήσεις παραθύρων."
 
-#: src/dialogs/dock_settings_dialog.cpp:1129
+#: src/dialogs/dock_settings_dialog.cpp:1216
 msgid "Set preview height in pixels; 0 selects automatic sizing."
 msgstr "Ρύθμιση ύψους προεπισκόπησης σε pixels· 0 επιλέγει αυτόματη προσαρμογή μεγέθους."
 
-#: src/dialogs/dock_settings_dialog.cpp:1136
+#: src/dialogs/dock_settings_dialog.cpp:1223
 msgid "Set how long to wait before showing a preview."
 msgstr "Ρύθμιση χρόνου αναμονής πριν εμφανιστεί η προεπισκόπηση."
 
-#: src/dialogs/dock_settings_dialog.cpp:1144
+#: src/dialogs/dock_settings_dialog.cpp:1231
 msgid "Choose the display where DockLight appears."
 msgstr "Επιλογή της οθόνης όπου εμφανίζεται το DockLight."
 
-#: src/dialogs/dock_settings_dialog.cpp:1151
+#: src/dialogs/dock_settings_dialog.cpp:1238
 msgid "Choose the screen edge where the dock is placed."
 msgstr "Επιλογή της άκρης της οθόνης όπου τοποθετείται το dock."
 
-#: src/dialogs/dock_settings_dialog.cpp:1158
+#: src/dialogs/dock_settings_dialog.cpp:1245
 msgid "Align dock content along the selected screen edge."
 msgstr "Στοίχιση περιεχομένου dock κατά μήκος της επιλεγμένης άκρης της οθόνης."
 
-#: src/dialogs/dock_settings_dialog.cpp:1165
+#: src/dialogs/dock_settings_dialog.cpp:1252
 msgid "Choose when the dock moves out of view."
 msgstr "Επιλογή πότε το dock βγαίνει εκτός ορατού χώρου."
 
-#: src/dialogs/dock_settings_dialog.cpp:1172
+#: src/dialogs/dock_settings_dialog.cpp:1259
 msgid "Set how long to wait before hiding the dock."
 msgstr "Ρύθμιση χρόνου αναμονής πριν κρυφτεί το dock."
 
-#: src/dialogs/dock_settings_dialog.cpp:1182
+#: src/dialogs/dock_settings_dialog.cpp:1269
 msgid "Choose an autohide animation supported by this desktop."
 msgstr "Επιλογή μιας υποστηριζόμενης κινούμενης εικόνας αυτόματης απόκρυψης από αυτήν την επιφάνεια εργασίας."
 
-#: src/dialogs/dock_settings_dialog.cpp:1432
-#: src/dialogs/dock_settings_dialog.cpp:1469
+#: src/dialogs/dock_settings_dialog.cpp:1532
+#: src/dialogs/dock_settings_dialog.cpp:1569
 msgid "Select Home Icon"
 msgstr "Επιλέξτε το εικονίδιο αρχικής σελίδας"
 
+#: src/dialogs/dock_settings_dialog.cpp:1537
 #: src/dialogs/dock_session_dialog.cpp:509
-#: src/dialogs/dock_settings_dialog.cpp:1437
 msgid "_Cancel"
 msgstr "_Ακύρωση"
 
-#: src/dialogs/dock_settings_dialog.cpp:1440
+#: src/dialogs/dock_settings_dialog.cpp:1540
 msgid "_Open"
 msgstr "_Άνοιξε"
 
+#: src/dialogs/dock_settings_dialog.cpp:1606
 #: src/dialogs/dock_session_dialog.cpp:520
-#: src/dialogs/dock_settings_dialog.cpp:1506
 msgid "Image Files"
 msgstr "Αρχεία εικόνας"
 

@@ -6,26 +6,26 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Docklight 6.0.29\n"
 "Report-Msgid-Bugs-To: yoosamui@example.com\n"
-"POT-Creation-Date: 2026-09-06 21:59+0700\n"
-"PO-Revision-Date: 2026-08-16 14:25+0700\n"
+"POT-Creation-Date: 2026-09-07 15:20+0700\n"
+"PO-Revision-Date: 2026-09-07 15:30+0700\n"
 "Last-Translator: \n"
-"Language: th\n"
 "Language-Team: THAI <LL@li.org>\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: th\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: src/main.cpp:355
+#: src/main.cpp:362
 msgid "Window previews are disabled"
 msgstr "การแสดงตัวอย่างหน้าต่างถูกปิดใช้งาน"
 
-#: src/main.cpp:361
+#: src/main.cpp:368
 msgid "DockLight"
 msgstr "DockLight"
 
-#: src/main.cpp:368
+#: src/main.cpp:375
 msgid "Openbox requires an X11 compositor for complete window previews. Display Preview is disabled. Start compton or picom, then enable Display Preview in DockLight Settings."
 msgstr "Openbox ต้องใช้ตัวประกอบ X11 เพื่อดูตัวอย่างหน้าต่างทั้งหมด การแสดงตัวอย่างถูกปิดใช้งาน เริ่ม compton หรือ picom จากนั้นเปิดใช้งาน Display Preview ในการตั้งค่า DockLight"
 
@@ -33,7 +33,7 @@ msgstr "Openbox ต้องใช้ตัวประกอบ X11 เพื�
 msgid "_Edit"
 msgstr "_แก้ไข"
 
-#: src/dialogs/dock_session_editor_item.cpp:108 src/dock/dock_item.cpp:165
+#: src/dock/dock_item.cpp:165 src/dialogs/dock_session_editor_item.cpp:108
 msgid "_Remove"
 msgstr "_ลบ"
 
@@ -45,7 +45,7 @@ msgstr "_ปักหมุดไปที่ Dock"
 msgid "_Open New Window"
 msgstr "_เปิดหน้าต่างใหม่"
 
-#: src/dock/dock_home_item.cpp:77 src/dock/dock_item.cpp:174
+#: src/dock/dock_item.cpp:174 src/dock/dock_home_item.cpp:78
 msgid "_Close All"
 msgstr "_ปิดทั้งหมด"
 
@@ -61,411 +61,449 @@ msgstr "_คืนค่า"
 msgid "Ma_ximize"
 msgstr "_ขยายใหญ่สุด"
 
-#: src/dock/dock_home_item.cpp:62
+#: src/dock/dock_home_item.cpp:63
 msgid "_Settings"
 msgstr "_การตั้งค่า"
 
-#: src/dock/dock_home_item.cpp:65
+#: src/dock/dock_home_item.cpp:66
 msgid "Sessi_on"
 msgstr "_การประชุม"
 
-#: src/dock/dock_home_item.cpp:68
+#: src/dock/dock_home_item.cpp:69
 msgid "_Minimize All"
 msgstr "_ย่อขนาดทั้งหมด"
 
-#: src/dock/dock_home_item.cpp:71
+#: src/dock/dock_home_item.cpp:72
 msgid "_Unminimize All"
 msgstr "_กู้คืนทั้งหมด"
 
-#: src/dock/dock_home_item.cpp:74
+#: src/dock/dock_home_item.cpp:75
 msgid "Ma_ximize All"
 msgstr "_เพิ่มทั้งหมดให้สูงสุด"
 
-#: src/dock/dock_home_item.cpp:80
+#: src/dock/dock_home_item.cpp:81
 msgid "_About"
 msgstr "_เกี่ยวกับ"
 
-#: src/dock/dock_home_item.cpp:83
+#: src/dock/dock_home_item.cpp:84
 msgid "_Exit"
 msgstr "_ออก"
 
-#: src/dock/dock_home_item.cpp:310
+#: src/dock/dock_home_item.cpp:311
 msgctxt "dock tooltip"
 msgid "Home"
 msgstr "บ้าน"
 
-#: src/dialogs/dock_settings_dialog.cpp:243
-#: src/dialogs/dock_settings_dialog.cpp:288
-msgid "DockLight Settings"
-msgstr "การตั้งค่า DockLight"
+#: src/dialogs/dock_settings_dialog.cpp:141
+#: src/dialogs/dock_settings_dialog.cpp:155
+msgid "Desktop Shortcuts"
+msgstr "แป้นพิมพ์ลัดของเดสก์ท็อป"
 
-#: src/dialogs/dock_about_dialog.cpp:188
+#: src/dialogs/dock_settings_dialog.cpp:150
+#: src/dialogs/dock_settings_dialog.cpp:403
 #: src/dialogs/dock_session_dialog.cpp:1019
-#: src/dialogs/dock_settings_dialog.cpp:316
+#: src/dialogs/dock_about_dialog.cpp:188
 msgid "_Close"
 msgstr "_ปิด"
 
-#: src/dialogs/dock_settings_dialog.cpp:327
+#: src/dialogs/dock_settings_dialog.cpp:160
+msgid "If you disable the <b>Home icon</b>, its context menu will no longer be available. This means you will need another way to access DockLight settings and other actions."
+msgstr "หากคุณปิดใช้งาน<b>ไอคอนหน้าแรก</b> เมนูคลิกขวาของไอคอนจะไม่สามารถใช้งานได้อีกต่อไป คุณจึงต้องใช้วิธีอื่นในการเข้าถึงการตั้งค่า DockLight และการดำเนินการอื่น ๆ"
+
+#: src/dialogs/dock_settings_dialog.cpp:165
+msgid "You can create desktop keyboard shortcuts using the following commands:"
+msgstr "คุณสามารถสร้างแป้นพิมพ์ลัดของเดสก์ท็อปได้โดยใช้คำสั่งต่อไปนี้:"
+
+#: src/dialogs/dock_settings_dialog.cpp:177
+msgid "Open Settings"
+msgstr "เปิดการตั้งค่า"
+
+#: src/dialogs/dock_settings_dialog.cpp:180
+msgid "Open Sessions"
+msgstr "เปิดเซสชัน"
+
+#: src/dialogs/dock_settings_dialog.cpp:183
+msgid "Open About"
+msgstr "เปิดเกี่ยวกับ"
+
+#: src/dialogs/dock_settings_dialog.cpp:186
+msgid "Exit DockLight"
+msgstr "ออกจาก DockLight"
+
+#: src/dialogs/dock_settings_dialog.cpp:190
+msgid "Assign these commands to any keyboard shortcuts you prefer using your desktop environment's keyboard shortcut settings."
+msgstr "กำหนดคำสั่งเหล่านี้ให้กับแป้นพิมพ์ลัดที่คุณต้องการผ่านการตั้งค่าแป้นพิมพ์ลัดของสภาพแวดล้อมเดสก์ท็อป"
+
+#: src/dialogs/dock_settings_dialog.cpp:194
+msgid "For more information about DockLight shortcuts, see README.md."
+msgstr "สำหรับข้อมูลเพิ่มเติมเกี่ยวกับแป้นพิมพ์ลัดของ DockLight โปรดดู README.md"
+
+#: src/dialogs/dock_settings_dialog.cpp:330
+#: src/dialogs/dock_settings_dialog.cpp:375
+msgid "DockLight Settings"
+msgstr "การตั้งค่า DockLight"
+
+#: src/dialogs/dock_settings_dialog.cpp:414
 msgid "Appearance"
 msgstr "ลักษณะรูปลักษณ์"
 
-#: src/dialogs/dock_settings_dialog.cpp:329
+#: src/dialogs/dock_settings_dialog.cpp:416
 msgid "Behavior"
 msgstr "พฤติกรรม"
 
-#: src/dialogs/dock_settings_dialog.cpp:331
+#: src/dialogs/dock_settings_dialog.cpp:418
 msgid "Position & Autohide"
 msgstr "ตำแหน่ง & การซ่อนอัตโนมัติ"
 
-#: src/dialogs/dock_settings_dialog.cpp:358
+#: src/dialogs/dock_settings_dialog.cpp:445
 msgid "Monitor"
 msgstr "จอภาพ"
 
-#: src/dialogs/dock_settings_dialog.cpp:360
+#: src/dialogs/dock_settings_dialog.cpp:447
 msgid "Hover Effect"
 msgstr "เอฟเฟกต์โฮเวอร์"
 
-#: src/dialogs/dock_settings_dialog.cpp:362
+#: src/dialogs/dock_settings_dialog.cpp:449
 msgid "Indicator"
 msgstr "ตัวบ่งชี้"
 
-#: src/dialogs/dock_settings_dialog.cpp:364
-#: src/dialogs/dock_settings_dialog.cpp:570
+#: src/dialogs/dock_settings_dialog.cpp:451
+#: src/dialogs/dock_settings_dialog.cpp:657
 msgid "Indicator Color"
 msgstr "สีของตัวบ่งชี้"
 
-#: src/dialogs/dock_settings_dialog.cpp:366
-#: src/dialogs/dock_settings_dialog.cpp:589
+#: src/dialogs/dock_settings_dialog.cpp:453
+#: src/dialogs/dock_settings_dialog.cpp:676
 msgid "Preview Color"
 msgstr "สีตัวอย่าง"
 
-#: src/dialogs/dock_settings_dialog.cpp:368
+#: src/dialogs/dock_settings_dialog.cpp:455
 msgid "Display Home Icon"
 msgstr "แสดงไอคอนโฮม"
 
-#: src/dialogs/dock_settings_dialog.cpp:370
+#: src/dialogs/dock_settings_dialog.cpp:457
 msgid "Home Icon"
 msgstr "ไอคอนหน้าแรก"
 
-#: src/dialogs/dock_settings_dialog.cpp:372
+#: src/dialogs/dock_settings_dialog.cpp:459
 msgid "Display Tooltips"
 msgstr "แสดงคำแนะนำเครื่องมือ"
 
-#: src/dialogs/dock_settings_dialog.cpp:374
+#: src/dialogs/dock_settings_dialog.cpp:461
 msgid "Display Preview"
 msgstr "แสดงตัวอย่าง"
 
-#: src/dialogs/dock_settings_dialog.cpp:376
+#: src/dialogs/dock_settings_dialog.cpp:463
 msgid "Close Preview After Activation"
 msgstr "ปิดการแสดงตัวอย่างหลังการเปิดใช้งาน"
 
-#: src/dialogs/dock_settings_dialog.cpp:378
+#: src/dialogs/dock_settings_dialog.cpp:465
 msgid "Manage All Workspaces"
 msgstr "จัดการพื้นที่ทำงานทั้งหมด"
 
-#: src/dialogs/dock_settings_dialog.cpp:380
+#: src/dialogs/dock_settings_dialog.cpp:467
 msgid "Icon Size"
 msgstr "ขนาดไอคอน"
 
-#: src/dialogs/dock_settings_dialog.cpp:382
+#: src/dialogs/dock_settings_dialog.cpp:469
 msgid "Preview Card Height"
 msgstr "ดูตัวอย่างความสูงของการ์ด"
 
-#: src/dialogs/dock_settings_dialog.cpp:384
+#: src/dialogs/dock_settings_dialog.cpp:471
 msgid "Preview Show Delay (ms)"
 msgstr "ดูตัวอย่างการแสดงล่าช้า (มิลลิวินาที)"
 
-#: src/dialogs/dock_settings_dialog.cpp:386
+#: src/dialogs/dock_settings_dialog.cpp:473
 msgid "Location"
 msgstr "ที่ตั้ง"
 
-#: src/dialogs/dock_settings_dialog.cpp:388
+#: src/dialogs/dock_settings_dialog.cpp:475
 msgid "Gradient Background"
 msgstr "พื้นหลังไล่ระดับสี"
 
-#: src/dialogs/dock_settings_dialog.cpp:390
+#: src/dialogs/dock_settings_dialog.cpp:477
 msgid "Rounded Corners"
 msgstr "มุมโค้งมน"
 
-#: src/dialogs/dock_settings_dialog.cpp:392
+#: src/dialogs/dock_settings_dialog.cpp:479
 msgid "Corner Radius"
 msgstr "รัศมีมุม"
 
-#: src/dialogs/dock_settings_dialog.cpp:394
+#: src/dialogs/dock_settings_dialog.cpp:481
 msgid "Alignment"
 msgstr "การจัดตำแหน่ง"
 
-#: src/dialogs/dock_settings_dialog.cpp:396
+#: src/dialogs/dock_settings_dialog.cpp:483
 msgid "Autohide"
 msgstr "ซ่อนอัตโนมัติ"
 
-#: src/dialogs/dock_settings_dialog.cpp:398
+#: src/dialogs/dock_settings_dialog.cpp:485
 msgid "Autohide Effect"
 msgstr "เอฟเฟกต์ซ่อนอัตโนมัติ"
 
-#: src/dialogs/dock_settings_dialog.cpp:400
+#: src/dialogs/dock_settings_dialog.cpp:487
 msgid "Autohide Delay (ms)"
 msgstr "ความล่าช้าในการซ่อนอัตโนมัติ (มิลลิวินาที)"
 
-#: src/dialogs/dock_settings_dialog.cpp:458
+#: src/dialogs/dock_settings_dialog.cpp:545
 msgctxt "monitor identifier"
 msgid "Primary"
 msgstr "จอภาพหลัก"
 
-#: src/dialogs/dock_settings_dialog.cpp:496
+#: src/dialogs/dock_settings_dialog.cpp:583
 msgctxt "hover effect"
 msgid "Standard"
 msgstr "เอฟเฟกต์มาตรฐาน"
 
-#: src/dialogs/dock_settings_dialog.cpp:498
+#: src/dialogs/dock_settings_dialog.cpp:585
 msgctxt "hover effect"
 msgid "Zoom"
 msgstr "ผลการซูม"
 
-#: src/dialogs/dock_settings_dialog.cpp:500
+#: src/dialogs/dock_settings_dialog.cpp:587
 msgctxt "hover effect"
 msgid "Blur"
 msgstr "เอฟเฟกต์เบลอ"
 
-#: src/dialogs/dock_settings_dialog.cpp:502
+#: src/dialogs/dock_settings_dialog.cpp:589
 msgctxt "hover effect"
 msgid "Magnified"
 msgstr "ขยาย"
 
-#: src/dialogs/dock_settings_dialog.cpp:535
+#: src/dialogs/dock_settings_dialog.cpp:622
 msgctxt "running indicator style"
 msgid "Lines"
 msgstr "ตัวบ่งชี้เส้น"
 
-#: src/dialogs/dock_settings_dialog.cpp:537
+#: src/dialogs/dock_settings_dialog.cpp:624
 msgctxt "running indicator style"
 msgid "Dots"
 msgstr "ตัวชี้วัดแบบจุด"
 
-#: src/dialogs/dock_settings_dialog.cpp:572
+#: src/dialogs/dock_settings_dialog.cpp:659
 msgid "Choose the indicator color"
 msgstr "เลือกสีของตัวบ่งชี้"
 
-#: src/dialogs/dock_settings_dialog.cpp:591
+#: src/dialogs/dock_settings_dialog.cpp:678
 msgid "Choose the preview color"
 msgstr "เลือกสีตัวอย่าง"
 
-#: src/dialogs/dock_settings_dialog.cpp:603
+#: src/dialogs/dock_settings_dialog.cpp:690
 msgid "Select…"
 msgstr "เลือก..."
 
-#: src/dialogs/dock_settings_dialog.cpp:605
+#: src/dialogs/dock_settings_dialog.cpp:692
 msgid "Use Default"
 msgstr "ใช้ค่าเริ่มต้น"
 
-#: src/dialogs/dock_settings_dialog.cpp:613
+#: src/dialogs/dock_settings_dialog.cpp:700
 msgid "Built-in DockLight icon"
 msgstr "ไอคอน DockLight ในตัว"
 
-#: src/dialogs/dock_settings_dialog.cpp:647
+#: src/dialogs/dock_settings_dialog.cpp:734
 msgid "Otherwise keep the preview open until the pointer leaves it"
 msgstr "มิฉะนั้น ให้เปิดการแสดงตัวอย่างไว้จนกว่าตัวชี้จะออกไป"
 
-#: src/dialogs/dock_settings_dialog.cpp:654
+#: src/dialogs/dock_settings_dialog.cpp:741
 msgid "Apply icon actions and mouse-wheel cycling across all workspaces"
 msgstr "ใช้การทำงานของไอคอนและการหมุนเวียนล้อเมาส์กับพื้นที่ทำงานทั้งหมด"
 
-#: src/dialogs/dock_settings_dialog.cpp:685
+#: src/dialogs/dock_settings_dialog.cpp:772
 msgid "0 selects automatic sizing; otherwise use 64 to 512 pixels"
 msgstr "0 เลือกขนาดอัตโนมัติ มิฉะนั้นให้ใช้ 64 ถึง 512 พิกเซล"
 
-#: src/dialogs/dock_settings_dialog.cpp:702
+#: src/dialogs/dock_settings_dialog.cpp:789
 msgid "Delay before a window preview appears, from 0 to 5000 milliseconds"
 msgstr "หน่วงเวลาก่อนที่การแสดงตัวอย่างหน้าต่างจะปรากฏขึ้น ตั้งแต่ 0 ถึง 5,000 มิลลิวินาที"
 
-#: src/dialogs/dock_settings_dialog.cpp:720
+#: src/dialogs/dock_settings_dialog.cpp:807
 msgid "Delay before the dock hides, from 0 to 5000 milliseconds"
 msgstr "หน่วงเวลาก่อนที่ท่าเรือจะซ่อน จาก 0 ถึง 5,000 มิลลิวินาที"
 
-#: src/dialogs/dock_settings_dialog.cpp:726
+#: src/dialogs/dock_settings_dialog.cpp:813
 msgctxt "dock location"
 msgid "Bottom"
 msgstr "ขอบล่าง"
 
-#: src/dialogs/dock_settings_dialog.cpp:728
+#: src/dialogs/dock_settings_dialog.cpp:815
 msgctxt "dock location"
 msgid "Left"
 msgstr "ขอบซ้าย"
 
-#: src/dialogs/dock_settings_dialog.cpp:730
+#: src/dialogs/dock_settings_dialog.cpp:817
 msgctxt "dock location"
 msgid "Top"
 msgstr "ขอบบน"
 
-#: src/dialogs/dock_settings_dialog.cpp:732
+#: src/dialogs/dock_settings_dialog.cpp:819
 msgctxt "dock location"
 msgid "Right"
 msgstr "ขอบขวา"
 
-#: src/dialogs/dock_settings_dialog.cpp:788
+#: src/dialogs/dock_settings_dialog.cpp:875
 msgid "-1 selects the automatic radius"
 msgstr "-1 เลือกรัศมีอัตโนมัติ"
 
-#: src/dialogs/dock_settings_dialog.cpp:793
+#: src/dialogs/dock_settings_dialog.cpp:880
 msgctxt "dock alignment"
 msgid "Start"
 msgstr "เริ่มจัดตำแหน่ง"
 
-#: src/dialogs/dock_settings_dialog.cpp:795
+#: src/dialogs/dock_settings_dialog.cpp:882
 msgctxt "dock alignment"
 msgid "Center"
 msgstr "อยู่ตรงกลาง"
 
-#: src/dialogs/dock_settings_dialog.cpp:797
+#: src/dialogs/dock_settings_dialog.cpp:884
 msgctxt "dock alignment"
 msgid "End"
 msgstr "จัดวางท้าย"
 
-#: src/dialogs/dock_settings_dialog.cpp:799
+#: src/dialogs/dock_settings_dialog.cpp:886
 msgctxt "dock alignment"
 msgid "Fill"
 msgstr "เติมพื้นที่ว่าง"
 
-#: src/dialogs/dock_settings_dialog.cpp:832
+#: src/dialogs/dock_settings_dialog.cpp:919
 msgctxt "autohide mode"
 msgid "None"
 msgstr "ปิดการใช้งาน"
 
-#: src/dialogs/dock_settings_dialog.cpp:834
+#: src/dialogs/dock_settings_dialog.cpp:921
 msgctxt "autohide mode"
 msgid "Autohide"
 msgstr "อัตโนมัติ"
 
-#: src/dialogs/dock_settings_dialog.cpp:836
+#: src/dialogs/dock_settings_dialog.cpp:923
 msgctxt "autohide mode"
 msgid "Intellihide"
 msgstr "อัจฉริยะ"
 
-#: src/dialogs/dock_settings_dialog.cpp:885
+#: src/dialogs/dock_settings_dialog.cpp:972
 msgctxt "autohide effect"
 msgid "Plasma"
 msgstr "Plasma"
 
-#: src/dialogs/dock_settings_dialog.cpp:890
-#: src/dialogs/dock_settings_dialog.cpp:898
+#: src/dialogs/dock_settings_dialog.cpp:977
+#: src/dialogs/dock_settings_dialog.cpp:985
 msgctxt "autohide effect"
 msgid "Slide"
 msgstr "เลื่อน"
 
-#: src/dialogs/dock_settings_dialog.cpp:901
+#: src/dialogs/dock_settings_dialog.cpp:988
 msgctxt "autohide effect"
 msgid "Slide and Fade"
 msgstr "เลื่อนและจาง"
 
-#: src/dialogs/dock_settings_dialog.cpp:906
+#: src/dialogs/dock_settings_dialog.cpp:993
 msgctxt "autohide effect"
 msgid "GNOME"
 msgstr "GNOME"
 
-#: src/dialogs/dock_settings_dialog.cpp:1029
+#: src/dialogs/dock_settings_dialog.cpp:1116
 msgid "Set the dock icon size from 32 to 128 pixels."
 msgstr "ตั้งค่าขนาดไอคอน Dock จาก 32 ถึง 128 พิกเซล"
 
-#: src/dialogs/dock_settings_dialog.cpp:1036
+#: src/dialogs/dock_settings_dialog.cpp:1123
 msgid "Choose how icons respond when the pointer moves over them."
 msgstr "เลือกวิธีที่ไอคอนตอบสนองเมื่อชี้เมาส์ไปที่ไอคอน"
 
-#: src/dialogs/dock_settings_dialog.cpp:1043
+#: src/dialogs/dock_settings_dialog.cpp:1130
 msgid "Select how running applications are marked on the dock."
 msgstr "เลือกวิธีที่แอปพลิเคชันที่กำลังทำงานถูกทำเครื่องหมายบน Dock"
 
-#: src/dialogs/dock_settings_dialog.cpp:1050
+#: src/dialogs/dock_settings_dialog.cpp:1137
 msgid "Set the color of running-application indicators."
 msgstr "ตั้งค่าสีของตัวบ่งชี้แอปพลิเคชันที่กำลังทำงาน"
 
-#: src/dialogs/dock_settings_dialog.cpp:1057
+#: src/dialogs/dock_settings_dialog.cpp:1144
 msgid "Use a GTK theme-derived gradient instead of a solid background."
 msgstr "ใช้ gradient ที่มาจากธีม GTK แทนพื้นหลังทึบ"
 
-#: src/dialogs/dock_settings_dialog.cpp:1064
+#: src/dialogs/dock_settings_dialog.cpp:1151
 msgid "Round the corners of the dock background."
 msgstr "ทำให้มุมของพื้นหลัง Dock โค้งมน"
 
-#: src/dialogs/dock_settings_dialog.cpp:1071
+#: src/dialogs/dock_settings_dialog.cpp:1158
 msgid "Set the corner radius in pixels; -1 selects automatic sizing."
 msgstr "ตั้งค่ารัศมีมุมเป็นพิกเซล; -1 เลือกการปรับขนาดอัตโนมัติ"
 
-#: src/dialogs/dock_settings_dialog.cpp:1078
+#: src/dialogs/dock_settings_dialog.cpp:1165
 msgid "Show the DockLight home and launcher-management icon."
 msgstr "แสดงไอคอนบ้านและการจัดการตัวเปิด DockLight"
 
-#: src/dialogs/dock_settings_dialog.cpp:1085
+#: src/dialogs/dock_settings_dialog.cpp:1172
 msgid "Choose a custom image for the home icon, or use the built-in icon."
 msgstr "เลือกรูปภาพที่กำหนดเองสำหรับไอคอนบ้าน หรือใช้ไอคอนที่มีอยู่ภายใน"
 
-#: src/dialogs/dock_settings_dialog.cpp:1094
+#: src/dialogs/dock_settings_dialog.cpp:1181
 msgid "Show application names when the pointer rests on dock icons."
 msgstr "แสดงชื่อแอปพลิเคชันเมื่อเคอร์เซอร์อยู่บนไอคอน Dock"
 
-#: src/dialogs/dock_settings_dialog.cpp:1101
+#: src/dialogs/dock_settings_dialog.cpp:1188
 msgid "Include windows from every workspace in dock actions and cycling."
 msgstr "รวมหน้าต่างจากทุกเวิร์กสเปซในการดำเนินการและการหมุนไอคอน Dock"
 
-#: src/dialogs/dock_settings_dialog.cpp:1108
+#: src/dialogs/dock_settings_dialog.cpp:1195
 msgid "Show window previews when the pointer rests on running apps."
 msgstr "แสดงตัวอย่างหน้าต่างเมื่อเคอร์เซอร์อยู่บนแอปที่กำลังทำงาน"
 
-#: src/dialogs/dock_settings_dialog.cpp:1115
+#: src/dialogs/dock_settings_dialog.cpp:1202
 msgid "Close the preview popup after activating one of its windows."
 msgstr "ปิดหน้าต่างตัวอย่างหลังจากเปิดใช้งานหนึ่งในหน้าต่างของมัน"
 
-#: src/dialogs/dock_settings_dialog.cpp:1122
+#: src/dialogs/dock_settings_dialog.cpp:1209
 msgid "Set the accent color used by window previews."
 msgstr "ตั้งค่าสีเน้นที่ใช้โดยตัวอย่างหน้าต่าง"
 
-#: src/dialogs/dock_settings_dialog.cpp:1129
+#: src/dialogs/dock_settings_dialog.cpp:1216
 msgid "Set preview height in pixels; 0 selects automatic sizing."
 msgstr "ตั้งค่าความสูงของตัวอย่างเป็นพิกเซล; 0 หมายถึงการเลือกขนาดอัตโนมัติ"
 
-#: src/dialogs/dock_settings_dialog.cpp:1136
+#: src/dialogs/dock_settings_dialog.cpp:1223
 msgid "Set how long to wait before showing a preview."
 msgstr "ตั้งเวลารอที่จะแสดงตัวอย่าง"
 
-#: src/dialogs/dock_settings_dialog.cpp:1144
+#: src/dialogs/dock_settings_dialog.cpp:1231
 msgid "Choose the display where DockLight appears."
 msgstr "เลือกจอที่ DockLight ปรากฏ"
 
-#: src/dialogs/dock_settings_dialog.cpp:1151
+#: src/dialogs/dock_settings_dialog.cpp:1238
 msgid "Choose the screen edge where the dock is placed."
 msgstr "เลือกขอบหน้าจอที่วาง Dock"
 
-#: src/dialogs/dock_settings_dialog.cpp:1158
+#: src/dialogs/dock_settings_dialog.cpp:1245
 msgid "Align dock content along the selected screen edge."
 msgstr "จัดแนวเนื้อหา Dock ตามขอบหน้าจอที่เลือก"
 
-#: src/dialogs/dock_settings_dialog.cpp:1165
+#: src/dialogs/dock_settings_dialog.cpp:1252
 msgid "Choose when the dock moves out of view."
 msgstr "เลือกเวลาที่ Dock เคลื่อนออกจากการมองเห็น"
 
-#: src/dialogs/dock_settings_dialog.cpp:1172
+#: src/dialogs/dock_settings_dialog.cpp:1259
 msgid "Set how long to wait before hiding the dock."
 msgstr "ตั้งเวลารอก่อนซ่อน Dock"
 
-#: src/dialogs/dock_settings_dialog.cpp:1182
+#: src/dialogs/dock_settings_dialog.cpp:1269
 msgid "Choose an autohide animation supported by this desktop."
 msgstr "เลือกแอนิเมชันซ่อนอัตโนมัติที่รองรับโดยเดสก์ท็อปนี้"
 
-#: src/dialogs/dock_settings_dialog.cpp:1432
-#: src/dialogs/dock_settings_dialog.cpp:1469
+#: src/dialogs/dock_settings_dialog.cpp:1532
+#: src/dialogs/dock_settings_dialog.cpp:1569
 msgid "Select Home Icon"
 msgstr "เลือกไอคอนหน้าแรก"
 
+#: src/dialogs/dock_settings_dialog.cpp:1537
 #: src/dialogs/dock_session_dialog.cpp:509
-#: src/dialogs/dock_settings_dialog.cpp:1437
 msgid "_Cancel"
 msgstr "_ยกเลิก"
 
-#: src/dialogs/dock_settings_dialog.cpp:1440
+#: src/dialogs/dock_settings_dialog.cpp:1540
 msgid "_Open"
 msgstr "_เปิด"
 
+#: src/dialogs/dock_settings_dialog.cpp:1606
 #: src/dialogs/dock_session_dialog.cpp:520
-#: src/dialogs/dock_settings_dialog.cpp:1506
 msgid "Image Files"
 msgstr "ไฟล์รูปภาพ"
 
