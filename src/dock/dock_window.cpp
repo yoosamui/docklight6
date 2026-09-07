@@ -624,3 +624,23 @@ bool DockWindow::preview_input_forwarding() const
 {
     return m_controller->preview_input_forwarding();
 }
+
+void DockWindow::open_settings()
+{
+    m_home_item->schedule_open_settings();
+}
+
+void DockWindow::open_session()
+{
+    m_home_item->open_session();
+}
+
+void DockWindow::show_about()
+{
+    m_home_item->show_about();
+}
+
+void DockWindow::exit_docklight()
+{
+    m_home_item->exit_docklight();
+}

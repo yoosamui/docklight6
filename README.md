@@ -152,6 +152,53 @@ sudo apt install qt6-base-dev qt6-declarative-dev
 
 The setup command must be run as the logged-in Plasma user, without `sudo`.
 
+## Desktop command shortcuts
+
+Turning off **Display Home Icon** in Settings shows a **Desktop Shortcuts**
+notice with the commands below. Its text can be selected and copied.
+
+These actions remain available when the Home icon is hidden. With the updated
+DockLight running, run a command or assign it to a custom keyboard shortcut
+in your desktop's keyboard settings:
+
+```sh
+gapplication action org.docklight6 settings
+gapplication action org.docklight6 session
+gapplication action org.docklight6 about
+gapplication action org.docklight6 exit
+```
+
+`settings`, `session` (singular), and `about` open the corresponding dialogs.
+`exit` closes DockLight, dismissing any open dialogs without saving pending
+Session edits. Repeated requests for an already open dialog do not create
+additional copies.
+
+For example, assign Ctrl+I to Settings. The desktop handles the key globally
+and sends the action to DockLight over the user session's D-Bus. DockLight does
+not need keyboard focus or a visible Home icon.
+
+`gapplication` is a GLib command-line tool (`libglib2.0-bin` on Debian/Ubuntu).
+The command requires a running updated DockLight in the same user session; it
+does not start DockLight. The shortcut is configured by the desktop, not by a
+`[keybindings]` section in `docklight.conf`. Choose an unused combination to
+avoid replacing an existing desktop or application shortcut.
+
+For standalone Openbox, add this inside the existing `<keyboard>` section of
+`~/.config/openbox/rc.xml` (edit the existing binding if Ctrl+I is already used):
+
+```xml
+<keybind key="C-i">
+  <action name="Execute">
+    <command>gapplication action org.docklight6 settings</command>
+  </action>
+</keybind>
+```
+
+Then run `openbox --reconfigure`. Openbox handles the key itself; no compositor
+such as picom is required. For Wayland, assign the same command through the
+desktop/compositor's shortcut settings. Command dispatch is independent of
+DockLight's window backend; the desktop controls focus and dialog placement.
+
 ## Configuration and diagnostics
 
 DockLight creates `~/.config/docklight6/docklight.conf` automatically and

@@ -48,6 +48,11 @@ public:
         const std::string &icon_path);
     ~DockHomeItem() override;
 
+    void schedule_open_settings();
+    void open_session();
+    void show_about();
+    void exit_docklight();
+
     void set_icon_size(int icon_size);
     void set_vertical(bool vertical);
     void set_magnified_enabled(bool enabled);
@@ -83,17 +88,13 @@ private:
     void refresh_context_menu();
     void show_context_menu(
         const GdkEvent *event);
-    void schedule_open_settings();
 
     bool minimize_all();
     bool unminimize_all();
     bool maximize_all();
     bool close_all();
 
-    void open_session();
     void open_settings();
-    void show_about();
-    void exit_docklight();
 
 private:
     DockWindow &m_dock;
@@ -121,6 +122,9 @@ private:
     Gtk::SeparatorMenuItem m_exit_separator;
     Gtk::MenuItem m_exit_item;
 
+    bool m_settings_open = false;
+    bool m_session_open = false;
+    bool m_about_open = false;
     sigc::connection m_settings_idle;
     sigc::connection m_context_menu_map;
     sigc::connection m_context_menu_unmap;

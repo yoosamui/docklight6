@@ -30,6 +30,7 @@
 #include "config.h"
 
 #include <giomm/application.h>
+#include <gtkmm/dialog.h>
 #include <glibmm/i18n.h>
 #include <glibmm/miscutils.h>
 
@@ -787,6 +788,10 @@ void DockHomeItem::show_context_menu(
 
 void DockHomeItem::schedule_open_settings()
 {
+    // Remote actions can arrive while the modal dialog runs its nested loop.
+    if (m_settings_open)
+        return;
+
     // A modal dialog takes the pointer grab away from the dock, so no leave
     // event is guaranteed while it opens. Clear the current frame before the
     // grab instead of leaving a magnified Home icon behind the dialog.
@@ -798,7 +803,9 @@ void DockHomeItem::schedule_open_settings()
         Glib::signal_idle().connect(
             [this]()
             {
+                m_settings_open = true;
                 open_settings();
+                m_settings_open = false;
                 return false;
             });
 }
@@ -833,6 +840,10 @@ bool DockHomeItem::close_all()
 
 void DockHomeItem::open_session()
 {
+    if (m_session_open)
+        return;
+    m_session_open = true;
+
     m_dock.inhibit_autohide();
     DockSessionDialog::show(
         m_dock,
@@ -844,6 +855,7 @@ void DockHomeItem::open_session()
             m_dock.synchronize_session_items();
         });
     m_dock.uninhibit_autohide();
+    m_session_open = false;
 }
 
 void DockHomeItem::open_settings()
@@ -862,16 +874,29 @@ void DockHomeItem::open_settings()
 
 void DockHomeItem::show_about()
 {
+    if (m_about_open)
+        return;
+    m_about_open = true;
+
     m_dock.inhibit_autohide();
     DockAboutDialog::show(
         m_dock,
         m_source_icon,
         m_runtime_info);
     m_dock.uninhibit_autohide();
+    m_about_open = false;
 }
 
 void DockHomeItem::exit_docklight()
 {
+    // Gio quit alone does not unwind the nested loops of modal GTK dialogs.
+    m_settings_idle.disconnect();
+    for (auto *window : Gtk::Window::list_toplevels())
+    {
+        if (auto *dialog = dynamic_cast<Gtk::Dialog *>(window))
+            dialog->response(Gtk::RESPONSE_CANCEL);
+    }
+
     auto application =
         Gio::Application::get_default();
 

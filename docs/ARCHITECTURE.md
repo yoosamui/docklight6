@@ -138,6 +138,16 @@ revealed. Temporary unmapping during a monitor move also does not terminate
 the process because the application holds itself independently of window map
 state.
 
+The primary process registers parameterless `settings`, `session`, `about`,
+and `exit` Gio actions after constructing the dock. Desktop command shortcuts
+invoke them with `gapplication action org.docklight6 ACTION`. The application
+layer defers callbacks until the D-Bus request can return; DockWindow forwards
+them to the existing Home dispatch, which remains alive when the icon is
+hidden and guards against duplicate modal dialogs. Exit dismisses modal
+dialogs to unwind their nested GTK loops before the process finishes quitting.
+This path requires neither dock focus nor local accelerator registration.
+Desktop key assignments remain outside DockLight configuration and backends.
+
 ## The three platform boundaries
 
 DockLight makes three independent platform decisions. They must not be
@@ -217,7 +227,7 @@ how application windows are observed.
 | Module | Responsibility |
 | --- | --- |
 | `src/main.cpp` | Process entry point, option parsing, subsystem construction, signal wiring, and main-loop entry. |
-| `src/application/dock_process_application.*` | Single-instance `Gio::Application`, activation, and GTK window identity without `GtkApplication` session management. |
+| `src/application/dock_process_application.*` | Single-instance `Gio::Application`, exported dialog/exit actions, activation, and GTK window identity without `GtkApplication` session management. |
 | `src/application/dock_runtime_info.h` | Plain startup-diagnostic snapshot passed to user-facing surfaces. |
 | `src/application/dock_application_controller.*` | Desktop-neutral policy for activate, cycle, minimize, maximize, close, present, and hide actions on one application group. |
 | `src/docklight_log.*` | Startup logging and release diagnostic filtering. |

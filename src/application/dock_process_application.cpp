@@ -8,12 +8,15 @@
 //
 // Implementation overview:
 // Creates the desktop-neutral GApplication used for process uniqueness and
-// activation, and preserves Docklight's GTK window identity on X11 and
-// Wayland surfaces.
+// activation and exported action dispatch, preserving window identity on
+// X11 and Wayland surfaces.
 //
 // ------------------------------------------------------------
 
 #include "application/dock_process_application.h"
+
+#include <giomm/simpleaction.h>
+#include <glibmm/main.h>
 
 #include <gio/gio.h>
 #include <gtk/gtk.h>
@@ -113,4 +116,29 @@ void DockProcessApplication::bind_window_identity(
                 window,
                 application);
         });
+}
+
+void DockProcessApplication::register_actions(
+    const Glib::RefPtr<Gio::Application> &application,
+    const sigc::slot<void> &open_settings,
+    const sigc::slot<void> &open_session,
+    const sigc::slot<void> &show_about,
+    const sigc::slot<void> &exit_docklight)
+{
+    // Defer modal callbacks and quit until the D-Bus request can return.
+    const auto add_action = [&application](
+        const char *name,
+        const sigc::slot<void> &callback)
+    {
+        application->add_action(
+            name,
+            [callback]()
+            {
+                Glib::signal_idle().connect_once(callback);
+            });
+    };
+    add_action("settings", open_settings);
+    add_action("session", open_session);
+    add_action("about", show_about);
+    add_action("exit", exit_docklight);
 }

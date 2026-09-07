@@ -13,6 +13,7 @@
 // Important implementation decisions:
 // - Controls are initialized from the current configuration snapshot.
 // - User changes are written through DockConfigurationManager.
+// - Disabling Home explains alternate access through desktop commands.
 // - Settings remains a decorated toplevel so nested choosers retain modality.
 // - Translated radio choices wrap within their settings column.
 // - Initial placement uses the final dialog size on the parent monitor.
@@ -26,6 +27,7 @@
 #include "presentation/docklight_surface_identity.h"
 
 #include <glibmm/i18n.h>
+#include <glibmm/markup.h>
 #include <gdk/gdkwayland.h>
 #include <gtkmm.h>
 
@@ -131,6 +133,91 @@ namespace
                 std::max(0, (geometry.get_width() - width) / 2),
             geometry.get_y() +
                 std::max(0, (geometry.get_height() - height) / 2));
+    }
+
+    void show_desktop_shortcuts(Gtk::Window &parent)
+    {
+        Gtk::Dialog dialog(
+            _("Desktop Shortcuts"),
+            parent,
+            true);
+        dialog.set_default_size(
+            640,
+            560);
+        dialog.set_skip_taskbar_hint(true);
+        dialog.set_skip_pager_hint(true);
+        dialog.add_button(
+            _("_Close"),
+            Gtk::RESPONSE_CLOSE);
+        dialog.set_default_response(Gtk::RESPONSE_CLOSE);
+
+        Gtk::HeaderBar header;
+        header.set_title(_("Desktop Shortcuts"));
+        header.set_show_close_button(true);
+        dialog.set_titlebar(header);
+
+        Glib::ustring text = _(
+            "If you disable the <b>Home icon</b>, its context menu will no "
+            "longer be available. This means you will need another way to "
+            "access DockLight settings and other actions.");
+        text += "\n\n";
+        text += Glib::Markup::escape_text(_(
+            "You can create desktop keyboard shortcuts using the following commands:"));
+        const auto add_command = [&text](
+            const char *title,
+            const char *command)
+        {
+            text += "\n\n<b>";
+            text += Glib::Markup::escape_text(title);
+            text += "</b>\n<tt>";
+            text += command;
+            text += "</tt>";
+        };
+        add_command(
+            _("Open Settings"),
+            "gapplication action org.docklight6 settings");
+        add_command(
+            _("Open Sessions"),
+            "gapplication action org.docklight6 session");
+        add_command(
+            _("Open About"),
+            "gapplication action org.docklight6 about");
+        add_command(
+            _("Exit DockLight"),
+            "gapplication action org.docklight6 exit");
+        text += "\n\n";
+        text += Glib::Markup::escape_text(_(
+            "Assign these commands to any keyboard shortcuts you prefer using "
+            "your desktop environment's keyboard shortcut settings."));
+        text += "\n\n";
+        text += Glib::Markup::escape_text(_(
+            "For more information about DockLight shortcuts, see README.md."));
+
+        Gtk::Label instructions;
+        instructions.set_markup(text);
+        instructions.set_selectable(true);
+        instructions.set_line_wrap(true);
+        instructions.set_xalign(0.0F);
+        instructions.set_yalign(0.0F);
+        instructions.set_margin_start(20);
+        instructions.set_margin_end(20);
+        instructions.set_margin_top(16);
+        instructions.set_margin_bottom(16);
+
+        // Keep instructions copyable and readable on small monitors.
+        Gtk::ScrolledWindow scroller;
+        scroller.set_policy(
+            Gtk::POLICY_NEVER,
+            Gtk::POLICY_AUTOMATIC);
+        scroller.add(instructions);
+        dialog.get_content_area()->pack_start(
+            scroller,
+            Gtk::PACK_EXPAND_WIDGET);
+        dialog.show_all_children();
+        size_dialog_on_parent_monitor(dialog, parent);
+        dialog.present();
+        dialog.run();
+        dialog.hide();
     }
 
     void configure_settings_page(
@@ -1186,6 +1273,7 @@ void DockSettingsDialog::show(
 
     std::vector<sigc::connection>
         settings_connections;
+    sigc::connection shortcuts_notice;
 
     settings_connections.push_back(
         monitor_list
@@ -1348,14 +1436,26 @@ void DockSettingsDialog::show(
             .signal_toggled()
             .connect(
                 [&configuration,
+                 &dialog,
+                 &shortcuts_notice,
                  &home_icon_enabled]()
                 {
-                    configuration.save_setting(
-                        "home_icon_enabled",
-                        home_icon_enabled
-                                .get_active()
-                            ? "true"
-                            : "false");
+                    shortcuts_notice.disconnect();
+                    const bool enabled = home_icon_enabled.get_active();
+                    if (configuration.save_setting(
+                            "home_icon_enabled",
+                            enabled ? "true" : "false") &&
+                        !enabled)
+                    {
+                        // Let mouse, keyboard and accessibility activation
+                        // finish before entering another modal event loop.
+                        shortcuts_notice = Glib::signal_idle().connect(
+                            [&dialog]()
+                            {
+                                show_desktop_shortcuts(dialog);
+                                return false;
+                            });
+                    }
                 }));
 
     settings_connections.push_back(
@@ -1754,6 +1854,7 @@ void DockSettingsDialog::show(
         });
     dialog.run();
     center_connection.disconnect();
+    shortcuts_notice.disconnect();
 
     // Several GTK controls can emit signals while being torn down. Their
     // callbacks refer to other stack-owned dialog controls, whose destruction

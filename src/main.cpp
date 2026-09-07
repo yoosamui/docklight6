@@ -292,6 +292,13 @@ int main(int argc, char *argv[])
             window,
             app);
 
+    DockProcessApplication::register_actions(
+        app,
+        sigc::mem_fun(window, &DockWindow::open_settings),
+        sigc::mem_fun(window, &DockWindow::open_session),
+        sigc::mem_fun(window, &DockWindow::show_about),
+        sigc::mem_fun(window, &DockWindow::exit_docklight));
+
     // A second invocation is delivered to this primary process as an
     // application activation. Treat it as an explicit request to reveal the
     // existing dock instead of silently exiting while the dock is hidden.
