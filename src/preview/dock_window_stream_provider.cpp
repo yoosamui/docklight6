@@ -13,6 +13,7 @@
 // Important implementation decisions:
 // - Wayland screencast objects are negotiated asynchronously.
 // - PipeWire processing occurs away from GTK presentation state.
+// - Reject bottom-up buffers and validate row arithmetic before reading pixels.
 // - Frames are converted to pixbufs before callbacks cross the provider
 //   boundary.
 //
@@ -40,6 +41,7 @@
 #include <cstdint>
 #include <cstring>
 #include <map>
+#include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -141,17 +143,27 @@ bool copy_scaled_frame(
     int &scaled_height,
     std::vector<unsigned char> &rgba)
 {
+    // Keep the packed row width representable before narrowing or multiplying.
+    if (stream.video_info.size.width >
+            static_cast<unsigned int>(std::numeric_limits<int>::max() / 4) ||
+        stream.video_info.size.height >
+            static_cast<unsigned int>(std::numeric_limits<int>::max()))
+    {
+        return false;
+    }
+
     const auto width = static_cast<int>(stream.video_info.size.width);
     const auto height = static_cast<int>(stream.video_info.size.height);
 
     if (!data.data || !data.chunk || width <= 0 || height <= 0 ||
-        stream.target_width <= 0 || stream.target_height <= 0)
+        stream.target_width <= 0 || stream.target_height <= 0 ||
+        data.chunk->stride < 0)
     {
         return false;
     }
 
     const int stride = data.chunk->stride != 0
-                           ? std::abs(data.chunk->stride)
+                           ? data.chunk->stride
                            : width * 4;
 
     if (stride < width * 4 ||
@@ -185,9 +197,11 @@ bool copy_scaled_frame(
         1,
         static_cast<int>(std::lround(height * scale)));
 
-    rgba.resize(
-        static_cast<std::size_t>(scaled_width) *
-        scaled_height * 4);
+    const auto output_bytes =
+        static_cast<std::uint64_t>(scaled_width) * scaled_height * 4;
+    if (output_bytes > std::numeric_limits<std::size_t>::max())
+        return false;
+    rgba.resize(static_cast<std::size_t>(output_bytes));
 
     const bool blue_first =
         format == SPA_VIDEO_FORMAT_BGRA ||
@@ -219,8 +233,8 @@ bool copy_scaled_frame(
             static_cast<int>(std::floor(source_y)));
         const int y1 = std::min(height - 1, y0 + 1);
         const double y_fraction = source_y - y0;
-        const auto *row0 = source + y0 * stride;
-        const auto *row1 = source + y1 * stride;
+        const auto *row0 = source + static_cast<std::size_t>(y0) * stride;
+        const auto *row1 = source + static_cast<std::size_t>(y1) * stride;
         auto *destination_row = rgba.data() +
                                 static_cast<std::size_t>(y) *
                                     scaled_width * 4;

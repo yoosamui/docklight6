@@ -15,11 +15,14 @@
 // - Returned file descriptors and pixel buffers are validated before
 //   conversion.
 // - Completion checks shared lifetime state before invoking callbacks.
+// - Capture errors stay on private X11 connections; GDK handling is untouched.
+// - Validate image dimensions and row layout once before pixel conversion.
 //
 // ------------------------------------------------------------
 
 #include "dock_window_thumbnail_provider.h"
 #include "hyprland_thumbnail_capture.h"
+#include "x11_capture_connection.h"
 #include "integrations/desktop_session_identity.h"
 
 #include <gdk/gdk.h>
@@ -108,8 +111,7 @@ void complete_gnome_live_previews(
     g_clear_error(&error);
 }
 
-std::mutex x_error_handler_mutex;
-thread_local bool x_capture_error = false;
+std::mutex x_capture_mutex;
 
 unsigned long parsed_x11_window_id(
     const WindowId &window_id)
@@ -138,14 +140,6 @@ bool is_x11_window_id(
     const WindowId &window_id)
 {
     return parsed_x11_window_id(window_id) != None;
-}
-
-int capture_x_error_handler(
-    Display *,
-    XErrorEvent *)
-{
-    x_capture_error = true;
-    return 0;
 }
 
 bool x11_compositor_owns_screen(
@@ -211,6 +205,31 @@ unsigned char pixel_channel(
         channel.maximum);
 }
 
+bool valid_capture_image(
+    const XImage *image,
+    int width,
+    int height)
+{
+    if (!image || !image->data || width <= 0 || height <= 0 ||
+        image->width != width || image->height != height ||
+        image->format != ZPixmap || image->xoffset != 0 ||
+        image->bytes_per_line <= 0 ||
+        image->bits_per_pixel <= 0 || image->bits_per_pixel > 32)
+    {
+        return false;
+    }
+
+    const auto row_bytes =
+        (static_cast<std::uint64_t>(width) *
+         image->bits_per_pixel + 7) / 8;
+    return row_bytes <=
+               static_cast<std::uint64_t>(image->bytes_per_line) &&
+           static_cast<std::uint64_t>(image->bytes_per_line) * height <=
+               std::numeric_limits<std::size_t>::max() &&
+           static_cast<std::uint64_t>(width) * height * 4 <=
+               std::numeric_limits<std::size_t>::max();
+}
+
 unsigned long image_pixel(
     XImage *image,
     int x,
@@ -247,28 +266,15 @@ unsigned long image_pixel(
 bool capture_x11_window(
     Completion &completion)
 {
-    char *end = nullptr;
-    errno = 0;
-    const auto parsed = std::strtoull(
-        completion.window_id.c_str(),
-        &end,
-        0);
-
-    if (errno != 0 ||
-        !end ||
-        *end != '\0' ||
-        parsed == 0 ||
-        parsed > std::numeric_limits<unsigned long>::max())
-    {
+    const ::Window window =
+        parsed_x11_window_id(completion.window_id);
+    if (window == None)
         return false;
-    }
 
-    Display *display = XOpenDisplay(nullptr);
+    Display *display = X11Capture::open_display();
     if (!display)
         return false;
 
-    const ::Window window =
-        static_cast<::Window>(parsed);
     XWindowAttributes attributes{};
     Pixmap pixmap = None;
     Pixmap scaled_pixmap = None;
@@ -277,14 +283,11 @@ bool capture_x11_window(
     XImage *image = nullptr;
     bool success = false;
 
-    // X errors are asynchronous. Serialize the process-global handler while
-    // probing a client that may disappear between the registry snapshot and
-    // this worker, and synchronize before restoring the previous handler.
+    // Serialize capture/redirection work. Errors belong only to this private
+    // connection; synchronize asynchronous requests before checking the flag.
     std::lock_guard<std::mutex> guard(
-        x_error_handler_mutex);
-    auto previous_handler = XSetErrorHandler(
-        capture_x_error_handler);
-    x_capture_error = false;
+        x_capture_mutex);
+    X11Capture::error = false;
 
     if (XGetWindowAttributes(
             display,
@@ -323,14 +326,14 @@ bool capture_x11_window(
             XSync(display, False);
 
             if (completion.x11_strict_composite &&
-                x_capture_error)
+                X11Capture::error)
                 pixmap = None;
         }
 
         int drawable_width = attributes.width;
         int drawable_height = attributes.height;
 
-        if (pixmap != None && !x_capture_error)
+        if (pixmap != None && !X11Capture::error)
         {
             ::Window root = None;
             int x = 0;
@@ -340,7 +343,7 @@ bool capture_x11_window(
             unsigned int border_width = 0;
             unsigned int depth = 0;
 
-            x_capture_error = false;
+            X11Capture::error = false;
             const bool has_pixmap_geometry =
                 XGetGeometry(
                     display,
@@ -355,7 +358,7 @@ bool capture_x11_window(
             XSync(display, False);
 
             if (has_pixmap_geometry &&
-                !x_capture_error &&
+                !X11Capture::error &&
                 ((!completion.x11_strict_composite &&
                   width > 0 &&
                   height > 0) ||
@@ -382,7 +385,7 @@ bool capture_x11_window(
         // map/unmap transitions, or without a compositor-owned redirection,
         // that drawable can expose stale or partially obscured storage.
         const bool named_pixmap_valid =
-            pixmap != None && !x_capture_error;
+            pixmap != None && !X11Capture::error;
         const bool drawable_valid =
             !completion.x11_strict_composite ||
             named_pixmap_valid ||
@@ -392,7 +395,7 @@ bool capture_x11_window(
             named_pixmap_valid
                 ? pixmap
                 : window;
-        x_capture_error = false;
+        X11Capture::error = false;
 
         int capture_width = drawable_width;
         int capture_height = drawable_height;
@@ -518,7 +521,7 @@ bool capture_x11_window(
                 XUngrabServer(display);
                 XFlush(display);
 
-                if (!x_capture_error)
+                if (!X11Capture::error)
                 {
                     drawable = scaled_pixmap;
                     capture_width = scaled_width;
@@ -528,7 +531,7 @@ bool capture_x11_window(
             }
         }
 
-        x_capture_error = false;
+        X11Capture::error = false;
 
         if (drawable_valid &&
             completion.x11_native_capture)
@@ -555,11 +558,13 @@ bool capture_x11_window(
             XFlush(display);
         }
 
-        bool image_is_valid = image && !x_capture_error;
+        bool image_is_valid =
+            !X11Capture::error &&
+            valid_capture_image(image, capture_width, capture_height);
         if (image_is_valid && completion.x11_strict_composite)
         {
             XWindowAttributes verified_attributes{};
-            x_capture_error = false;
+            X11Capture::error = false;
             const bool same_viewable_window =
                 XGetWindowAttributes(
                     display,
@@ -568,7 +573,7 @@ bool capture_x11_window(
             XSync(display, False);
 
             image_is_valid =
-                !x_capture_error &&
+                !X11Capture::error &&
                 same_viewable_window &&
                 verified_attributes.map_state == IsViewable &&
                 verified_attributes.c_class == InputOutput &&
@@ -646,7 +651,6 @@ bool capture_x11_window(
         XFreePixmap(display, pixmap);
 
     XSync(display, False);
-    XSetErrorHandler(previous_handler);
     XCloseDisplay(display);
 
     if (!success)
@@ -1226,13 +1230,11 @@ void DockWindowThumbnailProvider::
         return;
 
     std::lock_guard<std::mutex> guard(
-        x_error_handler_mutex);
+        x_capture_mutex);
 
     if (!enabled)
     {
-        auto previous_handler = XSetErrorHandler(
-            capture_x_error_handler);
-        x_capture_error = false;
+        X11Capture::error = false;
         for (const auto window :
              m_x11_redirected_windows)
         {
@@ -1242,14 +1244,13 @@ void DockWindowThumbnailProvider::
                 CompositeRedirectAutomatic);
         }
         XSync(redirect_display, False);
-        XSetErrorHandler(previous_handler);
         m_x11_redirected_windows.clear();
         XCloseDisplay(redirect_display);
         m_x11_redirect_display = nullptr;
         return;
     }
 
-    redirect_display = XOpenDisplay(nullptr);
+    redirect_display = X11Capture::open_display();
     if (!redirect_display)
     {
         g_warning(
@@ -1303,16 +1304,14 @@ void DockWindowThumbnailProvider::
     }
 
     std::lock_guard<std::mutex> guard(
-        x_error_handler_mutex);
-    auto previous_handler = XSetErrorHandler(
-        capture_x_error_handler);
+        x_capture_mutex);
 
     for (const auto window :
          m_x11_redirected_windows)
     {
         if (desired_windows.count(window) == 0)
         {
-            x_capture_error = false;
+            X11Capture::error = false;
             XCompositeUnredirectWindow(
                 display,
                 window,
@@ -1330,17 +1329,16 @@ void DockWindowThumbnailProvider::
             continue;
         }
 
-        x_capture_error = false;
+        X11Capture::error = false;
         XCompositeRedirectWindow(
             display,
             window,
             CompositeRedirectAutomatic);
         XSync(display, False);
-        if (!x_capture_error)
+        if (!X11Capture::error)
             redirected_windows.insert(window);
     }
 
-    XSetErrorHandler(previous_handler);
     m_x11_redirected_windows =
         std::move(redirected_windows);
 }

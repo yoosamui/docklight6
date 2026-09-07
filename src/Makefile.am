@@ -3,6 +3,7 @@ bin_PROGRAMS = \
     docklight6-hyprland-reservation
 
 check_PROGRAMS = \
+    x11_capture_connection_test \
     thumbnail_disk_cache_test \
     dock_application_controller_test \
     dock_autohide_layout_test \
@@ -154,6 +155,8 @@ docklight6_SOURCES = \
     media/dock_media_playback_monitor.cpp \
     preview/dock_window_thumbnail_provider.h \
     preview/dock_window_thumbnail_provider.cpp \
+    preview/x11_capture_connection.h \
+    preview/x11_capture_connection.cpp \
     preview/hyprland_thumbnail_capture.h \
     preview/hyprland_thumbnail_capture.cpp \
     ext-foreign-toplevel-list-v1-client-protocol.h \
@@ -294,6 +297,14 @@ thumbnail_disk_cache_test_SOURCES = \
 
 thumbnail_disk_cache_test_CPPFLAGS = $(GTKMM_CFLAGS)
 thumbnail_disk_cache_test_LDADD = $(GTKMM_LIBS)
+
+x11_capture_connection_test_SOURCES = \
+    tests/x11_capture_connection_test.cpp \
+    preview/x11_capture_connection.h \
+    preview/x11_capture_connection.cpp
+
+x11_capture_connection_test_CPPFLAGS = $(GTKMM_CFLAGS)
+x11_capture_connection_test_LDADD = $(GTKMM_LIBS) -lX11
 
 dock_autohide_layout_test_SOURCES = \
     tests/dock_autohide_layout_test.cpp \
