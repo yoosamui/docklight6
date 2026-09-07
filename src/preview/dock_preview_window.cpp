@@ -11,6 +11,7 @@
 // public signals.
 //
 // Important implementation decisions:
+// - Prune persisted thumbnails on construction, before loading cached frames.
 // - Cohesive cache, animation, and layout methods live in neighboring build
 //   units while sharing the same class declaration.
 //
@@ -49,6 +50,7 @@ bool uses_muffin_session()
 
 DockPreviewWindow::DockPreviewWindow()
 {
+    prune_persistent_thumbnail_cache();
     m_preview_color.set("#69aaff");
 
     set_decorated(false);

@@ -3,6 +3,7 @@ bin_PROGRAMS = \
     docklight6-hyprland-reservation
 
 check_PROGRAMS = \
+    thumbnail_disk_cache_test \
     dock_application_controller_test \
     dock_autohide_layout_test \
     dock_configuration_manager_test \
@@ -169,6 +170,8 @@ docklight6_SOURCES = \
     preview/dock_preview_window_internal.h \
     preview/dock_preview_window.cpp \
     preview/dock_preview_thumbnail_cache.cpp \
+    preview/thumbnail_disk_cache.h \
+    preview/thumbnail_disk_cache.cpp \
     preview/dock_preview_animation.cpp \
     preview/dock_preview_layout.cpp \
     autohide/dock_reveal_window.h \
@@ -283,6 +286,14 @@ dock_application_controller_test_CPPFLAGS = \
 
 dock_application_controller_test_LDADD = \
     $(GTKMM_LIBS)
+
+thumbnail_disk_cache_test_SOURCES = \
+    tests/thumbnail_disk_cache_test.cpp \
+    preview/thumbnail_disk_cache.h \
+    preview/thumbnail_disk_cache.cpp
+
+thumbnail_disk_cache_test_CPPFLAGS = $(GTKMM_CFLAGS)
+thumbnail_disk_cache_test_LDADD = $(GTKMM_LIBS)
 
 dock_autohide_layout_test_SOURCES = \
     tests/dock_autohide_layout_test.cpp \

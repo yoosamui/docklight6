@@ -8,11 +8,13 @@
 //
 // Implementation overview:
 // Implements thumbnail caching, capture recovery, and live preview streams.
+// Disk pairs are removed for closed windows and bounded at startup and writes.
 //
 // ------------------------------------------------------------
 
 #include "dock_preview_window.h"
 #include "dock_preview_window_internal.h"
+#include "thumbnail_disk_cache.h"
 
 #include <glib/gstdio.h>
 
@@ -845,6 +847,10 @@ void DockPreviewWindow::prime_thumbnail_cache(
         {
             if (m_known_window_ids.count(key->first) == 0)
             {
+                const auto paths =
+                    persistent_thumbnail_paths(key->first);
+                g_unlink(paths.image.c_str());
+                g_unlink(paths.identity.c_str());
                 m_thumbnail_cache_persisted.erase(
                     key->first);
                 m_thumbnail_cache_dirty.erase(
@@ -1342,6 +1348,20 @@ void DockPreviewWindow::request_active_cache_refresh(
         uses_strict_x11_capture());
 }
 
+void DockPreviewWindow::prune_persistent_thumbnail_cache()
+{
+    const auto removed = ThumbnailDiskCache::prune(
+        persistent_thumbnail_paths({}).directory);
+    for (auto item = m_thumbnail_cache_persisted.begin();
+         item != m_thumbnail_cache_persisted.end();)
+    {
+        if (removed.count(sha256(*item)) != 0)
+            item = m_thumbnail_cache_persisted.erase(item);
+        else
+            ++item;
+    }
+}
+
 void DockPreviewWindow::persist_thumbnail_cache(
     const WindowId &window_id,
     const Glib::RefPtr<Gdk::Pixbuf> &thumbnail)
@@ -1415,12 +1435,16 @@ void DockPreviewWindow::persist_thumbnail_cache(
     {
         g_clear_error(&error);
         g_unlink(identity_temporary.c_str());
+        g_unlink(paths.image.c_str());
+        g_unlink(paths.identity.c_str());
+        m_thumbnail_cache_persisted.erase(window_id);
         return;
     }
 
     g_clear_error(&error);
     m_thumbnail_cache_persisted.insert(window_id);
     m_thumbnail_cache_dirty.erase(window_id);
+    prune_persistent_thumbnail_cache();
 }
 
 void DockPreviewWindow::request_thumbnail(

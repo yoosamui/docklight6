@@ -14,6 +14,7 @@
 // - Build and update preview cards for managed windows.
 // - Position the surface relative to dock placement and monitor bounds.
 // - Coordinate thumbnails, live streams, and window actions.
+// - Bound persistent thumbnail storage and remove closed-window entries.
 //
 // Dependencies and ownership:
 // The window borrows DockApplicationController and owns its GTK widgets,
@@ -172,6 +173,7 @@ private:
         const WindowId &window_id,
         const Glib::RefPtr<Gdk::Pixbuf>
             &thumbnail);
+    void prune_persistent_thumbnail_cache();
     void show_thumbnail_fallback(
         const WindowId &window_id);
     void start_next_thumbnail_recovery();
