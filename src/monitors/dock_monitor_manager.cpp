@@ -15,6 +15,7 @@
 // - A missing requested output falls back to the primary monitor.
 // - Repeated samples prevent transient geometry from reaching layout code.
 // - Monitor logs describe applied state rather than raw event traffic.
+// - Invalid KDE integers are ignored; geometry is applied as one complete set.
 //
 // ------------------------------------------------------------
 
@@ -35,6 +36,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
+#include <optional>
 #include <regex>
 #include <sstream>
 
@@ -164,6 +166,26 @@ std::string base_identifier(
            std::to_string(index + 1);
 }
 
+std::optional<int> parse_integer(
+    const std::string &value)
+{
+    try
+    {
+        std::size_t parsed_characters = 0;
+        const int parsed =
+            std::stoi(value, &parsed_characters);
+
+        if (parsed_characters != value.size())
+            return {};
+
+        return parsed;
+    }
+    catch (const std::exception &)
+    {
+        return {};
+    }
+}
+
 std::vector<KdeOutput> kde_outputs()
 {
     std::vector<KdeOutput> outputs;
@@ -249,23 +271,27 @@ std::vector<KdeOutput> kde_outputs()
                 match,
                 priority_pattern))
         {
-            current->priority =
-                std::stoi(
-                    match[1].str());
+            const auto priority =
+                parse_integer(match[1].str());
+            if (priority)
+                current->priority = *priority;
         }
         else if (std::regex_search(
                      line,
                      match,
                      geometry_pattern))
         {
-            current->x =
-                std::stoi(match[1].str());
-            current->y =
-                std::stoi(match[2].str());
-            current->width =
-                std::stoi(match[3].str());
-            current->height =
-                std::stoi(match[4].str());
+            const auto x = parse_integer(match[1].str());
+            const auto y = parse_integer(match[2].str());
+            const auto width = parse_integer(match[3].str());
+            const auto height = parse_integer(match[4].str());
+            if (!x || !y || !width || !height)
+                continue;
+
+            current->x = *x;
+            current->y = *y;
+            current->width = *width;
+            current->height = *height;
             current->has_geometry = true;
         }
     }
