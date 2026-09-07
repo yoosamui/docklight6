@@ -15,6 +15,7 @@
 // - Repeated identical requests do not restart visible tooltip state.
 // - Input is transparent so the overlay never interrupts dock hovering.
 // - Mapping is delayed briefly before the centred fade-and-scale reveal.
+// - Destruction cancels reveal and animation timers before members tear down.
 // - Overlay distance is selected from the active hover effect.
 //
 // ------------------------------------------------------------
@@ -181,6 +182,12 @@ DockTooltipWindow::DockTooltipWindow()
         {
             make_input_transparent();
         });
+}
+
+DockTooltipWindow::~DockTooltipWindow()
+{
+    cancel_reveal();
+    cancel_visual_animation();
 }
 
 void DockTooltipWindow::set_monitor(

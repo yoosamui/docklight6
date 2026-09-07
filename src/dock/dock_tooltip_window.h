@@ -41,6 +41,7 @@ class DockTooltipWindow : public Gtk::Window
 {
 public:
     DockTooltipWindow();
+    ~DockTooltipWindow() override;
 
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor>
