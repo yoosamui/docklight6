@@ -30,79 +30,79 @@
 
 namespace
 {
-void keep_dialog_above(
-    Gtk::Window &dialog,
-    Gtk::Window &parent,
-    const char *name_space)
-{
-    dialog.set_keep_above(true);
+    void keep_dialog_above(
+        Gtk::Window &dialog,
+        Gtk::Window &parent,
+        const char *name_space)
+    {
+        dialog.set_keep_above(true);
 
-    if (!gtk_layer_is_supported())
-        return;
+        if (!gtk_layer_is_supported())
+            return;
 
-    auto *window = GTK_WINDOW(dialog.gobj());
-    gtk_layer_init_for_window(window);
-    gtk_layer_set_namespace(window, name_space);
-    gtk_layer_set_layer(
-        window,
-        GTK_LAYER_SHELL_LAYER_OVERLAY);
-    gtk_layer_set_exclusive_zone(window, 0);
-    gtk_layer_set_keyboard_mode(
-        window,
-        GTK_LAYER_SHELL_KEYBOARD_MODE_ON_DEMAND);
+        auto *window = GTK_WINDOW(dialog.gobj());
+        gtk_layer_init_for_window(window);
+        gtk_layer_set_namespace(window, name_space);
+        gtk_layer_set_layer(
+            window,
+            GTK_LAYER_SHELL_LAYER_OVERLAY);
+        gtk_layer_set_exclusive_zone(window, 0);
+        gtk_layer_set_keyboard_mode(
+            window,
+            GTK_LAYER_SHELL_KEYBOARD_MODE_ON_DEMAND);
 
-    const auto parent_window = parent.get_window();
-    if (!parent_window)
-        return;
+        const auto parent_window = parent.get_window();
+        if (!parent_window)
+            return;
 
-    auto *display =
-        gdk_window_get_display(parent_window->gobj());
-    auto *monitor =
-        gdk_display_get_monitor_at_window(
-            display,
-            parent_window->gobj());
-    gtk_layer_set_monitor(window, monitor);
-}
+        auto *display =
+            gdk_window_get_display(parent_window->gobj());
+        auto *monitor =
+            gdk_display_get_monitor_at_window(
+                display,
+                parent_window->gobj());
+        gtk_layer_set_monitor(window, monitor);
+    }
 
-void center_dialog_on_parent_monitor(
-    Gtk::Window &dialog,
-    Gtk::Window &parent)
-{
-    if (gtk_layer_is_supported())
-        return;
+    void center_dialog_on_parent_monitor(
+        Gtk::Window &dialog,
+        Gtk::Window &parent)
+    {
+        if (gtk_layer_is_supported())
+            return;
 
-    const auto parent_window = parent.get_window();
-    if (!parent_window)
-        return;
+        const auto parent_window = parent.get_window();
+        if (!parent_window)
+            return;
 
-    const auto display = parent_window->get_display();
-    const auto monitor = display
-                             ? display->get_monitor_at_window(
-                                   parent_window)
-                             : Glib::RefPtr<Gdk::Monitor>{};
-    if (!monitor)
-        return;
+        const auto display = parent_window->get_display();
+        const auto monitor = display
+                                 ? display->get_monitor_at_window(
+                                       parent_window)
+                                 : Glib::RefPtr<Gdk::Monitor>{};
+        if (!monitor)
+            return;
 
-    Gdk::Rectangle geometry;
-    monitor->get_geometry(geometry);
+        Gdk::Rectangle geometry;
+        monitor->get_geometry(geometry);
 
-    Gtk::Requisition minimum;
-    Gtk::Requisition natural;
-    dialog.get_preferred_size(minimum, natural);
-    const int width = std::max(
-        1,
-        natural.width);
-    const int height = std::max(
-        1,
-        natural.height);
+        Gtk::Requisition minimum;
+        Gtk::Requisition natural;
+        dialog.get_preferred_size(minimum, natural);
+        const int width = std::max(
+            1,
+            natural.width);
+        const int height = std::max(
+            1,
+            natural.height);
 
-    dialog.set_position(Gtk::WIN_POS_NONE);
-    dialog.move(
-        geometry.get_x() +
-            (geometry.get_width() - width) / 2,
-        geometry.get_y() +
-            (geometry.get_height() - height) / 2);
-}
+        dialog.set_position(Gtk::WIN_POS_NONE);
+        dialog.move(
+            geometry.get_x() +
+                (geometry.get_width() - width) / 2,
+            geometry.get_y() +
+                (geometry.get_height() - height) / 2);
+    }
 }
 
 void DockAboutDialog::show(
@@ -199,7 +199,7 @@ void DockAboutDialog::show(
             VERSION));
     Gtk::Label comments(
         _("A lightweight application dock.\n"
-          "Author and Maintainer: yoosamui\n\n"
+          "Author and Maintainer: Juan González\n\n"
           "Copyright © 2018-2026 Juan González"));
 
     Gtk::LinkButton website(

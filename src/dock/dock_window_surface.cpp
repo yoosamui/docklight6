@@ -11,6 +11,8 @@
 // orientation, visual styling, and autohide surface effects.
 // Native X11 magnification grows the painted background without reallocating children.
 // X11 slide distance follows the visible box, excluding magnified overflow.
+// Local transforms clear exposed pixels and invalidate the full dock frame.
+// Bottom magnification omits 10 logical pixels of unused surface headroom.
 //
 // The controller calculates placement; this file performs GTK effects and
 // delegates native placement to the selected surface backend.
@@ -138,23 +140,29 @@ bool DockSurfaceBox::on_draw(
         return true;
     }
 
+    const bool transformed =
+        m_horizontal_scale < 1.0 ||
+        m_vertical_scale < 1.0 ||
+        std::abs(m_horizontal_offset) >= 0.0001 ||
+        std::abs(m_vertical_offset) >= 0.0001;
+    if (transformed)
+    {
+        // GTK can redraw this child without replacing its parent's pixels.
+        // Clear every intermediate frame, not just the fully hidden frame,
+        // so the old body cannot remain behind the moving/scaling content.
+        context->save();
+        context->set_operator(Cairo::OPERATOR_CLEAR);
+        context->paint();
+        context->restore();
+    }
+
     const bool fully_translated =
         std::abs(m_horizontal_offset) >=
             get_allocated_width() ||
         std::abs(m_vertical_offset) >=
             get_allocated_height();
     if (fully_translated)
-    {
-        // A fully clipped slide still owns an X11 backing pixmap. Clear the
-        // last rendered frame explicitly so raising the window opacity for
-        // reveal cannot expose stale dock pixels below another edge panel.
-        context->save();
-        context->set_operator(
-            Cairo::OPERATOR_CLEAR);
-        context->paint();
-        context->restore();
         return true;
-    }
 
     if (m_horizontal_scale <= 0.0 ||
         m_vertical_scale <= 0.0)
@@ -200,6 +208,8 @@ void DockWindow::set_x11_horizontal_scale(
     m_dock_box.set_horizontal_scale(
         scale,
         anchor);
+    // The top-level clear pass must accompany child transform frames.
+    queue_draw();
 }
 
 double DockWindow::x11_horizontal_scale() const
@@ -214,6 +224,8 @@ void DockWindow::set_x11_vertical_scale(
     m_dock_box.set_vertical_scale(
         scale,
         anchor);
+    // The top-level clear pass must accompany child transform frames.
+    queue_draw();
 }
 
 double DockWindow::x11_vertical_scale() const
@@ -236,7 +248,10 @@ ScreenPosition DockWindow::x11_autohide_slide_content_offset(
 void DockWindow::set_x11_horizontal_offset(
     double offset)
 {
+    const double previous = m_dock_box.horizontal_offset();
     m_dock_box.set_horizontal_offset(offset);
+    if (m_dock_box.horizontal_offset() != previous)
+        queue_draw();
 }
 
 double DockWindow::x11_horizontal_offset() const
@@ -247,7 +262,10 @@ double DockWindow::x11_horizontal_offset() const
 void DockWindow::set_x11_vertical_offset(
     double offset)
 {
+    const double previous = m_dock_box.vertical_offset();
     m_dock_box.set_vertical_offset(offset);
+    if (m_dock_box.vertical_offset() != previous)
+        queue_draw();
 }
 
 double DockWindow::x11_vertical_offset() const
@@ -573,8 +591,13 @@ int DockWindow::magnified_surface_cross_axis_size() const
     const int base_size =
         DockLayoutMetrics::item_size_for(
             std::max(1, m_effective_icon_size));
-    return static_cast<int>(
+    const int surface_size = static_cast<int>(
         std::lround(base_size * 2.25));
+    // Scaling the padded item adds 20 pixels beyond the maximum icon
+    // extent plus its normal padding. Trim half that spare room at bottom.
+    return location() == DockLocation::bottom
+               ? surface_size - 10
+               : surface_size;
 }
 
 int DockWindow::magnified_main_axis_extra_size() const

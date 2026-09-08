@@ -54,10 +54,10 @@ int main()
         24);
     assert(
         DockLayoutMetrics::magnified_tooltip_distance_for(48) ==
-        -10);
+        0);
     assert(
         DockLayoutMetrics::magnified_tooltip_distance_for(96) ==
-        -20);
+        0);
 
     DockLayoutEngine engine;
     // Side previews must fit the actual remaining space even when the work
@@ -835,12 +835,12 @@ int main()
     assert(
         reduced_top_overlay_position.y -
             (top_dock.y + top_dock.height) ==
-        -10);
+        0);
     assert(
         bottom_dock.y -
             (reduced_bottom_overlay_position.y +
              overlay_height) ==
-        -10);
+        0);
 
     const auto bottom_layer_position =
         overlay_position_in_workarea(

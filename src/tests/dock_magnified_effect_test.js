@@ -257,4 +257,16 @@ assert.match(
     /if \(m_external_background\)[\s\S]*?propagate_draw\(\*child, context\);[\s\S]*?return true;/,
     "the GTK box must not paint a second background inside the buffered frame");
 
+for (const name of ["pointer_is_inside", "pointer_is_over_dock_body"]) {
+    const body = dockWindowSource.split(`bool DockWindow::${name}()`)[1]
+        .split("\n}\n")[0];
+    assert.match(body,
+        /if \(is_native_x11_presentation\(\)\)[\s\S]*?gdk_device_get_position/,
+        "root pointer coordinates must be restricted to native X11");
+    assert.doesNotMatch(body, /if \(GDK_IS_X11_DISPLAY/,
+        "XWayland must not reuse frozen root coordinates as pointer presence");
+    assert.match(body, /gdk_window_get_device_position/,
+        "XWayland and Wayland require a pointer window for hit testing");
+}
+
 console.log("Dock magnified effect tests passed");

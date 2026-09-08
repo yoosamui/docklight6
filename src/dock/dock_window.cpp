@@ -10,6 +10,7 @@
 // Native X11 magnification uses a reusable complete-frame buffer and painted margins.
 // Implements DockWindow construction, magnified overflow painting, simple
 // controller forwarding, tooltip scheduling, and autohide inhibition.
+// Root pointer coordinates are trusted only on native X11, not XWayland.
 //
 // Cohesive item, surface, and drag-and-drop behavior lives in the companion
 // dock_window_*.cpp translation units.
@@ -21,6 +22,7 @@
 #include "dock_session_item.h"
 #include "dialogs/dock_session_dialog.h"
 #include "presentation/docklight_surface_identity.h"
+#include "presentation/presentation_selector.h"
 
 #include "dock_constants.h"
 #include "dock_window_controller.h"
@@ -488,13 +490,13 @@ bool DockWindow::pointer_is_inside()
     if (!pointer)
         return false;
 
-    // On X11, activating a window can change the topmost GdkWindow below
+    // On native X11, activating a window can change the topmost GdkWindow below
     // the pointer before the pointer itself has moved. Asking the dock's
     // GdkWindow for the device position then returns no pointer window and
     // autohide incorrectly treats the activation as a leave. Use root
     // coordinates for the physical dock rectangle instead; the dock must
     // remain visible until the pointer actually leaves that rectangle.
-    if (GDK_IS_X11_DISPLAY(display))
+    if (is_native_x11_presentation())
     {
         int pointer_x = 0;
         int pointer_y = 0;
@@ -518,6 +520,9 @@ bool DockWindow::pointer_is_inside()
                        get_allocated_height();
     }
 
+    // XWayland freezes root coordinates when the pointer leaves X surfaces.
+    // Require a pointer window so that the last dock position cannot veto
+    // hiding indefinitely after crossing to a native Wayland application.
     int x = 0;
     int y = 0;
     GdkModifierType modifiers{};
@@ -580,7 +585,7 @@ bool DockWindow::pointer_is_over_dock_body()
 
     int x = 0;
     int y = 0;
-    if (GDK_IS_X11_DISPLAY(display))
+    if (is_native_x11_presentation())
     {
         int window_x = 0;
         int window_y = 0;

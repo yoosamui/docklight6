@@ -4,6 +4,8 @@
 // Captures a Hyprland toplevel into wl_shm with
 // ext-image-copy-capture-v1. Each request owns its Wayland connection so the
 // GTK display connection is never used from a thumbnail worker thread.
+// Buffer dimensions stay fixed across asynchronous session resize events;
+// conversion validates the mapped byte capacity before reading pixels.
 // ------------------------------------------------------------
 
 #include "hyprland_thumbnail_capture.h"
@@ -397,11 +399,19 @@ std::optional<uint32_t> preferred_format(
     return std::nullopt;
 }
 
-void convert_to_rgba(
+bool convert_to_rgba(
     HyprlandThumbnail &thumbnail,
     const void *pixels,
+    std::size_t size,
     uint32_t format)
 {
+    if (!pixels || thumbnail.width <= 0 || thumbnail.height <= 0 ||
+        static_cast<std::size_t>(thumbnail.width) >
+            size / 4 / static_cast<std::size_t>(thumbnail.height))
+    {
+        return false;
+    }
+
     const auto pixel_count =
         static_cast<std::size_t>(thumbnail.width) *
         thumbnail.height;
@@ -428,6 +438,7 @@ void convert_to_rgba(
             ? static_cast<unsigned char>(pixel >> 24U)
             : 255;
     }
+    return true;
 }
 
 } // namespace
@@ -499,24 +510,30 @@ capture_hyprland_toplevel(const WindowId &window_id)
         return std::nullopt;
     }
 
+    // Session callbacks can publish new dimensions while wait_for_frame()
+    // dispatches events. Every operation on this buffer must use the same
+    // dimensions that were validated before allocating its shared memory.
+    const auto buffer_width = session_state.width;
+    const auto buffer_height = session_state.height;
+
     const auto format = preferred_format(session_state.formats);
     if (!format ||
-        session_state.width >
+        buffer_width >
             static_cast<uint32_t>(std::numeric_limits<int>::max()) ||
-        session_state.height >
+        buffer_height >
             static_cast<uint32_t>(std::numeric_limits<int>::max()))
     {
         return std::nullopt;
     }
 
     const std::size_t stride =
-        static_cast<std::size_t>(session_state.width) * 4;
-    if (session_state.height >
+        static_cast<std::size_t>(buffer_width) * 4;
+    if (buffer_height >
         std::numeric_limits<std::size_t>::max() / stride)
     {
         return std::nullopt;
     }
-    const std::size_t size = stride * session_state.height;
+    const std::size_t size = stride * buffer_height;
     if (stride >
             static_cast<std::size_t>(
                 std::numeric_limits<int32_t>::max()) ||
@@ -558,8 +575,8 @@ capture_hyprland_toplevel(const WindowId &window_id)
     auto *buffer = wl_shm_pool_create_buffer(
         pool,
         0,
-        static_cast<int32_t>(session_state.width),
-        static_cast<int32_t>(session_state.height),
+        static_cast<int32_t>(buffer_width),
+        static_cast<int32_t>(buffer_height),
         static_cast<int32_t>(stride),
         *format);
     wl_shm_pool_destroy(pool);
@@ -589,20 +606,20 @@ capture_hyprland_toplevel(const WindowId &window_id)
         frame,
         0,
         0,
-        static_cast<int32_t>(session_state.width),
-        static_cast<int32_t>(session_state.height));
+        static_cast<int32_t>(buffer_width),
+        static_cast<int32_t>(buffer_height));
     ext_image_copy_capture_frame_v1_capture(frame);
 
-    const bool captured = wait_for_frame(
+    bool captured = wait_for_frame(
         context.display,
         frame_state.complete) && frame_state.ready;
 
     HyprlandThumbnail thumbnail;
     if (captured)
     {
-        thumbnail.width = static_cast<int>(session_state.width);
-        thumbnail.height = static_cast<int>(session_state.height);
-        convert_to_rgba(thumbnail, pixels, *format);
+        thumbnail.width = static_cast<int>(buffer_width);
+        thumbnail.height = static_cast<int>(buffer_height);
+        captured = convert_to_rgba(thumbnail, pixels, size, *format);
     }
 
     ext_image_copy_capture_frame_v1_destroy(frame);

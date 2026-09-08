@@ -116,9 +116,8 @@ public:
     static constexpr int TOOLTIP_HEIGHT = 38; // Baseline tooltip height
     static constexpr int TOOLTIP_DISTANCE = 12; // Normal gap from the dock
     // Magnified icons grow into the transparent overflow reserved around the
-    // dock. A small overlap compensates for the auxiliary surface shadow and
-    // keeps its visible content close to that enlarged artwork.
-    static constexpr int MAGNIFIED_TOOLTIP_DISTANCE = -10;
+    // dock. Place tooltips and previews flush with that surface edge.
+    static constexpr int MAGNIFIED_TOOLTIP_DISTANCE = 0;
     // Minimum gap between a tooltip and either end of the monitor axis.
     static constexpr int TOOLTIP_EDGE_MARGIN = 8; // Minimum gap from monitor edges
     static constexpr int TOOLTIP_LABEL_PADDING = 12; // Baseline horizontal label padding

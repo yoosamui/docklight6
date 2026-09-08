@@ -13,6 +13,7 @@ check_PROGRAMS = \
     gnome_wayland_window_backend_test \
     hyprland_reserved_area_test \
     hyprland_window_backend_test \
+    hyprland_thumbnail_capture_test \
     launcher_manager_test \
     presentation_selector_test \
     window_registry_test \
@@ -508,3 +509,16 @@ EXTRA_DIST = \
     tests/marco_restore_test.js \
     tests/openbox_group_minimize_test.js \
     tests/xfwm4_restore_test.js
+
+# Include the private converter in the test translation unit.
+hyprland_thumbnail_capture_test_SOURCES = \
+    tests/hyprland_thumbnail_capture_test.cpp \
+    ext-foreign-toplevel-list-v1-protocol.c \
+    ext-image-capture-source-v1-protocol.c \
+    ext-image-copy-capture-v1-protocol.c
+hyprland_thumbnail_capture_test_CPPFLAGS = $(GTKMM_CFLAGS) $(WAYLAND_CFLAGS)
+hyprland_thumbnail_capture_test_LDADD = $(GTKMM_LIBS) $(WAYLAND_LIBS)
+tests/hyprland_thumbnail_capture_test-hyprland_thumbnail_capture_test.$(OBJEXT): \
+    ext-foreign-toplevel-list-v1-client-protocol.h \
+    ext-image-capture-source-v1-client-protocol.h \
+    ext-image-copy-capture-v1-client-protocol.h

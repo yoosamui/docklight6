@@ -1035,8 +1035,8 @@ assert.match(
     "the dock drawing transform must support clipped slide translation on vertical edges");
 assert.match(
     dockWindowSource,
-    /fully_translated[\s\S]*?Cairo::OPERATOR_CLEAR[\s\S]*?context->paint\(\)[\s\S]*?return true;/,
-    "a fully hidden slide must clear stale backing pixels before reveal");
+    /if \(transformed\)[\s\S]*?Cairo::OPERATOR_CLEAR[\s\S]*?context->paint\(\)[\s\S]*?if \(fully_translated\)[\s\S]*?return true;/,
+    "every transformed frame must clear stale pixels, including the fully hidden slide");
 assert.match(
     autohideControllerSource,
     /set_placement\([\s\S]*?cancel_animation\(\);\s*reset_local_visual_transform\(\);/,
