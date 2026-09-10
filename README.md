@@ -13,28 +13,6 @@ previews, multi-monitor placement, bookmarks (sessions) and configurable auto-hi
 **Current version:** `6.0.40`
 
 
-Important current-code details:
-
-- KWin, xfwm4, Marco/Metacity, Muffin, Mutter, and Openbox have separate X11
-  backends. GNOME Wayland uses `GnomeWaylandWindowBackend`; GNOME Shell X11
-  uses `GnomeX11WindowBackend`, which retains `MutterWindowBackend`'s native
-  EWMH/XComposite behavior and adds an optional dock-animation-only Shell
-  bridge. Standalone Mutter keeps `MutterWindowBackend` unchanged.
-- Openbox window previews require an X11 compositor such as `compton` or
-  `picom`. Without one, DockLight continues running, sets `display_preview`
-  to `false`, and displays a warning.
-- KWin on X11 selects `KWinX11WindowBackend`; unknown EWMH-compatible window
-  managers select `EwmhFallbackWindowBackend`.
-- KDE Plasma/KWin, GNOME Shell, and Hyprland are the enabled Wayland
-  environments.
-- Automatic presentation uses XWayland on Hyprland while retaining
-  `HyprlandWindowBackend`. A small native layer-shell companion reserves the
-  work area when autohide is disabled because Hyprland does not consume the
-  visible XWayland dock's EWMH strut. Explicit native presentation remains
-  available for testing the full layer-shell path.
-- Other Wayland sessions exit window-integration startup without creating a
-  backend.
-
 **Project status:** Feature complete. Development now focuses on maintenance,
 bug fixes, compatibility, and translations.
 
@@ -92,7 +70,59 @@ docklight6
 ```
 On the next login, DockLight will start automatically.
 
-### Development builds
+## Uninstallation
+
+Close DockLight before removing it. If it is running, use **Exit** from the
+Home menu or run:
+
+```sh
+gapplication action org.docklight6 exit
+```
+
+From the source directory used for installation, remove the installed files
+with:
+
+```sh
+sudo make -C build-release uninstall
+```
+
+Use the same build directory and installation prefix you originally installed
+with. If you installed a debug build, replace `build-release` with
+`build-debug`. Keep that configured build directory until removal is complete.
+
+Desktop integrations are installed separately and are not removed by
+`make uninstall`. Run the commands for your desktop as your normal user,
+without `sudo`.
+
+For GNOME, disable and remove the Shell extension:
+
+```sh
+gnome-extensions disable docklight-window-integration@docklight6
+gnome-extensions uninstall docklight-window-integration@docklight6
+```
+
+For KDE Plasma, disable the KWin script and remove its package:
+
+```sh
+kwriteconfig6 --file kwinrc --group Plugins \
+    --key org.docklight6.windowintegrationEnabled false
+kpackagetool6 --type KWin/Script --remove org.docklight6.windowintegration
+rm -f "${XDG_DATA_HOME:-$HOME/.local/share}/applications/org.docklight6.desktop"
+kbuildsycoca6 --noincremental
+```
+
+If you installed the optional Plasma minimize effect or geometry bridge, remove
+those components separately as well. Log out and back in after removing desktop
+integrations so the session unloads them. X11 needs no companion removal unless
+you installed the optional GNOME Shell integration.
+
+Remove any DockLight entry from your desktop's autostart settings and any custom
+keyboard shortcuts you created. Your settings remain in
+`~/.config/docklight6/`; delete that folder only if you also want to discard your
+saved configuration, launchers, and sessions. If you use a custom
+`XDG_CONFIG_HOME`, look for the `docklight6` folder there instead.
+
+## Development builds
 
 DockLight uses an out-of-source Autotools build, keeping generated files out of
 `src/`. Create a debug build with full debug symbols and run its tests with:
@@ -201,36 +231,66 @@ DockLight's window backend; the desktop controls focus and dialog placement.
 
 ## Configuration and diagnostics
 
-DockLight creates `~/.config/docklight6/docklight.conf` automatically and
-monitors it for changes. Use the settings dialog for normal configuration.
-The default hover effect is **Magnified**. A missing or empty `hover_effect`
-uses this default; an explicit effect selection is preserved.
-On GNOME Wayland, **Autohide Effect** offers a `GNOME` compositor effect which
-keeps the dock at its edge while scaling the complete dock around its centre
-and fading, matching Plasma Wayland's map/unmap behavior. `Slide and Fade`
-instead combines outward movement with opacity. The GNOME Shell extension
-owns both effects for native Wayland and XWayland presentation.
-On GNOME Shell X11, `GNOME` and `Plasma` use the same Shell-owned centred scale
-and fade while application-window discovery and previews remain native
-EWMH/XComposite. This also upgrades existing configurations which persisted
-`Plasma` before the GNOME-specific choice existed. `Slide` remains a native X11
-effect, and the native path is used automatically for every choice if the
-Shell bridge is unavailable.
-On Plasma Wayland, **Autohide Effect** offers the existing `Plasma` behavior
-and the KDE-specific movement-only `Slide` behavior. KWin owns DockLight's
-screen-edge reveal activation, so an overlapping Plasma panel cannot cover the
-trigger and a newly mapped GTK edge strip cannot reverse a pending hide. At a
-boundary shared by two monitors, KWin detects crossing that boundary along the
-dock instead of activating at the adjacent monitor's outer edge. To suppress
-KWin's blue screen-edge indication without disabling DockLight reveal, disable
-**Desktop Effects → Appearance → Highlight Screen Edges and Hot Corners**. For
-the command-line equivalent and restoration instructions, see
-[Disable KWin's blue screen-edge indication](SETUP.md#disable-kwins-blue-screen-edge-indication).
+### Settings and hover effects
 
-List the monitor names available for monitor-specific placement with:
+Use the **Settings** dialog to configure DockLight. The application creates
+`~/.config/docklight6/docklight.conf` automatically and watches it for changes.
+
+The default hover effect is **Magnified**. DockLight uses this default when
+`hover_effect` is missing or empty, while preserving any effect you explicitly
+select.
+
+### Autohide on GNOME Wayland
+
+In Settings, **Autohide Effect → GNOME** keeps the dock at its screen edge
+while scaling it around its centre and fading it in or out. This matches the
+map/unmap behavior on Plasma Wayland.
+
+Choose **Slide and Fade** to combine outward movement with fading instead.
+The GNOME Shell extension handles both effects, whether DockLight uses native
+Wayland or XWayland presentation.
+
+### Autohide on GNOME Shell X11
+
+The **GNOME** and **Plasma** choices both use the Shell extension's centred
+scale-and-fade animation. Existing configurations saved with **Plasma** also
+receive this behavior. Window discovery and previews continue to use native
+X11 EWMH/XComposite integration.
+
+**Slide** uses DockLight's native X11 animation. If the Shell bridge is
+unavailable, DockLight automatically uses native effects for every choice.
+
+### Autohide on KDE Plasma Wayland
+
+Choose **Plasma** for the compositor's existing animation, or **Slide** for
+the KDE-specific movement-only effect.
+
+KWin handles screen-edge activation to reveal the dock. This lets the trigger
+work even when a Plasma panel overlaps it, and prevents a newly mapped GTK
+edge strip from interrupting a pending hide.
+
+When the dock sits at a boundary between two monitors, KWin detects pointer
+crossings along that boundary rather than using the adjacent monitor's outer
+edge.
+
+To hide KWin's blue edge highlight while keeping DockLight's reveal trigger,
+disable **Desktop Effects → Appearance → Highlight Screen Edges and Hot
+Corners**. See [Disable KWin's blue screen-edge indication](SETUP.md#disable-kwins-blue-screen-edge-indication)
+for the command-line equivalent and instructions to restore the highlight.
+
+### Monitor and integration diagnostics
+
+To find monitor names for monitor-specific placement, run:
 
 ```sh
 docklight6 --list-monitors
+```
+
+To inspect the installed, enabled, and active state of desktop integrations
+without changing your system, run this from the source directory:
+
+```sh
+./setup_backend.sh status
 ```
 
 On KDE Plasma Wayland, a successful integration startup includes these log
@@ -240,6 +300,20 @@ messages:
 KWin window integration is ready for the KWin script
 KWin window integration connected
 ```
+
+## Contributing
+
+Ideas, feedback, and pull requests are welcome. If you have a suggestion or
+would like to propose a change, [open an issue](https://github.com/yoosamui/docklight6/issues)
+and describe what you would like to improve and how it would help users.
+You do not need to write code to contribute: bug reports, documentation
+improvements, and translations are valuable too.
+
+For code changes, submit a pull request explaining the problem, your proposed
+solution, and how you tested it. Please discuss larger changes in an issue
+first so we can agree on the direction before you start. See
+[SETUP.md](SETUP.md) for build and test instructions, and follow the project's
+[architecture guidelines](docs/ARCHITECTURE.md).
 
 ## License
 
