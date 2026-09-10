@@ -21,6 +21,10 @@ Wayland. **On unsupported desktop sessions, the dock can still start, but
 desktop-specific window actions and previews may not be available.**
 
 
+**Demo video:**
+https://youtu.be/ZBSN9LmiqUY
+
+
 ## Installation
 
 ### Debian and Ubuntu based systems
