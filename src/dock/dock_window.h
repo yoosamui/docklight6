@@ -15,6 +15,7 @@
 // - Delegate calculated surface placement to DockSurfaceBackend.
 // - Coordinate item ordering, attachment, drag-and-drop, and tooltips.
 // - Provide the GTK surface used by DockWindowController.
+// - Limit magnified surface input to the dock body; preserve hidden passthrough.
 //
 // Dependencies and ownership:
 // DockWindow owns its GTK children, tooltip, launcher manager, and
@@ -262,6 +263,9 @@ private:
         DockOrientation orientation);
     void set_magnified_layer_active(
         bool active);
+    void update_surface_input_region();
+    void set_surface_input_passthrough(
+        bool passthrough);
     void release_magnified_hover();
     void clear_magnified_hover_frame();
     void set_magnified_main_axis_overflow(
@@ -388,6 +392,7 @@ private:
     guint m_magnified_tick_callback = 0;
     gint64 m_magnified_frame_time_us = 0;
     bool m_magnified_enabled = false;
+    bool m_surface_input_passthrough = false;
 
     bool m_has_synchronized_items = false;
 };

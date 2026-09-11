@@ -8,7 +8,8 @@
 //
 // Purpose:
 // Guards magnified frame ownership, stable geometry, popup handoff,
-// overlay placement, and native X11 buffered presentation contracts.
+// overlay placement, surface input shaping, and native X11 buffered
+// presentation contracts.
 // ------------------------------------------------------------
 
 "use strict";
@@ -268,5 +269,24 @@ for (const name of ["pointer_is_inside", "pointer_is_over_dock_body"]) {
     assert.match(body, /gdk_window_get_device_position/,
         "XWayland and Wayland require a pointer window for hit testing");
 }
+
+// Native input shaping must agree with magnified body hit-testing, including
+// after autohide restoration and child-only allocation changes.
+assert.match(dockWindowSource,
+    /m_dock_box.signal_size_allocate\(\).connect\([\s\S]*?update_surface_input_region\(\)/,
+    "styled margin allocation changes must refresh the native input shape");
+for (const signal of ["signal_realize", "signal_map", "signal_size_allocate"]) {
+    assert.match(dockWindowSource,
+        new RegExp(`${signal}\\(\\).connect\\([\\s\\S]*?update_surface_input_region`),
+        "input shape must follow realization, mapping, and allocation");
+}
+assert.match(dockWindowSource,
+    /DockWindow::update_surface_input_region[\s\S]*?m_surface_input_passthrough \|\| m_magnified_enabled[\s\S]*?Region::create\(\)[\s\S]*?!m_surface_input_passthrough &&[\s\S]*?m_dock_box.translate_coordinates[\s\S]*?m_dock_box.get_allocation\(\)[\s\S]*?region->do_union\(body\)[\s\S]*?input_shape_combine_region\(\s*region,\s*0,\s*0\)/,
+    "hidden input must stay empty while visible magnified input follows the translated body");
+assert.match(autohideSource,
+    /DockAutohideController::set_surface_input_passthrough[\s\S]*?m_window.set_surface_input_passthrough\(passthrough\)/,
+    "autohide must restore the dock-owned input shape instead of the full surface");
+assert.doesNotMatch(autohideSource, /input_shape_combine_region/,
+    "autohide must not overwrite the dock-owned input region");
 
 console.log("Dock magnified effect tests passed");

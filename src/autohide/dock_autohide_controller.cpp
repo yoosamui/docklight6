@@ -7,6 +7,7 @@
 // dock_autohide_controller.cpp
 //
 // Implementation overview:
+// DockWindow owns input shaping across hidden and revealed states.
 // Implements pointer-driven dock hiding and reveal timing around a
 // persistent edge trigger.
 //
@@ -769,18 +770,9 @@ void DockAutohideController::apply_hidden_x11_placement(
 void DockAutohideController::set_surface_input_passthrough(
     bool passthrough)
 {
-    auto gdk_window = m_window.get_window();
-    if (gdk_window)
-    {
-        gdk_window->set_pass_through(passthrough);
-        Cairo::RefPtr<Cairo::Region> input_region;
-        if (passthrough)
-            input_region = Cairo::Region::create();
-        gdk_window->input_shape_combine_region(
-            input_region,
-            0,
-            0);
-    }
+    // DockWindow owns the visible input shape as well as hidden passthrough.
+    // Revealing must not restore input across transparent magnified overflow.
+    m_window.set_surface_input_passthrough(passthrough);
 }
 
 void DockAutohideController::request_shell_visibility(

@@ -11,6 +11,7 @@
 // Implements DockWindow construction, magnified overflow painting, simple
 // controller forwarding, tooltip scheduling, and autohide inhibition.
 // Root pointer coordinates are trusted only on native X11, not XWayland.
+// The native input shape excludes transparent magnification capacity.
 //
 // Cohesive item, surface, and drag-and-drop behavior lives in the companion
 // dock_window_*.cpp translation units.
@@ -222,6 +223,27 @@ DockWindow::DockWindow(
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION +
             1);
 
+    // Child allocations can change inside the fixed magnification surface.
+    // Apply after allocation, using coordinates relative to the toplevel.
+    m_dock_box.signal_size_allocate().connect(
+        [this](Gtk::Allocation &)
+        {
+            update_surface_input_region();
+        });
+    signal_size_allocate().connect(
+        [this](Gtk::Allocation &)
+        {
+            update_surface_input_region();
+        });
+    signal_realize().connect(
+        sigc::mem_fun(
+            *this,
+            &DockWindow::update_surface_input_region));
+    signal_map().connect(
+        sigc::mem_fun(
+            *this,
+            &DockWindow::update_surface_input_region));
+
     create_dock(runtime_info);
 
     m_effective_icon_size =
@@ -341,6 +363,7 @@ bool DockWindow::on_motion_notify_event(
 void DockWindow::set_magnified_enabled(bool enabled)
 {
     m_magnified_enabled = enabled;
+    update_surface_input_region();
     if (m_home_item)
         m_home_item->set_magnified_enabled(enabled);
 
@@ -540,6 +563,47 @@ bool DockWindow::pointer_is_inside()
            y >= 0 &&
            x < get_allocated_width() &&
            y < get_allocated_height();
+}
+
+void DockWindow::set_surface_input_passthrough(
+    bool passthrough)
+{
+    m_surface_input_passthrough = passthrough;
+    update_surface_input_region();
+}
+
+void DockWindow::update_surface_input_region()
+{
+    auto window = get_window();
+    if (!window)
+        return;
+
+    Cairo::RefPtr<Cairo::Region> region;
+    if (m_surface_input_passthrough || m_magnified_enabled)
+    {
+        region = Cairo::Region::create();
+        int x = 0;
+        int y = 0;
+        if (!m_surface_input_passthrough &&
+            m_dock_box.translate_coordinates(*this, 0, 0, x, y))
+        {
+            // Match point_is_over_dock_body(): magnified artwork outside
+            // the body is visual overflow, not another input surface.
+            const auto allocation = m_dock_box.get_allocation();
+            const Cairo::RectangleInt body{
+                x,
+                y,
+                allocation.get_width(),
+                allocation.get_height()};
+            region->do_union(body);
+        }
+    }
+
+    window->set_pass_through(m_surface_input_passthrough);
+    window->input_shape_combine_region(
+        region,
+        0,
+        0);
 }
 
 bool DockWindow::point_is_over_dock_body(int x, int y)
