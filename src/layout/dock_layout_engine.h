@@ -13,6 +13,7 @@
 // Responsibilities:
 // - Convert DockLayoutRequest into concrete screen placement.
 // - Keep monitor-edge and orientation rules centralized.
+// - Derive normal dock bounds without magnification capacity.
 // - Clamp tooltip placement to the selected monitor.
 // - Fit preview width to the actual space beside a vertical dock.
 // - Avoid GTK and layer-shell side effects.
@@ -35,6 +36,12 @@
 class DockLayoutEngine
 {
 public:
+    DockWindowGeometry normal_dock_geometry(
+        DockLocation location,
+        const DockWindowGeometry &surface,
+        int normal_cross_axis_size,
+        int main_axis_capacity) const;
+
     int preview_available_width(
         DockLocation location,
         const MonitorGeometry &monitor,

@@ -8,7 +8,7 @@
 //
 // Implementation overview:
 // Verifies screen reservation, edge placement, and intellihide overlap
-// behavior.
+// behavior, including normal-body overlap inside magnified surfaces.
 //
 // Important implementation decisions:
 // - Tests use plain geometry values without a compositor session.
@@ -23,6 +23,7 @@
 #include "autohide/dock_intellihide_policy.h"
 
 #include <cassert>
+#include <vector>
 
 int main()
 {
@@ -91,6 +92,48 @@ int main()
         DockLocation::bottom, {20, 30, 1000, 600}, {}, 12) == 984);
     assert(engine.preview_available_width(
         DockLocation::top, {20, 30, 1000, 600}, {}, -10) == 984);
+
+    // Only the normal body intersects: overflow on either axis must not
+    // trigger intellihide. Test negative screen origins and every edge.
+    for (const auto location : {DockLocation::top, DockLocation::bottom,
+                               DockLocation::left, DockLocation::right})
+    {
+        const bool vertical = location == DockLocation::left ||
+                              location == DockLocation::right;
+        const DockWindowGeometry surface{
+            -600, -200, vertical ? 144 : 500, vertical ? 500 : 144, true};
+        const auto body = engine.normal_dock_geometry(
+            location, surface, 64, 100);
+        const int expected_x = -600 + (vertical
+            ? (location == DockLocation::right ? 80 : 0) : 50);
+        const int expected_y = -200 + (vertical
+            ? 50 : (location == DockLocation::bottom ? 80 : 0));
+        assert(body.x == expected_x);
+        assert(body.y == expected_y);
+        assert(body.width == (vertical ? 64 : 400));
+        assert(body.height == (vertical ? 400 : 64));
+        assert(body.has_position);
+        const WindowGeometry normal{body.x, body.y, body.width, body.height};
+        std::vector<ManagedWindow> windows(1);
+        for (int x = surface.x - 1; x <= surface.x + surface.width; ++x)
+        {
+            for (int y = surface.y - 1; y <= surface.y + surface.height; ++y)
+            {
+                windows[0].frame_geometry = {x, y, 1, 1};
+                const bool inside = x >= expected_x && y >= expected_y &&
+                    x < expected_x + (vertical ? 64 : 400) &&
+                    y < expected_y + (vertical ? 400 : 64);
+                assert(DockIntellihidePolicy::overlaps_dock(
+                    normal, windows) == inside);
+            }
+        }
+        const auto unchanged = engine.normal_dock_geometry(
+            location, body, 64, 0);
+        assert(unchanged.x == body.x && unchanged.y == body.y);
+        assert(unchanged.width == body.width &&
+               unchanged.height == body.height);
+    }
+
     DockLayoutRequest request;
 
     const MonitorGeometry monitor{

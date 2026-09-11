@@ -289,4 +289,12 @@ assert.match(autohideSource,
 assert.doesNotMatch(autohideSource, /input_shape_combine_region/,
     "autohide must not overwrite the dock-owned input region");
 
+const intellihideBody = dockWindowControllerSource.split(
+    "void DockWindowController::update_intellihide()")[1].split("\nScreenPosition")[0];
+assert.match(intellihideBody,
+    /m_placement.width[\s\S]*?m_placement.height[\s\S]*?magnified_surface_enabled[\s\S]*?normal_dock_geometry[\s\S]*?normal_dock_cross_axis_size[\s\S]*?magnified_main_axis_extra_size[\s\S]*?body.x, body.y, body.width, body.height[\s\S]*?overlaps_dock/,
+    "intellihide must remove magnification capacity from stable revealed bounds");
+assert.doesNotMatch(intellihideBody, /get_allocated_|m_magnified_main_axis_margin_extra/,
+    "hidden allocations and animated margins must not change overlap bounds");
+
 console.log("Dock magnified effect tests passed");

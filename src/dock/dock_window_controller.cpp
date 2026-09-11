@@ -16,6 +16,7 @@
 // - Mapping invalidates applied placement because the WM may reposition it.
 // - Effective icon size is derived from available monitor space.
 // - Published icon geometry prefers compositor surface coordinates.
+// - Intellihide compares normal revealed bounds, excluding magnification.
 // - Tooltip and preview timers are owned by their focused managers.
 //
 // ------------------------------------------------------------
@@ -1222,11 +1223,21 @@ void DockWindowController::update_intellihide()
                 dock_width,
                 dock_height);
 
-        WindowGeometry dock_geometry;
-        dock_geometry.x = position.x;
-        dock_geometry.y = position.y;
-        dock_geometry.width = dock_width;
-        dock_geometry.height = dock_height;
+        DockWindowGeometry body{
+            position.x, position.y, dock_width, dock_height, true};
+        if (m_window.magnified_surface_enabled())
+        {
+            // Intellihide uses the normal revealed body, independent of
+            // transparent capacity and animated magnified end margins.
+            body = DockLayoutEngine{}.normal_dock_geometry(
+                m_layout_request.location,
+                body,
+                m_window.normal_dock_cross_axis_size(),
+                m_window.magnified_main_axis_extra_size());
+        }
+
+        const WindowGeometry dock_geometry{
+            body.x, body.y, body.width, body.height};
 
         overlap =
             DockIntellihidePolicy::overlaps_dock(

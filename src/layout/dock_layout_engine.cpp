@@ -13,6 +13,7 @@
 // Important implementation decisions:
 // - Calculations use plain data structures and have no GTK effects.
 // - Dock placement is expressed as anchors and compositor margins.
+// - Normal body bounds exclude magnification capacity on both axes.
 // - Tooltip positions use monitor coordinates and edge clamping.
 // - Orientation-specific branches remain explicit at the rule boundary.
 //
@@ -22,6 +23,42 @@
 #include "dock_layout_metrics.h"
 
 #include <algorithm>
+
+DockWindowGeometry DockLayoutEngine::normal_dock_geometry(
+    DockLocation location,
+    const DockWindowGeometry &surface,
+    int normal_cross_axis_size,
+    int main_axis_capacity) const
+{
+    auto body = surface;
+    if (surface.width <= 0 || surface.height <= 0)
+        return body;
+
+    const bool vertical =
+        location == DockLocation::left ||
+        location == DockLocation::right;
+    if (vertical)
+    {
+        body.width = std::clamp(
+            normal_cross_axis_size, 1, surface.width);
+        body.height = std::max(
+            1, surface.height - std::max(0, main_axis_capacity));
+        body.y += (surface.height - body.height) / 2;
+        if (location == DockLocation::right)
+            body.x += surface.width - body.width;
+    }
+    else
+    {
+        body.width = std::max(
+            1, surface.width - std::max(0, main_axis_capacity));
+        body.height = std::clamp(
+            normal_cross_axis_size, 1, surface.height);
+        body.x += (surface.width - body.width) / 2;
+        if (location == DockLocation::bottom)
+            body.y += surface.height - body.height;
+    }
+    return body;
+}
 
 // Calculates dock anchors, margins, orientation, and requested size from
 // plain geometry. Keeping this outside DockWindow prevents layer-shell side
