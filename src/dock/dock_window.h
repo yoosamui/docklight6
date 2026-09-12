@@ -214,6 +214,9 @@ private:
         int x,
         int y);
     bool drop_item_first();
+    bool drop_item_in_magnified_gap(
+        int x,
+        int y);
     bool pointer_is_inside();
     bool point_is_over_dock_body(
         int x,
@@ -369,7 +372,6 @@ private:
     std::unique_ptr<DockWindowController> m_controller;
 
     DockItem *m_dragged_item = nullptr;
-    bool m_item_drop_accepted = false;
     std::vector<std::pair<DockItem *, double>>
         m_magnified_anchors;
     std::vector<std::pair<Gtk::Widget *, double>>

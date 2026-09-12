@@ -11,7 +11,8 @@
 // Implements DockWindow construction, magnified overflow painting, simple
 // controller forwarding, tooltip scheduling, and autohide inhibition.
 // Root pointer coordinates are trusted only on native X11, not XWayland.
-// The native input shape excludes transparent magnification capacity.
+// The native input shape includes magnification capacity during internal drags.
+// Autohide containment follows that same visible input area.
 //
 // Cohesive item, surface, and drag-and-drop behavior lives in the companion
 // dock_window_*.cpp translation units.
@@ -494,6 +495,12 @@ void DockWindow::edit_session(
 
 bool DockWindow::pointer_is_inside()
 {
+    // Leaving the shaped body emits the last crossing event: transparent
+    // overflow cannot emit another leave when the pointer exits the surface.
+    // Match the input shape so that overflow cannot cancel autohide forever.
+    if (m_magnified_enabled && !m_dragged_item)
+        return pointer_is_over_dock_body();
+
     auto *window = gtk_widget_get_window(
         GTK_WIDGET(gobj()));
 
@@ -579,7 +586,8 @@ void DockWindow::update_surface_input_region()
         return;
 
     Cairo::RefPtr<Cairo::Region> region;
-    if (m_surface_input_passthrough || m_magnified_enabled)
+    if (m_surface_input_passthrough ||
+        (m_magnified_enabled && !m_dragged_item))
     {
         region = Cairo::Region::create();
         int x = 0;
@@ -587,8 +595,8 @@ void DockWindow::update_surface_input_region()
         if (!m_surface_input_passthrough &&
             m_dock_box.translate_coordinates(*this, 0, 0, x, y))
         {
-            // Match point_is_over_dock_body(): magnified artwork outside
-            // the body is visual overflow, not another input surface.
+            // Normal hover uses the body. An internal magnified drag uses
+            // the full surface, including the enlarged artwork and gaps.
             const auto allocation = m_dock_box.get_allocation();
             const Cairo::RectangleInt body{
                 x,

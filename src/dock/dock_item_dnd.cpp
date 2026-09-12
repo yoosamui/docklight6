@@ -8,12 +8,31 @@
 //
 // Implementation overview:
 // Implements DockItem drag-source and drag-destination behavior.
+// Magnified items delegate destinations to the dock's painted-coordinate
+// handler; their fixed GTK allocations are not visual drop targets.
 //
 // ------------------------------------------------------------
 
 #include "dock_item.h"
 #include "dock_constants.h"
 #include "dock_window.h"
+
+void DockItem::configure_drag_destination()
+{
+    if (m_hover_effect == DockHoverEffect::magnified)
+    {
+        drag_dest_unset();
+        return;
+    }
+
+    drag_dest_set(
+        {Gtk::TargetEntry(
+            DockConstants::DOCK_ITEM_DRAG_TARGET,
+            Gtk::TARGET_SAME_APP)},
+        Gtk::DEST_DEFAULT_MOTION |
+            Gtk::DEST_DEFAULT_HIGHLIGHT,
+        Gdk::ACTION_MOVE);
+}
 
 void DockItem::on_drag_begin(
     const Glib::RefPtr<

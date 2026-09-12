@@ -10,6 +10,8 @@
 // Implements DockWindow item-reordering drag-and-drop behavior.
 //
 // Drag reorder writes through LauncherManager before rebuilding widgets.
+// Magnified gaps use painted centers; other effects keep their existing targets.
+// Drag completion samples pointer containment after restoring normal input.
 //
 // ------------------------------------------------------------
 
@@ -28,7 +30,7 @@ void DockWindow::begin_item_drag(
         inhibit_autohide();
 
     m_dragged_item = &item;
-    m_item_drop_accepted = false;
+    update_surface_input_region();
     hide_tooltip_immediately();
 }
 
@@ -72,10 +74,8 @@ bool DockWindow::drop_item(
 
     if (m_dragged_item == &target)
     {
-        m_item_drop_accepted =
-            apply_dragged_item_order(
-                items);
-        return m_item_drop_accepted;
+        return apply_dragged_item_order(
+            items);
     }
 
     const bool horizontal =
@@ -119,10 +119,8 @@ bool DockWindow::drop_item(
         insertion,
         m_dragged_item);
 
-    m_item_drop_accepted =
-        apply_dragged_item_order(
-            items);
-    return m_item_drop_accepted;
+    return apply_dragged_item_order(
+        items);
 }
 
 void DockWindow::end_item_drag(
@@ -130,14 +128,17 @@ void DockWindow::end_item_drag(
 {
     if (m_dragged_item == &item)
     {
-        const bool pointer_inside =
-            m_item_drop_accepted ||
-            pointer_is_inside();
-
+        if (m_magnified_enabled)
+        {
+            // Discard the frozen picture and finish queued child allocation
+            // before hover can capture anchors for the new order.
+            reset_magnified_hover();
+            check_resize();
+        }
         m_dragged_item = nullptr;
+        update_surface_input_region();
         m_controller->finish_autohide_drag(
-            pointer_inside);
-        m_item_drop_accepted = false;
+            pointer_is_inside());
     }
 }
 
@@ -148,7 +149,8 @@ bool DockWindow::on_drag_motion(
     int y,
     guint time)
 {
-    if (!is_first_item_drop_zone(
+    if (!(m_magnified_enabled && m_dragged_item) &&
+        !is_first_item_drop_zone(
             x,
             y))
     {
@@ -168,8 +170,9 @@ bool DockWindow::on_drag_drop(
     int y,
     guint time)
 {
-    const bool accepted =
-        is_first_item_drop_zone(
+    const bool accepted = m_magnified_enabled
+        ? drop_item_in_magnified_gap(x, y)
+        : is_first_item_drop_zone(
             x,
             y) &&
         drop_item_first();
@@ -180,6 +183,43 @@ bool DockWindow::on_drag_drop(
         time);
 
     return accepted;
+}
+
+bool DockWindow::drop_item_in_magnified_gap(
+    int x,
+    int y)
+{
+    if (!m_dragged_item)
+        return false;
+
+    const bool horizontal =
+        m_dock_box.get_orientation() ==
+            Gtk::ORIENTATION_HORIZONTAL;
+    const int pointer = horizontal ? x : y;
+    DockItem *target = nullptr;
+    bool after = false;
+    for (auto *item : dock_items())
+    {
+        if (!item->get_visible())
+            continue;
+        auto geometry = item->icon_geometry();
+        apply_magnified_visual_center(*item, geometry);
+        target = item;
+        after = pointer >=
+            (horizontal ? geometry.center_x : geometry.center_y);
+        if (!after)
+            break;
+    }
+    if (!target)
+        return false;
+
+    // Feed the selected side to the existing reorder/persistence path.
+    // The pointer is in a gap, so it has no meaningful child-local position.
+    const auto allocation = target->get_allocation();
+    return drop_item(
+        *target,
+        horizontal && after ? allocation.get_width() : 0,
+        !horizontal && after ? allocation.get_height() : 0);
 }
 
 bool DockWindow::is_first_item_drop_zone(
@@ -269,16 +309,17 @@ bool DockWindow::drop_item_first()
         items.begin(),
         m_dragged_item);
 
-    m_item_drop_accepted =
-        apply_dragged_item_order(
-            items);
-    return m_item_drop_accepted;
+    return apply_dragged_item_order(
+        items);
 }
 
 bool DockWindow::apply_dragged_item_order(
     const std::vector<DockItem *>
         &items)
 {
+    // A successful gap drop must not retain the pre-drop painted order.
+    if (m_magnified_pointer_active)
+        reset_magnified_hover();
     int position = 2;
 
     for (auto *item : items)

@@ -260,6 +260,7 @@ private:
     void log_context_action(
         const char *action) const;
     void apply_hover_effect();
+    void configure_drag_destination();
     void apply_magnified_size_request();
     void create_zoom_frames();
     void start_zoom_animation();

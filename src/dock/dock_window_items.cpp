@@ -15,6 +15,7 @@
 // - Item synchronization preserves configured order while merging apps.
 // - Auxiliary overlays follow painted magnified centers, not fixed widgets.
 // - Magnification waits for reveal and interpolates using elapsed frame time.
+// - Internal drags freeze the painted positions until GTK finishes reordering.
 // - Native X11 expands only the painted background, keeping GTK allocations fixed.
 // - Frame origins use allocated spacers, never pending margin requests.
 //
@@ -101,6 +102,11 @@ void DockWindow::unregister_dock_item(
 
 void DockWindow::update_magnified_hover(int x, int y)
 {
+    // A drag uses the painted positions captured before GTK takes the grab.
+    // Do not capture a new snapshot while reorder allocation is pending.
+    if (m_dragged_item)
+        return;
+
     if (!m_magnified_enabled ||
         !m_controller ||
         !m_controller->is_fully_revealed() ||
@@ -257,6 +263,9 @@ void DockWindow::clear_magnified_hover_frame()
 
 bool DockWindow::advance_magnified_hover()
 {
+    if (m_dragged_item)
+        return true;
+
     if (!m_magnified_enabled ||
         !m_magnified_pointer_active)
     {

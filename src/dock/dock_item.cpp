@@ -212,11 +212,7 @@ void DockItem::initialize(
         Gdk::BUTTON1_MASK,
         Gdk::ACTION_MOVE);
 
-    drag_dest_set(
-        drag_targets,
-        Gtk::DEST_DEFAULT_MOTION |
-            Gtk::DEST_DEFAULT_HIGHLIGHT,
-        Gdk::ACTION_MOVE);
+    configure_drag_destination();
 
     image.set_halign(Gtk::ALIGN_CENTER);
     image.set_valign(Gtk::ALIGN_CENTER);
@@ -378,6 +374,7 @@ void DockItem::set_hover_effect(
     }
 
     m_hover_effect = effect;
+    configure_drag_destination();
     m_magnified_scale = 1.0;
     image.set_opacity(1.0);
     if (m_hover_effect == DockHoverEffect::magnified)

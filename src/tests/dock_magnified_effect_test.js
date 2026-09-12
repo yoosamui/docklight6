@@ -21,11 +21,17 @@ const path = require("path");
 const dockItemSource = fs.readFileSync(
     path.resolve(__dirname, "../dock/dock_item.cpp"),
     "utf8");
+const dockItemDndSource = fs.readFileSync(
+    path.resolve(__dirname, "../dock/dock_item_dnd.cpp"),
+    "utf8");
 const dockItemEffectsSource = fs.readFileSync(
     path.resolve(__dirname, "../dock/dock_item_effects.cpp"),
     "utf8");
 const dockWindowSource = fs.readFileSync(
     path.resolve(__dirname, "../dock/dock_window.cpp"),
+    "utf8");
+const dockWindowDndSource = fs.readFileSync(
+    path.resolve(__dirname, "../dock/dock_window_dnd.cpp"),
     "utf8");
 const dockWindowItemsSource = fs.readFileSync(
     path.resolve(__dirname, "../dock/dock_window_items.cpp"),
@@ -273,6 +279,16 @@ for (const name of ["pointer_is_inside", "pointer_is_over_dock_body"]) {
 // Native input shaping must agree with magnified body hit-testing, including
 // after autohide restoration and child-only allocation changes.
 assert.match(dockWindowSource,
+    /DockWindow::pointer_is_inside\(\)[\s\S]*?if \(m_magnified_enabled && !m_dragged_item\)\s*return pointer_is_over_dock_body\(\);/,
+    "autohide must treat leaving the shaped body as a leave, without waiting for an overflow crossing");
+const dragEnd = dockWindowDndSource.split("void DockWindow::end_item_drag")[1]
+    .split("bool DockWindow::on_drag_motion")[0];
+assert.match(dragEnd,
+    /m_dragged_item = nullptr;\s*update_surface_input_region\(\);\s*m_controller->finish_autohide_drag\(\s*pointer_is_inside\(\)\);/,
+    "drag completion must resample the pointer against the restored input area");
+assert.doesNotMatch(dragEnd, /m_item_drop_accepted\s*\|\|/,
+    "an accepted overflow drop must not force the autohide pointer state inside");
+assert.match(dockWindowSource,
     /m_dock_box.signal_size_allocate\(\).connect\([\s\S]*?update_surface_input_region\(\)/,
     "styled margin allocation changes must refresh the native input shape");
 for (const signal of ["signal_realize", "signal_map", "signal_size_allocate"]) {
@@ -281,7 +297,7 @@ for (const signal of ["signal_realize", "signal_map", "signal_size_allocate"]) {
         "input shape must follow realization, mapping, and allocation");
 }
 assert.match(dockWindowSource,
-    /DockWindow::update_surface_input_region[\s\S]*?m_surface_input_passthrough \|\| m_magnified_enabled[\s\S]*?Region::create\(\)[\s\S]*?!m_surface_input_passthrough &&[\s\S]*?m_dock_box.translate_coordinates[\s\S]*?m_dock_box.get_allocation\(\)[\s\S]*?region->do_union\(body\)[\s\S]*?input_shape_combine_region\(\s*region,\s*0,\s*0\)/,
+    /DockWindow::update_surface_input_region[\s\S]*?m_surface_input_passthrough \|\|\s*\(m_magnified_enabled && !m_dragged_item\)[\s\S]*?Region::create\(\)[\s\S]*?!m_surface_input_passthrough &&[\s\S]*?m_dock_box.translate_coordinates[\s\S]*?m_dock_box.get_allocation\(\)[\s\S]*?region->do_union\(body\)[\s\S]*?input_shape_combine_region\(\s*region,\s*0,\s*0\)/,
     "hidden input must stay empty while visible magnified input follows the translated body");
 assert.match(autohideSource,
     /DockAutohideController::set_surface_input_passthrough[\s\S]*?m_window.set_surface_input_passthrough\(passthrough\)/,
@@ -297,4 +313,33 @@ assert.match(intellihideBody,
 assert.doesNotMatch(intellihideBody, /get_allocated_|m_magnified_main_axis_margin_extra/,
     "hidden allocations and animated margins must not change overlap bounds");
 
+assert.match(dockWindowDndSource,
+    /DockWindow::on_drag_motion[\s\S]*?m_magnified_enabled && m_dragged_item[\s\S]*?is_first_item_drop_zone/,
+    "magnified gaps must accept an active internal drag beyond the first-item zone");
+assert.match(dockWindowDndSource,
+    /const bool accepted = m_magnified_enabled\s*\? drop_item_in_magnified_gap\(x, y\)\s*: is_first_item_drop_zone/,
+    "gap fallback must be restricted to magnified mode, preserving other drop behavior");
+assert.match(dockWindowDndSource,
+    /DockWindow::drop_item_in_magnified_gap[\s\S]*?if \(!m_dragged_item\)[\s\S]*?return false;[\s\S]*?apply_magnified_visual_center[\s\S]*?return drop_item\(/,
+    "magnified gaps must use existing painted centers and the existing persistence path");
+assert.match(dockWindowDndSource,
+    /DockWindow::apply_dragged_item_order[\s\S]*?if \(m_magnified_pointer_active\)\s*reset_magnified_hover\(\);[\s\S]*?m_dock_box.reorder_child/,
+    "successful reordering must discard the previous magnified picture before moving widgets");
+assert.match(dockItemDndSource,
+    /DockItem::configure_drag_destination[\s\S]*?m_hover_effect == DockHoverEffect::magnified[\s\S]*?drag_dest_unset\(\);[\s\S]*?return;[\s\S]*?drag_dest_set\([\s\S]*?Gtk::DEST_DEFAULT_MOTION[\s\S]*?Gtk::DEST_DEFAULT_HIGHLIGHT/,
+    "magnified drops must reach the dock while other effects retain their GTK destinations");
+assert.match(dockItemSource,
+    /drag_source_set\([\s\S]*?configure_drag_destination\(\);/,
+    "new items must configure destinations for their initial effect");
+assert.match(dockItemSource,
+    /m_hover_effect = effect;\s*configure_drag_destination\(\);/,
+    "changing effects must restore or remove child destinations immediately");
+assert.match(dockWindowDndSource,
+    /reset_magnified_hover\(\);\s*check_resize\(\);[\s\S]*?m_dragged_item = nullptr;\s*update_surface_input_region\(\);/,
+    "drag completion must settle allocation before hover can capture the reordered icons");
+for (const method of ["update_magnified_hover", "advance_magnified_hover"]) {
+    assert.match(dockWindowItemsSource.split(`DockWindow::${method}`)[1],
+        /\{\s*(?:\/\/[^\n]*\n\s*)*if \(m_dragged_item\)/,
+        "dragging must freeze magnified positions and prevent stale anchor capture");
+}
 console.log("Dock magnified effect tests passed");
