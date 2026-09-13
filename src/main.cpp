@@ -4,7 +4,7 @@
 // Copyright © 2018-2026 Juan González  <https://github.com/yoosamui>
 //
 // Author & Maintainer: Juan González
-// Development Pair: ChatGPT
+// Development Pair: GPT codex
 //
 // This file is part of Docklight.
 //
