@@ -8,7 +8,7 @@
 //
 // Implementation overview:
 // Implements tooltip measurement, styling, visual transitions, and
-// application of precomputed layer-shell margins.
+// application of precomputed output-relative layer-shell positions.
 //
 // Important implementation decisions:
 // - Text is measured before the layout engine chooses a position.
@@ -17,6 +17,9 @@
 // - Mapping is delayed briefly before the centred fade-and-scale reveal.
 // - Destruction cancels reveal and animation timers before members tear down.
 // - Overlay distance is selected from the active hover effect.
+//
+// - Native tooltips use TOP beneath the magnified dock on OVERLAY.
+// - Exclusive zone -1 keeps output coordinates independent of panel struts.
 //
 // ------------------------------------------------------------
 
@@ -161,7 +164,9 @@ DockTooltipWindow::DockTooltipWindow()
             DocklightSurfaceIdentity::
                 TOOLTIP_NAMESPACE);
         gtk_layer_set_layer(window, GTK_LAYER_SHELL_LAYER_OVERLAY);
-        gtk_layer_set_exclusive_zone(window, 0);
+        // Layout already accounts for panels and dock geometry. Do not let
+        // the compositor offset the result again by its reserved work area.
+        gtk_layer_set_exclusive_zone(window, -1);
     }
     else
     {
@@ -190,6 +195,15 @@ DockTooltipWindow::~DockTooltipWindow()
     cancel_visual_animation();
 }
 
+void DockTooltipWindow::set_below_magnified_dock(bool enabled)
+{
+    if (m_uses_layer_shell)
+        gtk_layer_set_layer(
+            GTK_WINDOW(gobj()),
+            enabled ? GTK_LAYER_SHELL_LAYER_TOP
+                    : GTK_LAYER_SHELL_LAYER_OVERLAY);
+}
+
 void DockTooltipWindow::set_monitor(
     const Glib::RefPtr<Gdk::Monitor>
         &monitor)
@@ -203,11 +217,6 @@ void DockTooltipWindow::set_monitor(
             geometry.get_y(),
             geometry.get_width(),
             geometry.get_height()};
-        m_workarea_geometry = {
-            0,
-            0,
-            geometry.get_width(),
-            geometry.get_height()};
     }
 
     if (m_uses_layer_shell)
@@ -217,16 +226,6 @@ void DockTooltipWindow::set_monitor(
             monitor
                 ? monitor->gobj()
                 : nullptr);
-    }
-}
-
-void DockTooltipWindow::set_workarea_geometry(
-    const MonitorGeometry &geometry)
-{
-    if (geometry.width > 0 &&
-        geometry.height > 0)
-    {
-        m_workarea_geometry = geometry;
     }
 }
 
@@ -631,11 +630,8 @@ void DockTooltipWindow::apply_position(
 
     auto window = GTK_WINDOW(gobj());
 
-    const auto layer_position =
-        overlay_position_in_workarea(
-            position,
-            m_workarea_geometry);
-
+    // Zone -1 anchors against the full output, irrespective of which
+    // panels reserve space or which layer contains this tooltip.
     const bool right =
         location == DockLocation::right;
 
@@ -667,7 +663,7 @@ void DockTooltipWindow::apply_position(
         GTK_LAYER_SHELL_EDGE_LEFT,
         right
             ? 0
-            : std::max(0, layer_position.x));
+            : std::max(0, position.x));
 
     gtk_layer_set_margin(
         window,
@@ -675,8 +671,8 @@ void DockTooltipWindow::apply_position(
         right
             ? std::max(
                   0,
-                  m_workarea_geometry.width -
-                      layer_position.x - width)
+                  m_monitor_geometry.width -
+                      position.x - width)
             : 0);
 
     gtk_layer_set_margin(
@@ -684,7 +680,7 @@ void DockTooltipWindow::apply_position(
         GTK_LAYER_SHELL_EDGE_TOP,
         anchor_bottom
             ? 0
-            : std::max(0, layer_position.y));
+            : std::max(0, position.y));
 
     gtk_layer_set_margin(
         window,
@@ -692,7 +688,7 @@ void DockTooltipWindow::apply_position(
         anchor_bottom
             ? std::max(
                   0,
-                  m_workarea_geometry.height -
-                      layer_position.y - height)
+                  m_monitor_geometry.height -
+                      position.y - height)
             : 0);
 }

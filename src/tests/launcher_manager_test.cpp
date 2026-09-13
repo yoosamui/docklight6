@@ -27,6 +27,43 @@
 namespace
 {
 
+void verifies_resolution_cache_invalidation(const std::string &directory)
+{
+    LauncherManager manager(directory + "/docklight.data");
+    const std::string alias = "Docklight CPU Cache Test Alias";
+    const auto unresolved = LauncherManager::normalize_desktop_id(alias);
+    const auto desktop_file = directory +
+        "/applications/docklight-cpu-cache-test.desktop";
+    assert(manager.normalize_resolved_id(alias) == unresolved);
+    {
+        std::ofstream file(desktop_file);
+        file << "[Desktop Entry]\nType=Application\n"
+             << "Name=" << alias << "\nExec=/bin/true\n";
+        assert(file);
+    }
+
+    // A previously missing alias must be discovered after installation,
+    // and a cached positive result must disappear after uninstallation.
+    const auto await_resolution = [&manager, &alias](const std::string &expected)
+    {
+        const auto deadline = g_get_monotonic_time() + 5000000;
+        do
+        {
+            while (g_main_context_iteration(nullptr, false)) {}
+            if (manager.normalize_resolved_id(alias) == expected)
+                return;
+            g_usleep(10000);
+        } while (g_get_monotonic_time() < deadline);
+        assert(false && "application monitor did not invalidate resolved IDs");
+    };
+    await_resolution("docklight-cpu-cache-test.desktop");
+    for (int i = 0; i < 100; ++i)
+        assert(manager.normalize_resolved_id(alias) ==
+               "docklight-cpu-cache-test.desktop");
+    assert(g_remove(desktop_file.c_str()) == 0);
+    await_resolution(unresolved);
+}
+
 void verifies_executable_alias_resolution()
 {
     // Exercise the executable-to-desktop-ID alias that originally exposed
@@ -722,8 +759,15 @@ void verifies_legacy_dock_order_migrates_with_session_items()
 
 int main()
 {
+    auto *cache_directory = g_dir_make_tmp("docklight-app-cache-XXXXXX", nullptr);
+    assert(cache_directory);
+    const std::string directory = cache_directory;
+    g_free(cache_directory);
+    assert(g_mkdir_with_parents((directory + "/applications").c_str(), 0700) == 0);
+    assert(g_setenv("XDG_DATA_HOME", directory.c_str(), true));
     Gio::init();
 
+    verifies_resolution_cache_invalidation(directory);
     verifies_executable_alias_resolution();
     verifies_order_and_persistence();
     verifies_transient_window_ids_are_not_persisted();
@@ -732,5 +776,7 @@ int main()
     verifies_session_markers_resolve_bottom_definitions();
     verifies_legacy_dock_order_migrates_with_session_items();
 
+    g_rmdir((directory + "/applications").c_str());
+    g_rmdir(directory.c_str());
     return 0;
 }

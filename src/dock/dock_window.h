@@ -156,6 +156,7 @@ public:
         const Glib::ustring &text);
     void schedule_hide_tooltip(Gtk::Widget &item);
     void update_magnified_hover(int x, int y);
+    void start_magnified_animation();
     void reset_magnified_hover();
     void set_magnified_enabled(bool enabled);
     void hide_tooltip_immediately();

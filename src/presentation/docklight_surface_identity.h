@@ -39,6 +39,9 @@ namespace DocklightSurfaceIdentity
 
     constexpr char DOCK_NAMESPACE[] =
         "docklight6";
+    // KWin exposes this type to scripts and keeps Scale/Fade transitions.
+    constexpr char KWIN_DOCK_NAMESPACE[] =
+        "dialog";
     constexpr char REVEAL_NAMESPACE[] =
         "docklight6-autohide-reveal";
     constexpr char TOOLTIP_NAMESPACE[] =

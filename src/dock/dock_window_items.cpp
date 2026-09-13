@@ -18,6 +18,7 @@
 // - Internal drags freeze the painted positions until GTK finishes reordering.
 // - Native X11 expands only the painted background, keeping GTK allocations fixed.
 // - Frame origins use allocated spacers, never pending margin requests.
+// - Settled magnification sleeps until pointer motion or release restarts it.
 //
 // ------------------------------------------------------------
 
@@ -177,16 +178,7 @@ void DockWindow::update_magnified_hover(int x, int y)
         m_magnified_pointer_active = true;
     }
 
-    if (m_magnified_tick_callback == 0)
-    {
-        m_magnified_tick_callback =
-            add_tick_callback(
-                [this](
-                    const Glib::RefPtr<Gdk::FrameClock> &)
-                {
-                    return advance_magnified_hover();
-                });
-    }
+    start_magnified_animation();
 
     // The frame-clock callback is the sole steady-state renderer. Pointer
     // motion only updates the target coordinates; rendering here as well can
@@ -216,6 +208,20 @@ void DockWindow::set_magnified_layer_active(
         m_home_item->set_magnified_layer_active(active);
 }
 
+void DockWindow::start_magnified_animation()
+{
+    if (m_magnified_tick_callback == 0)
+    {
+        m_magnified_tick_callback =
+            add_tick_callback(
+                [this](
+                    const Glib::RefPtr<Gdk::FrameClock> &)
+                {
+                    return advance_magnified_hover();
+                });
+    }
+}
+
 void DockWindow::reset_magnified_hover()
 {
     if (m_magnified_tick_callback != 0)
@@ -241,6 +247,7 @@ void DockWindow::release_magnified_hover()
     // to 1.0. Re-entering the dock clears this flag and reverses smoothly from
     // the current intermediate scales.
     m_magnified_releasing = true;
+    start_magnified_animation();
 }
 
 void DockWindow::clear_magnified_hover_frame()
@@ -399,7 +406,11 @@ bool DockWindow::advance_magnified_hover()
                 clear_magnified_hover_frame();
                 return false;
             }
-            return true;
+            // Keep the painted frame, but stop waking the GTK frame clock.
+            // Motion or release restarts interpolation from the stored scales.
+            m_magnified_tick_callback = 0;
+            m_magnified_frame_time_us = 0;
+            return false;
         }
     }
 

@@ -9,6 +9,7 @@
 // Implementation overview:
 // Coordinates focused layout, autohide, tooltip, and preview managers with
 // icon refresh and publication of compositor effect geometry.
+// Caption-only registry updates do not wake launcher/geometry coordination.
 //
 // Important implementation decisions:
 // - Expensive GTK reactions are coalesced through idle callbacks.
@@ -267,7 +268,7 @@ void DockWindowController::initialize()
         m_window_registry_changed =
             m_window
                 .m_window_registry
-                ->signal_changed()
+                ->signal_application_state_changed()
                 .connect(
                     [this]()
                     {

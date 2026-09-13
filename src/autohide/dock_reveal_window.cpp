@@ -14,6 +14,8 @@
 // - The surface accepts pointer entry without taking keyboard focus.
 // - Monitor anchors and margins follow the current dock placement.
 // - A transparent draw handler keeps the trigger visually unobtrusive.
+// - Native X11 uses raw pointer events, not an idle polling timer.
+// - XWayland and servers without XI2 retain the existing polling fallback.
 //
 // ------------------------------------------------------------
 
@@ -366,11 +368,10 @@ void DockRevealWindow::start_x11_edge_poll()
 {
     stop_x11_edge_poll();
 
-    // Keep polling even when the transparent strip itself touches the edge.
-    // Another X11 dock can be stacked above that two-pixel input window and
-    // consume its crossing event. Root-pointer polling remains independent
-    // of X11 window stacking, while the enter event still provides the
-    // immediate path when the reveal strip is unobstructed.
+    // Another X11 dock can cover the two-pixel input window. Raw pointer
+    // motion remains independent of that stacking, while enter events give
+    // the immediate path for an unobstructed strip. Poll only when raw motion
+    // is unavailable; a stationary native X11 pointer needs no timer.
     //
     // Preserve the established XWayland behavior: its root cursor can be
     // stale outside X surfaces, so it polls only for an inset trigger. Native
@@ -382,6 +383,13 @@ void DockRevealWindow::start_x11_edge_poll()
     }
 
     m_pointer_was_on_physical_edge = false;
+    if (m_x11_pointer_monitor.start(
+            [this]() { poll_x11_physical_edge(); }))
+    {
+        poll_x11_physical_edge();
+        return;
+    }
+
     m_x11_edge_poll_timer =
         Glib::signal_timeout().connect(
             sigc::mem_fun(
@@ -392,6 +400,7 @@ void DockRevealWindow::start_x11_edge_poll()
 
 void DockRevealWindow::stop_x11_edge_poll()
 {
+    m_x11_pointer_monitor.stop();
     m_x11_edge_poll_timer.disconnect();
     m_pointer_was_on_physical_edge = false;
 }

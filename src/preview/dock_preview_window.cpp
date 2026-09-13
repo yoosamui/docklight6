@@ -15,11 +15,16 @@
 // - Cohesive cache, animation, and layout methods live in neighboring build
 //   units while sharing the same class declaration.
 //
+// - Native previews use TOP beneath the magnified dock on OVERLAY.
+// - Magnified native X11 previews use NORMAL to avoid implicit utility
+//   group-transient ordering; PreviewManager requests sibling stacking.
+//
 // ------------------------------------------------------------
 
 #include "dock_preview_window.h"
 #include "dock_preview_window_internal.h"
 #include "presentation/docklight_surface_identity.h"
+#include "presentation/presentation_selector.h"
 
 #include <gtk-layer-shell.h>
 
@@ -257,6 +262,24 @@ DockPreviewWindow::~DockPreviewWindow()
     }
 
     clear_cards();
+}
+
+void DockPreviewWindow::set_below_magnified_dock(bool enabled)
+{
+    if (m_uses_layer_shell)
+        gtk_layer_set_layer(
+            GTK_WINDOW(gobj()),
+            enabled ? GTK_LAYER_SHELL_LAYER_TOP
+                    : GTK_LAYER_SHELL_LAYER_OVERLAY);
+    else if (is_native_x11_presentation())
+    {
+        set_type_hint(
+            enabled ? Gdk::WINDOW_TYPE_HINT_NORMAL
+                    : Gdk::WINDOW_TYPE_HINT_UTILITY);
+        // Restore the default when switching effects. Native X11 map policy
+        // may clear ABOVE for the Marco/Metacity layer workaround.
+        set_keep_above(true);
+    }
 }
 
 void DockPreviewWindow::set_monitor(

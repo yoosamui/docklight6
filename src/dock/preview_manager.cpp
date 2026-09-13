@@ -16,8 +16,12 @@
 // - Closing the last card removes the empty preview intentionally.
 // - Tooltip and preview timers cancel one another through focused managers.
 // - Native margins use reserved body thickness, excluding magnified overflow.
+// - Overlay edges follow the normal body; item centers stay surface-relative.
 // - Magnified mode anchors previews to each icon's painted visual center.
 // - Preview sizing reserves monitor-edge margins on the dock's main axis.
+// - Previews keep the standard gap for every hover effect.
+// - Native X11 magnified previews use a WM-authoritative sibling restack.
+// - Hyprland XWayland requests the equivalent compositor-owned dock raise.
 // - Owned signal connections are disconnected during destruction.
 //
 // ------------------------------------------------------------
@@ -31,10 +35,12 @@
 #include "layout/dock_layout_metrics.h"
 #include "media/dock_media_playback_monitor.h"
 #include "preview/dock_preview_window.h"
+#include "presentation/x11_surface_stacking.h"
 #include "tooltip_manager.h"
 #include "windowing/window_registry.h"
 
 #include <algorithm>
+#include <gdkmm/window.h>
 
 PreviewManager::PreviewManager(
     DockWindow &window,
@@ -56,6 +62,19 @@ PreviewManager::PreviewManager(
       m_layout_request(layout_request),
       m_monitor(monitor)
 {
+    m_preview_window->signal_map().connect(
+        [this]()
+        {
+            if (m_window.magnified_surface_enabled() &&
+                !m_window.surface_uses_native_placement() &&
+                m_window.get_window())
+            {
+                if (!request_x11_surface_below(
+                        m_preview_window->get_window(),
+                        m_window.get_window()))
+                    m_window.get_window()->raise();
+            }
+        });
     set_monitor(monitor);
     apply_configuration(settings);
 
@@ -116,6 +135,8 @@ PreviewManager::~PreviewManager()
 void PreviewManager::apply_configuration(const DockSettings &settings)
 {
     m_settings = settings;
+    m_preview_window->set_below_magnified_dock(
+        settings.hover_effect() == DockHoverEffect::magnified);
     hide();
     m_preview_window->set_card_user_height(settings.preview_card_height());
     m_preview_window->set_preview_color(settings.preview_color());
@@ -297,6 +318,16 @@ void PreviewManager::show_now(
     dock_geometry.y = dock_position.y - m_output_geometry.y;
     dock_geometry.has_position = true;
 
+    // Remove only cross-axis overflow. Item centers are relative to the
+    // mapped surface, so its main-axis origin must remain unchanged.
+    const auto anchor_geometry = m_window.magnified_surface_enabled()
+        ? m_layout_engine.normal_dock_geometry(
+              m_layout_request.location,
+              dock_geometry,
+              m_window.normal_dock_cross_axis_size(),
+              0)
+        : dock_geometry;
+
     auto monitor_geometry = m_usable_monitor_geometry;
     if (monitor_geometry.width <= 0 || monitor_geometry.height <= 0)
     {
@@ -310,11 +341,11 @@ void PreviewManager::show_now(
         m_layout_request.location == DockLocation::right;
     const int preview_distance =
         m_window.m_overlay_window.tooltip_distance(
-            m_settings.hover_effect());
+            DockHoverEffect::standard);
     const int available_width = m_layout_engine.preview_available_width(
         m_layout_request.location,
         monitor_geometry,
-        dock_geometry,
+        anchor_geometry,
         preview_distance);
     const int available_height = std::max(
         1,
@@ -330,7 +361,7 @@ void PreviewManager::show_now(
     const auto position = m_layout_engine.calculate_tooltip_position(
         m_layout_request,
         monitor_geometry,
-        dock_geometry,
+        anchor_geometry,
         item_geometry,
         preview_size.width,
         preview_size.height,

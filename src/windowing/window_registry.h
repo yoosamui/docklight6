@@ -108,6 +108,8 @@ public:
 
     sigc::signal<void> &
     signal_changed();
+    // Excludes caption-only updates; general observers still receive them.
+    sigc::signal<void> &signal_application_state_changed();
     sigc::signal<void, bool> &
     signal_connection_changed();
     sigc::signal<void> &
@@ -130,6 +132,7 @@ public:
     signal_dock_animation_completed();
 
 private:
+    void emit_changed(bool application_state_changed = true);
     void load_snapshot();
     void clear();
     void rebuild_applications();
@@ -188,6 +191,7 @@ private:
     std::vector<sigc::connection> m_connections;
 
     sigc::signal<void> m_signal_changed;
+    sigc::signal<void> m_signal_application_state_changed;
     sigc::signal<void, bool>
         m_signal_connection_changed;
     sigc::signal<void>

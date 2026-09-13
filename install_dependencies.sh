@@ -30,6 +30,7 @@ bamfdaemon \
 libxtst-dev \
 libxss-dev \
 libxcomposite-dev \
+libxi-dev \
 libxdamage-dev \
 libxrender-dev \
 libxt-dev \

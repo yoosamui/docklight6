@@ -21,7 +21,9 @@
 // - Session values are key=value lines because desktop IDs and window titles
 //   are arbitrary text that may contain spaces, pipes, or brackets.
 // - Writes replace the complete file to keep reorder and save atomic.
-// - Gio application enumeration is cached until its monitor reports change.
+// - Gio enumeration and resolved launcher IDs are cached until the app-info
+//   monitor reports change; repeated order comparisons do not reopen desktop
+//   files or scan the installed application list. Explicit paths stay live.
 //
 // ------------------------------------------------------------
 
@@ -272,6 +274,7 @@ void LauncherManager::
             user_data);
 
     manager->m_applications.clear();
+    manager->m_resolved_ids.clear();
     manager->m_applications_loaded =
         false;
 }
@@ -462,15 +465,24 @@ std::string
 LauncherManager::normalize_resolved_id(
     const std::string &desktop_id) const
 {
-    const auto app =
-        find_application(
-            desktop_id);
+    const auto requested = trimmed(desktop_id);
+    // External desktop files need not belong to a monitored application
+    // directory, so preserve their direct lookup behavior.
+    const bool cacheable = requested.find_first_of("/\\") ==
+                           std::string::npos;
+    if (cacheable)
+    {
+        const auto cached = m_resolved_ids.find(requested);
+        if (cached != m_resolved_ids.end())
+            return cached->second;
+    }
 
-    return normalize_desktop_id(
-        app &&
-                !app->get_id().empty()
-            ? app->get_id()
-            : desktop_id);
+    const auto app = find_application(requested);
+    const auto resolved = normalize_desktop_id(
+        app && !app->get_id().empty() ? app->get_id() : requested);
+    if (cacheable)
+        m_resolved_ids.emplace(requested, resolved);
+    return resolved;
 }
 
 std::string

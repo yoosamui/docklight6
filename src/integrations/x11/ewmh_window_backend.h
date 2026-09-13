@@ -85,6 +85,7 @@ private:
     static void on_screen_value_changed(WnckScreen *, gpointer, gpointer data);
     static void on_active_workspace_changed(
         WnckScreen *, WnckWorkspace *, gpointer data);
+    static void on_window_name_changed(WnckWindow *, gpointer data);
     static void on_window_changed(WnckWindow *, gpointer data);
     static void on_window_state_changed(WnckWindow *,
                                         WnckWindowState,

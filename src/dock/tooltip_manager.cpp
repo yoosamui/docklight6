@@ -13,14 +13,16 @@
 // Important implementation decisions:
 // - Request generations invalidate stale timeout callbacks.
 // - Monitor-local geometry is used for placement calculations.
-// - Native placement receives an overlay work area derived from dock bounds.
-// - Native margins use reserved body thickness, excluding magnified overflow.
+// - Native tooltip placement uses output coordinates without work-area offsets.
+// - Overlay edges follow the normal body; item centers stay surface-relative.
 // - Magnified mode anchors labels to each icon's painted visual center.
 // - Coordination with previews is emitted through manager signals.
 //
 // ------------------------------------------------------------
 
 #include "tooltip_manager.h"
+
+#include <gdkmm/window.h>
 
 #include "dock_constants.h"
 #include "dock_window.h"
@@ -31,10 +33,19 @@ TooltipManager::TooltipManager(
     : m_window(window),
       m_dock_position(std::move(dock_position))
 {
+    m_overlay_mapped = m_window.m_overlay_window.signal_map().connect(
+        [this]()
+        {
+            if (m_window.magnified_surface_enabled() &&
+                !m_window.surface_uses_native_placement() &&
+                m_window.get_window())
+                m_window.get_window()->raise();
+        });
 }
 
 TooltipManager::~TooltipManager()
 {
+    m_overlay_mapped.disconnect();
     cancel_show_timer();
     cancel_hide_timer();
 }
@@ -43,6 +54,8 @@ void TooltipManager::apply_configuration(
     const DockSettings &settings)
 {
     m_settings = settings;
+    m_window.m_overlay_window.set_below_magnified_dock(
+        settings.hover_effect() == DockHoverEffect::magnified);
     if (!m_settings.display_tooltips())
         hide_immediately();
 }
@@ -66,7 +79,6 @@ void TooltipManager::set_layout_geometry(
 {
     m_usable_monitor_geometry = usable_monitor;
     m_output_geometry = output;
-    m_window.m_overlay_window.set_workarea_geometry(usable_monitor);
 }
 
 void TooltipManager::schedule_show(
@@ -193,6 +205,16 @@ void TooltipManager::show_now(
     dock_geometry.y = dock_position.y - m_output_geometry.y;
     dock_geometry.has_position = true;
 
+    // Remove only cross-axis overflow. Item centers are relative to the
+    // mapped surface, so its main-axis origin must remain unchanged.
+    const auto anchor_geometry = m_window.magnified_surface_enabled()
+        ? m_layout_engine.normal_dock_geometry(
+              m_layout_request.location,
+              dock_geometry,
+              m_window.normal_dock_cross_axis_size(),
+              0)
+        : dock_geometry;
+
     auto monitor_geometry = m_usable_monitor_geometry;
     if (monitor_geometry.width <= 0 || monitor_geometry.height <= 0)
     {
@@ -204,28 +226,12 @@ void TooltipManager::show_now(
     const auto position = m_layout_engine.calculate_tooltip_position(
         m_layout_request,
         monitor_geometry,
-        dock_geometry,
+        anchor_geometry,
         item_geometry,
         tooltip_width,
         m_window.m_overlay_window.tooltip_height(),
         m_window.m_overlay_window.tooltip_distance(
             m_settings.hover_effect()));
-
-    if (m_window.surface_uses_native_placement())
-    {
-        m_window.m_overlay_window.set_workarea_geometry(
-            overlay_workarea_for_dock(
-                monitor_geometry,
-                m_layout_request.location,
-                m_layout_request.autohide,
-                dock_geometry.x,
-                dock_geometry.y,
-                dock_geometry.width,
-                dock_geometry.height,
-                m_window.magnified_surface_enabled()
-                    ? m_window.normal_dock_cross_axis_size()
-                    : 0));
-    }
 
     m_visible_item = &item;
     m_window.m_overlay_window.show_tooltip(

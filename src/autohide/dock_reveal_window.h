@@ -26,6 +26,7 @@
 #pragma once
 
 #include "layout/dock_layout_types.h"
+#include "presentation/x11_pointer_monitor.h"
 
 #include <gdkmm/monitor.h>
 #include <gtkmm/window.h>
@@ -67,6 +68,7 @@ private:
     Glib::RefPtr<Gdk::Monitor> m_monitor;
     MonitorGeometry m_monitor_geometry;
     DockPlacement m_placement;
+    X11PointerMonitor m_x11_pointer_monitor;
     sigc::connection m_x11_edge_poll_timer;
     bool m_has_placement = false;
     bool m_pointer_was_on_physical_edge = false;

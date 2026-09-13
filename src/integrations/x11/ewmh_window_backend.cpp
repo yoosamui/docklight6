@@ -17,6 +17,8 @@
 // - Off-workspace grouped presentation defers focus until workspace change.
 // - Native objects are converted to ManagedWindow values before publication.
 //
+// Title changes publish one normalized window, not a complete snapshot.
+//
 // ------------------------------------------------------------
 
 #include "ewmh_window_backend.h"
@@ -643,6 +645,17 @@ void EwmhWindowBackend::on_active_workspace_changed(
     backend->complete_pending_activation();
 }
 
+void EwmhWindowBackend::on_window_name_changed(
+    WnckWindow *window,
+    gpointer data)
+{
+    auto *backend = static_cast<EwmhWindowBackend *>(data);
+    // Titles can change many times per second. Only this window needs a
+    // refresh; keep module-specific desktop identity resolution (LibreOffice)
+    // in managed_window(), without enumerating the entire desktop again.
+    backend->notify_window_updated(managed_window(window, backend->m_screen));
+}
+
 void EwmhWindowBackend::on_window_changed(WnckWindow *, gpointer data)
 {
     static_cast<EwmhWindowBackend *>(data)->snapshot_changed();
@@ -662,7 +675,7 @@ void EwmhWindowBackend::watch_window(WnckWindow *window)
         return;
 
     g_signal_connect(window, "name-changed",
-                     G_CALLBACK(on_window_changed), this);
+                     G_CALLBACK(on_window_name_changed), this);
     g_signal_connect(window, "class-changed",
                      G_CALLBACK(on_window_changed), this);
     g_signal_connect(window, "workspace-changed",

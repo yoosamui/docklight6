@@ -84,6 +84,8 @@ public:
     sigc::signal<void> &signal_hide_requested();
 
 private:
+    sigc::connection m_overlay_mapped;
+
     void show_now(
         Gtk::Widget &item,
         const Glib::ustring &text,

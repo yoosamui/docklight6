@@ -64,6 +64,7 @@ PKG_CHECK_MODULES([X11_BACKEND],
     gdk-x11-3.0 >= 3.24
     x11
     xcomposite
+    xi >= 1.6
     xrender
 ])
 

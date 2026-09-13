@@ -21,6 +21,7 @@
 //
 // Design notes:
 // Runtime preferences remain inputs rather than global mutable settings.
+// Magnified tooltips add a fixed logical-pixel offset to the scaled gap.
 //
 // ------------------------------------------------------------
 
@@ -115,9 +116,10 @@ public:
     static constexpr int TOOLTIP_MIN_WIDTH = 80; // Baseline tooltip minimum width
     static constexpr int TOOLTIP_HEIGHT = 38; // Baseline tooltip height
     static constexpr int TOOLTIP_DISTANCE = 12; // Normal gap from the dock
-    // Magnified icons grow into the transparent overflow reserved around the
-    // dock. Place tooltips and previews flush with that surface edge.
-    static constexpr int MAGNIFIED_TOOLTIP_DISTANCE = 0;
+    // Only magnified tooltips add this fixed gap; previews use the normal gap.
+    static constexpr int MAGNIFIED_TOOLTIP_EXTRA_DISTANCE = 44;
+    static constexpr int MAGNIFIED_TOOLTIP_DISTANCE =
+        TOOLTIP_DISTANCE + MAGNIFIED_TOOLTIP_EXTRA_DISTANCE;
     // Minimum gap between a tooltip and either end of the monitor axis.
     static constexpr int TOOLTIP_EDGE_MARGIN = 8; // Minimum gap from monitor edges
     static constexpr int TOOLTIP_LABEL_PADDING = 12; // Baseline horizontal label padding
@@ -165,9 +167,8 @@ public:
     static int magnified_tooltip_distance_for(
         int icon_size)
     {
-        return scale_from_icon_size(
-            MAGNIFIED_TOOLTIP_DISTANCE,
-            icon_size);
+        return tooltip_distance_for(icon_size) +
+               MAGNIFIED_TOOLTIP_EXTRA_DISTANCE;
     }
 
     static int tooltip_label_padding_for(int icon_size)

@@ -16,6 +16,10 @@
 // - Geometry-only updates do not trigger full dock-state refreshes.
 // - Backend snapshots remain authoritative after reconnects.
 // - Public change signals are emitted only for dock-relevant state.
+// - Caption changes notify general observers without rebuilding application
+//   groups or waking dock placement/launcher/cache coordination.
+// - Full snapshots share incremental no-op/geometry filtering and retain
+//   desktop identity lookups for identities still present in the snapshot.
 //
 // ------------------------------------------------------------
 
@@ -29,6 +33,7 @@
 #include <cctype>
 #include <iterator>
 #include <memory>
+#include <set>
 #include <string_view>
 
 namespace
@@ -94,7 +99,8 @@ bool is_docklight_window(
 
 bool has_same_dock_state(
     const ManagedWindow &left,
-    const ManagedWindow &right)
+    const ManagedWindow &right,
+    bool include_caption = true)
 {
     // Frame geometry is retained in the registry, but it does not affect any
     // dock item state. KWin effects and interactive moves can update it many
@@ -102,7 +108,7 @@ bool has_same_dock_state(
     return left.id == right.id &&
            left.desktop_file_name ==
                right.desktop_file_name &&
-           left.caption == right.caption &&
+           (!include_caption || left.caption == right.caption) &&
            left.icon_name == right.icon_name &&
            left.icon_png == right.icon_png &&
            left.activity_ids ==
@@ -696,10 +702,25 @@ WindowRegistry::signal_window_geometry_changed()
     return m_signal_window_geometry_changed;
 }
 
+sigc::signal<void> &WindowRegistry::signal_application_state_changed()
+{
+    return m_signal_application_state_changed;
+}
+
+void WindowRegistry::emit_changed(bool application_state_changed)
+{
+    if (application_state_changed)
+        m_signal_application_state_changed.emit();
+    m_signal_changed.emit();
+}
+
 void WindowRegistry::load_snapshot()
 {
+    const auto previous_windows = std::move(m_windows);
+    const auto previous_active = m_active_window;
+    const bool previously_connected = m_connected;
     m_windows.clear();
-    m_canonical_desktop_file_names.clear();
+    std::set<std::pair<std::int64_t, std::string>> live_identities;
 
     for (auto window :
          m_backend.windows())
@@ -709,6 +730,9 @@ void WindowRegistry::load_snapshot()
             continue;
         }
 
+        live_identities.emplace(
+            window.process_id,
+            normalize_desktop_file_name(window.desktop_file_name));
         window.desktop_file_name =
             canonical_desktop_file_name(
                 window);
@@ -731,8 +755,57 @@ void WindowRegistry::load_snapshot()
         m_backend.active_window());
 
     m_connected = m_backend.connected();
-    rebuild_applications();
-    m_signal_changed.emit();
+
+    // Keep repeated X11 snapshots from reopening the same desktop files.
+    // Removed/replaced identities must still be resolved afresh if reused.
+    for (auto cached = m_canonical_desktop_file_names.begin();
+         cached != m_canonical_desktop_file_names.end();)
+    {
+        if (live_identities.count(cached->first) == 0)
+            cached = m_canonical_desktop_file_names.erase(cached);
+        else
+            ++cached;
+    }
+
+    const bool application_changed =
+        previously_connected != m_connected ||
+        previous_active != m_active_window ||
+        !std::equal(
+            previous_windows.begin(), previous_windows.end(),
+            m_windows.begin(), m_windows.end(),
+            [](const ManagedWindow &left, const ManagedWindow &right)
+            {
+                return has_same_dock_state(left, right, false) &&
+                       left.active == right.active;
+            });
+    const bool dock_changed = application_changed ||
+        !std::equal(
+            previous_windows.begin(), previous_windows.end(),
+            m_windows.begin(), m_windows.end(),
+            [](const ManagedWindow &left, const ManagedWindow &right)
+            {
+                return left.caption == right.caption;
+            });
+    const bool geometry_changed = std::any_of(
+        m_windows.begin(), m_windows.end(),
+        [&previous_windows](const ManagedWindow &window)
+        {
+            const auto previous = std::find_if(
+                previous_windows.begin(), previous_windows.end(),
+                [&window](const ManagedWindow &candidate)
+                {
+                    return candidate.id == window.id;
+                });
+            return previous != previous_windows.end() &&
+                   !has_same_frame_geometry(*previous, window);
+        });
+
+    if (application_changed)
+        rebuild_applications();
+    if (geometry_changed)
+        m_signal_window_geometry_changed.emit();
+    if (dock_changed)
+        emit_changed(application_changed);
 }
 
 void WindowRegistry::clear()
@@ -749,7 +822,7 @@ void WindowRegistry::clear()
     m_connected = false;
 
     if (had_state)
-        m_signal_changed.emit();
+        emit_changed();
 }
 
 // Rebuilds the application-oriented view from the authoritative window
@@ -979,6 +1052,9 @@ void WindowRegistry::on_window_updated(
                     *current,
                     normalized_window);
 
+            const bool application_changed =
+                !has_same_dock_state(*current, normalized_window, false);
+
             const bool geometry_changed =
                 !has_same_frame_geometry(
                     *current,
@@ -1004,11 +1080,16 @@ void WindowRegistry::on_window_updated(
                 m_signal_window_geometry_changed
                     .emit();
             }
+            if (!application_changed)
+            {
+                emit_changed(false);
+                return;
+            }
         }
     }
 
     rebuild_applications();
-    m_signal_changed.emit();
+    emit_changed();
 }
 
 void WindowRegistry::on_window_removed(
@@ -1080,7 +1161,7 @@ void WindowRegistry::on_window_removed(
     }
 
     rebuild_applications();
-    m_signal_changed.emit();
+    emit_changed();
 }
 
 void WindowRegistry::
@@ -1092,7 +1173,7 @@ void WindowRegistry::
         return;
 
     rebuild_applications();
-    m_signal_changed.emit();
+    emit_changed();
 }
 
 void WindowRegistry::
@@ -1107,7 +1188,7 @@ void WindowRegistry::
     }
 
     rebuild_applications();
-    m_signal_changed.emit();
+    emit_changed();
 }
 
 void WindowRegistry::on_connection_changed(

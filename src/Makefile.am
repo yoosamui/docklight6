@@ -3,6 +3,7 @@ bin_PROGRAMS = \
     docklight6-hyprland-reservation
 
 check_PROGRAMS = \
+    x11_pointer_monitor_test \
     x11_capture_connection_test \
     thumbnail_disk_cache_test \
     dock_application_controller_test \
@@ -92,6 +93,10 @@ docklight6_SOURCES = \
     presentation/docklight_surface_identity.h \
     presentation/presentation_selector.h \
     presentation/presentation_selector.cpp \
+    presentation/x11_pointer_monitor.h \
+    presentation/x11_pointer_monitor.cpp \
+    presentation/x11_surface_stacking.h \
+    presentation/x11_surface_stacking.cpp \
     windowing/managed_window.h \
     windowing/running_application.h \
     windowing/window_icon_geometry.h \
@@ -522,3 +527,12 @@ tests/hyprland_thumbnail_capture_test-hyprland_thumbnail_capture_test.$(OBJEXT):
     ext-foreign-toplevel-list-v1-client-protocol.h \
     ext-image-capture-source-v1-client-protocol.h \
     ext-image-copy-capture-v1-client-protocol.h
+
+x11_pointer_monitor_test_SOURCES = \
+    tests/x11_pointer_monitor_test.cpp \
+    presentation/x11_pointer_monitor.h \
+    presentation/x11_pointer_monitor.cpp \
+    presentation/presentation_selector.h \
+    presentation/presentation_selector.cpp
+x11_pointer_monitor_test_CPPFLAGS = $(GTKMM_CFLAGS) $(X11_BACKEND_CFLAGS)
+x11_pointer_monitor_test_LDADD = $(GTKMM_LIBS) $(X11_BACKEND_LIBS) -ldl

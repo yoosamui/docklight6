@@ -15,7 +15,7 @@ requires:
 - gtkmm 3.24 or newer and GTK Layer Shell;
 - PipeWire 0.3 and Wayland client development files;
 - `wayland-scanner`;
-- libwnck 3, GDK X11, Xlib, XComposite, and XRender development files.
+- libwnck 3, GDK X11, Xlib, XComposite, XInput2 (libXi), and XRender development files.
 
 On Debian or Ubuntu, install the repository's dependency set with:
 

@@ -46,8 +46,8 @@ public:
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor>
             &monitor);
-    void set_workarea_geometry(
-        const MonitorGeometry &geometry);
+    // Native overlays yield to the magnified dock drawing surface.
+    void set_below_magnified_dock(bool enabled);
 
     void set_rounded_corners(
         bool enabled,
@@ -101,7 +101,6 @@ private:
 
     ScreenPosition m_request_position;
     MonitorGeometry m_monitor_geometry;
-    MonitorGeometry m_workarea_geometry;
 
     int m_tooltip_height = DockLayoutMetrics::TOOLTIP_HEIGHT;
     int m_tooltip_distance = DockLayoutMetrics::TOOLTIP_DISTANCE;

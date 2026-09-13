@@ -1,5 +1,13 @@
+// Docklight 6.0 — GNOME compositor integration.
+// Owns window discovery, placement, previews, and compositor animations.
+// Preview surfaces remain siblings of window actors so the real dock can
+// paint above them; window actors themselves are never reparented.
+// Active clone sources bypass window-space culling through a paint-through
+// effect, released with the previews; no shader or offscreen capture is used.
+
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
 import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
@@ -7,6 +15,13 @@ import St from 'gi://St';
 
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+
+// Meta.WindowGroup clips source textures before painting its children. Live
+// clones in that group must not inherit a source window's occlusion/damage
+// clip. Mutter skips culling for actors with an enabled effect. The base
+// Clutter.Effect paints through unchanged, without an offscreen framebuffer.
+const LivePreviewCullGuard = GObject.registerClass(
+    class DocklightLivePreviewCullGuard extends Clutter.Effect {});
 
 Gio._promisify(Shell.Screenshot, 'composite_to_stream');
 
@@ -190,6 +205,7 @@ export default class DocklightWindowIntegration extends Extension {
         this._dockRevealSignal = 0;
         this._nativeWorkAreas = [];
         this._livePreviewOverlay = null;
+        this._livePreviewCullGuards = new Map();
         this._previewSessionOpen = false;
         this._previewReplacementShield = null;
         this._previewReplacementShieldReleaseSource = 0;
@@ -502,6 +518,7 @@ export default class DocklightWindowIntegration extends Extension {
                             this._scheduleDockPlacement(
                                 placementPolicyChanged);
                             this._updateDockRevealActor();
+                            this._syncMagnifiedOverlayStack();
                         }
                         return GLib.SOURCE_REMOVE;
                     });
@@ -768,6 +785,7 @@ export default class DocklightWindowIntegration extends Extension {
             // The Meta.Window can disappear while a preview is closing.
         }
         this._finishAuxiliaryTransition(window);
+        this._syncMagnifiedOverlayStack();
     }
 
     _beginAuxiliaryTransition(window, actor = null) {
@@ -924,6 +942,73 @@ export default class DocklightWindowIntegration extends Extension {
             this._dockWindow.stick();
         } catch (_error) {
             // The dock can be unmanaged while a restack is being delivered.
+        }
+        this._syncMagnifiedOverlayStack();
+    }
+
+    _syncMagnifiedOverlayStack() {
+        // Keep the existing X11 thumbnail composition. All Wayland hover modes
+        // keep dock icons in front of tooltips and previews.
+        // A Shell live thumbnail must not be a child of Meta.WindowActor:
+        // use the window group as its parent, without a window-paint dependency.
+        const foregroundDock = this._waylandIntegration;
+        const parent = foregroundDock ? global.window_group : Main.uiGroup;
+        for (const actor of [this._previewReplacementShield, this._livePreviewOverlay]) {
+            if (!actor || actor.is_destroyed?.())
+                continue;
+            if (actor.get_parent() !== parent) {
+                actor.get_parent()?.remove_child(actor);
+                parent.add_child(actor);
+            }
+        }
+        if (!foregroundDock || !this._dockWindow || this._syncingOverlayStack)
+            return;
+
+        const dockActor = this._dockWindow.get_compositor_private?.();
+        if (!dockActor || dockActor.get_parent() !== parent)
+            return;
+
+        this._syncingOverlayStack = true;
+        try {
+            // Raising is conditional: restacked invokes this method too.
+            // Do not elevate the dock above a fullscreen application.
+            const fullscreen = global.display.get_monitor_in_fullscreen(
+                this._dockMonitorIndex());
+            const windows = parent.get_children();
+            const auxiliaries = [];
+            const dockIndex = windows.indexOf(dockActor);
+            let auxiliaryAboveDock = false;
+            for (const window of this._auxiliaryWindowSignals.keys()) {
+                const type = this._auxiliaryPosition(window)?.type;
+                const actor = window.get_compositor_private?.();
+                if (!['tooltip', 'preview'].includes(type) || !actor?.visible ||
+                    actor.get_parent() !== parent)
+                    continue;
+                auxiliaries.push(actor);
+                if (windows.indexOf(actor) > dockIndex)
+                    auxiliaryAboveDock = true;
+            }
+            if (!fullscreen && auxiliaryAboveDock)
+                this._dockWindow.raise();
+
+            // Meta.Window.raise() cannot cross Mutter's window-type layers.
+            // Enforce the paint order too: tooltip actors can otherwise remain
+            // above a DOCK window even after a successful raise request.
+            // Keep actual window actors in their compositor-owned parent.
+            if (!fullscreen) {
+                for (const actor of auxiliaries)
+                    parent.set_child_below_sibling(actor, dockActor);
+            }
+
+            // These Shell actors cover their GTK card but stay below the dock.
+            // Reassert after Mutter restacks, and after every preview replacement.
+            // Moving siblings does not remap any GTK surface or intercept input.
+            for (const actor of [this._previewReplacementShield, this._livePreviewOverlay]) {
+                if (actor && !actor.is_destroyed?.())
+                    parent.set_child_below_sibling(actor, dockActor);
+            }
+        } finally {
+            this._syncingOverlayStack = false;
         }
     }
 
@@ -2221,8 +2306,9 @@ export default class DocklightWindowIntegration extends Extension {
                 Main.uiGroup.add_child(shield);
                 this._previewReplacementShield = shield;
 
+                this._syncMagnifiedOverlayStack();
                 if (this._livePreviewOverlay) {
-                    Main.uiGroup.set_child_above_sibling(
+                    this._livePreviewOverlay.get_parent().set_child_above_sibling(
                         this._livePreviewOverlay, shield);
                 }
                 break;
@@ -2252,8 +2338,8 @@ export default class DocklightWindowIntegration extends Extension {
             preserveSession: true,
         });
 
-        // WindowPreviewLayout actors must remain in Shell's UI layer. Making
-        // them children of a real MetaWindowActor creates an unsupported
+        // WindowPreviewLayout actors must remain outside real window actors.
+        // Making them children of a MetaWindowActor creates an unsupported
         // paint dependency and can stop live video damage from reaching the
         // clones. The full-stage container and layout-created descendants
         // remain non-reactive. The GTK card underneath remains the sole input
@@ -2314,6 +2400,7 @@ export default class DocklightWindowIntegration extends Extension {
             const clone = layout.add_window(window);
             if (!clone)
                 continue;
+            this._inhibitLivePreviewCulling(windowActor);
             // Keep the layout's geometry and lifetime tracking, but exclude
             // compositor effects attached to the WindowActor from its clone.
             // The final child is the X11 surface actor or Wayland container.
@@ -2389,6 +2476,7 @@ export default class DocklightWindowIntegration extends Extension {
             Main.uiGroup.add_child(overlay);
             this._livePreviewOverlay = overlay;
             this._livePreviewRects = previewRects;
+            this._syncMagnifiedOverlayStack();
             this._publishPreviewPointerInside(true);
             // Keep the full-stage overlay untransformed; only bounded cards
             // participate in the opening effect.
@@ -2679,6 +2767,24 @@ export default class DocklightWindowIntegration extends Extension {
         invocation.return_value(null);
     }
 
+    _inhibitLivePreviewCulling(actor) {
+        if (!this._waylandIntegration || !actor || actor.is_destroyed?.() ||
+            this._livePreviewCullGuards.has(actor))
+            return;
+
+        const effect = new LivePreviewCullGuard();
+        actor.add_effect(effect);
+        this._livePreviewCullGuards.set(actor, effect);
+    }
+
+    _restoreLivePreviewCulling() {
+        for (const [actor, effect] of this._livePreviewCullGuards) {
+            if (!actor.is_destroyed?.())
+                actor.remove_effect(effect);
+        }
+        this._livePreviewCullGuards.clear();
+    }
+
     _destroyLivePreviews({
         publishPointerOutside = true,
         preserveSession = false,
@@ -2694,6 +2800,7 @@ export default class DocklightWindowIntegration extends Extension {
             this._livePreviewOverlay = null;
         }
 
+        this._restoreLivePreviewCulling();
         this._livePreviewRects = [];
         if (publishPointerOutside)
             this._publishPreviewPointerInside(true);

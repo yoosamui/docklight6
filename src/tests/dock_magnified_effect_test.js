@@ -197,19 +197,30 @@ assert.match(
 assert.match(
     tooltipWindowSource,
     /DockTooltipWindow::tooltip_distance[\s\S]*?DockHoverEffect::magnified[\s\S]*?m_magnified_tooltip_distance[\s\S]*?m_tooltip_distance/,
-    "only magnified hover may select the reduced overlay distance");
+    "tooltip distance selection follows the hover effect");
 
 for (const source of [tooltipManagerSource, previewManagerSource]) {
-    assert.match(
-        source,
-        /overlay_workarea_for_dock\([\s\S]*?dock_geometry\.height,[\s\S]*?m_window\.magnified_surface_enabled\(\)[\s\S]*?m_window\.normal_dock_cross_axis_size\(\)/,
-        "native overlays must convert margins using the magnified dock's reserved body thickness");
-
-    assert.match(
-        source,
-        /tooltip_distance\([\s\S]*?m_settings\.hover_effect\(\)\)/,
-        "tooltip and preview placement must select distance by hover effect");
+    assert.match(source,
+        /normal_dock_geometry\([\s\S]*?normal_dock_cross_axis_size\(\),\s*0\)/,
+        "body anchoring must preserve the surface-relative main-axis origin");
+    assert.match(source,
+        /calculate_tooltip_position\([\s\S]*?anchor_geometry,\s*item_geometry,/,
+        "both overlays must anchor to the body while preserving painted centers");
 }
+
+assert.match(
+    previewManagerSource,
+    /overlay_workarea_for_dock\([\s\S]*?dock_geometry\.height,[\s\S]*?m_window\.magnified_surface_enabled\(\)[\s\S]*?m_window\.normal_dock_cross_axis_size\(\)/,
+    "native previews must convert margins using the magnified dock's reserved body thickness");
+
+assert.match(
+    tooltipManagerSource,
+    /tooltip_distance\(\s*m_settings\.hover_effect\(\)\)/,
+    "tooltip placement must select distance by hover effect");
+assert.match(
+    previewManagerSource,
+    /tooltip_distance\(\s*DockHoverEffect::standard\)/,
+    "previews must retain the standard gap for every hover effect");
 
 assert.match(
     autohideSource,
@@ -342,4 +353,90 @@ for (const method of ["update_magnified_hover", "advance_magnified_hover"]) {
         /\{\s*(?:\/\/[^\n]*\n\s*)*if \(m_dragged_item\)/,
         "dragging must freeze magnified positions and prevent stale anchor capture");
 }
+
+for (const file of ['../dock/dock_tooltip_window.cpp', '../preview/dock_preview_window.cpp']) {
+    const source = fs.readFileSync(path.resolve(__dirname, file), 'utf8');
+    assert.match(source,
+        /set_below_magnified_dock\(bool enabled\)[\s\S]*?enabled \? GTK_LAYER_SHELL_LAYER_TOP\s*: GTK_LAYER_SHELL_LAYER_OVERLAY/,
+        'magnified overlays must use TOP, and restore OVERLAY for other effects');
+}
+const nativeSurfaceSource = fs.readFileSync(path.resolve(__dirname,
+    '../dock/backends/layer_shell_dock_surface_backend.cpp'), 'utf8');
+assert.match(nativeSurfaceSource,
+    /apply_dock_placement\([\s\S]*?magnified_surface_enabled\(\)\s*\? GTK_LAYER_SHELL_LAYER_OVERLAY\s*: GTK_LAYER_SHELL_LAYER_TOP/,
+    'native placement must order the magnified dock above its overlays');
+
+// Tooltip coordinates must not inherit a second compositor work-area offset.
+assert.match(tooltipWindowSource, /gtk_layer_set_exclusive_zone\(window, -1\)/,
+    'native tooltips must be positioned against the full output');
+assert.doesNotMatch(tooltipWindowSource, /overlay_position_in_workarea|m_workarea_geometry/,
+    'tooltip output coordinates must not be converted to estimated work-area coordinates');
+assert.doesNotMatch(tooltipManagerSource, /overlay_workarea_for_dock/,
+    'tooltip manager must not infer compositor margins from dock reservations');
+assert.match(tooltipWindowSource,
+    /m_monitor_geometry\.width -\s*position\.x - width/,
+    'right tooltip margins must use output width');
+assert.match(tooltipWindowSource,
+    /m_monitor_geometry\.height -\s*position\.y - height/,
+    'bottom tooltip margins must use output height');
+
+const x11PreviewSource = fs.readFileSync(path.resolve(__dirname,
+    '../preview/dock_preview_window.cpp'), 'utf8');
+assert.match(x11PreviewSource,
+    /else if \(is_native_x11_presentation\(\)\)\s*\{\s*set_type_hint\(\s*enabled \? Gdk::WINDOW_TYPE_HINT_NORMAL\s*: Gdk::WINDOW_TYPE_HINT_UTILITY/,
+    'native X11 magnified previews must avoid implicit group-transient ordering');
+assert.doesNotMatch(x11PreviewSource, /set_keep_above\(!enabled\)/,
+    'keep-above must not be disabled globally across native X11 WMs');
+const x11StackingSource = fs.readFileSync(path.resolve(__dirname,
+    '../presentation/x11_surface_stacking.cpp'), 'utf8');
+assert.match(x11StackingSource, /!is_native_x11_presentation\(\)/,
+    'the sibling request must preserve other Wayland and XWayland paths');
+assert.match(x11StackingSource,
+    /GDK_IS_X11_DISPLAY[\s\S]*?is_hyprland_wayland_session\(\)[\s\S]*?raise_hyprland_dock\(\);[\s\S]*?!is_native_x11_presentation\(\)/,
+    'Hyprland compositor stacking must be scoped to XWayland before the native X11 guard');
+assert.ok(x11StackingSource.includes('"top,title:^(Docklight 6 Dock)$"'),
+    'Hyprland must raise only the named dock, never the active application');
+assert.match(x11StackingSource, /"hyprctl", "dispatch", "alterzorder"/,
+    'Hyprland must change stacking without activating or focusing the dock');
+assert.match(x11StackingSource, /g_subprocess_communicate_utf8_async/,
+    'compositor stacking must not block the GTK map/draw cycle');
+assert.match(x11StackingSource,
+    /g_timeout_add_full\([\s\S]*?windows.first->is_visible\(\) &&\s*windows.second->is_visible\(\)[\s\S]*?raise_hyprland_dock\(\);/,
+    'Hyprland must wait for compositor mapping and skip surfaces hidden before the deferred raise');
+assert.match(x11StackingSource, /"_NET_RESTACK_WINDOW"/);
+assert.match(x11StackingSource,
+    /if \(!gdk_x11_screen_supports_net_wm_hint\([\s\S]*?"_NET_RESTACK_WINDOW"[\s\S]*?surface->set_keep_above\(!needs_layer_workaround\);\s*surface->restack\(sibling, false\);[\s\S]*?return true;[\s\S]*?XEvent event/,
+    'WMs without EWMH restacking must apply the scoped layer workaround before legacy restacking');
+assert.match(x11StackingSource,
+    /const bool needs_layer_workaround =\s*g_strcmp0\(wm_name, "Marco"\) == 0 \|\|\s*g_strcmp0\(wm_name, "Metacity"\) == 0;/,
+    'only Marco/Metacity may clear ABOVE; Xfwm4 previews must remain above applications');
+assert.match(x11PreviewSource,
+    /set_below_magnified_dock\(bool enabled\)[\s\S]*?set_keep_above\(true\)/,
+    'effect changes must restore keep-above after a magnified fallback');
+assert.match(x11StackingSource, /data\.l\[0\] = 2/,
+    'dock stacking needs pager authority to avoid Muffin focus-prevention rejection');
+assert.match(x11StackingSource, /data\.l\[1\] = GDK_WINDOW_XID\(sibling->gobj\(\)\)/);
+assert.match(x11StackingSource, /data\.l\[2\] = Below/);
+assert.match(previewManagerSource,
+    /signal_map\(\)[\s\S]*?magnified_surface_enabled\(\)[\s\S]*?request_x11_surface_below\(\s*m_preview_window->get_window\(\),\s*m_window.get_window\(\)\)/,
+    'each magnified preview map must request ordering below its own dock');
+
+assert.match(dockWindowItemsSource,
+    /if \(!animation_pending\)[\s\S]*?m_magnified_frame_time_us = 0;\s*return false;/,
+    'settled magnification must stop the frame clock without discarding its painted frame');
+assert.match(dockWindowItemsSource,
+    /DockWindow::release_magnified_hover[\s\S]*?m_magnified_releasing = true;\s*start_magnified_animation\(\);/,
+    'leaving a settled magnified frame must restart its shrink animation');
+
+const ewmhIdleSource = fs.readFileSync(path.resolve(__dirname,
+    '../integrations/x11/ewmh_window_backend.cpp'), 'utf8');
+assert.match(ewmhIdleSource,
+    /"name-changed",\s*G_CALLBACK\(on_window_name_changed\)/,
+    'X11 title notifications must use their incremental window path');
+const nameChangedBody = ewmhIdleSource.split('void EwmhWindowBackend::on_window_name_changed(')[1]
+    .split('void EwmhWindowBackend::on_window_changed(')[0];
+assert.match(nameChangedBody, /notify_window_updated\(managed_window\(window, backend->m_screen\)\)/);
+assert.doesNotMatch(nameChangedBody, /snapshot_changed\(\)/,
+    'rapid title changes must not request full desktop snapshots');
+
 console.log("Dock magnified effect tests passed");

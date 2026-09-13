@@ -55,12 +55,46 @@ int main()
         24);
     assert(
         DockLayoutMetrics::magnified_tooltip_distance_for(48) ==
-        0);
+        56);
     assert(
         DockLayoutMetrics::magnified_tooltip_distance_for(96) ==
-        0);
+        68);
 
     DockLayoutEngine engine;
+    // Output-relative tooltip placement preserves painted icon centers and
+    // the body gap on every edge, even with asymmetric panel reservations.
+    for (const auto edge : {DockLocation::left, DockLocation::right,
+                            DockLocation::top, DockLocation::bottom})
+    for (const int panel : {0, 44, 80})
+    {
+        const bool vertical = edge == DockLocation::left ||
+                              edge == DockLocation::right;
+        const MonitorGeometry workarea{20, panel, 2500, 1400 - panel};
+        const DockWindowGeometry surface{
+            edge == DockLocation::right ? 2400 : 20,
+            edge == DockLocation::bottom ? 1280 : panel,
+            vertical ? 120 : 600, vertical ? 600 : 120, true};
+        const auto body = engine.normal_dock_geometry(edge, surface, 60, 0);
+        DockLayoutRequest tooltip_request;
+        tooltip_request.location = edge;
+        const ItemGeometry painted{0, 0, 48, 48, 300, 300};
+        const int gap = DockLayoutMetrics::magnified_tooltip_distance_for(48);
+        const auto tooltip = engine.calculate_tooltip_position(
+            tooltip_request, workarea, body, painted, 160, 38, gap);
+        if (vertical)
+            assert(tooltip.y + 19 == surface.y + painted.center_y);
+        else
+            assert(tooltip.x + 80 == surface.x + painted.center_x);
+        if (edge == DockLocation::left)
+            assert(tooltip.x - (body.x + body.width) == gap);
+        else if (edge == DockLocation::right)
+            assert(body.x - (tooltip.x + 160) == gap);
+        else if (edge == DockLocation::top)
+            assert(tooltip.y - (body.y + body.height) == gap);
+        else
+            assert(body.y - (tooltip.y + 38) == gap);
+    }
+
     // Side previews must fit the actual remaining space even when the work
     // area includes our dock or the mapped surface has magnified overflow.
     for (const auto location : {DockLocation::left, DockLocation::right})
@@ -132,6 +166,63 @@ int main()
         assert(unchanged.x == body.x && unchanged.y == body.y);
         assert(unchanged.width == body.width &&
                unchanged.height == body.height);
+    }
+
+    // Overlay height is invariant under magnification capacity. Keep the
+    // painted center in surface coordinates, including main-axis padding.
+    for (const auto location : {DockLocation::top, DockLocation::bottom,
+                               DockLocation::left, DockLocation::right})
+    for (const int scale : {1, 2})
+    for (const int extra : {20, 80, 160})
+    for (const auto autohide : {DockAutohide::none, DockAutohide::autohide})
+    {
+        const bool vertical = location == DockLocation::left ||
+                              location == DockLocation::right;
+        const int thickness = 64 * scale;
+        const MonitorGeometry area{-1200, -400, 2400, 1800};
+        const DockWindowGeometry normal{
+            -800, -100, vertical ? thickness : 500,
+            vertical ? 500 : thickness, true};
+        auto surface = normal;
+        if (vertical)
+        {
+            surface.width += extra;
+            if (location == DockLocation::right)
+                surface.x -= extra;
+        }
+        else
+        {
+            surface.height += extra;
+            if (location == DockLocation::bottom)
+                surface.y -= extra;
+        }
+        const auto anchor = engine.normal_dock_geometry(
+            location, surface, thickness, 0);
+        const ItemGeometry painted{0, 0, 64, 64, 237, 251};
+        DockLayoutRequest overlay_request;
+        overlay_request.location = location;
+        overlay_request.autohide = autohide;
+        for (const int width : {120, 480})
+        {
+            const int distance = DockLayoutMetrics::tooltip_distance_for(48 * scale);
+            const auto expected = engine.calculate_tooltip_position(
+                overlay_request, area, normal, painted, width, 160, distance);
+            const auto actual = engine.calculate_tooltip_position(
+                overlay_request, area, anchor, painted, width, 160, distance);
+            assert(actual.x == expected.x && actual.y == expected.y);
+            assert(engine.preview_available_width(location, area, anchor, distance) ==
+                   engine.preview_available_width(location, area, normal, distance));
+            const auto physical_workarea = overlay_workarea_for_dock(
+                area, location, autohide, surface.x, surface.y,
+                surface.width, surface.height, thickness);
+            const auto normal_workarea = overlay_workarea_for_dock(
+                area, location, autohide, normal.x, normal.y,
+                normal.width, normal.height);
+            const auto actual_margin = overlay_position_in_workarea(actual, physical_workarea);
+            const auto expected_margin = overlay_position_in_workarea(expected, normal_workarea);
+            assert(actual_margin.x == expected_margin.x &&
+                   actual_margin.y == expected_margin.y);
+        }
     }
 
     DockLayoutRequest request;
@@ -854,10 +945,10 @@ int main()
     assert(top_gap == overlay_distance);
     assert(bottom_gap == top_gap);
 
-    const int reduced_overlay_distance =
+    const int magnified_overlay_distance =
         DockLayoutMetrics::magnified_tooltip_distance_for(
             DockLayoutMetrics::BASE_ICON_SIZE);
-    const auto reduced_top_overlay_position =
+    const auto magnified_top_overlay_position =
         engine.calculate_tooltip_position(
             top_overlay_request,
             full_overlay_workarea,
@@ -865,8 +956,8 @@ int main()
             horizontal_item,
             overlay_width,
             overlay_height,
-            reduced_overlay_distance);
-    const auto reduced_bottom_overlay_position =
+            magnified_overlay_distance);
+    const auto magnified_bottom_overlay_position =
         engine.calculate_tooltip_position(
             bottom_overlay_request,
             full_overlay_workarea,
@@ -874,16 +965,16 @@ int main()
             horizontal_item,
             overlay_width,
             overlay_height,
-            reduced_overlay_distance);
+            magnified_overlay_distance);
     assert(
-        reduced_top_overlay_position.y -
+        magnified_top_overlay_position.y -
             (top_dock.y + top_dock.height) ==
-        0);
+        magnified_overlay_distance);
     assert(
         bottom_dock.y -
-            (reduced_bottom_overlay_position.y +
+            (magnified_bottom_overlay_position.y +
              overlay_height) ==
-        0);
+        magnified_overlay_distance);
 
     const auto bottom_layer_position =
         overlay_position_in_workarea(

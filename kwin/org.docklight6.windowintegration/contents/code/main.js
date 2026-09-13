@@ -16,11 +16,6 @@
         "docklight6-";
     const DOCKLIGHT_ROLE_PREFIX =
         "docklight6-";
-    // KWin's script API exposes Window.layer as a number but does not expose
-    // the Layer enum constants. The main layer-shell surface uses DockLayer
-    // (3); reveal, tooltip, and preview surfaces use the overlay layer and
-    // must never become the dock geometry source.
-    const KWIN_DOCK_LAYER = 3;
     // KWin can hold the cursor one logical pixel inside a physical edge while
     // dispatching its screen-edge callback. Keep the ownership check tolerant
     // of that pushback without accepting another monitor's distant edge.
@@ -95,18 +90,20 @@
         const windowRole = String(
             window && window.windowRole || "");
 
-        // X11/XWayland surfaces share the application's resource name, so
-        // WM_WINDOW_ROLE is the semantic discriminator there. KWin exposes
-        // the same application resource for native layer surfaces; their
-        // configured layer distinguishes the main dock from its overlays.
+        // X11 uses WM_WINDOW_ROLE. Native layer surfaces expose no role or
+        // title. The main surface uses dialog scope to retain Plasma's normal
+        // Scale/Fade animations. Restrict it to layer-shell TOP (3) or OVERLAY
+        // (9); ordinary settings dialogs live in Normal/Above layers instead.
+        // Tooltip/preview/reveal scopes do not have the dialog window type.
         const hasMainDockIdentity =
             window && window.x11Client === true
                 ? windowRole ===
                     DOCKLIGHT_MAIN_ROLE
                 : resourceName ===
                     DOCKLIGHT_APPLICATION_RESOURCE &&
-                  Number(window.layer) ===
-                    KWIN_DOCK_LAYER;
+                  window.dialog === true &&
+                  (Number(window.layer) === 3 ||
+                   Number(window.layer) === 9);
 
         return Boolean(
             window &&

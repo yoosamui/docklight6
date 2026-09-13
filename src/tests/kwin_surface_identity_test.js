@@ -51,6 +51,7 @@ function createWindow(
         outline: false,
         desktopWindow: false,
         dock: false,
+        dialog: false,
         x11Client: true,
         frameGeometryChanged: new Signal(),
         outputChanged: new Signal(),
@@ -75,7 +76,7 @@ const reveal = createWindow(
     "reveal",
     "",
     {x: 0, y: 44, width: 2, height: 1036});
-reveal.dock = true;
+reveal.dock = false;
 reveal.x11Client = false;
 reveal.layer = 9;
 
@@ -84,12 +85,18 @@ const preview = createWindow(
     "docklight6-preview",
     {x: 53, y: 300, width: 512, height: 400});
 preview.keepAbove = true;
+preview.x11Client = false;
+preview.windowRole = "";
+preview.layer = 3;
 
 const tooltip = createWindow(
     "tooltip",
     "docklight6-tooltip",
     {x: 53, y: 500, width: 140, height: 32});
-tooltip.tooltip = true;
+tooltip.tooltip = false;
+tooltip.x11Client = false;
+tooltip.windowRole = "";
+tooltip.layer = 3;
 tooltip.keepAbove = true;
 
 const settings = createWindow(
@@ -97,14 +104,18 @@ const settings = createWindow(
     "docklight6-settings",
     {x: 600, y: 200, width: 460, height: 700});
 settings.keepAbove = true;
+settings.x11Client = false;
+settings.dialog = true;
+settings.windowRole = "";
+settings.layer = 4;
 
 const dock = createWindow(
     "dock",
     "",
     {x: 0, y: 44, width: 53, height: 1036});
-dock.dock = true;
+dock.dialog = true;
 dock.x11Client = false;
-dock.layer = 3;
+dock.layer = 9;
 dock.output = {
     geometry: {
         x: 0,
@@ -236,6 +247,12 @@ for (const [relativePath, constant] of [
             constant));
 }
 
+assert.match(identityHeader, /KWIN_DOCK_NAMESPACE\[\]\s*=\s*"dialog"/);
+const nativeBackend = fs.readFileSync(path.resolve(sourceDirectory,
+    'dock/backends/layer_shell_dock_surface_backend.cpp'), 'utf8');
+assert.match(nativeBackend,
+    /gtk_layer_set_namespace\([\s\S]*?m_plasma_session\s*\? DocklightSurfaceIdentity::KWIN_DOCK_NAMESPACE\s*: DocklightSurfaceIdentity::DOCK_NAMESPACE/);
+
 const settingsDialogSource = fs.readFileSync(
     path.resolve(
         sourceDirectory,
@@ -260,7 +277,7 @@ assert.match(
     /windowRole\s*===\s*\n?\s*DOCKLIGHT_MAIN_ROLE/);
 assert.match(
     scriptSource,
-    /Number\(window\.layer\)\s*===\s*\n?\s*KWIN_DOCK_LAYER/);
+    /window\.dialog\s*===\s*true/);
 assert.doesNotMatch(
     scriptSource,
     /window\.skipTaskbar\s*&&\s*\n?\s*isDocklightWindow\(window\)/);
@@ -327,6 +344,20 @@ assert.deepStrictEqual(
         dock.frameGeometry.width,
         dock.frameGeometry.height
     ]);
+
+// Changing hover effects must preserve the same geometry source, while
+// TOP-layer native auxiliary surfaces must never substitute for the dock.
+for (const layer of [3, 9, 3, 9]) {
+    dock.layer = layer;
+    dock.frameGeometryChanged.emit();
+    assert.deepStrictEqual(geometryCalls().at(-1).arguments.slice(1),
+        [0, 44, 53, 1036]);
+}
+
+// The native main type must remain eligible for Plasma's Scale/Fade
+// effects, whose shared type predicate accepts normal windows or dialogs.
+assert.strictEqual(dock.dialog, true);
+assert.strictEqual(dock.dock, false);
 
 // Native layer-shell placement remains compositor-owned.
 assert.strictEqual(placementCalls().length, 0);

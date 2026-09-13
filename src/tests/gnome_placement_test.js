@@ -812,7 +812,11 @@ assert.match(
 assert.match(
     revealWindowSource,
     /DockRevealWindow::start_x11_edge_poll[\s\S]*?uses_xwayland_presentation\(\) &&[\s\S]*?!x11_reveal_surface_is_inset\(\)[\s\S]*?return;[\s\S]*?signal_timeout/,
-    "native X11 must poll the physical edge while XWayland retains its inset-only fallback");
+    "XWayland must retain its inset-only polling fallback");
+assert.match(
+    revealWindowSource,
+    /m_x11_pointer_monitor.start\([\s\S]*?poll_x11_physical_edge\(\);\s*return;[\s\S]*?signal_timeout/,
+    "native XI2 motion must replace recurring polling while unsupported servers retain fallback");
 assert.match(
     revealWindowSource,
     /uses_xwayland_presentation[\s\S]*?DOCKLIGHT_XWAYLAND_PRESENTATION/,
@@ -1560,4 +1564,188 @@ assert.deepStrictEqual(
         'a removed monitor must not leave an active stale input strip');
 }
 
-console.log("GNOME placement tests passed");
+
+// Exercise real stacking policy with actor/window doubles: compositor restacks
+// and preview remaps must not put the GTK card or live content over the dock.
+const stackMethod = extensionSource.match(
+    /    _syncMagnifiedOverlayStack\(\) \{[\s\S]*?\n    \}\n\n    _isX11DockWindow/)[0]
+    .replace(/\n\n    _isX11DockWindow$/, "");
+function group() {
+    return {
+        children: [],
+        get_children() { return this.children.slice(); },
+        add_child(actor) { this.children.push(actor); actor.parent = this; },
+        remove_child(actor) {
+            this.children.splice(this.children.indexOf(actor), 1);
+            actor.parent = null;
+        },
+        set_child_below_sibling(actor, sibling) {
+            assert.strictEqual(actor.parent, this);
+            assert.strictEqual(sibling.parent, this);
+            this.remove_child(actor);
+            this.children.splice(this.children.indexOf(sibling), 0, actor);
+            actor.parent = this;
+        },
+    };
+}
+const windowGroup = group();
+const uiGroup = group();
+function stackActor(parent) {
+    const actor = {visible: true, get_parent() { return this.parent; }};
+    parent.add_child(actor);
+    return actor;
+}
+const dockActor = stackActor(windowGroup);
+const cardActor = stackActor(windowGroup);
+const shieldActor = stackActor(uiGroup);
+const liveActor = stackActor(uiGroup);
+let fullscreen = false;
+let raises = 0;
+const stackPolicy = vm.runInNewContext(`({${stackMethod}})`, {
+    global: {
+        window_group: windowGroup,
+        get_window_actors: () => windowGroup.children.filter(
+            actor => actor === dockActor || actor === cardActor),
+        display: {get_monitor_in_fullscreen: () => fullscreen},
+    },
+    Main: {uiGroup},
+});
+Object.assign(stackPolicy, {
+    _waylandIntegration: true,
+    _previewReplacementShield: shieldActor,
+    _livePreviewOverlay: liveActor,
+    _dockMonitorIndex: () => 0,
+    _auxiliaryPosition: () => ({type: 'preview'}),
+    _auxiliaryWindowSignals: new Map([
+        [{get_compositor_private: () => cardActor}, []],
+    ]),
+    _dockWindow: {
+        get_compositor_private: () => dockActor,
+        raise() {
+            raises++;
+            windowGroup.remove_child(dockActor);
+            windowGroup.add_child(dockActor);
+            stackPolicy._syncMagnifiedOverlayStack(); // reentrant restacked
+        },
+    },
+});
+stackPolicy._syncMagnifiedOverlayStack();
+assert.deepStrictEqual(windowGroup.children,
+    [cardActor, shieldActor, liveActor, dockActor]);
+assert.strictEqual(raises, 1);
+stackPolicy._syncMagnifiedOverlayStack();
+assert.strictEqual(raises, 1, 'stable ordering must not cause a restack loop');
+windowGroup.remove_child(cardActor);
+windowGroup.add_child(cardActor);
+stackPolicy._syncMagnifiedOverlayStack();
+assert.deepStrictEqual(windowGroup.children,
+    [cardActor, shieldActor, liveActor, dockActor]);
+assert.strictEqual(raises, 2);
+fullscreen = true;
+windowGroup.remove_child(cardActor);
+windowGroup.add_child(cardActor);
+stackPolicy._syncMagnifiedOverlayStack();
+assert.strictEqual(raises, 2, 'fullscreen must not trigger dock elevation');
+stackPolicy._waylandIntegration = false;
+stackPolicy._syncMagnifiedOverlayStack();
+assert.deepStrictEqual(uiGroup.children, [shieldActor, liveActor]);
+
+// A replacement shield can arrive while the live overlay already belongs to
+// the window group; both must acquire the same parent before sibling ordering.
+stackPolicy._waylandIntegration = true;
+fullscreen = false;
+uiGroup.remove_child(shieldActor);
+const replacementShield = stackActor(uiGroup);
+stackPolicy._previewReplacementShield = replacementShield;
+stackPolicy._syncMagnifiedOverlayStack();
+assert.deepStrictEqual(windowGroup.children,
+    [cardActor, replacementShield, liveActor, dockActor]);
+stackPolicy._auxiliaryPosition = () => ({type: 'tooltip'});
+windowGroup.remove_child(cardActor);
+windowGroup.add_child(cardActor);
+stackPolicy._syncMagnifiedOverlayStack();
+assert.strictEqual(windowGroup.children.at(-1), dockActor);
+const stableRaises = raises;
+cardActor.visible = false;
+windowGroup.remove_child(cardActor);
+windowGroup.add_child(cardActor);
+stackPolicy._syncMagnifiedOverlayStack();
+assert.strictEqual(raises, stableRaises, 'hidden auxiliary windows must not raise the dock');
+
+
+// Mutter can keep a tooltip above a DOCK window despite Meta.Window.raise().
+// Actor ordering must still put the GTK card and live content behind icons.
+cardActor.visible = true;
+stackPolicy._dockWindow.raise = () => { raises++; };
+windowGroup.remove_child(cardActor);
+windowGroup.add_child(cardActor);
+stackPolicy._syncMagnifiedOverlayStack();
+assert.deepStrictEqual(windowGroup.children,
+    [cardActor, replacementShield, liveActor, dockActor]);
+const constrainedRaises = raises;
+stackPolicy._syncMagnifiedOverlayStack();
+assert.strictEqual(raises, constrainedRaises,
+    'a constrained Meta stack must not cause repeated raise requests');
+// Reproduce a later compositor restack without changing its window list.
+windowGroup.remove_child(cardActor);
+windowGroup.add_child(cardActor);
+stackPolicy._syncMagnifiedOverlayStack();
+assert.strictEqual(windowGroup.children.at(-1), dockActor);
+
+// Window-group culling is computed for original window coordinates, not for
+// the thumbnail. Exercise guard ownership with occluded and damaged sources.
+const cullMethods = extensionSource.match(
+    /    _inhibitLivePreviewCulling\(actor\) \{[\s\S]*?\n    _destroyLivePreviews\(/)[0]
+    .replace(/\n    _destroyLivePreviews\($/, '');
+const cullPolicy = vm.runInNewContext(`new (class {${cullMethods}})()`, {
+    LivePreviewCullGuard: class {},
+});
+Object.assign(cullPolicy, {
+    _waylandIntegration: true,
+    _livePreviewCullGuards: new Map(),
+});
+const unrelatedEffect = {};
+function cullSource() {
+    return {
+        effects: [unrelatedEffect],
+        destroyed: false,
+        is_destroyed() { return this.destroyed; },
+        add_effect(effect) { this.effects.push(effect); },
+        remove_effect(effect) {
+            assert.ok(!this.destroyed, 'closed sources must not be accessed');
+            this.effects.splice(this.effects.indexOf(effect), 1);
+        },
+    };
+}
+const sourceA = cullSource();
+const sourceB = cullSource();
+cullPolicy._inhibitLivePreviewCulling(sourceA);
+cullPolicy._inhibitLivePreviewCulling(sourceA);
+cullPolicy._inhibitLivePreviewCulling(sourceB);
+assert.strictEqual(sourceA.effects.length, 2, 'one guard per source');
+assert.strictEqual(cullPolicy._livePreviewCullGuards.size, 2);
+// Model Mutter's enabled-effect bypass: a fully occluded original must still
+// supply its complete texture to the live clone in the same window group.
+const guard = cullPolicy._livePreviewCullGuards.get(sourceA);
+assert.ok(sourceA.effects.includes(guard));
+sourceB.destroyed = true;
+cullPolicy._restoreLivePreviewCulling();
+assert.deepStrictEqual(sourceA.effects, [unrelatedEffect]);
+assert.strictEqual(cullPolicy._livePreviewCullGuards.size, 0);
+cullPolicy._restoreLivePreviewCulling();
+cullPolicy._inhibitLivePreviewCulling(sourceB);
+assert.strictEqual(cullPolicy._livePreviewCullGuards.size, 0);
+cullPolicy._waylandIntegration = false;
+cullPolicy._inhibitLivePreviewCulling(sourceA);
+assert.deepStrictEqual(sourceA.effects, [unrelatedEffect],
+    'X11 UI-group previews must not alter source culling');
+assert.match(extensionSource,
+    /const clone = layout.add_window\(window\);[\s\S]*?if \(!clone\)[\s\S]*?continue;[\s\S]*?_inhibitLivePreviewCulling\(windowActor\)/);
+assert.match(extensionSource,
+    /_livePreviewOverlay.destroy\(\);[\s\S]*?_restoreLivePreviewCulling\(\);/,
+    'remove guards only after destroying live clones');
+assert.match(extensionSource,
+    /class DocklightLivePreviewCullGuard extends Clutter.Effect \{\}/,
+    'the guard must inherit paint-through behavior without shaders or FBOs');
+
+console.log("GNOME placement, stacking, and preview culling tests passed");

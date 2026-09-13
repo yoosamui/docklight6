@@ -10,6 +10,9 @@
 // Owns gtk-layer-shell setup, placement, monitor selection, and exclusive
 // zone handling for the main dock surface on native Wayland compositors.
 //
+// Magnified drawing uses OVERLAY above its TOP-layer auxiliary surfaces.
+// Plasma uses dialog scope for explicit identity with Scale/Fade transitions.
+//
 // ------------------------------------------------------------
 
 #include "layer_shell_dock_surface_backend.h"
@@ -122,7 +125,9 @@ LayerShellDockSurfaceBackend::
         GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
     gtk_layer_set_namespace(
         gtk_window,
-        DocklightSurfaceIdentity::DOCK_NAMESPACE);
+        m_plasma_session
+            ? DocklightSurfaceIdentity::KWIN_DOCK_NAMESPACE
+            : DocklightSurfaceIdentity::DOCK_NAMESPACE);
     gtk_layer_set_layer(
         gtk_window,
         GTK_LAYER_SHELL_LAYER_TOP);
@@ -174,6 +179,14 @@ void LayerShellDockSurfaceBackend::
 {
     auto *gtk_window =
         GTK_WINDOW(m_window.gobj());
+
+    // The magnified drawing surface must paint above its body-anchored
+    // tooltips and previews, which use TOP in this mode.
+    gtk_layer_set_layer(
+        gtk_window,
+        m_window.magnified_surface_enabled()
+            ? GTK_LAYER_SHELL_LAYER_OVERLAY
+            : GTK_LAYER_SHELL_LAYER_TOP);
 
     gtk_layer_set_anchor(
         gtk_window,

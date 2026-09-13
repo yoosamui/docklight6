@@ -269,6 +269,106 @@ void verifies_snapshot_and_grouping()
                "window-6"}));
 }
 
+void verifies_snapshot_change_filtering()
+{
+    FakeWindowBackend backend;
+    const auto publish = [&backend](
+        std::vector<ManagedWindow> windows,
+        std::vector<WindowId> order,
+        std::optional<WindowId> active)
+    {
+        backend.set_snapshot(std::move(windows), std::move(order), active);
+        backend.signal_snapshot_changed().emit();
+    };
+    auto first = window("first", "first-app");
+    auto second = window("second", "second-app");
+    auto own = window("own", "org.docklight6");
+    auto ignored = window("ignored", "panel", true);
+    publish({first, second}, {"first", "second"}, "first");
+    WindowRegistry registry(backend);
+    registry.start();
+    int changes = 0;
+    int geometry_changes = 0;
+    registry.signal_changed().connect([&changes]() { ++changes; });
+    registry.signal_window_geometry_changed().connect(
+        [&geometry_changes]() { ++geometry_changes; });
+
+    // Irrelevant windows, their metadata and backend enumeration order must
+    // not trigger launcher resolution or preview work in the dock.
+    publish({second, own, ignored, first},
+                         {"first", "own", "second", "ignored"}, "first");
+    ignored.caption = "changing panel title";
+    own.frame_geometry.x = 20;
+    publish({second, ignored, own, first},
+                         {"first", "second", "own", "ignored"}, "first");
+    assert(changes == 0);
+    assert(geometry_changes == 0);
+
+    first.frame_geometry.x = 240;
+    publish({first, second}, {"first", "second"}, "first");
+    assert(changes == 0);
+    assert(geometry_changes == 1);
+    assert(registry.find_window("first")->frame_geometry.x == 240);
+    publish({first, second}, {"first", "second"}, "first");
+    assert(changes == 0 && geometry_changes == 1);
+
+    publish({first, second}, {"second", "first"}, "second");
+    assert(changes == 1 && geometry_changes == 1);
+    assert(registry.active_window() == std::optional<WindowId>{"second"});
+    assert(registry.windows().front().id == "second");
+    second.caption = "new caption";
+    publish({first, second}, {"second", "first"}, "second");
+    assert(changes == 2);
+    assert(registry.find_window("second")->caption == "new caption");
+    second.minimized = true;
+    publish({first, second}, {"second", "first"}, "first");
+    assert(changes == 3);
+    assert(registry.find_window("second")->minimized);
+    publish({first}, {"first"}, "first");
+    assert(changes == 4);
+    assert(!registry.find_application("second-app"));
+    publish({}, {}, std::nullopt);
+    assert(changes == 5);
+    publish({}, {}, std::nullopt);
+    assert(changes == 5);
+}
+
+void verifies_caption_notifications_do_not_wake_application_state()
+{
+    FakeWindowBackend backend;
+    auto entry = window("caption-window", "caption-app");
+    backend.set_snapshot({entry}, {entry.id}, entry.id);
+    WindowRegistry registry(backend);
+    registry.start();
+    int general = 0;
+    int application = 0;
+    registry.signal_changed().connect([&]() { ++general; });
+    registry.signal_application_state_changed().connect(
+        [&]() { ++application; });
+    for (int i = 0; i < 100; ++i)
+    {
+        entry.caption = std::to_string(i);
+        if (i % 2 == 0)
+            backend.update_window(entry);
+        else
+        {
+            backend.set_snapshot({entry}, {entry.id}, entry.id);
+            backend.signal_snapshot_changed().emit();
+        }
+        assert(registry.find_window(entry.id)->caption == entry.caption);
+        assert(general == i + 1);
+        assert(application == 0);
+    }
+    entry.minimized = true;
+    backend.update_window(entry);
+    assert(application == 1);
+    backend.set_active_window(std::nullopt);
+    assert(application == 2);
+    backend.remove_window(entry.id);
+    assert(application == 3);
+    assert(registry.running_applications().empty());
+}
+
 void verifies_synthetic_shell_identity_is_not_an_application()
 {
     FakeWindowBackend backend;
@@ -667,6 +767,8 @@ int main()
 
     verifies_process_executable_fallback();
     verifies_snapshot_and_grouping();
+    verifies_snapshot_change_filtering();
+    verifies_caption_notifications_do_not_wake_application_state();
     verifies_synthetic_shell_identity_is_not_an_application();
     verifies_incremental_updates();
     verifies_skip_taskbar_auxiliary_grouping();

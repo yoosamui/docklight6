@@ -456,7 +456,7 @@ D-Bus rather than the main configuration file.
 DockLight uses Autoconf and Automake with C++17:
 
 - `configure.ac` declares GTKmm 3, gtk-layer-shell, PipeWire, Wayland,
-  libwnck, GDK X11, Xlib, XComposite, XRender, gettext, and wayland-scanner
+  libwnck, GDK X11, Xlib, XComposite, XInput2, XRender, gettext, and wayland-scanner
   requirements.
 - `src/Makefile.am` declares the executable, source modules, generated Wayland
   client files, and compiled/JavaScript tests.

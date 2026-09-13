@@ -71,6 +71,8 @@ public:
 
     void set_monitor(
         const Glib::RefPtr<Gdk::Monitor> &monitor);
+    // Layer-shell and native X11 previews yield to the magnified dock.
+    void set_below_magnified_dock(bool enabled);
     void set_workarea_geometry(
         const MonitorGeometry &geometry);
     void set_card_user_height(int height);

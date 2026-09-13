@@ -32,6 +32,7 @@
 
 #include <giomm.h>
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -124,6 +125,8 @@ private:
         m_applications;
     mutable bool m_applications_loaded =
         false;
+
+    mutable std::map<std::string, std::string> m_resolved_ids;
 
     GAppInfoMonitor *m_app_info_monitor =
         nullptr;
