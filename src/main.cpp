@@ -34,6 +34,7 @@
 // - Window-system integration is optional outside supported sessions.
 // - Long-lived managers remain in main for the GTK application lifetime.
 // - Configuration and monitor changes are forwarded as complete updates.
+// - A GTK module lifetime guard keeps external theme callbacks executable.
 //
 // ------------------------------------------------------------
 
@@ -45,6 +46,7 @@
 #include "integrations/window_system_controller.h"
 #include "monitors/dock_monitor_manager.h"
 #include "presentation/docklight_surface_identity.h"
+#include "presentation/gtk_module_lifetime.h"
 #include "presentation/presentation_selector.h"
 #include "config.h"
 
@@ -163,6 +165,7 @@ int main(int argc, char *argv[])
     Gtk::Main gtk_runtime(
         argc,
         argv);
+    GtkModuleLifetime gtk_module_lifetime;
 
     // Ensure an existing configuration receives newly introduced settings
     // even when this invocation only lists monitors.

@@ -17,6 +17,7 @@ check_PROGRAMS = \
     hyprland_thumbnail_capture_test \
     launcher_manager_test \
     presentation_selector_test \
+    gtk_module_lifetime_test \
     window_registry_test \
     kwin_window_backend_test \
     kwin_protocol_codec_test \
@@ -94,6 +95,8 @@ docklight6_SOURCES = \
     presentation/docklight_surface_identity.h \
     presentation/presentation_selector.h \
     presentation/presentation_selector.cpp \
+    presentation/gtk_module_lifetime.h \
+    presentation/gtk_module_lifetime.cpp \
     presentation/x11_pointer_monitor.h \
     presentation/x11_pointer_monitor.cpp \
     presentation/x11_surface_stacking.h \
@@ -271,6 +274,7 @@ docklight6_CPPFLAGS = \
     $(X11_BACKEND_CFLAGS)
 
 docklight6_LDADD = \
+    -ldl \
     $(GTKMM_LIBS) \
     $(GTK_LAYER_SHELL_LIBS) \
     $(PIPEWIRE_LIBS) \
@@ -502,6 +506,14 @@ presentation_selector_test_CPPFLAGS = \
 
 presentation_selector_test_LDADD = \
     $(GTKMM_LIBS)
+
+gtk_module_lifetime_test_SOURCES = \
+    tests/gtk_module_lifetime_test.cpp \
+    presentation/gtk_module_lifetime.h \
+    presentation/gtk_module_lifetime.cpp
+
+gtk_module_lifetime_test_CPPFLAGS = $(GTKMM_CFLAGS)
+gtk_module_lifetime_test_LDADD = $(GTKMM_LIBS) -ldl
 
 EXTRA_DIST = \
     tests/dock_magnified_effect_test.js \
