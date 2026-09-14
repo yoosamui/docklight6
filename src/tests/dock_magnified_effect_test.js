@@ -240,8 +240,12 @@ assert.strictEqual(
     "hidden placement, animation, immediate hide, and reveal must share box travel");
 assert.match(
     autohideSource,
+    /if \(!m_animation_collapses_horizontally &&\s*!m_animation_collapses_vertically &&\s*!m_animation_translates_content\)[\s\S]*?m_animation_timer =\s*Glib::signal_timeout\(\).connect\([\s\S]*?advance_x11_animation[\s\S]*?return;[\s\S]*?m_x11_animation_tick = m_window.add_tick_callback/,
+    "offscreen X11 window movement must progress without compositor frame callbacks");
+assert.match(
+    autohideSource,
     /m_x11_animation_tick = m_window.add_tick_callback/,
-    "X11 animation must share GTK paint scheduling with magnification");
+    "fixed-window X11 transforms must share GTK paint scheduling with magnification");
 assert.match(
     autohideSource,
     /cancel_animation\(\)[\s\S]*?remove_tick_callback\(m_x11_animation_tick\)/,

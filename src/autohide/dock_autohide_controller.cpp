@@ -14,7 +14,8 @@
 // Important implementation decisions:
 // - Placement changes are mirrored to the reveal surface.
 // - Timers are cancelled and replaced as visibility intent changes.
-// - X11 transforms run on the GTK frame clock, with magnification suspended.
+// - Fixed-window X11 transforms use the GTK frame clock. Offscreen window
+//   movement uses a timer because compositors can suspend frame callbacks.
 // - Intellihide overlap participates in the same visibility policy.
 //
 // ------------------------------------------------------------
@@ -1337,6 +1338,22 @@ void DockAutohideController::animate_x11(
         return;
     }
 
+    // A compositor can stop frame callbacks while the entire X11 window is
+    // offscreen. Window-motion effects must advance independently so their
+    // first reveal can return the surface to the visible output.
+    if (!m_animation_collapses_horizontally &&
+        !m_animation_collapses_vertically &&
+        !m_animation_translates_content)
+    {
+        m_animation_timer =
+            Glib::signal_timeout().connect(
+                sigc::mem_fun(
+                    *this,
+                    &DockAutohideController::advance_x11_animation),
+                DockConstants::AUTOHIDE_ANIMATION_FRAME_MS);
+        return;
+    }
+
     m_x11_animation_tick = m_window.add_tick_callback(
         [this](const Glib::RefPtr<Gdk::FrameClock> &)
         {
@@ -1436,8 +1453,10 @@ bool DockAutohideController::advance_x11_animation()
     if (progress < 1.0)
         return true;
 
-    // Returning false removes the currently executing GTK callback.
+    // Returning false removes the active tick; disconnect the timer as well
+    // when this transition was driven independently of the frame clock.
     m_x11_animation_tick = 0;
+    m_animation_timer.disconnect();
 
     if (m_animating_to_hidden)
     {
