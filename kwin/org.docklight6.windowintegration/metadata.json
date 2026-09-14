@@ -9,7 +9,7 @@
             }
         ],
         "Id": "org.docklight6.windowintegration",
-        "Version": "5.2",
+        "Version": "5.4",
         "License": "GPL-3.0-or-later"
     },
     "X-Plasma-API": "javascript",

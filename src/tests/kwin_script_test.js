@@ -734,6 +734,63 @@ assert.strictEqual(
     callsFor("RequestDockReveal").length,
     revealRequestsBeforeEdge + 1);
 
+// Edge-to-body traversal must retain the dock across a panel inset. Test
+// all edges on an output with a negative origin, including exact boundaries.
+const savedOutput = replacementDockWindow.output;
+replacementDockWindow.x11Client = false;
+replacementDockWindow.dialog = true;
+replacementDockWindow.layer = 9;
+replacementDockWindow.output = {
+    geometry: {x: -1000, y: -500, width: 1000, height: 800}
+};
+const assertPointer = (x, y, inside) => {
+    workspace.cursorPos = {x, y};
+    workspace.cursorPosChanged.emit();
+    assert.deepStrictEqual(
+        callsFor("PublishDockPointerInside").at(-1).arguments,
+        [inside], `pointer (${x}, ${y})`);
+};
+for (const scenario of [
+    {frame: {x: -800, y: -456, width: 600, height: 64},
+     inside: [[-500, -500], [-500, -480], [-500, -420]],
+     outside: [[-801, -480], [-200, -480], [-500, -501], [-500, -392]]},
+    {frame: {x: -800, y: 192, width: 600, height: 64},
+     inside: [[-500, 299], [-500, 280], [-500, 220]],
+     outside: [[-801, 280], [-200, 280], [-500, 300], [-500, 191]]},
+    {frame: {x: -956, y: -400, width: 64, height: 600},
+     inside: [[-1000, -100], [-980, -100], [-920, -100]],
+     outside: [[-980, -401], [-980, 200], [-1001, -100], [-892, -100]]},
+    {frame: {x: -108, y: -400, width: 64, height: 600},
+     inside: [[-1, -100], [-20, -100], [-80, -100]],
+     outside: [[-20, -401], [-20, 200], [0, -100], [-109, -100]]}
+]) {
+    replacementDockWindow.frameGeometry = scenario.frame;
+    replacementDockWindow.frameGeometryChanged.emit();
+    for (const [x, y] of scenario.inside)
+        assertPointer(x, y, true);
+    for (const [x, y] of scenario.outside)
+        assertPointer(x, y, false);
+
+    // Removing and remapping a native surface must restore containment
+    // without a cursorPosChanged event, even at the physical reveal edge.
+    const [x, y] = scenario.inside[0];
+    assertPointer(x, y, true);
+    workspace.stackingOrder = [managedWindow];
+    workspace.windowRemoved.emit(replacementDockWindow);
+    assert.deepStrictEqual(
+        callsFor("PublishDockPointerInside").at(-1).arguments, [false]);
+    workspace.stackingOrder.push(replacementDockWindow);
+    workspace.windowAdded.emit(replacementDockWindow);
+    assert.deepStrictEqual(
+        callsFor("PublishDockPointerInside").at(-1).arguments, [true]);
+}
+replacementDockWindow.x11Client = true;
+replacementDockWindow.output = savedOutput;
+replacementDockWindow.frameGeometry = {
+    x: 100, y: 44, width: 600, height: 64
+};
+replacementDockWindow.frameGeometryChanged.emit();
+
 // KWin's ElectricRight edge is the outer edge of the whole desktop, not an
 // internal border. Reject its far-monitor callback and reveal when the cursor
 // actually crosses the dock output's shared boundary instead.
@@ -1240,3 +1297,71 @@ assert.strictEqual(
             "Register")
         .length,
     previousRegisterCount + 1);
+
+// Reload while native autohide has unmapped the dock: no surface exists to
+// register a reveal edge. Recovery must request one reveal, then learn the
+// remapped surface and rearm the edge without requiring pointer motion.
+for (const hidden of [true, false]) {
+    const recoveryCalls = [];
+    const recoveryEdges = new Map();
+    const recoveryWorkspace = {
+        stackingOrder: [],
+        cursorPos: {x: 400, y: 0},
+        windowAdded: new Signal(),
+        currentDesktop: {},
+        screens: [savedOutput]
+    };
+    const recoveryContext = {
+        ...context,
+        workspace: recoveryWorkspace,
+        callDBus(
+            service,
+            objectPath,
+            interfaceName,
+            methodName,
+            ...args) {
+            recoveryCalls.push({
+                methodName,
+                args: args.slice(0, -1),
+                callback: args.at(-1)
+            });
+        },
+        registerScreenEdge(edge, callback) {
+            recoveryEdges.set(edge, callback);
+        },
+        unregisterScreenEdge(edge) {
+            recoveryEdges.delete(edge);
+        }
+    };
+    vm.createContext(recoveryContext);
+    vm.runInContext(
+        fs.readFileSync(scriptPath, "utf8"),
+        recoveryContext);
+    recoveryCalls[0].callback(true, "10");
+    const recoveryCallsFor = methodName =>
+        recoveryCalls.filter(call => call.methodName === methodName);
+    const query = recoveryCallsFor("GetDockHidden").at(-1);
+    assert(query,
+        "missing geometry must query hidden state after registration");
+    query.callback(hidden);
+    assert.strictEqual(
+        recoveryCallsFor("RequestDockReveal").length,
+        hidden ? 1 : 0);
+    if (hidden) {
+        replacementDockWindow.x11Client = false;
+        replacementDockWindow.frameGeometry = {
+            x: 100, y: 44, width: 600, height: 64
+        };
+        recoveryWorkspace.stackingOrder.push(replacementDockWindow);
+        recoveryWorkspace.windowAdded.emit(replacementDockWindow);
+        assert(recoveryEdges.has(context.KWin.ElectricTop));
+        assert.deepStrictEqual(
+            recoveryCallsFor("PublishDockPointerInside")
+                .at(-1).args,
+            [true]);
+        query.callback(true);
+        assert.strictEqual(
+            recoveryCallsFor("RequestDockReveal").length,
+            1, "late hidden replies must not reveal a rediscovered surface");
+    }
+}

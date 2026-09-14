@@ -956,12 +956,37 @@
         const width = Number(geometry.width || 0);
         const height = Number(geometry.height || 0);
 
-        return width > 0 &&
-            height > 0 &&
-            x >= left &&
-            y >= top &&
-            x < left + width &&
-            y < top + height;
+        if (width <= 0 || height <= 0)
+            return false;
+
+        let hoverLeft = left;
+        let hoverTop = top;
+        let hoverRight = left + width;
+        let hoverBottom = top + height;
+        const output = lastDockOutputGeometry;
+        const edge = dockScreenEdge();
+
+        // A Plasma panel can inset the dock from its reveal edge. Keep the
+        // corridor between that edge and the dock inside the hover region,
+        // so a stationary edge pointer and motion towards the dock retain it.
+        // Preserve the dock's main-axis bounds and its inward boundary.
+        if (output) {
+            if (edge === KWin.ElectricTop)
+                hoverTop = Math.min(top, output.y);
+            else if (edge === KWin.ElectricBottom)
+                hoverBottom = Math.max(
+                    hoverBottom, output.y + output.height);
+            else if (edge === KWin.ElectricLeft)
+                hoverLeft = Math.min(left, output.x);
+            else if (edge === KWin.ElectricRight)
+                hoverRight = Math.max(
+                    hoverRight, output.x + output.width);
+        }
+
+        return x >= hoverLeft &&
+            y >= hoverTop &&
+            x < hoverRight &&
+            y < hoverBottom;
     }
 
     function publishDockPointerInside() {
@@ -1723,6 +1748,31 @@
                 waitForCommand();
                 publishSnapshot();
                 publishCurrentDesktop();
+
+                // A script reload can start while native autohide has no
+                // mapped surface. Without cached geometry no screen edge can
+                // be registered. Reveal once to rediscover the surface; normal
+                // pointer policy then decides whether it should remain shown.
+                if (!lastDockSurfaceGeometry) {
+                    callDBus(
+                        SERVICE_NAME,
+                        OBJECT_PATH,
+                        INTERFACE_NAME,
+                        "GetDockHidden",
+                        function (hidden) {
+                            if (!connected || hidden !== true ||
+                                lastDockSurfaceGeometry) {
+                                return;
+                            }
+
+                            callDBus(
+                                SERVICE_NAME,
+                                OBJECT_PATH,
+                                INTERFACE_NAME,
+                                "RequestDockReveal",
+                                handlePublishReply);
+                        });
+                }
             });
     }
 
@@ -1743,8 +1793,12 @@
         if (trackable)
             publishWindow(window);
 
-        if (isDockSurface)
+        if (isDockSurface) {
             publishDockSurfaceGeometry();
+            // Native autohide remaps a new surface under a stationary cursor.
+            // Do not wait for cursor motion to replace the hidden false state.
+            publishDockPointerInside();
+        }
 
         publishStackingOrder();
     }
