@@ -2,6 +2,9 @@
 // Owns window discovery, placement, previews, and compositor animations.
 // Preview surfaces remain siblings of window actors so the real dock can
 // paint above them; window actors themselves are never reparented.
+// Async replies belong to one enabled backend lifetime; failed command waits
+// reconnect through the bounded registration retry after session interruptions.
+// XWayland pointer/reveal geometry follows its actual GTK-owned frame.
 // Active clone sources bypass window-space culling through a paint-through
 // effect, released with the previews; no shader or offscreen capture is used.
 
@@ -32,6 +35,7 @@ import {
     clampAuxiliaryToWorkArea,
     dockMonitorIndexForRect,
     dockPlacementChangesMonitor,
+    inferDockEdge,
     isDockPlacementCommitted,
     isPointInsideRect,
     isPointerInsideDockInterior,
@@ -137,6 +141,7 @@ function integerText(value) {
 export default class DocklightWindowIntegration extends Extension {
     enable() {
         this._enabled = true;
+        this._dbusGeneration = {};
         this._waylandIntegration = Meta.is_wayland_compositor();
 
         this._proxy = Gio.DBusProxy.new_for_bus_sync(
@@ -353,6 +358,7 @@ export default class DocklightWindowIntegration extends Extension {
             return;
 
         this._enabled = false;
+        this._dbusGeneration = {};
         this._connected = false;
 
         if (this._thumbnailNameId) {
@@ -1208,12 +1214,7 @@ export default class DocklightWindowIntegration extends Extension {
         // redrawing the GTK surface.
         const base = this._dockActorBaseTranslation ?? {x: 0, y: 0};
         const monitorIndex = this._dockMonitorIndex();
-        const positioned = placeDockInWorkArea(
-            Main.layoutManager.monitors[monitorIndex],
-            this._workAreaForMonitor(monitorIndex),
-            placement,
-            this._dockAlignment,
-            this._dockLocation);
+        const positioned = this._dockInteractionPlacement(monitorIndex);
         const offset = calculateDockHideOffset(positioned);
         const collapseRight = rightHideCorridorIntersectsMonitor(
             positioned,
@@ -1511,6 +1512,33 @@ export default class DocklightWindowIntegration extends Extension {
         });
     }
 
+    _dockInteractionPlacement(monitorIndex) {
+        const monitor = Main.layoutManager.monitors[monitorIndex];
+        // On GNOME Wayland, GTK owns XWayland placement. Reapplying Shell's
+        // work area here can move the pointer/reveal region away from the
+        // real dock (for example beside the GNOME Classic bottom panel).
+        // Actor animation does not change this stable, revealed frame.
+        if (this._waylandIntegration && this._isX11DockWindow()) {
+            const frame = this._dockWindow.get_frame_rect();
+            return {
+                x: frame.x,
+                y: frame.y,
+                width: frame.width,
+                height: frame.height,
+                edge: ['top', 'bottom', 'left', 'right'].includes(this._dockLocation)
+                    ? this._dockLocation
+                    : inferDockEdge(monitor, frame),
+            };
+        }
+
+        return placeDockInWorkArea(
+            monitor,
+            this._workAreaForMonitor(monitorIndex),
+            this._dockPlacement,
+            this._dockAlignment,
+            this._dockLocation);
+    }
+
     _dockPointerIsInside() {
         if (!this._dockPlacement || this._dockVisibilityState === 'hidden')
             return false;
@@ -1520,12 +1548,7 @@ export default class DocklightWindowIntegration extends Extension {
         if (!monitor)
             return false;
 
-        const placement = placeDockInWorkArea(
-            monitor,
-            this._workAreaForMonitor(monitorIndex),
-            this._dockPlacement,
-            this._dockAlignment,
-            this._dockLocation);
+        const placement = this._dockInteractionPlacement(monitorIndex);
         if (!this._pointerPosition)
             return false;
 
@@ -1767,12 +1790,7 @@ export default class DocklightWindowIntegration extends Extension {
             return;
         }
 
-        const placement = placeDockInWorkArea(
-            monitor,
-            this._workAreaForMonitor(monitorIndex),
-            this._dockPlacement,
-            this._dockAlignment,
-            this._dockLocation);
+        const placement = this._dockInteractionPlacement(monitorIndex);
         const reveal = calculateDockRevealRect(placement);
 
         actor.set_position(reveal.x, reveal.y);
@@ -1987,6 +2005,7 @@ export default class DocklightWindowIntegration extends Extension {
         if (!this._proxy)
             return;
 
+        const generation = this._dbusGeneration;
         const parameters = signature ? new GLib.Variant(signature, values) : null;
         this._proxy.call(
             method,
@@ -1995,11 +2014,21 @@ export default class DocklightWindowIntegration extends Extension {
             -1,
             null,
             (proxy, result) => {
+                let reply = null;
+                let failure = null;
                 try {
-                    callback(proxy.call_finish(result).deepUnpack());
+                    reply = proxy.call_finish(result).deepUnpack();
                 } catch (error) {
-                    callback(null, error);
+                    failure = error;
                 }
+
+                // Lock/unlock can disable and re-enable the same extension
+                // object while old waits are still completing. Consume their
+                // results, but never mutate the replacement connection.
+                if (!this._enabled || this._proxy !== proxy ||
+                    this._dbusGeneration !== generation)
+                    return;
+                callback(reply, failure);
             });
     }
 
@@ -2083,6 +2112,7 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _disconnectBackend() {
+        this._dbusGeneration = {};
         if (!this._waylandIntegration)
             this._restoreX11DockActor();
 
@@ -3082,8 +3112,18 @@ export default class DocklightWindowIntegration extends Extension {
             this._pendingWaits++;
             this._call('WaitForCommand', null, null, (reply) => {
                 this._pendingWaits--;
-                if (!this._connected || !reply)
+                if (!this._connected)
                     return;
+
+                if (!reply) {
+                    // A timeout after suspend must not silently retire both
+                    // command consumers. Register again to clear server-side
+                    // waits and restore the snapshot/geometry handshake.
+                    this._disconnectBackend();
+                    this._scheduleRegistrationRetry();
+                    return;
+                }
+
                 this._waitForCommands();
                 this._executeCommand(reply[0], reply[1], reply[2]);
             });

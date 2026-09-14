@@ -1504,13 +1504,17 @@ assert.deepStrictEqual(
             assert.strictEqual(actor.reactive, false);
         },
     };
-    const methods = extensionSource.match(
+    const interactionMethods = extensionSource.match(
+        /    _dockInteractionPlacement\(monitorIndex\) \{[\s\S]*?(?=    _publishDockPointerInside\()/)[0];
+    const methods = interactionMethods + extensionSource.match(
         /    _ensureDockRevealActor\(\) \{[\s\S]*?(?=    _destroyDockRevealActor\(\))/)[0];
     const RevealController = vm.runInNewContext(
         `(class { ${methods} })`, {
             St: {Widget: RevealActor},
             Main: {layoutManager},
             placeDockInWorkArea,
+            inferDockEdge,
+            isPointerInsideDockInterior,
             calculateDockRevealRect,
         });
     const controller = new RevealController();
@@ -1524,6 +1528,31 @@ assert.deepStrictEqual(
         _dockMonitorIndex: () => 0,
         _workAreaForMonitor: () => layoutManager.monitors[0],
     });
+    // GNOME Classic can expose a Shell work area that differs from the
+    // GTK-owned XWayland dock frame. A stationary edge pointer must remain
+    // inside after reveal, including the enlarged magnification surface.
+    const frame = {x: 378, y: 1296, width: 1804, height: 144};
+    controller._waylandIntegration = true;
+    controller._isX11DockWindow = () => true;
+    controller._dockWindow = {get_frame_rect: () => frame};
+    controller._pointerPosition = {x: 1280, y: 1439};
+    controller._workAreaForMonitor = () =>
+        ({x: 0, y: 32, width: 2560, height: 1376});
+    assert.strictEqual(controller._dockPointerIsInside(), true,
+        'revealed XWayland dock must retain a stationary physical-edge pointer');
+    controller._pointerPosition.y = 1295;
+    assert.strictEqual(controller._dockPointerIsInside(), false);
+    controller._pointerPosition.y = 1439;
+    controller._waylandIntegration = false;
+    assert.deepStrictEqual({...controller._dockInteractionPlacement(0)},
+        {...placeDockInWorkArea(layoutManager.monitors[0],
+            controller._workAreaForMonitor(0), controller._dockPlacement,
+            'center', 'bottom')}, 'native X11 keeps its existing geometry');
+    controller._waylandIntegration = true;
+    controller._isX11DockWindow = () => false;
+    assert.strictEqual(controller._dockPointerIsInside(), false,
+        'native Wayland continues to use Shell placement');
+    controller._isX11DockWindow = () => true;
     controller._ensureDockRevealActor();
     const actor = controller._dockRevealActor;
     const simulateOverviewReturn = () => { actor.visible = true; };
@@ -1748,4 +1777,94 @@ assert.match(extensionSource,
     /class DocklightLivePreviewCullGuard extends Clutter.Effect \{\}/,
     'the guard must inherit paint-through behavior without shaders or FBOs');
 
-console.log("GNOME placement, stacking, and preview culling tests passed");
+// Exercise delayed D-Bus completions across lock/unlock and command timeouts.
+// These are the real methods with only transport and Shell cleanup stubbed.
+{
+    const methods = extensionSource.match(
+        /    _call\(method,[\s\S]*?(?=    _register\()/)[0] +
+        extensionSource.match(
+            /    _disconnectBackend\(\) \{[\s\S]*?(?=    _nextRevision\()/)[0] +
+        extensionSource.match(
+            /    _waitForCommands\(\) \{[\s\S]*?(?=    _executeCommand\()/)[0];
+    const Controller = vm.runInNewContext(`(class { ${methods} })`, {
+        Gio: {DBusCallFlags: {NONE: 0}},
+        GLib: {},
+    });
+    const completions = [];
+    let consumed = 0;
+    const proxy = {
+        call(_method, _parameters, _flags, _timeout, _cancel, complete) {
+            completions.push(complete);
+        },
+        call_finish(result) {
+            consumed++;
+            if (result.error)
+                throw result.error;
+            return {deepUnpack: () => result.reply};
+        },
+    };
+    const controller = new Controller();
+    let retries = 0;
+    let commands = 0;
+    Object.assign(controller, {
+        _enabled: true,
+        _dbusGeneration: {},
+        _proxy: proxy,
+        _connected: true,
+        _pendingWaits: 0,
+        _waylandIntegration: true,
+        _cancelApplicationPlacements() {},
+        _clearIconGeometries() {},
+        _destroyLivePreviews() {},
+        _scheduleRegistrationRetry() { retries++; },
+        _executeCommand() { commands++; },
+    });
+    controller._waitForCommands();
+    assert.strictEqual(completions.length, 2);
+    const oldWaits = completions.splice(0);
+    controller._enabled = false;
+    oldWaits[0](proxy, {reply: ['old', '', '']});
+    assert.strictEqual(commands, 0, 'disabled extension ignores replies');
+    // Re-enable the same object and even reuse the proxy: only the generation
+    // distinguishes the pending old session from the new registration.
+    controller._enabled = true;
+    controller._dbusGeneration = {};
+    controller._pendingWaits = 0;
+    controller._waitForCommands();
+    oldWaits[1](proxy, {reply: ['old', '', '']});
+    assert.strictEqual(controller._pendingWaits, 2);
+    assert.strictEqual(commands, 0);
+    assert.strictEqual(consumed, 2, 'stale results must still be finished');
+
+    const timedOutWaits = completions.splice(0);
+    timedOutWaits[0](proxy, {error: new Error('Timeout after suspend')});
+    assert.strictEqual(controller._connected, false);
+    assert.strictEqual(controller._pendingWaits, 0);
+    assert.strictEqual(retries, 1, 'failed consumer schedules reconnection');
+    timedOutWaits[1](proxy, {reply: ['stale', '', '']});
+    assert.strictEqual(controller._pendingWaits, 0);
+    assert.strictEqual(commands, 0);
+    assert.strictEqual(retries, 1);
+
+    controller._connected = true;
+    controller._waitForCommands();
+    completions.shift()(proxy, {reply: ['fresh', '', '']});
+    assert.strictEqual(commands, 1, 'new connection executes commands');
+    assert.strictEqual(controller._pendingWaits, 2);
+
+    let callbacks = 0;
+    controller._call('Example', null, null, () => {
+        callbacks++;
+        throw new Error('handler failed');
+    });
+    const throwingCallback = completions.pop();
+    assert.throws(() => throwingCallback(proxy, {reply: []}), /handler failed/);
+    assert.strictEqual(callbacks, 1,
+        'handler exception must not invoke the callback twice as a bus error');
+}
+assert.match(extensionSource,
+    /enable\(\) \{\s*this\._enabled = true;\s*this\._dbusGeneration = \{\};/);
+assert.match(extensionSource,
+    /this\._enabled = false;\s*this\._dbusGeneration = \{\};/);
+
+console.log("GNOME placement, stacking, preview culling, and connection lifecycle tests passed");
