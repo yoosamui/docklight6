@@ -34,6 +34,7 @@ TESTS = \
     tests/kwin_surface_identity_test.js \
     tests/plasma_geometry_bridge_test.js \
     tests/marco_restore_test.js \
+    tests/muffin_restore_test.js \
     tests/openbox_group_minimize_test.js \
     tests/xfwm4_restore_test.js
 
@@ -512,6 +513,7 @@ EXTRA_DIST = \
     tests/kwin_surface_identity_test.js \
     tests/plasma_geometry_bridge_test.js \
     tests/marco_restore_test.js \
+    tests/muffin_restore_test.js \
     tests/openbox_group_minimize_test.js \
     tests/xfwm4_restore_test.js
 

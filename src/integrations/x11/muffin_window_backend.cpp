@@ -12,7 +12,8 @@
 //
 // Important implementation decisions:
 // - XIDs bridge normalized EWMH windows to Muffin MetaWindow objects.
-// - Group presentation restores all members and focuses one intended target.
+// - Group presentation preserves the supplied back-to-front order and focuses
+//   its final member, independently of Cinnamon's actor enumeration order.
 // - Failed native actions do not fall through to workspace-moving libwnck
 //   activation.
 // - Every D-Bus connection, reply, and error is released locally.
@@ -122,12 +123,13 @@ MuffinWindowBackend::activate_windows_override(
     }
 
     script +=
-        "]; const wins = global.get_window_actors()"
-        ".map(a => a.meta_window)"
-        ".filter(w => ids.includes(w.get_xwindow()));"
+        "]; const actors = global.get_window_actors();"
+        "const wins = ids.map(id => actors.find("
+        "a => a.meta_window.get_xwindow() === id))"
+        ".filter(a => a).map(a => a.meta_window);"
         "if (wins.length === 0) return false;"
         "const target = wins[wins.length - 1];"
-        "wins.forEach(w => w.unminimize());"
+        "wins.forEach(w => { w.unminimize(); w.raise(); });"
         "target.get_workspace().activate_with_focus("
         "target, global.get_current_time());"
         "return true; })()";
