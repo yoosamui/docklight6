@@ -120,7 +120,7 @@ private:
     std::string m_home_icon_path;
     bool m_display_tooltips = true;
     bool m_display_preview = true;
-    bool m_close_preview_after_activation = false;
+    bool m_close_preview_after_activation = true;
     bool m_manage_all_workspaces = true;
     bool m_gradient_background = true;
 };
