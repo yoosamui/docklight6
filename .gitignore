@@ -3,6 +3,7 @@
 # #  # untracked file and nor will it be automatically added.
 # git rm file will stop track them.
 
+artifacts/
 src/docklight/
 src/docklight6
 /build/

@@ -22,7 +22,7 @@ desktop-specific window actions and previews may not be available.**
 
 
 **Demo video:**
-https://youtu.be/ZBSN9LmiqUY
+https://youtu.be/ulG_2Mtu5hc
 
 
 ## Installation
