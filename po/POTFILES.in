@@ -8,3 +8,4 @@ src/dock/dock_session_item.cpp
 src/launchers/session_launcher.cpp
 src/dialogs/dock_about_dialog.cpp
 src/monitors/dock_monitor_manager.cpp
+src/preview/dock_preview_layout.cpp

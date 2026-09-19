@@ -17,6 +17,10 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < 20)) ? 1 : 2;\n"
 "Generated-By: Babel 2.17.0\n"
 
+#: src/preview/dock_preview_layout.cpp:479
+msgid "Close window"
+msgstr "Închide fereastra"
+
 #: src/main.cpp:362
 msgid "Window previews are disabled"
 msgstr "Previzualizările ferestrelor sunt dezactivate"

@@ -17,6 +17,7 @@
 
 #include <gtk-layer-shell.h>
 #include <glib/gstdio.h>
+#include <glibmm/i18n.h>
 
 #include <algorithm>
 #include <cmath>
@@ -475,7 +476,7 @@ void DockPreviewWindow::rebuild(
         close->set_visible_window(true);
         close->add_events(
             Gdk::BUTTON_RELEASE_MASK);
-        close->set_tooltip_text("Close window");
+        close->set_tooltip_text(_("Close window"));
         close->get_style_context()->add_class(
             "dock-preview-close");
 

@@ -17,6 +17,10 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==1 ? 0 : n%10==1 && n%100!=11 && n%100!=71 && n%100!=91 ? 1 : n%10==2 && n%100!=12 && n%100!=72 && n%100!=92 ? 2 : (n%10==3 || n%10==4 || n%10==9) && n%100!=13 && n%100!=14 && n%100!=19 && n%100!=73 && n%100!=74 && n%100!=79 && n%100!=93 && n%100!=94 && n%100!=99 ? 3 : n%1000000==0 ? 4 : 5);\n"
 "Generated-By: Babel 2.17.0\n"
 
+#: src/preview/dock_preview_layout.cpp:479
+msgid "Close window"
+msgstr "Serriñ ar prenestr"
+
 #: src/main.cpp:362
 msgid "Window previews are disabled"
 msgstr "Diweredekaet eo ar rakweledennoù prenestr"

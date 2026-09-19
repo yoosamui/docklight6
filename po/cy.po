@@ -17,6 +17,10 @@ msgstr ""
 "Plural-Forms: nplurals=5; plural=(n==1 ? 1 : n==2 ? 2 : n==3 ? 3 : n==6 ? 4 : 0);\n"
 "Generated-By: Babel 2.17.0\n"
 
+#: src/preview/dock_preview_layout.cpp:479
+msgid "Close window"
+msgstr "Cau’r ffenestr"
+
 #: src/main.cpp:362
 msgid "Window previews are disabled"
 msgstr "Mae rhagolygon ffenestri wedi'u hanalluogi"
