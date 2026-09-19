@@ -6,9 +6,28 @@
 
 <img width="127" height="127" alt="docklight home" src="https://github.com/user-attachments/assets/7e338d8e-2ce2-4ede-b8dc-48aed38e25d2" />
 
-DockLight is a Generic lightweight application dock for Linux with X11 and Wayland
-support. It provides application launchers, window management, live window
-previews, multi-monitor placement, bookmarks (sessions) and configurable auto-hide behavior.
+## Overview
+
+DockLight is a lightweight, generic application dock for Linux that runs on both X11 and Wayland. It works across multiple desktop environments, providing full window management integration.
+
+Rather than being a simple app launcher, DockLight is a mature project that also offers live window previews, multi-monitor placement, bookmarks/sessions (persistent dock items), and configurable auto-hide behavior.
+Core Features
+
+    Application launchers — launch and manage your apps from the dock
+
+    Window management — control open windows directly from the dock
+
+    Live window previews — see thumbnails of running windows
+
+    Multi-monitor placement — configure placement per monitor
+
+    Bookmarks / sessions — persistent dock items that survive restarts
+
+    Configurable auto-hide — edge-triggered reveal when you need it
+
+    Desktop integrations — companion components for GNOME and KDE Plasma
+
+    Hyprland backend — recently added support    
 
 **Current version:** `6.0.40`
 
