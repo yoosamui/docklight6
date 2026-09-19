@@ -282,6 +282,17 @@ disable **Desktop Effects → Appearance → Highlight Screen Edges and Hot
 Corners**. See [Disable KWin's blue screen-edge indication](SETUP.md#disable-kwins-blue-screen-edge-indication)
 for the command-line equivalent and instructions to restore the highlight.
 
+### KDE Plasma Wayland Thumbnail Permissions
+
+On KDE Plasma Wayland, KWin authorizes window thumbnail capture based on the executable path registered in Docklight’s desktop entry (by default, /usr/local/bin/docklight6).
+
+Full previews and thumbnails are only shown when you launch Docklight using the registered installation path (/usr/local/bin/docklight6).
+
+    Note: This is not a folder permission issue. You do not need to open your terminal inside /usr/local/bin; you can successfully launch /usr/local/bin/docklight6 from anywhere.
+
+However, running a different binary—such as a local build version like build-debug/src/docklight6—may result in generic icons instead of live thumbnails because its path does not match the desktop entry authorization.
+
+
 ### Monitor and integration diagnostics
 
 To find monitor names for monitor-specific placement, run:
