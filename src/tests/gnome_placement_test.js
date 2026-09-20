@@ -863,8 +863,8 @@ assert.match(
     "GNOME X11 must default to its Shell effect while every other native X11 backend retains Plasma-style behavior");
 assert.match(
     legacySurfaceBackendSource,
-    /set_type_hint\([\s\S]*?WINDOW_TYPE_HINT_DOCK[\s\S]*?set_keep_above\(true\)/,
-    "the dock must retain its established EWMH type and keep-above policy");
+    /set_type_hint\([\s\S]*?WINDOW_TYPE_HINT_DOCK[\s\S]*?set_keep_above\(\s*!xfwm4_dock_layer &&\s*!\(m_native_x11 &&\s*DesktopSessionIdentity::is_gnome_shell_x11_session\(\)\)\)/,
+    "GNOME X11 and Xfwm4 must yield their DOCK layer to fullscreen");
 assert.match(
     legacySurfaceBackendSource,
     /configurable_autohide_effects\(\) const[\s\S]*?if \(!m_native_x11\)[\s\S]*?return \{[\s\S]*?DockAutohideEffect::plasma,[\s\S]*?DockAutohideEffect::slide\};/,
@@ -1868,3 +1868,26 @@ assert.match(extensionSource,
     /this\._enabled = false;\s*this\._dbusGeneration = \{\};/);
 
 console.log("GNOME placement, stacking, preview culling, and connection lifecycle tests passed");
+
+// X11 publishes dock geometry for Shell animation only. It must not acquire
+// ABOVE from Wayland placement, even when a real dock window is available.
+const layerMethod = extensionSource.match(
+    /    _enforceDockWindowLayer\(\) \{[\s\S]*?\n    \}\n\n    _syncMagnifiedOverlayStack/)[0]
+    .replace(/\n\n    _syncMagnifiedOverlayStack$/, '');
+let layerMutations = 0;
+const x11LayerPolicy = vm.runInNewContext(`({${layerMethod}})`, {
+    global: {display: {get_monitor_in_fullscreen: () => false}},
+});
+Object.assign(x11LayerPolicy, {
+    _waylandIntegration: false,
+    _dockMonitorIndex: () => 0,
+    _dockWindow: {
+        is_above: () => false,
+        make_above: () => layerMutations++,
+        stick: () => layerMutations++,
+    },
+    _syncMagnifiedOverlayStack: () => layerMutations++,
+});
+x11LayerPolicy._enforceDockWindowLayer();
+assert.strictEqual(layerMutations, 0,
+    'X11 geometry updates must not reapply Wayland layer policy');

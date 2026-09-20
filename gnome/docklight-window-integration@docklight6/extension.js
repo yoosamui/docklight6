@@ -924,7 +924,8 @@ export default class DocklightWindowIntegration extends Extension {
     }
 
     _enforceDockWindowLayer() {
-        if (!this._dockWindow)
+        // X11 owns its EWMH hints; geometry publication must not add ABOVE.
+        if (!this._waylandIntegration || !this._dockWindow)
             return;
 
         try {

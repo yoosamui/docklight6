@@ -10,6 +10,7 @@
 // Owns ordinary GTK toplevel placement and the legacy X11 work-area/strut
 // integration while exposing current GDK monitor geometry. Preserves a clean
 // monitor work area while an old dock reservation settles during edge changes.
+// GNOME X11 and Xfwm4 use the dock layer without ABOVE so fullscreen covers it.
 //
 // ------------------------------------------------------------
 
@@ -235,7 +236,19 @@ LegacyDockSurfaceBackend::
         Gdk::WINDOW_TYPE_HINT_DOCK);
     m_window.set_skip_taskbar_hint(true);
     m_window.set_skip_pager_hint(true);
-    m_window.set_keep_above(true);
+    const bool xfwm4_dock_layer =
+        m_native_x11 &&
+        g_strcmp0(
+            gdk_x11_screen_get_window_manager_name(
+                m_window.get_screen()->gobj()),
+            "Xfwm4") == 0;
+    // Mutter's and Xfwm4's DOCK layers already stay above ordinary windows. ABOVE
+    // promotes it over fullscreen clients too, bypassing every autohide mode.
+    // Keep the established hint for other desktops and XWayland presentation.
+    m_window.set_keep_above(
+        !xfwm4_dock_layer &&
+        !(m_native_x11 &&
+          DesktopSessionIdentity::is_gnome_shell_x11_session()));
     m_window.stick();
     m_window.set_position(Gtk::WIN_POS_NONE);
 

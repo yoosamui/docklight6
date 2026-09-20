@@ -46,4 +46,16 @@ assert.doesNotMatch(
     /wnck_window_unminimize|workspace_activate|window_activate|defer_activation/,
     "XFWM restore must not activate each window through libwnck");
 
-console.log("XFWM restore tests passed");
+const surfaceSource = fs.readFileSync(
+    path.resolve(__dirname, "../dock/backends/legacy_dock_surface_backend.cpp"),
+    "utf8");
+assert.match(
+    surfaceSource,
+    /const bool xfwm4_dock_layer =\s*m_native_x11 &&\s*g_strcmp0\(\s*gdk_x11_screen_get_window_manager_name\(\s*m_window.get_screen\(\)->gobj\(\)\),\s*"Xfwm4"\) == 0;/,
+    "Xfwm4 dock layering must follow the actual presentation WM, not desktop environment variables");
+assert.match(
+    surfaceSource,
+    /set_keep_above\(\s*!xfwm4_dock_layer &&/,
+    "Xfwm4 must omit ABOVE in every autohide mode so fullscreen covers the dock");
+
+console.log("XFWM restore and fullscreen layering tests passed");
