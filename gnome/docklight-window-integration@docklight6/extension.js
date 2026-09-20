@@ -5,6 +5,7 @@
 // Async replies belong to one enabled backend lifetime; failed command waits
 // reconnect through the bounded registration retry after session interruptions.
 // XWayland pointer/reveal geometry follows its actual GTK-owned frame.
+// Repeated auxiliary classification preserves an existing entrance animation.
 // Active clone sources bypass window-space culling through a paint-through
 // effect, released with the previews; no shader or offscreen capture is used.
 
@@ -715,9 +716,11 @@ export default class DocklightWindowIntegration extends Extension {
         // Metadata can arrive after map. Begin the same guarded placement
         // transition here as well so correcting a provisional dock identity
         // cannot briefly restore Mutter's centred actor.
-        this._beginAuxiliaryTransition(window);
-
         if (!this._auxiliaryWindowSignals.has(window)) {
+            // Reclassification can follow title/registry notifications after
+            // the surface is already visible. Only its first classification
+            // needs staging; the map handler separately guards actual remaps.
+            this._beginAuxiliaryTransition(window);
             const signals = [];
             for (const [signal, callback] of [
                 ['notify::title', () => this._placeAuxiliaryWindow(window)],

@@ -8,6 +8,7 @@
 //
 // Implementation overview:
 // Implements preview presentation and opacity animation.
+// GNOME Wayland owns opening opacity in Shell; GTK stages it before map.
 //
 // ------------------------------------------------------------
 
@@ -124,7 +125,14 @@ void DockPreviewWindow::show_preview(
         return;
     }
 
-    set_opacity(0.0);
+    // Shell owns the GNOME Wayland entrance animation. Changing the client
+    // opacity after map can overwrite that in-flight compositor transition.
+    // Stage the final client opacity before mapping instead.
+    set_opacity(
+        uses_wayland_session() &&
+                m_thumbnail_provider.supports_gnome_live_previews()
+            ? 1.0
+            : 0.0);
     present_preview(entries, location, position, size);
 }
 
@@ -312,9 +320,9 @@ void DockPreviewWindow::complete_presentation()
 void DockPreviewWindow::start_opacity_animation(
     bool hiding)
 {
-    // Opacity animation can expose an intermediate XWayland surface frame in
-    // Mutter. Complete the transition immediately on GNOME Wayland while
-    // retaining the existing effect on the other presentation backends.
+    // Shell owns opening visibility on GNOME Wayland. Do not write client
+    // opacity on the mapped surface while its compositor animation runs.
+    // Closing remains immediate, with opacity reset only after unmapping.
     if (uses_wayland_session() &&
         m_thumbnail_provider.supports_gnome_live_previews())
     {
@@ -323,8 +331,8 @@ void DockPreviewWindow::start_opacity_animation(
         {
             hide();
             clear_cards();
+            set_opacity(1.0);
         }
-        set_opacity(1.0);
         return;
     }
 

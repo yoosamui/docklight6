@@ -468,7 +468,7 @@ assert.match(
     "GNOME fallback capture must start after the preview entrance fade settles");
 assert.match(
     previewWindowSource,
-    /GNOME_PREVIEW_REMAP_DELAY_MS = 34[\s\S]*?uses_wayland_session\(\)[\s\S]*?XDG_SESSION_TYPE[\s\S]*?wayland[\s\S]*?DockPreviewWindow::show_preview[\s\S]*?remap_was_pending[\s\S]*?m_replacing_gnome_wayland_preview\s*=[\s\S]*?get_mapped\(\) \|\| remap_was_pending[\s\S]*?uses_wayland_session\(\)[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?if \(m_replacing_gnome_wayland_preview\)[\s\S]*?hold_gnome_live_preview_surface\([\s\S]*?generation != m_generation[\s\S]*?set_opacity\(0\.01\);[\s\S]*?hide\(\);[\s\S]*?m_gnome_preview_remap_delay[\s\S]*?present_preview\([\s\S]*?GNOME_PREVIEW_REMAP_DELAY_MS[\s\S]*?return;[\s\S]*?set_opacity\(0\.0\);[\s\S]*?present_preview\(entries, location, position, size\)/,
+    /GNOME_PREVIEW_REMAP_DELAY_MS = 34[\s\S]*?uses_wayland_session\(\)[\s\S]*?XDG_SESSION_TYPE[\s\S]*?wayland[\s\S]*?DockPreviewWindow::show_preview[\s\S]*?remap_was_pending[\s\S]*?m_replacing_gnome_wayland_preview\s*=[\s\S]*?get_mapped\(\) \|\| remap_was_pending[\s\S]*?uses_wayland_session\(\)[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?if \(m_replacing_gnome_wayland_preview\)[\s\S]*?hold_gnome_live_preview_surface\([\s\S]*?generation != m_generation[\s\S]*?set_opacity\(0\.01\);[\s\S]*?hide\(\);[\s\S]*?m_gnome_preview_remap_delay[\s\S]*?present_preview\([\s\S]*?GNOME_PREVIEW_REMAP_DELAY_MS[\s\S]*?return;[\s\S]*?set_opacity\([\s\S]*?uses_wayland_session\(\) &&[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?\? 1\.0[\s\S]*?: 0\.0\);[\s\S]*?present_preview\(entries, location, position, size\)/,
     "mapped GNOME XWayland replacements must hold the old compositor surface before unmapping and resizing");
 assert.match(
     previewWindowSource,
@@ -480,7 +480,7 @@ assert.match(
     "GNOME Wayland replacements must repaint and settle after Shell acknowledgement before GTK is revealed");
 assert.match(
     previewWindowSource,
-    /DockPreviewWindow::start_opacity_animation[\s\S]*?uses_wayland_session\(\)[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?if \(hiding\)[\s\S]*?hide\(\);[\s\S]*?clear_cards\(\);[\s\S]*?set_opacity\(1\.0\);[\s\S]*?return;[\s\S]*?m_opacity_animation_hiding = hiding/,
+    /DockPreviewWindow::start_opacity_animation[\s\S]*?uses_wayland_session\(\)[\s\S]*?supports_gnome_live_previews\(\)[\s\S]*?if \(hiding\)[\s\S]*?hide\(\);[\s\S]*?clear_cards\(\);\s*set_opacity\(1\.0\);\s*\}\s*return;[\s\S]*?m_opacity_animation_hiding = hiding/,
     "GNOME Wayland must close GTK immediately without exposing an XWayland fade frame");
 assert.match(
     thumbnailProviderSource,
@@ -1891,3 +1891,38 @@ Object.assign(x11LayerPolicy, {
 x11LayerPolicy._enforceDockWindowLayer();
 assert.strictEqual(layerMutations, 0,
     'X11 geometry updates must not reapply Wayland layer policy');
+
+// Late discovery retries must place an existing auxiliary without replaying
+// the hide/reveal transition. Execute the production classification method.
+{
+    const method = extensionSource.match(
+        /    _considerAuxiliaryWindow\(window\) \{[\s\S]*?(?=    _placeAuxiliaryWindow\()/)[0];
+    const policy = vm.runInNewContext(`({${method}})`);
+    let transitions = 0;
+    let placements = 0;
+    let connections = 0;
+    const window = {connect() { return ++connections; }};
+    Object.assign(policy, {
+        _dockWindow: null,
+        _auxiliaryWindowSignals: new Map(),
+        _windows: new Map(),
+        _auxiliaryPosition() { return {type: 'preview', x: 10, y: 20}; },
+        _windowId() { return 'preview'; },
+        _beginAuxiliaryTransition() { transitions++; },
+        _placeAuxiliaryWindow() { placements++; },
+    });
+    assert.strictEqual(policy._considerAuxiliaryWindow(window), true);
+    assert.strictEqual(transitions, 1, 'first classification stages the actor');
+    for (let retry = 0; retry < 3; retry++)
+        policy._considerAuxiliaryWindow(window);
+    assert.strictEqual(transitions, 1,
+        'late discovery must not hide a visible preview or restart its entrance');
+    assert.strictEqual(connections, 4, 'auxiliary signals are connected once');
+    assert.strictEqual(placements, 4, 'late geometry still receives placement');
+    policy._auxiliaryWindowSignals.delete(window);
+    policy._considerAuxiliaryWindow(window);
+    assert.strictEqual(transitions, 2, 'a new auxiliary lifetime stages again');
+    policy._auxiliaryPosition = () => null;
+    assert.strictEqual(policy._considerAuxiliaryWindow(window), false);
+    assert.strictEqual(transitions, 2, 'ordinary windows are untouched');
+}
