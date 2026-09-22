@@ -2,7 +2,7 @@ bin_PROGRAMS = \
     docklight6 \
     docklight6-hyprland-reservation
 
-check_PROGRAMS = \
+unit_test_programs = \
     x11_pointer_monitor_test \
     x11_capture_connection_test \
     thumbnail_disk_cache_test \
@@ -24,8 +24,11 @@ check_PROGRAMS = \
     kwin_integration_service_test \
     x11_backend_selection_test
 
+check_PROGRAMS = $(unit_test_programs) dock_autohide_handoff_test
+
 TESTS = \
-    $(check_PROGRAMS) \
+    $(unit_test_programs) \
+    tests/dock_autohide_handoff_test.sh \
     tests/dock_magnified_effect_test.js \
     tests/dock_visual_style_test.js \
     tests/dock_home_session_test.js \
@@ -550,3 +553,17 @@ x11_pointer_monitor_test_SOURCES = \
     presentation/presentation_selector.cpp
 x11_pointer_monitor_test_CPPFLAGS = $(GTKMM_CFLAGS) $(X11_BACKEND_CFLAGS)
 x11_pointer_monitor_test_LDADD = $(GTKMM_LIBS) $(X11_BACKEND_LIBS) -ldl
+
+# Exercise the real GTK controller without duplicating its implementation.
+# Reuse application objects, excluding main, and run under an isolated display.
+dock_autohide_handoff_test_SOURCES = \
+    tests/dock_autohide_handoff_test.cpp \
+    tests/fake_window_backend.cpp \
+    tests/fake_window_backend.h
+dock_autohide_handoff_test_CPPFLAGS = $(docklight6_CPPFLAGS)
+dock_autohide_handoff_test_LDADD = \
+    $(filter-out docklight6-main.$(OBJEXT),$(docklight6_OBJECTS)) \
+    $(docklight6_LDADD)
+dock_autohide_handoff_test_DEPENDENCIES = \
+    $(filter-out docklight6-main.$(OBJEXT),$(docklight6_OBJECTS))
+EXTRA_DIST += tests/dock_autohide_handoff_test.sh

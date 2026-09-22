@@ -14,6 +14,7 @@
 // Important implementation decisions:
 // - Placement changes are mirrored to the reveal surface.
 // - Timers are cancelled and replaced as visibility intent changes.
+// - Shell animation handoff clears any local opacity/transform and timer.
 // - Fixed-window X11 transforms use the GTK frame clock. Offscreen window
 //   movement uses a timer because compositors can suspend frame callbacks.
 // - Intellihide overlap participates in the same visibility policy.
@@ -779,6 +780,15 @@ void DockAutohideController::set_surface_input_passthrough(
 void DockAutohideController::request_shell_visibility(
     bool hidden)
 {
+    // A hidden XWayland dock can take the local placement/fallback path
+    // while Shell geometry is temporarily unavailable during session changes.
+    // Shell animates its actor, not GTK's separately retained opacity. Cancel
+    // local callbacks and restore their neutral state before handing over;
+    // otherwise a transparent GTK window stays invisible through every reveal.
+    cancel_animation();
+    m_pending_x11_reveal_animation = false;
+    reset_local_visual_transform();
+
     if (!hidden)
         set_surface_input_passthrough(false);
 
